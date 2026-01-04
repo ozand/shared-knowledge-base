@@ -1,0 +1,279 @@
+# Type Checking and Mypy Error Patterns
+# Common type checking issues and solutions
+
+version: "1.0"
+category: "type-checking"
+last_updated: "2026-01-04"
+
+errors:
+  - id: "TYPE-001"
+    title: "Mypy Too Strict for Test Files"
+    severity: "low"
+
+    problem: |
+      Test files use mocking, fixtures, and dynamic patterns that are
+      difficult to type check strictly. Mypy errors clutter test output.
+
+    symptoms:
+      - "error: Argument 1 has incompatible type..."
+      - "error: Incompatible return value type..."
+      - Excessive type: ignore comments in tests
+
+    solution:
+      config_file: "pyproject.toml"
+      config: |
+        [tool.mypy]
+        python_version = "3.12"
+        disallow_untyped_defs = true
+        warn_return_any = true
+        strict_equality = true
+        strict = true
+
+        [[tool.mypy.overrides]]
+        module = "tests.*"
+        ignore_errors = true  # Relax strictness for tests
+
+      explanation: |
+        Keep strict type checking for src/ but relax for tests/.
+        Tests use mocking and dynamic fixtures that are hard to type.
+
+    prevention:
+      - Use strict typing in src/ directory
+      - Relax typing in tests/ directory
+      - Type your fixtures when practical
+      - Use typing.cast() for mock return values
+      - Add # type: ignore sparingly with explanatory comment
+
+    tags: ["mypy", "testing", "configuration"]
+
+  - id: "TYPE-002"
+    title: "Missing Type Annotations"
+    severity: "medium"
+
+    problem: |
+      Functions without return type annotations fail strict mypy checks.
+
+    symptoms:
+      - "error: Function is missing a return type annotation"
+      - "note: Use -> None if function does not return a value"
+
+    wrong_code: |
+      def process_file(path):
+          with open(path) as f:
+              return f.read()
+
+    correct_code: |
+      from pathlib import Path
+
+      def process_file(path: Path) -> str:
+          """Process file and return contents."""
+          with path.open(encoding="utf-8") as f:
+              return f.read()
+
+    best_practices:
+      - "Always annotate function parameters"
+      - "Always annotate return types (even -> None)"
+      - "Use Path instead of str for file paths"
+      - "Add docstrings with parameter descriptions"
+
+    tags: ["mypy", "type-hints", "code-quality"]
+
+  - id: "TYPE-003"
+    title: "Optional vs None Type Confusion"
+    severity: "low"
+
+    problem: |
+      Confusion between Optional[T], T | None, and handling None values.
+
+    examples:
+      - wrong: |
+          def get_user(id: int) -> str:
+              user = database.get(id)  # Returns None if not found
+              return user.name  # Error: user might be None!
+
+      - correct: |
+          from typing import Optional
+
+          def get_user(id: int) -> Optional[str]:
+              """Get user name by ID, None if not found."""
+              user = database.get(id)
+              if user is None:
+                  return None
+              return user.name
+
+      - modern_syntax: |
+          def get_user(id: int) -> str | None:  # Python 3.10+
+              """Get user name by ID, None if not found."""
+              user = database.get(id)
+              return user.name if user else None
+
+    prevention:
+      - "Use Optional[T] or T | None for values that can be None"
+      - "Always check for None before using optional values"
+      - "Consider using get_or_default patterns"
+      - "Use mypy's --strict-optional flag"
+
+    tags: ["optional", "none", "type-hints"]
+
+  - id: "TYPE-004"
+    title: "AsyncMock vs Mock for Async Functions"
+    severity: "medium"
+
+    problem: |
+      Using regular Mock for async functions causes runtime errors and
+      type checking issues.
+
+    symptoms:
+      - "RuntimeWarning: coroutine 'Mock' was never awaited"
+      - Tests hang or fail mysteriously
+      - Type checker shows incompatible await
+
+    wrong_code: |
+      from unittest.mock import Mock
+
+      mock_ws = Mock()
+      mock_ws.accept = Mock()  # Wrong for async method!
+
+      async def test_connect():
+          await mock_ws.accept()  # RuntimeWarning!
+
+    correct_code: |
+      from unittest.mock import AsyncMock
+
+      mock_ws = AsyncMock()
+      mock_ws.accept = AsyncMock()  # Correct for async method
+
+      async def test_connect():
+          await mock_ws.accept()  # Works correctly
+
+    prevention:
+      - "Use AsyncMock for all async methods"
+      - "Use AsyncMock() for objects with async methods"
+      - "Decorate tests with @pytest.mark.asyncio"
+      - "Configure pytest-asyncio in pyproject.toml"
+
+    required_dependencies:
+      - "pytest-asyncio>=0.21.0"
+
+    tags: ["async", "mocking", "testing", "asyncmock"]
+
+best_practices:
+  type_annotations:
+    - rule: "Always add return type annotations"
+      good: "def func() -> int:"
+      bad: "def func():"
+
+    - rule: "Use Optional or | None for nullable types"
+      good: "def func() -> str | None:"
+      bad: "def func() -> str:  # but returns None sometimes"
+
+    - rule: "Use Path for file paths, not str"
+      good: "def read(path: Path) -> str:"
+      bad: "def read(path: str) -> str:"
+
+    - rule: "Use specific types, not Any"
+      good: "def parse(data: Dict[str, int]) -> List[str]:"
+      bad: "def parse(data: Any) -> Any:"
+
+  mypy_configuration:
+    strict_flags:
+      - "disallow_untyped_defs = true"
+      - "warn_return_any = true"
+      - "strict_equality = true"
+      - "warn_redundant_casts = true"
+      - "warn_unused_ignores = true"
+
+    relaxed_for_tests:
+      - "ignore_errors = true for tests.*"
+      - "Allow dynamic fixtures"
+      - "Allow mock objects"
+
+  forward_references:
+    - use_case: "Avoid circular imports"
+      pattern: |
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            from module import Class
+
+        def func(obj: "Class") -> None:  # String literal
+            pass
+
+    - use_case: "Self-referential types"
+      pattern: |
+        from __future__ import annotations
+
+        class Node:
+            def __init__(self, left: Node | None = None):  # Works!
+                self.left = left
+
+tools:
+  - name: "mypy"
+    purpose: "Static type checker"
+    command: "mypy src/"
+    config_file: "pyproject.toml"
+
+  - name: "pyright"
+    purpose: "Alternative type checker (faster)"
+    command: "pyright src/"
+    config_file: "pyrightconfig.json"
+
+  - name: "ruff"
+    purpose: "Type annotation linting"
+    command: "ruff check --select ANN"
+
+common_patterns:
+  async_typing:
+    - pattern: "Async function return types"
+      code: |
+        async def fetch_data() -> dict:
+            return await some_async_call()
+
+    - pattern: "Async generator"
+      code: |
+        from typing import AsyncGenerator
+
+        async def stream_data() -> AsyncGenerator[dict, None]:
+            yield {"data": "value"}
+
+  generic_typing:
+    - pattern: "Generic class"
+      code: |
+        from typing import Generic, TypeVar
+
+        T = TypeVar('T')
+
+        class Container(Generic[T]):
+            def __init__(self, value: T) -> None:
+                self.value = value
+
+    - pattern: "Generic function"
+      code: |
+        from typing import TypeVar, List
+
+        T = TypeVar('T')
+
+        def first(items: List[T]) -> T | None:
+            return items[0] if items else None
+
+troubleshooting:
+  - symptom: "Function is missing a return type annotation"
+    solution: "Add -> ReturnType or -> None"
+
+  - symptom: "Incompatible return value type"
+    checks:
+      - "Verify return statement matches annotation"
+      - "Check for missing None handling"
+      - "Use Union or | for multiple return types"
+
+  - symptom: "Cannot determine type of X"
+    solution:
+      - "Add explicit type annotation"
+      - "Use typing.cast() if you know the type"
+      - "Avoid using Any unless necessary"
+
+  - symptom: "error: Returning Any from function declared to return X"
+    solution:
+      - "Add more specific type annotations"
+      - "Use proper generic types"
+      - "Avoid Any in function signatures"
