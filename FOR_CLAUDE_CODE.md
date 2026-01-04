@@ -1,0 +1,473 @@
+# For Claude Code: Setting Up Shared Knowledge Base in New Projects
+
+**Instructions for Claude Code agents on how to deploy shared-knowledge-base**
+
+---
+
+## Quick Reference for Claude Code
+
+When user asks to "set up shared knowledge base" or mentions knowledge base in a new project:
+
+### Step 1: Check if Already Configured
+
+```bash
+# Check for existing KB setup
+ls -la docs/knowledge-base/.kb-config.yaml
+ls -la docs/knowledge-base/tools/kb.py
+git submodule status | grep shared-knowledge-base
+```
+
+### Step 2: Add as Git Submodule (Recommended)
+
+```bash
+# Add shared-knowledge-base as submodule
+cd /path/to/project
+git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+
+# Commit the change
+git commit -m "Add shared-knowledge-base as git submodule"
+```
+
+### Step 3: Copy Configuration Files
+
+```bash
+# Copy kb.py tool to project (if not using submodule directly)
+cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/kb.py
+
+# Copy or create .kb-config.yaml
+cp docs/knowledge-base/shared/.kb-config.yaml docs/knowledge-base/.kb-config.yaml
+```
+
+### Step 4: Update .kb-config.yaml for Project
+
+```yaml
+version: "2.0"
+paths:
+  kb_dir: "docs/knowledge-base"
+  cache_dir: "docs/knowledge-base/.cache"
+  index_db: "docs/knowledge-base/.cache/kb_index.db"
+
+shared_sources:
+  - name: "Universal Shared KB"
+    url: "https://github.com/ozand/shared-knowledge-base.git"
+    scopes: ["universal", "python"]
+    enabled: true
+
+import_scopes:
+  - universal
+  - python
+```
+
+### Step 5: Build Search Index
+
+```bash
+# Build index for fast search
+python docs/knowledge-base/tools/kb.py index -v
+```
+
+### Step 6: Test Search
+
+```bash
+# Test that search works
+python docs/knowledge-base/tools/kb.py search "websocket"
+python docs/knowledge-base/tools/kb.py stats
+```
+
+---
+
+## Detailed Setup Guide
+
+### Method 1: Git Submodule (Recommended)
+
+**Advantages:**
+- Easy updates via `git submodule update --remote`
+- Clear separation between shared and project-specific KB
+- Tracks which version of shared KB is used
+
+**Steps:**
+
+```bash
+# 1. Add submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+
+# 2. Copy tool to project root (for easier access)
+cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/kb.py
+
+# 3. Create .kb-config.yaml
+cat > docs/knowledge-base/.kb-config.yaml << 'EOF'
+version: "2.0"
+paths:
+  kb_dir: "docs/knowledge-base"
+  cache_dir: "docs/knowledge-base/.cache"
+  index_db: "docs/knowledge-base/.cache/kb_index.db"
+
+shared_sources:
+  - name: "Universal Shared KB"
+    url: "https://github.com/ozand/shared-knowledge-base.git"
+    scopes: ["universal", "python"]
+    enabled: true
+
+import_scopes:
+  - universal
+  - python
+  - framework
+  - domain
+  - project
+EOF
+
+# 4. Build index
+python docs/knowledge-base/tools/kb.py index -v
+
+# 5. Test
+python docs/knowledge-base/tools/kb.py search "import"
+```
+
+**Updating shared KB:**
+
+```bash
+# Update to latest version from GitHub
+git submodule update --remote docs/knowledge-base/shared
+
+# Rebuild index
+python docs/knowledge-base/tools/kb.py index -v
+```
+
+### Method 2: Direct Clone (Simple)
+
+**Advantages:**
+- Simpler setup
+- Full control over shared KB files
+- Can edit and contribute back easily
+
+**Steps:**
+
+```bash
+# 1. Clone to shared directory
+git clone https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+
+# 2. Copy tool and config
+cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/kb.py
+cp docs/knowledge-base/shared/.kb-config.yaml docs/knowledge-base/.kb-config.yaml
+
+# 3. Build index
+python docs/knowledge-base/tools/kb.py index -v
+
+# 4. Add to .gitignore
+echo "docs/knowledge-base/shared/" >> .gitignore
+```
+
+### Method 3: Copy Specific Content (Minimal)
+
+**Advantages:**
+- Only copy what you need
+- No git overhead
+- Project-specific customization
+
+**Steps:**
+
+```bash
+# 1. Create directory structure
+mkdir -p docs/knowledge-base/errors
+mkdir -p docs/knowledge-base/patterns
+mkdir -p docs/knowledge-base/tools
+mkdir -p docs/knowledge-base/.cache
+
+# 2. Clone shared KB temporarily to extract content
+git clone https://github.com/ozand/shared-knowledge-base.git /tmp/shared-kb-temp
+
+# 3. Copy relevant content
+cp /tmp/shared-kb-temp/python/errors/*.yaml docs/knowledge-base/errors/
+cp /tmp/shared-kb-temp/universal/patterns/*.yaml docs/knowledge-base/patterns/
+cp /tmp/shared-kb-temp/tools/kb.py docs/knowledge-base/tools/kb.py
+
+# 4. Create .kb-config.yaml
+cat > docs/knowledge-base/.kb-config.yaml << 'EOF'
+version: "2.0"
+paths:
+  kb_dir: "docs/knowledge-base"
+  cache_dir: "docs/knowledge-base/.cache"
+  index_db: "docs/knowledge-base/.cache/kb_index.db"
+
+import_scopes:
+  - universal
+  - python
+EOF
+
+# 5. Build index
+python docs/knowledge-base/tools/kb.py index -v
+
+# 6. Clean up
+rm -rf /tmp/shared-kb-temp
+```
+
+---
+
+## .gitignore Configuration
+
+Ensure these entries are in `.gitignore`:
+
+```gitignore
+# Knowledge Base cache (auto-generated by kb.py)
+docs/knowledge-base/.cache/
+docs/knowledge-base/.cache/**/*
+docs/knowledge-base/shared/
+
+# JSON exports for AI tools
+.kb-export.json
+.kb-snapshot.json
+
+# But allow these
+!docs/knowledge-base/.kb-config.yaml
+!docs/knowledge-base/tools/kb.py
+!docs/knowledge-base/errors/
+!docs/knowledge-base/patterns/
+```
+
+---
+
+## Updating CLAUDE.md
+
+Add to project's `CLAUDE.md`:
+
+```markdown
+## Knowledge Base
+
+This project uses a shared knowledge base for common errors, solutions, and best practices.
+
+**Quick search:**
+```bash
+python docs/knowledge-base/tools/kb.py search "keyword"
+```
+
+**Build index:**
+```bash
+python docs/knowledge-base/tools/kb.py index -v
+```
+
+**Statistics:**
+```bash
+python docs/knowledge-base/tools/kb.py stats
+```
+
+**Knowledge base includes:**
+- Universal Python errors (import, testing, type-checking)
+- Framework-specific patterns (Clean Architecture, WebSocket)
+- Best practices and troubleshooting guides
+
+For more details, see: [docs/knowledge-base/README.md](docs/knowledge-base/README.md)
+```
+
+---
+
+## Common Workflows for Claude Code
+
+### When User Reports an Error
+
+1. **Search knowledge base first:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search "error message"
+   ```
+
+2. **If error is not in KB:**
+   - Solve the problem
+   - Document the solution in appropriate YAML file
+   - Run validation: `python docs/knowledge-base/tools/kb.py validate`
+
+3. **If error should be in shared KB:**
+   - Check if it's universal enough
+   - Add to shared KB repository
+   - Submit PR to github.com/ozand/shared-knowledge-base
+
+### When Starting New Task
+
+1. **Search for related patterns:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search "task keyword"
+   ```
+
+2. **Review best practices:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search --scope pattern "best practice"
+   ```
+
+3. **Check for common pitfalls:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search --severity high,critical
+   ```
+
+### When User Asks for Best Practices
+
+1. **Search for specific topic:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search "async testing"
+   ```
+
+2. **List all patterns:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py search --scope pattern
+   ```
+
+3. **Show statistics:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py stats
+   ```
+
+---
+
+## Contributing to Shared KB
+
+When you document an error that's universally applicable:
+
+1. **Check shared KB structure:**
+   ```bash
+   ls docs/knowledge-base/shared/python/errors/
+   ```
+
+2. **Add to appropriate file in shared KB:**
+   ```bash
+   # Edit shared KB file
+   nano docs/knowledge-base/shared/python/errors/testing.yaml
+
+   # Or if not using submodule, clone and edit:
+   git clone https://github.com/ozand/shared-knowledge-base.git /tmp/shared-kb
+   nano /tmp/shared-kb/python/errors/testing.yaml
+   ```
+
+3. **Validate:**
+   ```bash
+   python docs/knowledge-base/tools/kb.py validate docs/knowledge-base/shared/
+   ```
+
+4. **Commit and push to shared KB:**
+   ```bash
+   cd docs/knowledge-base/shared
+   git add python/errors/testing.yaml
+   git commit -m "Add PY-TEST-XXX: New Error Title"
+   git push origin main
+   ```
+
+5. **Update project submodule:**
+   ```bash
+   cd /path/to/project
+   git submodule update --remote docs/knowledge-base/shared
+   ```
+
+---
+
+## Troubleshooting
+
+### kb.py Command Not Found
+
+```bash
+# Use full path
+python docs/knowledge-base/tools/kb.py search "keyword"
+
+# Or create alias
+echo 'alias kb="python docs/knowledge-base/tools/kb.py"' >> ~/.bashrc
+source ~/.bashrc
+kb search "keyword"
+```
+
+### Index Out of Date
+
+```bash
+# Rebuild index
+python docs/knowledge-base/tools/kb.py index --force -v
+```
+
+### Submodule Not Updating
+
+```bash
+# Check submodule status
+git submodule status
+
+# Update submodule
+git submodule update --remote docs/knowledge-base/shared
+
+# If needed, init submodule first
+git submodule init
+git submodule update
+```
+
+### Python Dependencies Missing
+
+```bash
+# Install PyYAML
+pip install pyyaml
+
+# Or with uv
+uv add pyyaml --optional dev
+```
+
+---
+
+## Verification Checklist
+
+After setup, verify:
+
+- [ ] `docs/knowledge-base/tools/kb.py` exists
+- [ ] `docs/knowledge-base/.kb-config.yaml` exists
+- [ ] `docs/knowledge-base/.cache/kb_index.db` exists (after running index)
+- [ ] `kb.py search` returns results
+- [ ] `kb.py stats` shows statistics
+- [ ] Git submodule status shows shared-knowledge-base (if using submodule)
+- [ ] `.gitignore` includes cache directory
+- [ ] `CLAUDE.md` mentions knowledge base
+- [ ] User can successfully search for errors
+
+---
+
+## Quick Command Reference
+
+```bash
+# Build index
+python docs/knowledge-base/tools/kb.py index -v
+
+# Search
+python docs/knowledge-base/tools/kb.py search "keyword"
+python docs/knowledge-base/tools/kb.py search --id ERROR-ID
+python docs/knowledge-base/tools/kb.py search --tag async --scope python
+
+# Statistics
+python docs/knowledge-base/tools/kb.py stats
+
+# Validate
+python docs/knowledge-base/tools/kb.py validate
+
+# Export for AI tools
+python docs/knowledge-base/tools/kb.py export --format json
+
+# Update shared KB (if using submodule)
+git submodule update --remote docs/knowledge-base/shared
+```
+
+---
+
+## Summary for Claude Code
+
+**When user says "set up knowledge base":**
+
+1. Check if already configured
+2. Add git submodule: `git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared`
+3. Copy `kb.py` and `.kb-config.yaml`
+4. Build index: `python docs/knowledge-base/tools/kb.py index -v`
+5. Test search: `python docs/knowledge-base/tools/kb.py search "test"`
+6. Update `.gitignore`
+7. Update `CLAUDE.md`
+
+**Estimated time:** 3-5 minutes
+
+**Files created/modified:**
+- `.gitmodules` (new)
+- `docs/knowledge-base/shared/` (new, submodule)
+- `docs/knowledge-base/tools/kb.py` (copied)
+- `docs/knowledge-base/.kb-config.yaml` (copied/created)
+- `docs/knowledge-base/.cache/kb_index.db` (auto-generated)
+- `.gitignore` (modified)
+- `CLAUDE.md` (modified)
+
+---
+
+**Last Updated:** 2026-01-05
+**Maintained By:** Development Team & Claude Code
+**Questions?** See: [docs/knowledge-base/HYBRID_APPROACH.md](HYBRID_APPROACH.md)
