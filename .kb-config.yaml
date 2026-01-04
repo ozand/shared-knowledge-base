@@ -1,0 +1,127 @@
+# Knowledge Base Configuration
+# Cross-platform configuration for kb.py tool
+
+version: "2.0"
+
+# Paths (relative to project root or absolute)
+paths:
+  kb_dir: "docs/knowledge-base"
+  shared_dir: "docs/knowledge-base/shared"
+  cache_dir: "docs/knowledge-base/.cache"
+  index_db: "docs/knowledge-base/.cache/kb_index.db"
+
+# Shared repositories to sync from
+shared_sources:
+  - name: "Universal Shared KB"
+    url: "https://github.com/ozand/shared-knowledge-base.git"
+    scopes: ["universal", "python"]
+    enabled: true
+
+  # Add more shared sources as needed
+  # - name: "Company Internal KB"
+  #   url: "git@github.com:company/internal-kb.git"
+  #   scopes: ["universal", "python", "fastapi"]
+  #   enabled: true
+
+# Scopes to import from shared repositories
+# Hierarchy: universal → language → framework → domain → project
+import_scopes:
+  - universal      # Cross-language patterns (git, testing, architecture)
+  - python         # Python-specific (imports, type hints, async)
+  # - javascript   # Uncomment if needed
+  # - docker       # Uncomment if needed
+  # - kubernetes   # Uncomment if needed
+
+# Exclude specific error IDs from sync
+exclude_ids: []
+  # - "EXAMPLE-999"  # Example exclusion
+
+# Search settings
+search:
+  default_limit: 50
+  max_results: 1000
+  fts_enabled: true  # Full-text search with SQLite FTS5
+
+# Indexing settings
+indexing:
+  auto_index: true           # Auto-rebuild index on changes
+  watch_patterns:
+    - "**/*.yaml"
+    - "**/*.yml"
+  exclude_patterns:
+    - "**/.cache/**"
+    - "**/node_modules/**"
+    - "**/.git/**"
+
+# Output settings
+output:
+  default_format: "text"     # text | json | markdown
+  color_output: true         # Use colors in terminal
+  verbose: false
+
+# AI Tool Integration
+# These settings help different AI tools consume the knowledge base
+ai_integration:
+  # Export formats for different AI tools
+  export_formats:
+    claude_code:
+      format: "markdown"
+      include_metadata: true
+
+    github_copilot:
+      format: "json"
+      include_code_examples: true
+
+    cursor:
+      format: "markdown"
+      include_code_examples: true
+
+  # Webhook URLs for proactive notifications (optional)
+  webhooks:
+    enabled: false
+    # urls:
+    #   - "http://localhost:8080/kb-update"
+
+# Validation rules
+validation:
+  required_fields:
+    - id
+    - title
+    - severity
+    - problem
+    - solution
+
+  severity_levels:
+    - critical
+    - high
+    - medium
+    - low
+
+  id_pattern: "^[A-Z]+-\\d+$"  # CATEGORY-NNN format
+
+  scope_levels:
+    - universal
+    - python
+    - javascript
+    - typescript
+    - go
+    - rust
+    - docker
+    - kubernetes
+    - aws
+    - azure
+    - framework
+    - domain
+    - project
+
+# Statistics and metrics
+stats:
+  track_usage: true          # Track which entries are accessed
+  usage_log: ".cache/usage.log"
+
+# Maintenance
+maintenance:
+  auto_cleanup: true         # Clean old cache files
+  cache_ttl_days: 30         # Cache time-to-live
+  archive_old_entries: false # Archive entries older than threshold
+  archive_threshold_days: 365

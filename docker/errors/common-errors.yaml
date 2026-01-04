@@ -1,0 +1,60 @@
+# Docker Common Errors
+version: "1.0"
+category: "docker-errors"
+scope: "docker"
+last_updated: "2026-01-04"
+
+errors:
+  - id: "DOCKER-PORT-001"
+    title: "Port Already in Use"
+    severity: "medium"
+    scope: "docker"
+    problem: |
+      Container fails because port is already allocated.
+    symptoms:
+      - "port is already allocated"
+      - "Bind for 0.0.0.0:3000 failed"
+    wrong_code: |
+      services:
+        app:
+          ports:
+            - "3000:3000"  # Already in use!
+    correct_code: |
+      services:
+        app:
+          ports:
+            - "3001:3000"  # Use different port
+    tags: ["docker", "ports", "networking"]
+
+  - id: "DOCKER-NET-001"
+    title: "Container Cannot Resolve Hostname"
+    severity: "high"
+    scope: "docker"
+    problem: |
+      Container cannot communicate due to wrong hostname.
+    symptoms:
+      - "getaddrinfo ENOTFOUND"
+      - "Could not resolve host"
+    wrong_code: |
+      DATABASE_URL=postgres://localhost:5432/db  # Wrong!
+    correct_code: |
+      DATABASE_URL=postgres://postgres:5432/db  # Use service name
+    tags: ["docker", "networking", "dns"]
+
+  - id: "DOCKER-VOL-001"
+    title: "Volume Mount Permission Denied"
+    severity: "medium"
+    scope: "docker"
+    problem: |
+      Container cannot read/write to volume due to permissions.
+    symptoms:
+      - "Permission denied"
+      - "EACCES"
+    wrong_code: |
+      volumes:
+        - ./data:/app/data  # Permission issues
+    correct_code: |
+      user: "${UID}:${GID}"
+      volumes:
+        - ./data:/app/data
+    tags: ["docker", "volumes", "permissions"]

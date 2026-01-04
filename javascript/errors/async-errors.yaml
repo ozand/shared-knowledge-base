@@ -1,0 +1,73 @@
+# JavaScript Async Errors
+version: "1.0"
+category: "javascript-async"
+scope: "javascript"
+last_updated: "2026-01-04"
+
+errors:
+  - id: "JS-ASYNC-001"
+    title: "Promise Not Awaited"
+    severity: "high"
+    scope: "javascript"
+    problem: |
+      Async function result not awaited, causing race conditions.
+    symptoms:
+      - "Promise {<pending>}"
+      - "Unhandled promise rejection"
+    wrong_code: |
+      async function fetchData() {
+        const data = fetch('/api');  // Missing await!
+        console.log(data);  // Promise {<pending>}
+      }
+    correct_code: |
+      async function fetchData() {
+        const data = await fetch('/api');  // Correct
+        console.log(data);
+      }
+    tags: ["javascript", "async", "promise"]
+
+  - id: "JS-ASYNC-002"
+    title: "Async Function Without Try-Catch"
+    severity: "medium"
+    scope: "javascript"
+    problem: |
+      Async functions without error handling cause unhandled rejections.
+    symptoms:
+      - "UnhandledPromiseRejectionWarning"
+    wrong_code: |
+      async function loadData() {
+        const data = await fetch('/api');  // Can throw!
+        return data;
+      }
+    correct_code: |
+      async function loadData() {
+        try {
+          const data = await fetch('/api');
+          return data;
+        } catch (error) {
+          console.error('Failed:', error);
+          return null;
+        }
+      }
+    tags: ["javascript", "async", "error-handling"]
+
+  - id: "JS-ASYNC-003"
+    title: "Blocking Event Loop"
+    severity: "high"
+    scope: "javascript"
+    problem: |
+      Using sync operations in async functions blocks event loop.
+    symptoms:
+      - "Application unresponsive"
+      - "High CPU usage"
+    wrong_code: |
+      async function process(file) {
+        const data = fs.readFileSync(file);  // Blocks!
+        return data;
+      }
+    correct_code: |
+      async function process(file) {
+        const data = await fs.promises.readFile(file);
+        return data;
+      }
+    tags: ["javascript", "async", "performance"]
