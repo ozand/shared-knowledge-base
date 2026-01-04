@@ -1,0 +1,555 @@
+# WebSocket Real-time Updates Patterns
+# Best practices for WebSocket implementation with FastAPI
+
+version: "1.0"
+category: "websocket-patterns"
+last_updated: "2026-01-04"
+
+architecture:
+  components:
+    - name: "ConnectionManager"
+      purpose: "Manage WebSocket connection lifecycle"
+      responsibilities:
+        - "Accept new connections"
+        - "Track active connections"
+        - "Handle disconnections"
+        - "Maintain room subscriptions"
+
+    - name: "EventBroadcaster"
+      purpose: "Broadcast structured events to connections"
+      responsibilities:
+        - "Create typed events"
+        - "Broadcast to all/rooms/users"
+        - "Serialize events to JSON"
+
+    - name: "WebSocket Router"
+      purpose: "Handle WebSocket endpoints"
+      responsibilities:
+        - "Accept WebSocket connections"
+        - "Handle client commands"
+        - "Manage connection lifecycle"
+
+patterns:
+  connection_lifecycle:
+    pattern_name: "Connection State Management"
+
+    implementation: |
+      from dataclasses import dataclass, field
+      from datetime import datetime
+
+      @dataclass
+      class WebSocketConnection:
+          """Represents active WebSocket connection."""
+          connection_id: str
+          websocket: WebSocket
+          user_id: str | None = None
+          rooms: set[str] = field(default_factory=set)
+          connected_at: datetime = field(default_factory=datetime.now)
+
+          @property
+          def is_authenticated(self) -> bool:
+              return self.user_id is not None
+
+      class ConnectionManager:
+          def __init__(self):
+              self.active_connections: dict[str, WebSocketConnection] = {}
+              self.rooms: dict[str, set[str]] = {}
+
+          async def connect(
+              self,
+              websocket: WebSocket,
+              connection_id: str | None = None,
+              user_id: str | None = None
+          ) -> str:
+              """Accept and track new connection."""
+              await websocket.accept()
+              if connection_id is None:
+                  connection_id = str(uuid4())
+
+              connection = WebSocketConnection(
+                  connection_id=connection_id,
+                  websocket=websocket,
+                  user_id=user_id
+              )
+              self.active_connections[connection_id] = connection
+              return connection_id
+
+          async def disconnect(self, connection_id: str):
+              """Remove connection and clean up subscriptions."""
+              if connection_id not in self.active_connections:
+                  return
+
+              connection = self.active_connections[connection_id]
+
+              # Leave all rooms
+              for room in list(connection.rooms):
+                  await self.leave_room(connection_id, room)
+
+              # Remove connection
+              del self.active_connections[connection_id]
+
+    best_practices:
+      - "Use unique connection IDs (UUID)"
+      - "Track connection metadata (user_id, connected_at)"
+      - "Clean up subscriptions on disconnect"
+      - "Handle disconnect gracefully"
+
+  room_subscriptions:
+    pattern_name: "Room-Based Broadcasting"
+
+    purpose: "Target messages to specific groups of connections"
+
+    implementation: |
+      class ConnectionManager:
+          async def join_room(self, connection_id: str, room_name: str):
+              """Subscribe connection to room."""
+              if room_name not in self.rooms:
+                  self.rooms[room_name] = set()
+
+              self.rooms[room_name].add(connection_id)
+
+              if connection_id in self.active_connections:
+                  self.active_connections[connection_id].rooms.add(room_name)
+
+          async def leave_room(self, connection_id: str, room_name: str):
+              """Unsubscribe from room."""
+              if room_name in self.rooms:
+                  self.rooms[room_name].discard(connection_id)
+                  if not self.rooms[room_name]:
+                      del self.rooms[room_name]
+
+              if connection_id in self.active_connections:
+                  self.active_connections[connection_id].rooms.discard(room_name)
+
+          async def broadcast_to_room(self, room_name: str, message: dict):
+              """Send message to all connections in room."""
+              if room_name not in self.rooms:
+                  return
+
+              for connection_id in list(self.rooms[room_name]):
+                  await self.send_personal_message(connection_id, message)
+
+    room_naming_conventions:
+      - "job:<job_id> - Updates for specific job"
+      - "folder:<folder_id> - Updates for folder processing"
+      - "user:<user_id> - User-specific notifications"
+      - "broadcast - System-wide announcements"
+
+    example_usage: |
+      # Client subscribes to job updates
+      ws.send(json.dumps({
+          "action": "subscribe",
+          "room": "job:12345"
+      }))
+
+      # Server broadcasts to job room
+      await manager.broadcast_to_room("job:12345", {
+          "event_type": "progress.update",
+          "data": {"percentage": 50}
+      })
+
+  structured_events:
+    pattern_name: "Typed Event System"
+
+    purpose: "Type-safe event creation and serialization"
+
+    implementation: |
+      from enum import Enum
+      from dataclasses import dataclass
+      from datetime import datetime
+
+      class EventType(str, Enum):
+          """All possible event types."""
+          PROGRESS_UPDATE = "progress.update"
+          JOB_STARTED = "job.started"
+          JOB_COMPLETED = "job.completed"
+          JOB_FAILED = "job.failed"
+          SYSTEM_ALERT = "system.alert"
+          CONNECTION_ESTABLISHED = "connection.established"
+
+      @dataclass
+      class WebSocketEvent:
+          """Base event with common fields."""
+          event_type: str
+          timestamp: datetime
+          event_id: str
+          data: dict
+
+          def to_dict(self) -> dict:
+              return {
+                  "event_type": self.event_type,
+                  "timestamp": self.timestamp.isoformat(),
+                  "event_id": self.event_id,
+                  "data": self.data
+              }
+
+      @dataclass
+      class ProgressUpdateEvent(WebSocketEvent):
+          """Progress update event."""
+          def __init__(self, job_id: str, stage: str, current: int, total: int):
+              percentage = (current / total * 100) if total > 0 else 0
+              data = {
+                  "job_id": job_id,
+                  "stage": stage,
+                  "current": current,
+                  "total": total,
+                  "percentage": round(percentage, 2)
+              }
+              super().__init__(
+                  event_type=EventType.PROGRESS_UPDATE,
+                  timestamp=datetime.now(),
+                  event_id=str(uuid4()),
+                  data=data
+              )
+
+    benefits:
+      - "Type safety with dataclasses"
+      - "Consistent event structure"
+      - "Easy serialization"
+      - "Self-documenting event types"
+
+  client_commands:
+    pattern_name: "Client Command Handling"
+
+    purpose: "Process commands from WebSocket clients"
+
+    implementation: |
+      @router.websocket("/ws")
+      async def websocket_endpoint(
+          websocket: WebSocket,
+          token: str | None = Query(None),
+          user_id: str | None = Query(None)
+      ):
+          """WebSocket endpoint with command handling."""
+          connection_id = await manager.connect(
+              websocket=websocket,
+              user_id=user_id
+          )
+
+          try:
+              await send_welcome_message(connection_id)
+
+              while True:
+                  data = await websocket.receive_json()
+                  await handle_client_command(connection_id, data)
+
+          except WebSocketDisconnect:
+              await manager.disconnect(connection_id)
+
+      async def handle_client_command(connection_id: str, data: dict):
+          """Handle different client commands."""
+          action = data.get("action")
+
+          if action == "subscribe":
+              room = data.get("room")
+              await manager.join_room(connection_id, room)
+
+          elif action == "unsubscribe":
+              room = data.get("room")
+              await manager.leave_room(connection_id, room)
+
+          elif action == "ping":
+              await manager.send_personal_message(
+                  connection_id,
+                  {"event_type": "pong", "timestamp": datetime.now().isoformat()}
+              )
+
+          else:
+              await manager.send_personal_message(
+                  connection_id,
+                  {"error": f"Unknown action: {action}"}
+              )
+
+    supported_commands:
+      subscribe:
+        params: { "room": "string" }
+        response: { "event_type": "subscribed", "room": "job:123" }
+
+      unsubscribe:
+        params: { "room": "string" }
+        response: { "event_type": "unsubscribed", "room": "job:123" }
+
+      ping:
+        params: {}
+        response: { "event_type": "pong", "timestamp": "2026-01-04T..." }
+
+  authentication:
+    pattern_name: "WebSocket Authentication"
+
+    problem: "Browsers can't send Auth headers with WebSocket connections"
+
+    solution: |
+      # Use query parameter for token
+      from fastapi import Query, HTTPException
+
+      async def get_api_key_from_query(token: str | None = Query(None)) -> str:
+          """Authenticate via query parameter."""
+          if not token:
+              raise HTTPException(401, "Missing token")
+
+          if not verify_token(token):
+              raise HTTPException(403, "Invalid token")
+
+          return token
+
+      @router.websocket("/ws")
+      async def websocket_endpoint(
+          websocket: WebSocket,
+          token: str | None = Query(None)
+      ):
+          # Verify before accepting connection
+          if not token or not verify_token(token):
+              await websocket.close(code=1008, reason="Unauthorized")
+              return
+
+          await websocket.accept()
+          # Continue with authenticated connection
+
+    client_usage: |
+      // JavaScript
+      const ws = new WebSocket(
+          `ws://localhost:8000/api/v1/ws?token=${apiKey}`
+      );
+
+      # Python
+      async with websockets.connect(
+          f"ws://localhost:8000/api/v1/ws?token={api_key}"
+      ) as ws:
+          ...
+
+  error_handling:
+    pattern_name: "Graceful Error Handling"
+
+    implementation: |
+      @router.websocket("/ws")
+      async def websocket_endpoint(websocket: WebSocket):
+          connection_id = None
+
+          try:
+              connection_id = await manager.connect(websocket)
+
+              while True:
+                  data = await websocket.receive_json()
+                  await handle_command(connection_id, data)
+
+          except WebSocketDisconnect as e:
+              logger.info("Client disconnected: %s", connection_id, e.code)
+
+          except json.JSONDecodeError:
+              logger.error("Invalid JSON from client: %s", connection_id)
+              await websocket.send_json({
+                  "error": "Invalid JSON format"
+              })
+
+          except Exception as e:
+              logger.exception("Unexpected error: %s", e)
+              await websocket.send_json({
+                  "error": "Internal server error"
+              })
+
+          finally:
+              if connection_id:
+                  await manager.disconnect(connection_id)
+
+  keep_alive:
+    pattern_name: "Connection Keep-Alive with Ping/Pong"
+
+    purpose: "Detect and handle stale connections"
+
+    server_side: |
+      import asyncio
+
+      class ConnectionManager:
+          async def ping_connections(self):
+              """Periodically ping all connections."""
+              while True:
+                  await asyncio.sleep(30)  # Every 30 seconds
+
+                  for conn_id, conn in list(self.active_connections.items()):
+                      try:
+                          await conn.websocket.send_json({
+                              "event_type": "ping",
+                              "timestamp": datetime.now().isoformat()
+                          })
+                      except Exception:
+                          await self.disconnect(conn_id)
+
+    client_side: |
+      // JavaScript - Auto-respond to pings
+      ws.onmessage = (event) => {
+          const msg = JSON.parse(event.data);
+
+          if (msg.event_type === 'ping') {
+              ws.send(JSON.stringify({ action: 'pong' }));
+          } else {
+              handleMessage(msg);
+          }
+      };
+
+integration:
+  with_application_services:
+    pattern: "Optional EventBroadcaster Dependency"
+
+    implementation: |
+      # Application service with optional WebSocket integration
+      from typing import TYPE_CHECKING
+
+      if TYPE_CHECKING:
+          from ...interfaces.api.websocket.events import EventBroadcaster
+
+      class ProgressService:
+          def __init__(
+              self,
+              event_broadcaster: "EventBroadcaster | None" = None
+          ):
+              """Initialize with optional event broadcaster."""
+              self._broadcaster = event_broadcaster
+
+          async def update_progress(
+              self,
+              task_id: str,
+              current: int,
+              total: int
+          ):
+              """Update progress and broadcast if configured."""
+              # Update internal state
+              progress = self._update_internal(task_id, current, total)
+
+              # Broadcast to WebSocket if available
+              if self._broadcaster:
+                  await self._broadcaster.broadcast_progress_update(
+                      job_id=task_id,
+                      stage=progress.phase,
+                      current=current,
+                      total=total,
+                      percentage=(current / total * 100)
+                  )
+
+    benefits:
+      - "Application layer doesn't depend on WebSocket"
+      - "Works with or without WebSocket enabled"
+      - "Clean Architecture preserved"
+      - "Easy to test without WebSocket"
+
+client_examples:
+  javascript:
+    basic: |
+      class WebSocketClient {
+          constructor(baseUrl, apiKey) {
+              this.baseUrl = baseUrl.replace(/^http/, 'ws');
+              this.apiKey = apiKey;
+              this.handlers = {};
+          }
+
+          connect() {
+              this.ws = new WebSocket(
+                  `${this.baseUrl}/api/v1/ws?token=${this.apiKey}`
+              );
+
+              this.ws.onopen = () => console.log('Connected');
+              this.ws.onmessage = (e) => this.handleMessage(JSON.parse(e.data));
+              this.ws.onerror = (e) => console.error('WebSocket error', e);
+              this.ws.onclose = () => this.reconnect();
+          }
+
+          subscribe(room) {
+              this.send({ action: 'subscribe', room });
+          }
+
+          on(eventType, handler) {
+              this.handlers[eventType] = handler;
+          }
+
+          handleMessage(message) {
+              const handler = this.handlers[message.event_type];
+              if (handler) handler(message.data);
+          }
+
+          send(data) {
+              this.ws.send(JSON.stringify(data));
+          }
+      }
+
+      // Usage
+      const client = new WebSocketClient('http://localhost:8000', 'api-key');
+      client.connect();
+      client.subscribe('job:12345');
+      client.on('progress.update', (data) => {
+          console.log(`Progress: ${data.percentage}%`);
+      });
+
+  python:
+    basic: |
+      import asyncio
+      import websockets
+      import json
+
+      class WebSocketClient:
+          def __init__(self, base_url: str, api_key: str):
+              self.base_url = base_url.replace('http', 'ws')
+              self.api_key = api_key
+              self.handlers = {}
+
+          async def connect(self):
+              url = f"{self.base_url}/api/v1/ws?token={self.api_key}"
+              async with websockets.connect(url) as ws:
+                  await self.handle_connection(ws)
+
+          async def handle_connection(self, ws):
+              async for message in ws:
+                  data = json.loads(message)
+                  await self.handle_message(data)
+
+          async def subscribe(self, ws, room: str):
+              await ws.send(json.dumps({"action": "subscribe", "room": room}))
+
+          def on(self, event_type: str, handler):
+              self.handlers[event_type] = handler
+
+          async def handle_message(self, message: dict):
+              handler = self.handlers.get(message['event_type'])
+              if handler:
+                  await handler(message['data'])
+
+      # Usage
+      client = WebSocketClient('http://localhost:8000', 'api-key')
+
+      @client.on('progress.update')
+      async def handle_progress(data):
+          print(f"Progress: {data['percentage']}%")
+
+      asyncio.run(client.connect())
+
+best_practices:
+  - "Use room-based broadcasting for scalability"
+  - "Implement connection keep-alive with ping/pong"
+  - "Handle disconnects gracefully with cleanup"
+  - "Use structured events with types"
+  - "Authenticate via query parameters"
+  - "Make WebSocket integration optional"
+  - "Test with multiple concurrent connections"
+  - "Log all connection events"
+  - "Implement reconnection logic on client"
+  - "Use asyncio for all WebSocket operations"
+
+troubleshooting:
+  - issue: "WebSocket connection refused"
+    causes:
+      - "Missing token parameter"
+      - "Invalid authentication"
+      - "Server not running"
+    solution: "Check token, verify server is running on correct port"
+
+  - issue: "Messages not received"
+    causes:
+      - "Not subscribed to room"
+      - "Connection disconnected"
+      - "Event type mismatch"
+    solution: "Verify subscription, check connection status, log events"
+
+  - issue: "Frequent disconnections"
+    causes:
+      - "Network instability"
+      - "Missing keep-alive"
+      - "Server timeouts"
+    solution: "Implement ping/pong, increase timeouts, add reconnection logic"

@@ -3,10 +3,10 @@
 
 version: "1.0"
 category: "type-checking"
-last_updated: "2026-01-04"
+last_updated: "2026-01-05"
 
 errors:
-  - id: "TYPE-001"
+  - id: "PY-TYPE-001"
     title: "Mypy Too Strict for Test Files"
     severity: "low"
 
@@ -46,7 +46,7 @@ errors:
 
     tags: ["mypy", "testing", "configuration"]
 
-  - id: "TYPE-002"
+  - id: "PY-TYPE-002"
     title: "Missing Type Annotations"
     severity: "medium"
 
@@ -78,7 +78,7 @@ errors:
 
     tags: ["mypy", "type-hints", "code-quality"]
 
-  - id: "TYPE-003"
+  - id: "PY-TYPE-003"
     title: "Optional vs None Type Confusion"
     severity: "low"
 
@@ -115,7 +115,7 @@ errors:
 
     tags: ["optional", "none", "type-hints"]
 
-  - id: "TYPE-004"
+  - id: "PY-TYPE-004"
     title: "AsyncMock vs Mock for Async Functions"
     severity: "medium"
 
