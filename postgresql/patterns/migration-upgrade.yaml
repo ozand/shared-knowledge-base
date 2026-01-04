@@ -1,0 +1,354 @@
+id: pg-migration-001
+title: PostgreSQL Major Version Migration with pg_upgrade --link
+category: postgresql
+severity: critical
+tags: [migration, upgrade, pg-upgrade, link-mode, downtime]
+
+problem: |
+  Migrating PostgreSQL between major versions (e.g., 15→16, 15→17, 15→18) can be
+  challenging with large databases. Traditional pg_dump/pg_restore approach can
+  take days for terabyte-scale databases, causing unacceptable downtime.
+
+symptoms:
+  - Need to upgrade PostgreSQL version
+  - Large databases (> 100GB) making logical backup too slow
+  - Minimal downtime requirement (hours, not days)
+  - Limited disk space for full data copy
+  - Multiple tablespaces across different drives
+
+context:
+  applicable_versions: "PostgreSQL 9.5+ through 18.1"
+  prerequisites:
+    - Target PostgreSQL version must be installed
+    - Sufficient disk space for --link mode (minimal additional space)
+    - Administrative privileges required
+    - Backup of critical data recommended
+
+solution: |
+  MIGRATION USING pg_upgrade --link (Fastest Method):
+
+  ## Prerequisites Checklist
+
+  1. Install target PostgreSQL version (e.g., PG 18) WITHOUT initializing cluster
+  2. Verify source version (e.g., PG 15) is healthy
+  3. Create backup of critical databases (optional but recommended)
+  4. Verify all tablespaces are accessible
+  5. Stop both PostgreSQL services
+  6. Run pg_upgrade --check first
+
+  ## Migration Steps
+
+  ### 1. Stop Services
+  ```powershell
+  # Windows (run as Administrator)
+  net stop postgresql-x64-15  # Source version
+  net stop postgresql-x64-18  # Target version (if running)
+  ```
+
+  ### 2. Remove Auto-Created Target Cluster
+  ```powershell
+  # Rename or delete the auto-initialized data directory
+  cd "C:\Program Files\PostgreSQL\18"
+  Rename-Item -Path "data" -NewName "data_original_backup"
+  ```
+
+  ### 3. Initialize Empty Target Cluster
+  ```powershell
+  mkdir data
+  .\bin\initdb.exe -D "C:\Program Files\PostgreSQL\18\data" -U postgres --locale=C --encoding=UTF8 --no-data-checksums
+  ```
+
+  ### 4. Run Compatibility Check
+  ```powershell
+  cd C:\Temp
+  & "C:\Program Files\PostgreSQL\18\bin\pg_upgrade.exe" `
+    --old-bindir "C:\Program Files\PostgreSQL\15\bin" `
+    --new-bindir "C:\Program Files\PostgreSQL\18\bin" `
+    --old-datadir "C:\Program Files\PostgreSQL\15\data" `
+    --new-datadir "C:\Program Files\PostgreSQL\18\data" `
+    --username=postgres `
+    --check
+  ```
+
+  Expected output: "*Clusters are compatible*"
+
+  If errors appear:
+  - Missing extensions: Install them in target version or DROP from source
+  - Missing tablespaces: Create directories or DROP references
+
+  ### 5. Run Actual Migration
+  ```powershell
+  & "C:\Program Files\PostgreSQL\18\bin\pg_upgrade.exe" `
+    --old-bindir "C:\Program Files\PostgreSQL\15\bin" `
+    --new-bindir "C:\Program Files\PostgreSQL\18\bin" `
+    --old-datadir "C:\Program Files\PostgreSQL\15\data" `
+    --new-datadir "C:\Program Files\PostgreSQL\18\data" `
+    --username=postgres `
+    --link
+  ```
+
+  Key flags:
+  - `--link`: Use hard links instead of copying (FAST, minimal space)
+  - `--check`: Compatibility check only (run this first!)
+  - `--old-bindir`: Path to old PostgreSQL binaries
+  - `--new-bindir`: Path to new PostgreSQL binaries
+  - `--old-datadir`: Path to old data directory
+  - `--new-datadir`: Path to new data directory
+
+  Estimated time: 10-30 minutes for 10TB database with --link
+
+  ### 6. Copy Configuration Files
+  ```powershell
+  # Copy pg_hba.conf (authentication)
+  Copy-Item "C:\Program Files\PostgreSQL\15\data\pg_hba.conf" `
+             "C:\Program Files\PostgreSQL\18\data\pg_hba.conf"
+
+  # Review and merge postgresql.conf settings
+  notepad "C:\Program Files\PostgreSQL\15\data\postgresql.conf"
+  notepad "C:\Program Files\PostgreSQL\18\data\postgresql.conf"
+  ```
+
+  ### 7. Start New PostgreSQL Service
+  ```powershell
+  net start postgresql-x64-18
+  ```
+
+  ### 8. Update Statistics
+  ```powershell
+  & "C:\Program Files\PostgreSQL\18\bin\vacuumdb.exe" -U postgres --all --analyze-in-stages
+  ```
+
+  This will take 30-60 minutes for large databases but is critical for performance.
+
+  ### 9. Update Extensions
+  ```powershell
+  # pg_upgrade creates update_extensions.sql script
+  & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -f C:\Temp\update_extensions.sql
+  ```
+
+  ### 10. Verification
+  ```sql
+  -- Check version
+  SELECT version();
+
+  -- Check all databases
+  SELECT datname FROM pg_database WHERE datname NOT IN ('template0', 'template1');
+
+  -- Check tablespaces
+  SELECT spcname, pg_tablespace_location(oid) FROM pg_tablespace;
+
+  -- Check extensions
+  SELECT extname, extversion FROM pg_extension;
+  ```
+
+  ## Expected Downtime
+
+  With --link mode:
+  - Preparation: 1-2 hours (setup, testing)
+  - Actual migration: 10-30 minutes (for 10TB)
+  - Post-migration: 30-60 minutes (ANALYZE)
+  - **Total downtime: 1-2 hours**
+
+  Without --link (copy mode):
+  - Would take 20-40+ hours for 10TB database
+  - Requires 2x disk space
+
+  ## Critical Warnings
+
+  ⚠️ **AFTER --link migration, old cluster is UNUSABLE!**
+  - Old data directory files are hard-linked to new cluster
+  - You CANNOT rollback to old version after starting new version
+  - Rollback only possible from backup
+
+  ⚠️ **Compatibility Issues to Check:**
+  - Extensions must exist in target version (pgvector, adminpack, etc.)
+  - Custom data types must be compatible
+  - Tablespaces must be accessible
+  - No corrupted data in old cluster
+
+  ⚠️ **Common Migration Errors:**
+
+  ### Error: "checksum mismatch"
+  **Cause:** Old cluster has no checksums, new cluster has them enabled
+  **Fix:** Reinit new cluster with `--no-data-checksums`
+
+  ### Error: "library not found"
+  **Cause:** Extension exists in old version but not in new
+  **Fix:**
+  1. Install extension in new version, OR
+  2. DROP extension from old version:
+     ```sql
+     DROP EXTENSION IF EXISTS vector CASCADE;
+     DROP EXTENSION IF EXISTS adminpack CASCADE;
+     ```
+
+  ### Error: "tablespace directory does not exist"
+  **Cause:** Tablespace directory missing on new cluster
+  **Fix:**
+  ```powershell
+  # Find missing tablespace from error message
+  New-Item -ItemType Directory -Path "i:\!!PG\pgsql_tmp" -Force
+  ```
+
+  ### Error: "relation references broken tablespace"
+  **Cause:** Tables/views reference non-existent tablespace
+  **Fix:**
+  ```sql
+  -- Find broken objects
+  SELECT relname, reltablespace FROM pg_class
+  WHERE reltablespace NOT IN (SELECT oid FROM pg_tablespace)
+    AND reltablespace != 0;
+
+  -- DROP problematic objects
+  DROP MATERIALIZED VIEW IF EXISTS ... CASCADE;
+  DROP TABLE IF EXISTS ... CASCADE;
+  ```
+
+expected_improvements:
+  downtime: "1-2 hours (vs 20-40 hours without --link)"
+  disk_space_required: "10-20GB for --link mode (vs 2x database size for copy)"
+  migration_speed: "10-30 minutes for 10TB with --link"
+  data_integrity: "100% - no data loss with --link"
+
+validation: |
+  1. Pre-migration validation:
+     SELECT count(*) as database_count FROM pg_database;
+
+  2. Post-migration validation:
+     -- Version check
+     SELECT version();
+
+     -- Database count should match
+     SELECT count(*) as database_count FROM pg_database;
+
+     -- Tablespaces check
+     SELECT spcname, pg_tablespace_location(oid)
+     FROM pg_tablespace;
+
+     -- Extension check
+     SELECT extname, extversion FROM pg_extension;
+
+  3. Performance validation:
+     -- Run ANALYZE and check query plans
+     VACUUM ANALYZE;
+     EXPLAIN ANALYZE <typical_query>;
+
+  4. Application validation:
+     -- Test application connections
+     -- Verify all queries work correctly
+     -- Monitor performance for 24-48 hours
+
+rollout_plan:
+  preparation:
+    - week: "1-2 weeks before migration"
+    tasks:
+      - Install target PostgreSQL version
+      - Test migration on staging environment
+      - Create backup of critical data
+      - Document custom extensions and configurations
+      - Plan maintenance window with stakeholders
+
+  migration_day:
+    - hour: "0-2 hours (maintenance window)"
+    steps:
+      - Stop applications using database
+      - Stop source PostgreSQL service
+      - Run pg_upgrade --check
+      - Run pg_upgrade --link
+      - Start target PostgreSQL service
+      - Update statistics
+      - Test applications
+      - Resume operations
+
+  post_migration:
+    - week: "1-2 weeks after migration"
+    tasks:
+      - Monitor logs for errors
+      - Analyze slow query logs
+      - Tune configuration if needed
+      - Remove old PostgreSQL installation (after 1-2 weeks)
+      - Document lessons learned
+
+  rollback_plan: |
+  ⚠️ ROLLBACK ONLY POSSIBLE FROM BACKUP after --link migration!
+
+  If critical issues occur after starting new version:
+  1. Stop PostgreSQL 18 service
+  2. Restore from backup (pg_basebackup or logical backup)
+  3. Update application connection strings if needed
+  4. Start PostgreSQL 15 service
+  5. Verify data integrity
+
+  Cannot rollback to old cluster's data directory after --link migration!
+
+sources:
+  - title: "PostgreSQL Documentation - pg_upgrade"
+    url: "https://www.postgresql.org/docs/current/pgupgrade.html"
+  - title: "PostgreSQL Wiki - Upgrading"
+    url: "https://wiki.postgresql.org/wiki/Upgrading"
+  - title: "Internal Migration Report: PG 15→18"
+    url: "https://github.com/ozand/shared-knowledge-base/blob/master/postgresql/patterns/migration-upgrade.md"
+
+examples:
+  - description: "Successful 15→18 Migration with --link"
+    system:
+      os: "Windows Server"
+      source_version: "PostgreSQL 15.11"
+      target_version: "PostgreSQL 18.1"
+      database_size: "postgres: 8889 GB, sw: 501 GB, others: < 4 GB"
+      tablespace_count: 13 tablespaces across 9 drives
+      downtime: "1.5 hours total"
+      migration_time: "12 minutes for pg_upgrade --link"
+      analyze_time: "35 minutes for vacuumdb --all --analyze-in-stages"
+
+    challenges:
+      - "Missing pgvector extension → installed in PG 18"
+      - "Missing adminpack extension → dropped (deprecated in PG 18)"
+      - "Missing tablespace directories → created manually"
+      - "3 broken tablespace references → dropped orphaned tables"
+
+    result: "Migration successful, all data intact, performance improved"
+
+  - description: "Migration Error Resolution"
+    error: "data checksums mismatch"
+    solution: |
+      Re-initialized target cluster with --no-data-checksums flag:
+
+      .\bin\initdb.exe -D "C:\Program Files\PostgreSQL\18\data" -U postgres `
+        --locale=C --encoding=UTF8 --no-data-checksums
+
+    outcome: "Compatibility check passed, migration completed"
+
+tested:
+  system: "Windows Server, PostgreSQL 15.11 → 18.1"
+  databases:
+    - "postgres: 8.7 TB (largest)"
+    - "sw: 501 GB"
+    - "others: 21 databases, < 4 GB each"
+  tablespace_count: 13
+  duration:
+    preparation: "2 days (installation, testing)"
+    migration: "12 minutes (pg_upgrade --link)"
+    post_migration: "35 minutes (ANALYZE)"
+    total_downtime: "1.5 hours"
+  result: "100% success, zero data loss, 38% SELECT performance improvement"
+  date: "2026-01-04"
+  status: "production_ready"
+
+caveats:
+  - "Old cluster data directory becomes unusable after --link migration"
+  - "Cannot rollback without backup after starting new version"
+  - "Extensions must exist in target version or be dropped from source"
+  - "Tablespace directories must exist on target system"
+  - "Always test migration on staging environment first!"
+  - "Plan for at least 2x migration time window for safety"
+
+related_patterns:
+  - id: "pg-perf-001"
+    title: "PostgreSQL 18 Performance Configuration"
+  - id: "pg-vacuum-001"
+    title: "VACUUM and Autovacuum Tuning"
+  - id: "pg-backup-001"
+    title: "Backup Strategies for Large Databases"
+
+languages: [en, ru]
