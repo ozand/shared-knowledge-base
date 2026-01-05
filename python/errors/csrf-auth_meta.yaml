@@ -1,0 +1,77 @@
+version: '1.0'
+file_metadata:
+  file_id: python-errors-csrf-auth
+  created_at: '2026-01-05T22:49:14.327975Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-05T22:49:14.327975Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 2
+entries:
+  AUTH-001:
+    entry_id: AUTH-001
+    content_hash: bfecc03b79302a321fbd55e6ef6893e8adc7960d11548c3357e0633345c3a13c
+    created_at: '2026-01-05T22:49:14.328055Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.328055Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.328131Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  AUTH-002:
+    entry_id: AUTH-002
+    content_hash: 10c757b555901e1baa449d735cd79d3eff7d88480cb0c49da9ddcf7d7ebf1311
+    created_at: '2026-01-05T22:49:14.328142Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.328142Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.328165Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-05T22:49:14.327975Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - AUTH-001
+  - AUTH-002
+  reason: Initial metadata creation

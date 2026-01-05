@@ -1,0 +1,105 @@
+version: '1.0'
+file_metadata:
+  file_id: docker-errors-docker-security
+  created_at: '2026-01-05T22:49:14.574829Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-05T22:49:14.574829Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 3
+entries:
+  DOCKER-017:
+    entry_id: DOCKER-017
+    content_hash: 09dcf1f9bd77b60f87b07f415e42b2bce98547af9d54e187c6a2dded3e7bd60e
+    created_at: '2026-01-05T22:49:14.574891Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.574891Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.574939Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  DOCKER-018:
+    entry_id: DOCKER-018
+    content_hash: 4920589e8040ac5d980583a4bca2c21e9088d8d487bcbf09c6fc869e3ac7e6c1
+    created_at: '2026-01-05T22:49:14.574950Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.574950Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.574968Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  DOCKER-019:
+    entry_id: DOCKER-019
+    content_hash: 96885d2c721c7cb3c3fb711a37641cea896cfa293ed8091dd9cb4dd89f288bcb
+    created_at: '2026-01-05T22:49:14.574971Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.574971Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.574984Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-05T22:49:14.574829Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - DOCKER-017
+  - DOCKER-018
+  - DOCKER-019
+  reason: Initial metadata creation

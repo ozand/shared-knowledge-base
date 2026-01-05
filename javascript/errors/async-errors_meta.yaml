@@ -1,0 +1,105 @@
+version: '1.0'
+file_metadata:
+  file_id: javascript-errors-async-errors
+  created_at: '2026-01-05T22:49:14.467170Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-05T22:49:14.467170Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 3
+entries:
+  JS-ASYNC-001:
+    entry_id: JS-ASYNC-001
+    content_hash: 9bc626b02b68ed96926c8113d912e7a6ce565852bf8dc5c54984251f5c61f0cd
+    created_at: '2026-01-05T22:49:14.467249Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.467249Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.467303Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  JS-ASYNC-002:
+    entry_id: JS-ASYNC-002
+    content_hash: d43554f75e5839a11b9e9c873bb50eb055a7f75b0bec194d2a046acfc224e799
+    created_at: '2026-01-05T22:49:14.467312Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.467312Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.467332Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  JS-ASYNC-003:
+    entry_id: JS-ASYNC-003
+    content_hash: 4f5082da976bcd53792de84320ab9d57be773b906736e376c55316a3b2a44250
+    created_at: '2026-01-05T22:49:14.467336Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.467336Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.467348Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-05T22:49:14.467170Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - JS-ASYNC-001
+  - JS-ASYNC-002
+  - JS-ASYNC-003
+  reason: Initial metadata creation

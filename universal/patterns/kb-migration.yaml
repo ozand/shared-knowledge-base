@@ -1,0 +1,322 @@
+# Knowledge Base Migration Patterns
+# Complete workflow for KB migration with error handling and issue tracking
+
+version: "1.0"
+category: "knowledge-base"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "KB-MIGRATION-001"
+    title: "Knowledge Base Migration with Automatic Error Handling"
+    severity: "high"
+    scope: "universal"
+    tags: ["knowledge-base", "migration", "error-handling", "github-issues", "agent-handoff"]
+
+    problem: |
+      When migrating Shared Knowledge Base to a new project:
+      1. Some YAML files have validation errors
+      2. Metadata initialization fails partially
+      3. No systematic way to track and fix errors
+      4. Manual error reporting is slow and error-prone
+      5. Multiple agents need to coordinate fixes
+
+    scenario: |
+      Agent A migrates Shared Knowledge Base to project:
+      - Clones repo
+      - Copies kb.py tool
+      - Runs init-metadata
+      - Gets errors: "5 YAML files failed validation"
+      - ❌ Old approach: Manually fix errors or ignore them
+      - ✅ New approach: Create GitHub issue with full details
+
+    solution:
+      workflow: "Agent Handoff via GitHub Issues"
+
+      phase_1_migration:
+        description: "Agent A: Initial migration and error detection"
+        steps: |
+          # 1. Clone KB repository
+          git clone https://github.com/ozand/shared-knowledge-base.git
+          cd shared-knowledge-base
+
+          # 2. Initialize metadata
+          python3 scripts/init_metadata.py --verbose
+
+          # 3. Check results
+          ✅ Success: 26/31 files (84%)
+          ❌ Errors: 5/31 files (16%)
+
+          # 4. Analyze errors
+          - postgresql/errors.yaml (line 410) - Mapping value error
+          - universal/patterns/clean-architecture.yaml - 'str' object has no attribute 'get'
+          - framework/fastapi/patterns/websocket.yaml - 'str' object has no attribute 'get'
+          - postgresql/patterns/migration-upgrade.yaml (lines 243-244) - Block collection syntax
+          - postgresql/patterns/performance-tuning.yaml (lines 130-131) - Key syntax error
+
+      phase_2_issue_creation:
+        description: "Agent A: Create comprehensive GitHub issue"
+        steps: |
+          # Use kb_issues.py tool
+          python3 -m tools.kb_issues scan --type yaml-errors
+
+          # OR manually create issue with gh CLI
+          gh issue create \
+            --title "Fix 5 YAML Formatting Errors Preventing Metadata Initialization" \
+            --label "bug,yaml,validation,kb-migration" \
+            --body-file issue_template.md
+
+        issue_content:
+          sections:
+            - "Problem Description": "Clear summary of what failed"
+            - "Errors Detected": "List of all errors with line numbers"
+            - "Impact": "What's affected (84% success rate)"
+            - "Root Cause Analysis": "Common patterns in errors"
+            - "Steps to Reproduce": "Commands to reproduce errors"
+            - "Expected Behavior": "What success looks like"
+            - "Suggested Approach": "Step-by-step fix process"
+            - "Acceptance Criteria": "Checklist for completion"
+
+        example_issue: |
+          ## Problem
+
+          5 YAML files have formatting errors preventing metadata generation
+
+          ## Errors Detected
+
+          1. ❌ postgresql/errors.yaml (line 410) - Mapping value error
+          2. ❌ universal/patterns/clean-architecture.yaml - 'str' object has no attribute 'get'
+          3. ❌ framework/fastapi/patterns/websocket.yaml - 'str' object has no attribute 'get'
+          4. ❌ postgresql/patterns/migration-upgrade.yaml (lines 243-244) - Block collection syntax
+          5. ❌ postgresql/patterns/performance-tuning.yaml (lines 130-131) - Key syntax error
+
+          ## Impact
+
+          - 26/31 files successfully processed (84%)
+          - Metadata cannot be generated for affected files
+          - Search still works (non-blocking)
+
+          ## Steps to Reproduce
+
+          ```bash
+          git clone https://github.com/ozand/shared-knowledge-base.git
+          cd shared-knowledge-base
+          python3 scripts/init_metadata.py --verbose
+          ```
+
+          ## Expected Behavior
+
+          - All YAML files should validate successfully
+          - 100% metadata generation success (31/31 files)
+          - No blocking errors
+
+          ## Acceptance Criteria
+
+          - [ ] All 5 YAML files validate without errors
+          - [ ] `python3 scripts/init_metadata.py` succeeds 31/31
+          - [ ] All metadata files generated
+          - [ ] No mapping value errors
+          - [ ] No 'str' object has no attribute 'get' errors
+
+      phase_3_fix_by_curator:
+        description: "Agent B (KB Curator): Analyze and fix errors"
+        steps: |
+          # 1. Read the GitHub issue
+          gh issue view 3
+
+          # 2. Analyze each error
+          # - Read the file
+          # - Understand the YAML syntax error
+          # - Identify root cause
+
+          # 3. Fix each error
+          # Example: postgresql/errors.yaml line 410
+          # Wrong:
+          #   key: "value with : colon"
+          # Right:
+          #   key: 'value with : colon'
+
+          # 4. Validate each fix
+          python3 tools/kb.py validate postgresql/errors.yaml
+
+          # 5. Commit fixes
+          git add postgresql/errors.yaml
+          git commit -m "Fix YAML mapping value error in postgresql/errors.yaml:410"
+          git push origin main
+
+          # 6. Close issue
+          gh issue close 3 --comment "All YAML errors fixed. Validation passes."
+
+        quality_checks:
+          - "Validate each file individually after fixing"
+          - "Re-run full metadata initialization"
+          - "Verify 100% success rate"
+          - "Test search functionality"
+          - "Check metadata file generation"
+
+      phase_4_sync_back:
+        description: "Agent A: Pull fixes and re-run migration"
+        steps: |
+          # 1. Pull fixed version
+          cd /home/ozand/docs/knowledge-base/shared
+          git pull origin main
+
+          # 2. Re-initialize metadata
+          python3 scripts/init_metadata.py --verbose
+
+          # 3. Verify 100% success (31/31)
+          # Expected output:
+          # ✅ All files validated successfully
+          # ✅ Metadata created: 31/31 (100%)
+
+          # 4. Verify search works
+          python3 tools/kb.py search "postgresql"
+          # Should return results
+
+    automation:
+      tool: "tools/kb_issues.py"
+      usage: |
+        # Automatic scanning and issue creation
+        python3 -m tools.kb_issues scan --type all
+
+        # Create specific issue types
+        python3 -m tools.kb_issues scan --type yaml-errors
+        python3 -m tools.kb_issues scan --type quality-issues
+        python3 -m tools.kb_issues scan --type missing-metadata
+
+        # Manual issue creation
+        python3 -m tools.kb_issues create \
+          --type yaml-errors \
+          --file postgresql/errors.yaml \
+          --reason "Mapping value error at line 410"
+
+      features:
+        - "Automatic YAML validation"
+        - "Batch error detection"
+        - "Rich issue templates"
+        - "GitHub CLI integration"
+        - "Issue statistics and reporting"
+
+    best_practices:
+      - item: "Always create GitHub issues for migration errors"
+        reason: "Systematic tracking, separate agent can fix, prevents data loss"
+
+      - item: "Include detailed error information in issues"
+        reason: "Exact line numbers, error messages, code snippets speed up fixes"
+
+      - item: "Provide reproduction steps"
+        reason: "Curator agent can verify fixes work"
+
+      - item: "Set clear acceptance criteria"
+        reason: "Know when issue is truly resolved"
+
+      - item: "Use appropriate labels"
+        example: "bug, yaml, validation, kb-migration, high-priority"
+
+      - item: "Track success rate"
+        example: "84% → 100% shows improvement"
+
+      - item: "Re-validate after fixes"
+        reason: "Ensure no regressions"
+
+    agent_responsibilities:
+
+      migration_agent:
+        role: "Agent performing KB migration"
+        responsibilities:
+          - "Clone KB repository"
+          - "Initialize metadata"
+          - "Detect and count errors"
+          - "Create GitHub issues with full details"
+          - "Wait for issue to be closed"
+          - "Pull fixes and re-run migration"
+          - "Verify 100% success"
+
+      curator_agent:
+        role: "Knowledge Base Curator (separate agent/session)"
+        responsibilities:
+          - "Monitor GitHub issues in KB repo"
+          - "Analyze errors thoroughly"
+          - "Fix YAML syntax issues"
+          - "Validate each fix"
+          - "Commit and push changes"
+          - "Close GitHub issue with comment"
+          - "Document lessons learned"
+
+    common_yaml_errors:
+      error_1:
+        name: "Mapping Value Error"
+        example: |
+          # ❌ Wrong
+          key: "value with : colon in middle"
+
+          # ✅ Right
+          key: 'value with : colon in middle'
+        fix: "Use single quotes for values with special characters"
+
+      error_2:
+        name: "Block Collection Syntax"
+        example: |
+          # ❌ Wrong
+          solutions:
+            - name: "Fix 1"
+          description: "Block mapping not allowed here"
+
+          # ✅ Right
+          solutions:
+            - name: "Fix 1"
+              description: "Proper indentation"
+        fix: "Maintain consistent indentation for block collections"
+
+      error_3:
+        name: "Key Syntax Error"
+        example: |
+          # ❌ Wrong
+          key 1: value  # Space in key
+
+          # ✅ Right
+          key_1: value
+        fix: "Use valid YAML key names (no spaces, use underscores)"
+
+      error_4:
+        name: "Python Type Error in Validation"
+        example: |
+          # Error: 'str' object has no attribute 'get'
+          # Happens when validator expects dict but gets string
+
+          # Check YAML structure:
+          # Ensure proper nesting of keys and values
+          # Verify list vs dict structure
+        fix: "Review YAML structure, ensure proper data types"
+
+    verification_checklist:
+      - "All YAML files validate without errors"
+      - "Metadata initialization succeeds 100%"
+      - "Search functionality works"
+      - "Quality scores calculated"
+      - "No blocking warnings"
+      - "Git history clean (commits for each fix)"
+      - "GitHub issues closed"
+
+    references:
+      - title: "GitHub Issues API"
+        url: "https://docs.github.com/en/rest/issues/issues"
+      - title: "YAML Specification"
+        url: "https://yaml.org/spec/1.2/spec.html"
+      - title: "Shared Knowledge Base Repository"
+        url: "https://github.com/ozand/shared-knowledge-base"
+
+    example_real_world:
+      title: "Issue #3: Fix 5 YAML Formatting Errors"
+      url: "https://github.com/ozand/shared-knowledge-base/issues/3"
+      description: |
+        Real example of this pattern in action:
+        - Agent detected 5 YAML errors during migration
+        - Created comprehensive issue #3
+        - KB Curator agent will fix errors
+        - After fix, migration will achieve 100% success
+
+      timeline:
+        - "2026-01-06: Issue created by migration agent"
+        - "Pending: KB Curator fixes errors"
+        - "Pending: Issue closed"
+        - "Pending: Migration agent syncs fixes"

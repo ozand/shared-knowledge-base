@@ -1,0 +1,49 @@
+version: '1.0'
+file_metadata:
+  file_id: vps-patterns-xray-management
+  created_at: '2026-01-06T00:04:59.866987Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-06T00:04:59.866987Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 1
+entries:
+  VPS-VPN-001:
+    entry_id: VPS-VPN-001
+    content_hash: 98bdd9981deab52ab9ef636178a7af9570c9cd963816882a1ca155a65b5a672b
+    created_at: '2026-01-06T00:04:59.867051Z'
+    created_by: unknown
+    last_modified: '2026-01-06T00:04:59.867051Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-06T00:04:59.867095Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-06T00:04:59.866987Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - VPS-VPN-001
+  reason: Initial metadata creation

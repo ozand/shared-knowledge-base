@@ -1,0 +1,49 @@
+version: '1.0'
+file_metadata:
+  file_id: vps-patterns-service-optimization
+  created_at: '2026-01-06T00:04:59.746299Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-06T00:04:59.746299Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 1
+entries:
+  VPS-OPT-001:
+    entry_id: VPS-OPT-001
+    content_hash: 6b52d59187491b87b9a8cff7233ba910bb7a35716aaa76815a39d30d257ccda1
+    created_at: '2026-01-06T00:04:59.746358Z'
+    created_by: unknown
+    last_modified: '2026-01-06T00:04:59.746358Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-06T00:04:59.746415Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-06T00:04:59.746299Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - VPS-OPT-001
+  reason: Initial metadata creation

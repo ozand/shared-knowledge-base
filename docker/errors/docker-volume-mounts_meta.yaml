@@ -1,0 +1,77 @@
+version: '1.0'
+file_metadata:
+  file_id: docker-errors-docker-volume-mounts
+  created_at: '2026-01-05T22:49:14.584175Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-05T22:49:14.584175Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 2
+entries:
+  DOCKER-020:
+    entry_id: DOCKER-020
+    content_hash: 31aa88a3e2f823e3f1e85be0d04d72a293a97e4c88635fa79b063c29b4510702
+    created_at: '2026-01-05T22:49:14.584235Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.584235Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.584277Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+  DOCKER-021:
+    entry_id: DOCKER-021
+    content_hash: 09eb60c72f49e37423ab34f24ec282ddbbe4e81b2573b98e712e2237a5c3a199
+    created_at: '2026-01-05T22:49:14.584286Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.584286Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.584306Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-05T22:49:14.584175Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - DOCKER-020
+  - DOCKER-021
+  reason: Initial metadata creation

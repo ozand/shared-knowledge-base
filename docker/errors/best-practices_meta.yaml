@@ -1,0 +1,49 @@
+version: '1.0'
+file_metadata:
+  file_id: docker-errors-best-practices
+  created_at: '2026-01-05T22:49:14.507908Z'
+  created_by: kb-meta-tool
+  last_modified: '2026-01-05T22:49:14.507908Z'
+  last_modified_by: kb-meta-tool
+  version: 1
+  entry_count: 1
+entries:
+  DOCKER-024:
+    entry_id: DOCKER-024
+    content_hash: de976c9881144955f8a6844c9c52d447ea97d857dd321d8ac7959dd7b195d97a
+    created_at: '2026-01-05T22:49:14.507992Z'
+    created_by: unknown
+    last_modified: '2026-01-05T22:49:14.507992Z'
+    last_modified_by: unknown
+    last_analyzed_at: null
+    last_analyzed_by: null
+    analysis_version: 0
+    quality_score: null
+    quality_assessed_at: null
+    quality_assessed_by: null
+    quality_dimensions: {}
+    last_researched_at: null
+    research_sources: []
+    research_version: 0
+    validation_status: needs_review
+    validated_at: null
+    validated_against_version: null
+    tested_versions: {}
+    requires_version_check: true
+    next_version_check_due: '2026-04-05T22:49:14.508048Z'
+    is_deprecated: false
+    deprecated_at: null
+    deprecated_by: null
+    superseded_by: null
+analytics:
+  total_access_count: 0
+  first_accessed_at: null
+  last_accessed_at: null
+  access_history_summary: []
+change_history:
+- timestamp: '2026-01-05T22:49:14.507908Z'
+  action: created
+  agent: kb-meta-tool
+  entries_affected:
+  - DOCKER-024
+  reason: Initial metadata creation

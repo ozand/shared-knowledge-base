@@ -18,6 +18,7 @@
 - ✅ **Pattern Recognition** - Find similar patterns across projects
 - ✅ **Community Analytics** - Privacy-first aggregation across projects
 - ✅ **Automated Scripts** - Daily/weekly/monthly maintenance automation
+- ✅ **GitHub Issues Integration** - Automatic issue creation for migration errors (NEW)
 
 **v2.0 Features:**
 - ✅ Cross-platform Python CLI (`kb.py`) - works on Windows/Mac/Linux
@@ -110,7 +111,8 @@ shared-knowledge-base/
 │   ├── kb_versions.py  # Version monitor
 │   ├── kb_community.py # Community analytics
 │   ├── kb_predictive.py # Predictive analytics
-│   └── kb_patterns.py  # Pattern recognizer
+│   ├── kb_patterns.py  # Pattern recognizer
+│   └── kb_issues.py    # GitHub issues integration (NEW)
 ├── scripts/             # Automation scripts (NEW in v3.0)
 │   ├── init_metadata.py
 │   ├── daily_freshness.py
@@ -174,6 +176,26 @@ python -m tools.kb_patterns report
 # Export community analytics
 python -m tools.kb_community export-analytics --project-name "MyApp"
 ```
+
+**New in v3.0 - GitHub Issues Integration:**
+
+```bash
+# Scan for issues and create GitHub tickets automatically
+python -m tools.kb_issues scan --type all
+
+# Create issues for specific problem types
+python -m tools.kb_issues scan --type yaml-errors
+python -m tools.kb_issues scan --type quality-issues
+python -m tools.kb_issues scan --type missing-metadata
+
+# Manually create issue for specific error
+python -m tools.kb_issues create \
+  --type yaml-errors \
+  --file postgresql/errors.yaml \
+  --reason "Mapping value error at line 410"
+```
+
+**Use Case:** When migrating KB to new projects, automatically create GitHub issues for any YAML errors or quality problems. A separate KB Curator agent then fixes these issues, and you sync back the corrections.
 
 ### Scope Levels
 
