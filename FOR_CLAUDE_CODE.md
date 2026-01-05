@@ -75,6 +75,198 @@ python docs/knowledge-base/tools/kb.py stats
 
 ---
 
+## 🚨 Agent Behavior Rules - CRITICAL
+
+### MANDATORY WORKFLOW FOR UNIVERSAL ERRORS
+
+**When adding KB entries with these scopes:**
+- **docker**
+- **universal**
+- **python**
+- **postgresql**
+- **javascript**
+
+**YOU MUST:**
+
+#### 1. Create file in SHARED KB (NOT local!)
+
+```bash
+# ✅ CORRECT: Create here
+/home/ozand/docs/knowledge-base/shared/<scope>/errors/<filename>.yaml
+
+# ❌ WRONG: NOT here
+/home/ozand/docs/knowledge-base/<scope>/errors/<filename>.yaml
+```
+
+#### 2. Validate YAML
+
+```bash
+python3 /home/ozand/docs/knowledge-base/tools/kb.py validate /home/ozand/docs/knowledge-base/shared/
+```
+
+#### 3. IMMEDIATELY commit and push
+
+```bash
+cd /home/ozand/docs/knowledge-base/shared
+git add <file>
+git commit -m "Add ERROR-ID: Error Title
+
+- Brief description
+- Related issues
+- Real-world example
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+# Push to remote
+git push origin main
+
+# If push fails with conflicts:
+git pull --rebase origin main
+git push origin main
+```
+
+#### 4. Rebuild index
+
+```bash
+cd /home/ozand
+python3 docs/knowledge-base/tools/kb.py index --force -v
+```
+
+#### 5. Confirm to user
+
+```
+✅ KB entry added to shared-knowledge-base repository
+📦 Committed: <commit-hash>
+🚀 Pushed to: origin/main
+🔍 Index rebuilt
+🌐 Available at: https://github.com/ozand/shared-knowledge-base
+```
+
+**🚨 NEVER skip synchronization for universal errors!**
+
+This creates knowledge silos and prevents other projects from benefiting.
+
+**What happens if you skip sync:**
+- ❌ Knowledge trapped in local repository
+- ❌ Other projects can't benefit
+- ❌ Duplicate work across projects
+- ❌ Knowledge becomes stale
+
+---
+
+## Quick Decision Tree
+
+```
+User reports error
+    ↓
+Search KB: python3 docs/knowledge-base/tools/kb.py search "error"
+    ↓
+Found? ──Yes──→ Return solution ✅
+    ↓
+   No
+    ↓
+Solve problem + Document in YAML
+    ↓
+Determine scope:
+    ├─ docker, universal, python, postgresql, javascript?
+    │   ↓
+    │   Create in /docs/knowledge-base/shared/<scope>/
+    │   ↓
+    │   Validate YAML
+    │   ↓
+    │   cd /home/ozand/docs/knowledge-base/shared
+    │   git add <file>
+    │   git commit -m "Add ERROR-ID: Title"
+    │   git push origin main
+    │   ↓ (if conflict)
+    │   git pull --rebase origin main
+    │   git push origin main
+    │   ↓
+    │   Rebuild index
+    │   ↓
+    │   Confirm: "✅ Synced to shared-knowledge-base"
+    │   └→ Done ✅
+    │
+    └─ project, domain, framework?
+        ↓
+        Create in /docs/knowledge-base/<scope>/
+        ↓
+        Add metadata: local_only: true
+        ↓
+        Validate YAML
+        ↓
+        Rebuild index
+        ↓
+        Confirm: "✅ Added to local KB (project-specific)"
+        └→ Done ✅
+```
+
+**Key Rules:**
+- 🚨 Universal scopes → ALWAYS sync to shared immediately
+- 🏠 Project-specific → Keep local, mark as `local_only: true`
+- ✅ Index rebuild ALWAYS required after changes
+- 📝 User confirmation ALWAYS required
+- ⚠️ Handle merge conflicts with `git pull --rebase`
+
+---
+
+## Criteria: Universal vs Local KB
+
+### Add to SHARED KB if:
+
+**✅ Error scope is:**
+- `docker` - Docker/container issues
+- `universal` - System-level, filesystem, networking
+- `python` - Python language errors
+- `postgresql` - PostgreSQL database errors
+- `javascript` - JavaScript/Node.js errors
+
+**✅ Solution applies to:**
+- Multiple projects
+- Different environments
+- Various configurations
+- Standard use cases
+
+**✅ Error is:**
+- Common across industry
+- Not infrastructure-specific
+- Framework-agnostic
+- Reusable knowledge
+
+**Examples of Shared KB entries:**
+- DOCKER-001: Port Already in Use (universal Docker issue)
+- PYTHON-001: ImportError Module Not Found (universal Python issue)
+- UNIVERSAL-001: Broken Symlink Detection (filesystem issue)
+- POSTGRES-001: Connection Refused (PostgreSQL issue)
+
+### Keep in LOCAL KB if:
+
+**❌ Error scope is:**
+- `project` - Single project issues
+- `domain` - Business logic specific
+- `framework` - Specific framework version quirks
+
+**❌ Solution depends on:**
+- Specific infrastructure setup
+- External systems (APIs, services)
+- Organization-specific configuration
+- Non-standard environment
+
+**❌ Error is:**
+- One-time occurrence
+- Environment-specific
+- Not reusable
+- Temporary workaround
+
+**Examples of Local KB entries:**
+- PROJECT-001: Production database timeout (specific infrastructure)
+- DOMAIN-001: Payment gateway integration (business logic)
+- FRAMEWORK-001: Custom FastAPI middleware (project-specific)
+
+---
+
 ## Detailed Setup Guide
 
 ### Method 1: Git Submodule (Recommended)
@@ -261,22 +453,66 @@ For more details, see: [docs/knowledge-base/README.md](docs/knowledge-base/READM
 
 ## Common Workflows for Claude Code
 
-### When User Reports an Error
+### When User Reports an Error - INTEGRATED WORKFLOW
 
-1. **Search knowledge base first:**
-   ```bash
-   python docs/knowledge-base/tools/kb.py search "error message"
-   ```
+**Step 1: Search knowledge base first:**
+```bash
+python docs/knowledge-base/tools/kb.py search "error message"
+```
 
-2. **If error is not in KB:**
-   - Solve the problem
-   - Document the solution in appropriate YAML file
-   - Run validation: `python docs/knowledge-base/tools/kb.py validate`
+**Step 2: If error is not in KB:**
+- Solve the problem
+- Determine scope (docker, universal, python, postgresql, javascript, project, etc.)
+- Document the solution in appropriate YAML file
+- Run validation: `python docs/knowledge-base/tools/kb.py validate`
 
-3. **If error should be in shared KB:**
-   - Check if it's universal enough
-   - Add to shared KB repository
-   - Submit PR to github.com/ozand/shared-knowledge-base
+**Step 3: Determine KB location and sync:**
+
+**IF scope is universal (docker, universal, python, postgresql, javascript):**
+- ✅ Create file in: `/docs/knowledge-base/shared/<scope>/errors/`
+- ✅ Validate YAML
+- ✅ IMMEDIATELY commit to shared repository:
+  ```bash
+  cd /home/ozand/docs/knowledge-base/shared
+  git add <file>
+  git commit -m "Add ERROR-ID: Title
+
+  - Brief description
+  - Real-world example
+
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+  git push origin main
+
+  # If push fails:
+  git pull --rebase origin main
+  git push origin main
+  ```
+- ✅ Rebuild index: `python docs/knowledge-base/tools/kb.py index --force -v`
+- ✅ Confirm to user: "✅ Synced to shared-knowledge-base repository"
+
+**IF scope is project-specific (project, domain, framework):**
+- ✅ Create file in: `/docs/knowledge-base/<scope>/errors/`
+- ✅ Mark metadata with `local_only: true`
+- ✅ Validate YAML
+- ✅ Rebuild index
+- ✅ Inform user: "✅ Added to local KB (project-specific, not shared)"
+
+**Step 4: Always rebuild index after changes:**
+```bash
+python docs/knowledge-base/tools/kb.py index --force -v
+```
+
+**MANDATORY CHECKLIST:**
+- [ ] File created in correct location (shared vs local)
+- [ ] YAML validated
+- [ ] No duplicates found
+- [ ] **If universal: Committed to shared repo**
+- [ ] **If universal: Pushed to origin/main**
+- [ ] **If universal: Conflicts resolved (if any)**
+- [ ] Index rebuilt
+- [ ] User notified
 
 ### When Starting New Task
 
@@ -465,6 +701,229 @@ git submodule update --remote docs/knowledge-base/shared
 - `docs/knowledge-base/.cache/kb_index.db` (auto-generated)
 - `.gitignore` (modified)
 - `CLAUDE.md` (modified)
+
+---
+
+## Session Completion Checklist
+
+**KB Entry Creation:**
+- [ ] YAML file created
+- [ ] YAML syntax validated (`python3 kb.py validate`)
+- [ ] No duplicates found (searched by ID, title, tags)
+- [ ] Related entries linked
+- [ ] Real-world example included
+
+**Synchronization (if universal scope):**
+- [ ] File created in `/docs/knowledge-base/shared/<scope>/` (NOT local!)
+- [ ] `git add <file>` executed
+- [ ] `git commit` executed with proper message format
+- [ ] `git push origin main` executed successfully
+- [ ] Conflicts resolved with `git pull --rebase` (if any)
+- [ ] Changes visible in GitHub repository
+
+**Index & Verification:**
+- [ ] KB index rebuilt (`python3 kb.py index --force -v`)
+- [ ] Search returns new entry
+- [ ] Stats updated (`python3 kb.py stats`)
+- [ ] User notified of sync status
+
+**Documentation:**
+- [ ] Session report created (if multi-step session)
+- [ ] Related files updated (README.md, CLAUDE.md, etc.)
+- [ ] Commit message follows format
+
+**Final Confirmation Template:**
+```
+✅ KB entry: ERROR-ID created
+📦 Location: shared/<scope>/errors/
+🚀 Synced: origin/main (commit: <hash>)
+🔍 Index: rebuilt
+📊 Stats: updated
+🌐 Available: https://github.com/ozand/shared-knowledge-base
+```
+
+---
+
+## Example Workflows
+
+### ✅ GOOD: Universal Error Workflow
+
+**User:** "Container shows unhealthy"
+
+**Claude:**
+1. ✅ Search KB: `python3 kb.py search "unhealthy"`
+2. ✅ Not found → Investigate issue
+3. ✅ Find root cause: curl not installed in minimal Python image
+4. ✅ Determine scope: "docker" (universal)
+5. ✅ Create file in: `/docs/knowledge-base/shared/docker/errors/best-practices.yaml`
+6. ✅ Add DOCKER-024 entry with:
+   - Problem description
+   - Wrong/correct code examples
+   - Solution steps
+   - Real-world example
+7. ✅ Validate: `python3 kb.py validate shared/`
+8. ✅ **IMMEDIATELY sync to repository:**
+   ```bash
+   cd /home/ozand/docs/knowledge-base/shared
+   git add docker/errors/best-practices.yaml
+   git commit -m "Add DOCKER-024: Healthcheck Command Not Available
+
+   - Minimal images don't include curl
+   - Use language built-ins instead
+   - Real example: notebooklm-mindmap fix
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+   git push origin main
+   ```
+9. ✅ Rebuild index: `python3 kb.py index --force -v`
+10. ✅ Confirm: "✅ Synced to shared-knowledge-base repository"
+
+**Result:**
+- Knowledge immediately available to all projects ✅
+- No manual sync required later ✅
+- Prevents duplicate work ✅
+- Follows best practices ✅
+
+---
+
+### ❌ BAD: What NOT to Do
+
+**User:** "Container shows unhealthy"
+
+**Claude (WRONG):**
+1. ✅ Search KB: `python3 kb.py search "unhealthy"`
+2. ✅ Not found → Investigate
+3. ✅ Find root cause
+4. ✅ Determine scope: "docker" (universal)
+5. ❌ **Create file in WRONG location:** `/docs/knowledge-base/docker/errors/`
+6. ✅ Add DOCKER-024 entry
+7. ✅ Validate
+8. ❌ **Skip sync** - tell user "Added to KB"
+9. ❌ User thinks it's shared
+10. ❌ **Actually only local** - not in repository
+
+**Problems:**
+- ❌ Knowledge silo (only local)
+- ❌ Not reusable across projects
+- ❌ Against documentation guidelines
+- ❌ Violates agent behavior rules
+- ❌ Requires manual sync later (often forgotten)
+- ❌ Other projects can't benefit
+- ❌ Creates duplicate work
+
+**What should happen instead:**
+- ✅ Create in `/docs/knowledge-base/shared/docker/errors/`
+- ✅ Immediately git add + git commit + git push
+- ✅ Confirm sync status to user
+
+---
+
+### ✅ GOOD: Local-Only Error Workflow
+
+**User:** "Production database timeout in project X"
+
+**Claude:**
+1. ✅ Search KB: `python3 kb.py search "database timeout"`
+2. ✅ Not found → Investigate
+3. ✅ Find issue: Specific infrastructure configuration
+4. ✅ Determine scope: "project" (infrastructure-specific)
+5. ✅ Create file in: `/docs/knowledge-base/project/errors/database-timeouts.yaml`
+6. ✅ Add PROJECT-001 entry with metadata:
+   ```yaml
+   metadata:
+     local_only: true
+     reason: "Production-specific infrastructure configuration"
+     environment: "production"
+     applies_to: "project-x only"
+   ```
+7. ✅ Validate
+8. ✅ Rebuild index
+9. ✅ Confirm: "✅ Added to local KB (project-specific, not shared)"
+
+**Result:**
+- Correctly kept local (not universal) ✅
+- Properly marked as local-only ✅
+- Won't pollute shared KB ✅
+- Clear documentation of why it's local ✅
+
+---
+
+### ✅ GOOD: Handling Merge Conflicts
+
+**Scenario:** Another agent pushed changes while you were working
+
+**Claude:**
+1. ✅ Create file in shared KB
+2. ✅ Add and commit locally
+3. ❌ Push fails: "Updates were rejected"
+4. ✅ **Handle conflict properly:**
+   ```bash
+   git pull --rebase origin main
+   # Resolve conflicts if needed
+   git push origin main
+   ```
+5. ✅ Rebuild index
+6. ✅ Confirm: "✅ Synced after resolving merge conflicts"
+
+**Result:**
+- Conflicts resolved correctly ✅
+- No force push needed ✅
+- Preserves all changes ✅
+
+---
+
+### ❌ BAD: Mishandling Conflicts
+
+**Claude (WRONG):**
+1. ✅ Create file and commit
+2. ❌ Push fails
+3. ❌ **Force push:** `git push --force`
+4. ❌ **Overwrites other agent's work**
+
+**Problems:**
+- ❌ Loses other agent's changes
+- ❌ Creates repository corruption
+- ❌ Bad collaboration practice
+
+**Correct approach:**
+- ✅ Always use `git pull --rebase`
+- ✅ Resolve conflicts manually
+- ✅ Never force push to main branch
+
+---
+
+## Quick Reference for Agent Behavior
+
+**When adding KB entry, ALWAYS:**
+
+1. **Check scope first**
+   - Universal? → shared/
+   - Project-specific? → local/
+
+2. **Follow the path:**
+   - Universal: `/docs/knowledge-base/shared/<scope>/errors/`
+   - Local: `/docs/knowledge-base/<scope>/errors/`
+
+3. **Sync immediately if universal:**
+   - git add
+   - git commit
+   - git push (with conflict handling)
+   - Rebuild index
+   - Confirm to user
+
+4. **Never skip steps:**
+   - Don't say "will sync later"
+   - Don't create universal errors locally
+   - Don't forget to rebuild index
+   - Don't forget to confirm to user
+
+**Remember:**
+- 🚨 Universal scopes = immediate sync required
+- 🏠 Project scopes = keep local, mark as local_only
+- ✅ Index rebuild = always required
+- 📝 User confirmation = always required
 
 ---
 
