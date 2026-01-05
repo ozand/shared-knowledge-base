@@ -136,19 +136,19 @@ patterns:
       - item: "Never create unassigned issues"
         reason: "No ownership = no action"
 
-      - item: "Always add labels and milestones",
+      - item: "Always add labels and milestones"
         reason: "Enables tracking and prioritization"
 
       - item: "Set SLA: Critical issues = 24h, High = 3 days, Medium = 1 week"
         reason: "Prevents stale issues"
 
-      - item: "Daily review of open maintenance issues",
+      - item: "Daily review of open maintenance issues"
         reason: "Catch problems early"
 
-      - item: "Close issues immediately after fix",
+      - item: "Close issues immediately after fix"
         reason: "Don't let issue count grow"
 
-      - item: "Document YAML syntax patterns",
+      - item: "Document YAML syntax patterns"
         reason: "Prevent recurring errors"
 
     yaml_syntax_patterns:
