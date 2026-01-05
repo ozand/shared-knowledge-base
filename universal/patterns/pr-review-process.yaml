@@ -1,0 +1,406 @@
+# Pull Request Review Pattern for Shared Knowledge Base
+# Systematic process for reviewing PRs before merge
+
+version: "1.0"
+category: "knowledge-base"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "PR-REVIEW-001"
+    title: "Pull Request Review Process for Shared Knowledge Base"
+    severity: "high"
+    scope: "universal"
+    tags: ["pr", "review", "quality-control", "workflow", "github", "validation"]
+
+    problem: |
+      Pull Requests to Shared Knowledge Base require thorough review before merge to:
+      - Prevent duplicate entries from being added
+      - Ensure code quality standards are maintained
+      - Verify no breaking changes to v3.0 tools
+      - Validate YAML syntax and structure
+      - Test all affected functionality
+
+      **Risks of inadequate review:**
+      - Duplicates pollute the knowledge base
+      - Low-quality entries reduce searchability
+      - Breaking changes block all v3.0 features
+      - Invalid YAML prevents indexing
+      - Poor solutions mislead users
+
+    symptoms:
+      - PRs merged without proper validation
+      - Duplicate patterns appear in KB
+      - Tools break after changes
+      - YAML validation errors
+      - Low-quality content accepted
+
+    root_cause: |
+      1. No systematic review process defined
+      2. Curator not explicitly responsible for PR review
+      3. Missing standardized review checklist
+      4. No testing procedures documented
+      5. Unclear decision criteria (approve vs request changes)
+
+    solution: |
+      **PR Review Process for Shared KB Curator:**
+
+      ## Phase 1: Access & Categorize (5 minutes)
+
+      1. **Get PR details:**
+         ```bash
+         gh pr view <number> --json title,body,additions,deletions,files,author
+         gh pr diff <number> --name-only
+         ```
+
+      2. **Categorize PR type:**
+         - **Bug Fix:** Resolves error/issue
+         - **New Pattern:** Adds knowledge entry
+         - **Tool Update:** Modifies kb*.py tools
+         - **Documentation:** Updates docs
+         - **Refactoring:** Code reorganization
+
+      ## Phase 2: Clone & Isolate (2 minutes)
+
+      ```bash
+      cd /tmp
+      rm -rf pr-test
+      mkdir pr-test && cd pr-test
+      git clone git@github.com:ozand/shared-knowledge-base.git .
+      git fetch origin pull/<number>/head:pr-branch
+      git checkout pr-branch
+      ```
+
+      **Why isolate:** Prevent contamination of main repository
+
+      ## Phase 3: Validate & Test (10-20 minutes)
+
+      **For Bug Fixes:**
+      ```bash
+      # Reproduce issue before fix (document in review)
+      # Apply fix
+      # Verify fix works
+      # Test for regressions
+      ```
+
+      **For New Patterns (CRITICAL):**
+      ```bash
+      # 1. Validate YAML syntax
+      python tools/kb.py validate <changed-files>
+
+      # 2. Check for duplicates (EXHAUSTIVE!)
+      python tools/kb.py search "<keyword1>"
+      python tools/kb.py search "<keyword2>"
+      python tools/kb.py search "<keyword3>"
+      # Use multiple related keywords
+
+      # 3. Verify completeness
+      # - All required fields present
+      # - Examples provided
+      # - Cross-references added
+      # - Tags appropriate
+      ```
+
+      **For Tool Updates:**
+      ```bash
+      # Test all v3.0 tools
+      python tools/kb_patterns.py find-universal
+      python tools/kb_community.py report
+      python tools/kb_predictive.py suggest-entries
+      python tools/kb_issues.py scan
+
+      # Check for import errors
+      python -c "from tools.kb_config import KBConfig"
+      ```
+
+      **For Documentation:**
+      ```bash
+      # Verify accuracy
+      # Check for outdated info
+      # Test examples
+      # Validate links
+      ```
+
+      ## Phase 4: Code Quality Review (5-10 minutes)
+
+      **Checklist:**
+      - ✅ PEP 8 compliant (Python)
+      - ✅ Type hints used
+      - ✅ Docstrings present
+      - ✅ Error handling
+      - ✅ No hard-coded paths
+      - ✅ Clear variable names
+      - ✅ Comments where needed
+
+      ## Phase 5: Breaking Changes Check (5 minutes)
+
+      ```bash
+      # Test basic KB operations
+      python tools/kb.py validate .
+      python tools/kb.py search "test"
+      python tools/kb.py index -v
+
+      # Check backward compatibility
+      # - Old commands still work?
+      # - Config file format changed?
+      # - API signatures modified?
+      ```
+
+      ## Phase 6: Decision & Document (10 minutes)
+
+      **Create Review Document:**
+      - File: `PR<NUMBER>_REVIEW.md`
+      - Include:
+        - Executive Summary (rating, decision)
+        - Problem Analysis
+        - Testing Results (before/after)
+        - Code Quality Review
+        - Issues Found (if any)
+        - Recommendation
+
+      **Decision Framework:**
+      - **APPROVE:** Meets all criteria, tested, no issues
+      - **APPROVE WITH SUGGESTIONS:** Good + minor non-blocking improvements
+      - **REQUEST CHANGES:** Blocking issues must be fixed
+      - **COMMENT ONLY:** Questions/discussion needed
+
+      **Rating Scale:** ⭐⭐⭐⭐⭐ (1-5)
+
+      ## Phase 7: Post Review (2 minutes)
+
+      ```bash
+      # Post comment on PR
+      gh pr comment <number> --body "<review summary>"
+
+      # Official review (if not own PR)
+      gh pr review <number> --approve --body "<review>"
+      # OR
+      gh pr review <number> --request-changes --body "<issues>"
+      ```
+
+      **IMPORTANT:** Cannot approve own PRs (GitHub restriction)
+
+      **Template:**
+      ```markdown
+      ## ✅ Shared KB Curator Review: [APPROVE/REQUEST CHANGES]
+
+      **Rating:** ⭐⭐⭐⭐⭐ (X/5)
+
+      ### 🧪 Testing Results
+      - ✅ All tests passed
+      - ✅ No breaking changes
+      - ✅ Tools working correctly
+
+      ### ⭐ Code Quality
+      - ✅ PEP 8 compliant
+      - ✅ Type hints used
+      - ✅ Well documented
+
+      ### ✅ Review Checklist
+      - ✅ Problem clearly defined
+      - ✅ Solution tested
+      - ✅ No duplicates
+      - ✅ YAML validation passes
+
+      ### 🎯 Decision
+      **[MERGE/CHANGE/DISCUSS]**
+
+      Full review: PR#_REVIEW.md
+      ```
+
+    review_checklist:
+      mandatory:
+        - item: "Access PR details with gh pr view"
+          critical: true
+
+        - item: "Clone and test in isolated environment (/tmp)"
+          critical: true
+
+        - item: "Validate YAML syntax for all changed files"
+          critical: true
+          command: "python tools/kb.py validate <files>"
+
+        - item: "Check for duplicates (CRITICAL for new patterns)"
+          critical: true
+          command: "python tools/kb.py search <keywords>"
+
+        - item: "Test all affected v3.0 tools"
+          critical: true
+          tools:
+            - "kb_patterns.py"
+            - "kb_community.py"
+            - "kb_predictive.py"
+            - "kb_issues.py"
+
+        - item: "Code quality review (PEP 8, types, docs)"
+          critical: false
+
+        - item: "Verify no breaking changes"
+          critical: true
+
+        - item: "Create PR#_REVIEW.md document"
+          critical: true
+
+        - item: "Post review comment on GitHub"
+          critical: true
+
+      pr_specific:
+        bug_fixes:
+          - "Reproduce issue before fix"
+          - "Verify fix resolves issue"
+          - "Test for regressions"
+          - "Check edge cases"
+
+        new_patterns:
+          - "Validate YAML structure"
+          - "Exhaustive duplicate check (3+ keywords)"
+          - "Verify all required fields"
+          - "Check for cross-references"
+          - "Assess universality claim"
+
+        tool_updates:
+          - "Test all v3.0 tools"
+          - "Check import statements"
+          - "Verify backward compatibility"
+          - "Update documentation"
+
+        documentation:
+          - "Verify accuracy"
+          - "Check for outdated info"
+          - "Test examples"
+          - "Validate links"
+
+    common_issues:
+      issue_1:
+        name: "Duplicate Content"
+        severity: "high"
+        detection: "kb.py search finds similar entries"
+        action: "REQUEST CHANGES - Merge or differentiate"
+
+      issue_2:
+        name: "Invalid YAML Syntax"
+        severity: "high"
+        detection: "kb.py validate fails"
+        action: "REQUEST CHANGES - Fix YAML errors"
+
+      issue_3:
+        name: "Breaking Changes"
+        severity: "critical"
+        detection: "Tools fail after changes"
+        action: "REQUEST CHANGES - Fix backward compatibility"
+
+      issue_4:
+        name: "Missing Required Fields"
+        severity: "medium"
+        detection: "id, title, problem, solution missing"
+        action: "REQUEST CHANGES - Add required fields"
+
+      issue_5:
+        name: "Poor Code Quality"
+        severity: "low"
+        detection: "No type hints, missing docs, PEP 8 violations"
+        action: "APPROVE WITH SUGGESTIONS - Note improvements"
+
+    time_estimate:
+      access_categorize: "5 minutes"
+      clone_isolate: "2 minutes"
+      validate_test: "10-20 minutes"
+      code_quality_review: "5-10 minutes"
+      breaking_changes_check: "5 minutes"
+      decision_document: "10 minutes"
+      post_review: "2 minutes"
+
+      total_min: "40 minutes"
+      total_max: "65 minutes"
+      average: "50 minutes"
+
+    examples:
+      example_1:
+        pr: "PR #6 - Add missing kb_config.py module"
+        type: "Bug Fix"
+        decision: "APPROVE ⭐⭐⭐⭐½"
+        review: "PR6_REVIEW.md"
+        highlights:
+          - "Critical blocker for all v3.0 tools"
+          - "Well-tested (all tools working)"
+          - "Code quality excellent"
+          - "Minor: Code duplication acceptable"
+        url: "https://github.com/ozand/shared-knowledge-base/pull/6"
+
+      example_2:
+        pr: "PR #4 - Add 5 universal patterns from PARSER project"
+        type: "New Patterns"
+        decision: "APPROVE ⭐⭐⭐⭐"
+        review: "PARSER_PROJECT_AGENT_ANALYSIS.md"
+        highlights:
+          - "5 unique patterns, no duplicates"
+          - "All patterns high quality"
+          - "Real-world tested"
+          - "Minor: DOC-REORG-001 overlaps with PROJECT-ORG-001"
+        url: "https://github.com/ozand/shared-knowledge-base/pull/4"
+
+    best_practices:
+      - "Always test in isolated environment (/tmp)"
+      - "Be exhaustive with duplicate checking (use multiple keywords)"
+      - "Create detailed review documents (PR#_REVIEW.md)"
+      - "Focus on critical issues over minor style"
+      - "Test all v3.0 tools for any code changes"
+      - "Document testing procedures thoroughly"
+      - "Be constructive and specific in feedback"
+      - "Approve when good enough (don't block for minor issues)"
+
+    anti_patterns:
+      - ❌ "Reviewing PR in main repository (not isolated)"
+      - ❌ "Skipping duplicate check for new patterns"
+      - ❌ "Not testing v3.0 tools after code changes"
+      - ❌ "Approving without creating review document"
+      - ❌ "Focusing on style over substance"
+      - ❌ "Requesting changes for minor issues"
+      - ❌ "Approving own PRs (GitHub restriction)"
+
+    required_tools:
+      - tool: "GitHub CLI (gh)"
+        purpose: "Access PR details, post reviews"
+        verify: "gh --version"
+
+      - tool: "Git"
+        purpose: "Clone PR branches"
+        verify: "git --version"
+
+      - tool: "Python 3.8+"
+        purpose: "Run kb.py tools"
+        verify: "python --version"
+
+      - tool: "kb.py"
+        purpose: "Validate, search, index"
+        verify: "python tools/kb.py --version"
+
+    success_criteria:
+      - ✅ "All validation checks pass"
+      - ✅ "No duplicates introduced"
+      - ✅ "Code quality meets standards"
+      - ✅ "No breaking changes"
+      - ✅ "All v3.0 tools work correctly"
+      - ✅ "Review document created (PR#_REVIEW.md)"
+      - ✅ "GitHub comment posted on PR"
+
+    related_patterns:
+      - id: "YAML-001"
+        title: "Common YAML Syntax Errors in Knowledge Base Entries"
+
+      - id: "AGENT-HANDOFF-001"
+        title: "Cross-Repository Agent Collaboration Pattern"
+
+      - id: "PROJECT-ORG-002"
+        title: "Git Submodule vs Clone Decision Matrix"
+
+    references:
+      - title: "GitHub PR Review Documentation"
+        url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests"
+
+      - title: "GitHub CLI Documentation"
+        url: "https://cli.github.com/manual/gh_pr_review"
+
+      - title: "PEP 8 Style Guide"
+        url: "https://pep8.org/"
+
+languages: [en]

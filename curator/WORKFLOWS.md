@@ -606,6 +606,240 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
+## Workflow 7: Pull Request Review
+
+**Trigger:** New PR opened in Shared Knowledge Base repository
+
+**Goal:** Thoroughly review PR before merge to ensure quality, prevent duplicates, and maintain standards
+
+### Steps
+
+1. **Access PR Details**
+   ```bash
+   # Get PR overview
+   gh pr view <number> --json title,body,additions,deletions,files,author,state
+
+   # List changed files
+   gh pr diff <number> --name-only
+
+   # Get full description
+   gh pr view <number> --json body --jq .body
+   ```
+
+2. **Categorize PR Type**
+   - **Bug Fix:** Resolves error or issue
+   - **New Pattern:** Adds new knowledge entry
+   - **Tool Update:** Modifies kb*.py tools
+   - **Documentation:** Updates README, guides
+   - **Refactoring:** Code reorganization
+
+3. **Clone & Isolate PR Branch**
+   ```bash
+   cd /tmp
+   rm -rf pr-test
+   mkdir pr-test && cd pr-test
+   git clone git@github.com:ozand/shared-knowledge-base.git .
+   git fetch origin pull/<number>/head:pr-branch
+   git checkout pr-branch
+   ```
+
+4. **Validate YAML Syntax (if applicable)**
+   ```bash
+   # Validate all changed YAML files
+   for file in $(gh pr diff <number> --name-only | grep '\.yaml$'); do
+     python tools/kb.py validate "$file"
+   done
+   ```
+
+5. **Check for Duplicates (CRITICAL for new patterns)**
+   ```bash
+   # Extract keywords from PR title/description
+   # Search for similar entries
+   python tools/kb.py search "<keyword1>"
+   python tools/kb.py search "<keyword2>"
+   python tools/kb.py search "<keyword3>"
+   ```
+
+6. **Test Affected Tools**
+   ```bash
+   # Test all v3.0 tools if code changes
+   python tools/kb_patterns.py find-universal --kb-root /tmp/pr-test
+   python tools/kb_community.py report --kb-root /tmp/pr-test
+   python tools/kb_predictive.py suggest-entries --kb-root /tmp/pr-test
+   python tools/kb_issues.py scan --kb-root /tmp/pr-test
+   ```
+
+7. **Code Quality Review**
+   - **PEP 8 Compliance:** Check formatting, naming
+   - **Type Hints:** Verify proper typing
+   - **Documentation:** Check docstrings, comments
+   - **Error Handling:** Verify exception handling
+   - **Testing:** Check if tests exist/work
+
+8. **Verify No Breaking Changes**
+   ```bash
+   # Run existing tests
+   python -m pytest tools/tests/ 2>/dev/null || echo "No test suite"
+
+   # Test basic KB operations
+   python tools/kb.py validate .
+   python tools/kb.py search "test"
+   python tools/kb.py index -v
+   ```
+
+9. **Assess Completeness**
+   - ✅ Problem clearly defined
+   - ✅ Solution tested and working
+   - ✅ Examples provided
+   - ✅ Cross-references added
+   - ✅ Documentation updated
+   - ✅ Tags appropriate
+
+10. **Create Review Document**
+    - Create file: `PR<NUMBER>_REVIEW.md` in repository root
+    - Include sections:
+      - Executive Summary (rating, decision)
+      - Problem Analysis
+      - Testing Results
+      - Code Quality Review
+      - Issues Found (if any)
+      - Recommendation
+
+11. **Post Review on GitHub**
+    ```bash
+    # Post review comment
+    gh pr comment <number> --body "<review summary>"
+
+    # Official review decision
+    gh pr review <number> --approve --body "<detailed review>"
+    # OR
+    gh pr review <number> --request-changes --body "<blocking issues>"
+    ```
+
+**Review Template:**
+```markdown
+## PR Review: #[number] - [PR Title]
+
+**Date:** YYYY-MM-DD
+**Reviewer:** Shared KB Curator Agent
+**PR Author:** @username
+**PR URL:** https://github.com/ozand/shared-knowledge-base/pull/<number>
+
+---
+
+### 📊 Executive Summary
+
+**Decision:** [APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES]
+
+**Rating:** ⭐⭐⭐⭐⭐ (X/5)
+
+---
+
+### 🎯 Problem Analysis
+
+[Describe the problem PR is solving]
+
+---
+
+### 🧪 Testing Results
+
+**Before PR:**
+```bash
+[Test results showing issue]
+```
+
+**After PR:**
+```bash
+[Test results showing fix]
+```
+
+---
+
+### ⭐ Code Quality
+
+- ✅ PEP 8 compliant
+- ✅ Type hints used
+- ✅ Well documented
+- ✅ No breaking changes
+
+---
+
+### ✅ Review Checklist
+
+- ✅ Problem clearly defined
+- ✅ Solution tested
+- ✅ Code quality meets standards
+- ✅ No breaking changes
+- ✅ No duplicates (if new pattern)
+- ✅ YAML validation passes
+- ✅ All tools work
+- ✅ Cross-references added
+- ✅ Documentation updated
+
+---
+
+### 🎯 Decision
+
+**[MERGE / CHANGE / DISCUSS]**
+
+[Detailed reasoning]
+
+---
+
+**Review Date:** YYYY-MM-DD
+**Reviewer:** Shared KB Curator Agent
+```
+
+### Success Criteria
+- ✅ All validation checks pass
+- ✅ No duplicates introduced
+- ✅ Code quality meets standards
+- ✅ No breaking changes
+- ✅ All v3.0 tools work correctly
+- ✅ Review document created
+- ✅ GitHub comment posted
+
+### Common Issues to Flag
+
+**For New Patterns:**
+- Duplicate or near-duplicate content
+- Missing required YAML fields
+- Incorrect scope classification
+- Lack of real-world examples
+- Missing cross-references
+
+**For Bug Fixes:**
+- Fix not thoroughly tested
+- Breaking changes introduced
+- No regression testing
+- Missing test cases
+
+**For Tool Updates:**
+- Backward compatibility broken
+- Import errors
+- Missing error handling
+- No documentation update
+
+**For Documentation:**
+- Outdated information
+- Inaccurate examples
+- Missing critical details
+- Unclear instructions
+
+### Output Artifacts
+
+1. **PR#_REVIEW.md** - Comprehensive review document
+2. **GitHub Comment** - Summary posted on PR
+3. **Official Review** - Via `gh pr review` command
+4. **Follow-up Issues** (if needed) - For non-blocking improvements
+
+### Examples
+
+- **PR #6:** PR6_REVIEW.md - kb_config.py fix (APPROVED ⭐⭐⭐⭐½)
+- **PR #4:** PARSER_PROJECT_AGENT_ANALYSIS.md - 5 new patterns (APPROVED ⭐⭐⭐⭐)
+
+---
+
 ## Workflow: Interactive Decision Tree
 
 Use this flow when unsure which workflow to apply:

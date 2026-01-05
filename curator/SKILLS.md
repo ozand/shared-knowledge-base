@@ -150,6 +150,151 @@ Please validate-technical for python/errors/testing.yaml
 
 ---
 
+### Skill: `review-pr`
+
+**Purpose:** Review Pull Requests for Shared Knowledge Base
+
+**Usage:**
+```
+Please review-pr #[number]
+```
+
+**What it does:**
+- Fetches PR details using GitHub CLI
+- Clones and tests PR branch in isolation
+- Validates YAML syntax for all changed files
+- Tests all affected v3.0 tools (kb_patterns, kb_community, kb_predictive, kb_issues)
+- Checks for duplicates in existing KB
+- Reviews code quality (PEP 8, type hints, documentation)
+- Verifies no breaking changes
+- Creates comprehensive review document (PR#_REVIEW.md)
+- Posts official review comment on GitHub PR
+
+**Example:**
+```bash
+# Review specific PR
+Please review-pr #6
+
+# Review latest PR
+Please review-pr latest
+```
+
+**Process:**
+1. **Access PR:**
+   ```bash
+   gh pr view <number> --json title,body,additions,deletions,files
+   gh pr diff <number> --name-only
+   ```
+
+2. **Clone & Test:**
+   ```bash
+   cd /tmp && mkdir pr-test && cd pr-test
+   git clone git@github.com:ozand/shared-knowledge-base.git .
+   git fetch origin pull/<number>/head:pr-branch
+   git checkout pr-branch
+   ```
+
+3. **Validate Changes:**
+   ```bash
+   # Check YAML syntax
+   python tools/kb.py validate <changed-files>
+
+   # Check for duplicates
+   python tools/kb.py search "<keywords from PR>"
+
+   # Test affected tools
+   python tools/kb_patterns.py <command>
+   python tools/kb_community.py <command>
+   python tools/kb_predictive.py <command>
+   python tools/kb_issues.py <command>
+   ```
+
+4. **Create Review Document:**
+   - Create PR#_REVIEW.md in repository root
+   - Include: problem analysis, testing results, code quality review, recommendation
+   - Rating scale: ⭐⭐⭐⭐⭐ (1-5)
+
+5. **Post Review:**
+   ```bash
+   # Post comment
+   gh pr comment <number> --body "<review summary>"
+
+   # Approve or request changes
+   gh pr review <number> --approve --body "<review>"
+   # OR
+   gh pr review <number> --request-changes --body "<issues>"
+   ```
+
+**Review Categories:**
+
+**1. Bug Fixes:**
+- Verify bug is reproducible
+- Test that fix resolves issue
+- Check for regressions
+- Verify no breaking changes
+
+**2. New Patterns:**
+- Validate YAML structure
+- Check for duplicates (critical!)
+- Assess quality and completeness
+- Verify universality claim
+- Check for cross-references
+
+**3. Tool Updates:**
+- Test all affected tools
+- Verify backward compatibility
+- Check for import errors
+- Validate new functionality
+
+**4. Documentation:**
+- Verify accuracy
+- Check for outdated info
+- Assess completeness
+- Validate examples
+
+**5. Refactoring:**
+- Ensure no functionality broken
+- Check for improvements
+- Verify test coverage
+- Validate simplifications
+
+**Review Checklist:**
+- ✅ Problem clearly defined and reproducible
+- ✅ Solution tested and working
+- ✅ Code quality: PEP 8, type hints, documentation
+- ✅ No breaking changes
+- ✅ No duplicates (use `kb.py search`)
+- ✅ YAML validation passes
+- ✅ All v3.0 tools work after changes
+- ✅ Cross-references added
+- ✅ Documentation updated
+
+**Decision Framework:**
+- **APPROVE:** Meets all criteria, tested, no issues
+- **APPROVE WITH SUGGESTIONS:** Good with minor non-blocking improvements
+- **REQUEST CHANGES:** Has blocking issues
+- **COMMENT ONLY:** Questions/discussion needed
+
+**Output:**
+- Review document (PR#_REVIEW.md)
+- GitHub comment on PR
+- Official review via `gh pr review`
+- Rating: ⭐⭐⭐⭐⭐ (1-5)
+- Recommendation: MERGE/CHANGE/DISCUSS
+
+**Notes:**
+- Cannot approve own PRs (GitHub restriction)
+- Always test in isolated environment (/tmp)
+- Document all testing procedures
+- Be thorough but pragmatic
+- Focus on critical issues over minor style
+
+**Examples:**
+- PR #6 Review: PR6_REVIEW.md (kb_config.py fix)
+- PR #4 Review: PARSER_PROJECT_AGENT_ANALYSIS.md (5 new patterns)
+
+---
+
 ### Skill: `promote-scope`
 
 **Purpose:** Promote entry from specific scope to more universal scope
