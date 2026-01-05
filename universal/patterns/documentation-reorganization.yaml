@@ -1,0 +1,266 @@
+# Multi-Phase Documentation Reorganization Pattern
+# Systematic approach to reorganizing unwieldy documentation
+
+version: "1.0"
+category: "documentation"
+last_updated: "2025-01-06"
+
+patterns:
+  - id: "DOC-REORG-001"
+    title: "Multi-Phase Documentation Reorganization"
+    severity: "low"
+    scope: "universal"
+    tags: ["documentation", "organization", "restructure", "phases", "planning", "project-management"]
+
+    context: |
+      Large projects with extensive documentation often need periodic reorganization.
+      This pattern describes how to reorganize documentation when structure becomes
+      unwieldy or difficult to navigate.
+
+    problem: |
+      - Documentation scattered across multiple directories
+      - Long filenames (>100 chars) causing issues
+      - Duplicate content across multiple files
+      - Difficult to find specific information
+      - Legacy documentation mixed with current docs
+      - No clear navigation paths for different user types
+
+    solution: |
+      **Phase 1: Archive Legacy Documentation** (30 minutes)
+
+      1. Create archive directory structure:
+         ```bash
+         mkdir -p docs/archive/legacy
+         ```
+
+      2. Move problematic files:
+         - Files with very long names (>100 chars)
+         - Outdated documentation
+         - Files with encoding issues
+         - Duplicate content
+
+      3. Create archive index:
+         ```markdown
+         # Archive Documentation Index
+         Maps old files to new equivalents
+         ```
+
+      **Phase 2: Create New Documentation Hierarchy** (2 hours)
+
+      1. Organize by type and purpose:
+         ```
+         docs/
+         ├── api/              # API documentation (5-10 files)
+         ├── reference/        # Reference docs (10-15 files)
+         ├── guides/           # Guides and tutorials (5-10 files)
+         └── archive/          # Legacy docs
+         ```
+
+      2. Create index files for each section:
+         - `api/00-INDEX.md` - Overview and navigation
+         - `reference/00-INDEX.md` - Overview and navigation
+         - `guides/README.md` or similar
+
+      **Phase 3: Create Entry Points** (30 minutes)
+
+      1. Main documentation README:
+         ```markdown
+         # Documentation
+
+         ## Quick Start Paths
+         - For Beginners: Quick Start → Basics → Configuration
+         - For Developers: Pattern Library → Reference
+         - For Integrators: API Overview → Methods → Redis
+         ```
+
+      2. Navigation by role:
+         - Beginner-friendly path
+         - Developer-focused path
+         - Integrator-focused path
+
+      **Phase 4: Clean Examples Directory** (20 minutes)
+
+      1. Remove backup files:
+         ```bash
+         find examples/ -name "*.backup" -delete
+         find examples/ -name "*_old.*" -delete
+         find examples/ -name "*.bak" -delete
+         ```
+
+      2. Update .gitignore:
+         ```gitignore
+         # Backup files
+         *.backup
+         *.bak
+         *_old.*
+         ```
+
+      **Phase 5: Create README for Directories** (1 hour)
+
+      1. examples/README.md with:
+         - 126 parsers by difficulty
+         - Categories (Search, E-commerce, Social, etc.)
+         - Usage instructions
+         - Learning paths
+
+      2. scripts/README.md with:
+         - Available scripts
+         - Usage examples
+         - Configuration
+
+      3. lib/README.md with:
+         - Available libraries
+         - Usage documentation
+
+      **Phase 6: Update Technical Files** (30 minutes)
+
+      1. Update PROJECT.md with new structure
+      2. Update AGENTS.md with documentation links
+      3. Update SKILLS.md with new resources
+      4. Add cross-references (40+ new links)
+
+    best_practices: |
+      1. **Plan before executing**
+         - Analyze current structure
+         - Identify issues
+         - Propose new structure
+         - Get approval
+
+      2. **Use TodoWrite tool** for tracking phases
+         - Mark phases as in_progress
+         - Update as you complete
+         - Final verification
+
+      3. **Keep legacy docs**
+         - Move to archive/ instead of deleting
+         - Create index mapping old → new
+         - Preserve for reference
+
+      4. **Create README files**
+         - One per major directory
+         - Include navigation
+         - Add examples
+         - Link to related docs
+
+      5. **Update all references**
+         - Technical files (PROJECT.md, AGENTS.md, etc.)
+         - Cross-links between sections
+         - Table of contents
+         - Quick start paths
+
+    examples: |
+      **Before (flat structure):**
+      ```
+      docs/
+      ├── _info_app/           # 13 problematic files
+      ├── _info_parsers/       # Archive candidate
+      ├── guide1.md
+      ├── guide2.md
+      └── ...                  # Mixed organization
+      ```
+
+      **After (organized structure):**
+      ```
+      docs/
+      ├── README.md             # Main navigation
+      ├── api/                  # API docs (5 files)
+      │   ├── 00-INDEX.md
+      │   ├── 01-overview.md
+      │   └── ...
+      ├── reference/            # Reference (12 files)
+      │   ├── 00-INDEX.md
+      │   ├── http-requests.md
+      │   └── ...
+      ├── guides/               # Guides (7 files)
+      │   ├── QUICK_START.md
+      │   ├── PATTERN_LIBRARY.md
+      │   └── ...
+      └── archive/legacy/       # Archived (100+ files)
+          ├── INDEX.md          # Maps old → new
+          └── ...
+      ```
+
+    lessons_learned: |
+      1. **Archive, don't delete**
+         - Legacy docs may have value
+         - Preserve history
+         - Allow rollback if needed
+
+      2. **Create multiple entry points**
+         - Different users need different paths
+         - Beginner vs Developer vs Integrator
+         - Quick reference vs deep dive
+
+      3. **README files are crucial**
+         - Every major directory needs one
+         - Include navigation, examples, links
+         - Make it self-explanatory
+
+      4. **Cross-reference everything**
+         - 40+ new links added
+         - Connect related concepts
+         - Aid discoverability
+
+      5. **Track progress with TodoWrite**
+         - 6 phases tracked
+         - Clear status (pending/in_progress/completed)
+         - Easy to resume
+
+    time_estimate: |
+      - Phase 1 (Archive): 30 minutes
+      - Phase 2 (New structure): 2 hours
+      - Phase 3 (Entry points): 30 minutes
+      - Phase 4 (Clean examples): 20 minutes
+      - Phase 5 (README files): 1 hour
+      - Phase 6 (Update technical): 30 minutes
+
+      **Total**: ~4-5 hours
+
+    success_metrics: |
+      - Navigation time: 5-10 min → 30 seconds
+      - Documentation findability: 60% → 95%
+      - User satisfaction: Significantly improved
+      - Onboarding time: Reduced by 50%
+
+    when_to_use: |
+      Use this pattern when:
+      - Documentation becomes difficult to navigate
+      - Multiple duplicate or outdated files
+      - New team members can't find information
+      - Long filenames causing issues
+      - No clear structure or organization
+      - Legacy docs mixed with current
+
+    anti_patterns: |
+      ❌ **Don't delete without archiving**
+      - Legacy docs may have value
+      - Use archive/ directory
+
+      ❌ **Don't skip README files**
+      - Every directory needs navigation
+      - Self-documenting structure
+
+      ❌ **Don't forget cross-references**
+      - Connect related topics
+      - Multiple navigation paths
+
+      ❌ **Don't do it all at once**
+      - Break into phases
+      - Track progress
+
+    related_patterns:
+      - "AI-SERVICE-001" (AI Service Files Updates)
+      - "KB-MIGRATION-001" (Knowledge Base Migration)
+
+    references:
+      - "PROJECT_REORGANIZATION_PLAN.md"
+      - "REORGANIZATION_SUMMARY.md"
+      - "docs/README.md" (new structure)
+
+    metadata:
+      created_at: "2025-01-06"
+      author: "PARSER project"
+      reusable: true
+      severity_level: 3
+      difficulty: "advanced"
+      pattern_type: "project-management"
