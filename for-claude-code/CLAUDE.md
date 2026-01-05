@@ -202,6 +202,118 @@ The knowledge base uses **SQLite FTS5 (Full-Text Search)** for scalability:
 4. **Immediate synchronization:** Universal errors must be pushed to shared repo immediately
 5. **Git-based distribution:** Designed for git submodule integration
 
+## Clean Code Principles
+
+### Directory Structure Rules
+
+**MUST keep root directory clean:**
+- ✅ Only essential files in root (README, LICENSE, main guides)
+- ✅ Curator documentation in `curator/`
+- ✅ AI tool integration in `for-claude-code/`
+- ✅ Metadata documentation in `curator/metadata/`
+- ❌ NEVER put local-only files in root
+- ❌ NEVER mix user/curator/AI tool documentation in root
+
+**Root directory should contain only:**
+1. Essential user docs (README.md, GUIDE.md, QUICKSTART.md, LICENSE)
+2. Deployment guides (SUBMODULE_VS_CLONE.md)
+3. Base config files (.kb-config.yaml only - NOT .kb-config-local.yaml)
+
+### File Organization Rules
+
+**Curator Documentation (curator/):**
+- All documentation for KB maintainers goes here
+- Role definitions, skills, workflows, quality standards
+- Metadata architecture and implementation details
+- NOT for general users
+
+**AI Tool Integration (for-claude-code/):**
+- Documentation specific to AI tools (Claude Code, Copilot, etc.)
+- Integration guides, workflows
+- NOT for general KB users
+
+**Content Directories (python/, javascript/, docker/, etc.):**
+- Only knowledge entries (errors/ and patterns/)
+- Optional README.md in each directory for category-specific info
+- NO documentation meant for root
+
+### Git Hygiene Rules
+
+**CRITICAL: Local files MUST NOT be in git:**
+```bash
+# ✅ CORRECT: These files are in .gitignore
+.kb-config-local.yaml
+.kb-config-local_meta.yaml
+_index.yaml
+_index_meta.yaml
+.cache/
+
+# ❌ WRONG: Never commit these to git
+git add .kb-config-local.yaml  # FORBIDDEN!
+```
+
+**Check before committing:**
+```bash
+# Review what will be committed
+git status
+
+# Ensure local files are NOT in commit:
+# - .kb-config-local.*
+# - _index.*
+# - .cache/
+```
+
+### Documentation Placement Rules
+
+**When creating documentation:**
+
+1. **User-facing docs** → Root directory
+   - README.md, GUIDE.md, QUICKSTART.md
+   - Deployment guides
+   - Examples: SUBMODULE_VS_CLONE.md
+
+2. **Curator docs** → `curator/`
+   - Role definitions (AGENT.md)
+   - Skills (SKILLS.md)
+   - Workflows (WORKFLOWS.md)
+   - Quality standards (QUALITY_STANDARDS.md)
+   - Deployment from curator perspective (DEPLOYMENT.md)
+
+3. **Metadata docs** → `curator/metadata/`
+   - Architecture (ARCHITECTURE.md)
+   - Implementation (IMPLEMENTATION.md)
+   - Summary (SUMMARY.md)
+   - Phase documentation (PHASE3.md)
+
+4. **AI tool docs** → `for-claude-code/`
+   - Tool-specific integration guides
+   - Claude Code (README.md, CLAUDE.md)
+   - Future: for-copilot/, for-cursor/, etc.
+
+### Before Committing Checklist
+
+**Ask yourself:**
+- [ ] Is this file in the correct directory?
+- [ ] Is this user-facing or curator-specific?
+- [ ] Are there any local files in my commit?
+- [ ] Is the root directory still clean (≤7 .md files)?
+- [ ] Have I updated all internal links if moving files?
+
+**Common mistakes to avoid:**
+- ❌ Adding curator documentation to root
+- ❌ Committing .kb-config-local.yaml
+- ❌ Creating project-specific docs in universal/
+- ❌ Mixing documentation types in same directory
+- ❌ Forgetting to move VPS_README.md to vps/ directory
+
+### File Naming Conventions
+
+**Use consistent naming:**
+- `INDEX.md` for main directory index
+- `README.md` for quick start/overview
+- Descriptive names: `ARCHITECTURE.md`, not `doc1.md`
+- Use hyphens: `clean-structure.md`, not `clean_structure.md`
+
 ## Testing Infrastructure
 
 No formal test suite exists. Validation is done through `kb.py validate` which checks:

@@ -1,0 +1,253 @@
+=============================================================================
+SHARED KNOWLEDGE BASE - DIRECTORY STRUCTURE COMPARISON
+=============================================================================
+
+📊 CURRENT STATE (21 files in root - TOO MANY!)
+=============================================================================
+
+shared-knowledge-base/
+│
+├── README.md                        ✅ Essential
+├── LICENSE                          ✅ Essential
+├── GUIDE.md                         ✅ Essential
+├── QUICKSTART.md                    ✅ Essential
+├── SUBMODULE_VS_CLONE.md            ✅ Essential
+│
+├── AGENT.md                         ❌ Curator-specific
+├── CURATOR_DOCS_INDEX.md            ❌ Curator-specific
+├── FOR_CLAUDE_CODE.md               ❌ AI tool-specific
+├── README_CURATOR.md                ❌ Curator-specific
+├── SKILLS.md                        ❌ Curator-specific
+├── WORKFLOWS.md                     ❌ Curator-specific
+├── QUALITY_STANDARDS.md             ❌ Curator-specific
+├── PROMPTS.md                       ❌ Curator-specific
+├── METADATA_ARCHITECTURE.md         ❌ Curator-specific
+├── METADATA_SKILLS.md               ❌ Curator-specific
+├── IMPLEMENTATION_GUIDE.md          ❌ Curator-specific
+├── METADATA_SUMMARY.md              ❌ Curator-specific
+├── PHASE3_SUMMARY.md                ❌ Curator-specific
+├── DEPLOYMENT_GUIDE.md              ❌ Curator-specific
+│
+├── CLAUDE.md                        ⚠️ Duplicate?
+├── MIGRATION_TO_HYBRID_RU.md        ⚠️ Legacy
+├── VPS_README.md                    ⚠️ Wrong location
+│
+├── .kb-config.yaml                  ✅ Keep
+├── .kb-config_meta.yaml             ✅ Keep
+├── .kb-config-local.yaml            ❌ IN GIT!
+├── .kb-config-local_meta.yaml       ❌ IN GIT!
+│
+├── python/
+├── javascript/
+├── docker/
+├── postgresql/
+├── vps/
+├── universal/
+├── framework/
+├── tools/
+├── scripts/
+└── docs/
+
+❌ PROBLEMS:
+  • 21 .md files in root = cluttered!
+  • No separation between users, curators, AI tools
+  • Hard to navigate
+  • Local files tracked in git
+  • Confusing for new users
+
+=============================================================================
+
+✨ PROPOSED STATE (7 files in root - CLEAN!)
+=============================================================================
+
+shared-knowledge-base/
+│
+├── README.md                        ✅ Main entry
+├── LICENSE                          ✅ Legal
+├── GUIDE.md                         ✅ User guide
+├── QUICKSTART.md                    ✅ Quick start
+├── SUBMODULE_VS_CLONE.md            ✅ Deployment
+│
+├── curator/                         📁 CURATOR DOCS (13 files)
+│   ├── INDEX.md                    # Main index
+│   ├── README.md                   # Quick start
+│   ├── AGENT.md                    # Role
+│   ├── SKILLS.md                   # Skills
+│   ├── WORKFLOWS.md                # Workflows
+│   ├── QUALITY_STANDARDS.md        # Quality
+│   ├── PROMPTS.md                  # Prompts
+│   ├── DEPLOYMENT.md               # Deployment
+│   │
+│   └── metadata/                   📁 METADATA (5 files)
+│       ├── ARCHITECTURE.md
+│       ├── SKILLS.md
+│       ├── SUMMARY.md
+│       ├── IMPLEMENTATION.md
+│       └── PHASE3.md
+│
+├── for-claude-code/                 📁 AI TOOLS (2 files)
+│   ├── README.md                   # Claude Code guide
+│   └── CLAUDE.md                   # Legacy
+│
+├── .kb-config.yaml                  ✅ Base config
+├── .kb-config_meta.yaml             ✅ Config metadata
+│
+├── python/
+├── javascript/
+├── docker/
+├── postgresql/
+├── vps/
+│   └── README.md                   # Moved from root
+├── universal/
+├── framework/
+├── tools/
+├── scripts/
+└── docs/
+
+✅ IMPROVEMENTS:
+  • 7 .md files in root (67% reduction!)
+  • Clear separation of concerns
+  • Easy navigation
+  • No local files in git
+  • Professional structure
+
+=============================================================================
+
+📊 NUMBERS COMPARISON
+=============================================================================
+
+                    BEFORE    AFTER     CHANGE
+------------------  --------  --------  --------
+Markdown in root    21        7         -67%
+Config in root      4         2         -50%
+Local files in git  2         0         -100%
+Directories         12        14        +2 (curator, for-claude-code)
+
+=============================================================================
+
+🎯 USER JOURNEYS
+=============================================================================
+
+NEW USER:
+  Before: README → overwhelmed by 20+ files
+  After:  README → GUIDE.md → Done!
+
+CURATOR:
+  Before: README → search everywhere → scattered docs
+  After:  README → curator/ → everything in one place
+
+AI TOOL USER:
+  Before: README → search → find FOR_CLAUDE_CODE.md
+  After:  README → for-claude-code/ → found immediately
+
+=============================================================================
+
+✅ FILE MAPPING (OLD → NEW)
+=============================================================================
+
+ESSENTIAL (stay in root):
+  README.md                  → README.md
+  LICENSE                    → LICENSE
+  GUIDE.md                   → GUIDE.md
+  QUICKSTART.md              → QUICKSTART.md
+  SUBMODULE_VS_CLONE.md      → SUBMODULE_VS_CLONE.md
+
+CURATOR DOCS (move to curator/):
+  CURATOR_DOCS_INDEX.md      → curator/INDEX.md
+  README_CURATOR.md          → curator/README.md
+  AGENT.md                   → curator/AGENT.md
+  SKILLS.md                  → curator/SKILLS.md
+  WORKFLOWS.md               → curator/WORKFLOWS.md
+  QUALITY_STANDARDS.md       → curator/QUALITY_STANDARDS.md
+  PROMPTS.md                 → curator/PROMPTS.md
+  DEPLOYMENT_GUIDE.md        → curator/DEPLOYMENT.md
+
+METADATA DOCS (move to curator/metadata/):
+  METADATA_ARCHITECTURE.md   → curator/metadata/ARCHITECTURE.md
+  METADATA_SKILLS.md         → curator/metadata/SKILLS.md
+  METADATA_SUMMARY.md        → curator/metadata/SUMMARY.md
+  IMPLEMENTATION_GUIDE.md    → curator/metadata/IMPLEMENTATION.md
+  PHASE3_SUMMARY.md          → curator/metadata/PHASE3.md
+
+AI TOOLS (move to for-claude-code/):
+  FOR_CLAUDE_CODE.md         → for-claude-code/README.md
+  CLAUDE.md                  → for-claude-code/CLAUDE.md
+
+PROJECT-SPECIFIC:
+  VPS_README.md              → vps/README.md
+
+LEGACY:
+  MIGRATION_TO_HYBRID_RU.md  → .archive/ (or delete)
+
+REMOVE FROM GIT:
+  .kb-config-local.yaml      → keep locally, remove from git
+  .kb-config-local_meta.yaml → keep locally, remove from git
+
+=============================================================================
+
+📋 MIGRATION CHECKLIST
+=============================================================================
+
+  [ ] Create curator/ directory
+  [ ] Create curator/metadata/ directory
+  [ ] Create for-claude-code/ directory
+  [ ] Move 8 curator docs to curator/
+  [ ] Move 5 metadata docs to curator/metadata/
+  [ ] Move 2 AI tool docs to for-claude-code/
+  [ ] Move VPS_README.md to vps/README.md
+  [ ] Archive MIGRATION_TO_HYBRID_RU.md
+  [ ] Remove .kb-config-local.* from git
+  [ ] Update all internal links
+  [ ] Create curator/INDEX.md
+  [ ] Update README.md (simplify links)
+  [ ] Verify all file references
+  [ ] Test navigation
+  [ ] Commit changes
+
+=============================================================================
+
+🎯 FINAL STRUCTURE
+=============================================================================
+
+ROOT (7 files):
+  README.md
+  LICENSE
+  GUIDE.md
+  QUICKSTART.md
+  SUBMODULE_VS_CLONE.md
+  .kb-config.yaml
+  .kb-config_meta.yaml
+
+CURATOR/ (13 files):
+  INDEX.md
+  README.md
+  AGENT.md
+  SKILLS.md
+  WORKFLOWS.md
+  QUALITY_STANDARDS.md
+  PROMPTS.md
+  DEPLOYMENT.md
+  metadata/
+    ARCHITECTURE.md
+    SKILLS.md
+    SUMMARY.md
+    IMPLEMENTATION.md
+    PHASE3.md
+
+FOR-CLAUDE-CODE/ (2 files):
+  README.md
+  CLAUDE.md
+
+CONTENT DIRECTORIES:
+  python/
+  javascript/
+  docker/
+  postgresql/
+  vps/README.md
+  universal/
+  framework/
+  tools/
+  scripts/
+  docs/
+
+=============================================================================
