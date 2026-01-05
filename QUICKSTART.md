@@ -213,10 +213,15 @@ git commit -m "kb: Add CATEGORY-001 error"
 
 ## Синхронизация с Shared KB (опционально)
 
+**РЕКОМЕНДАЦИЯ:** Используйте **git submodule** для интеграции Shared KB
+
 ```bash
-# Клонировать shared KB
-git clone https://github.com/ozand/shared-knowledge-base.git \
+# Добавить как submodule (РЕКОМЕНДУЕТСЯ ✅)
+git submodule add https://github.com/ozand/shared-knowledge-base.git \
   docs/knowledge-base/shared
+
+# Скопировать kb.py tool (однократно)
+cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/
 
 # Обновить индекс
 kb index -v
@@ -224,12 +229,26 @@ kb index -v
 # Теперь поиск включает и shared KB
 kb search "async"  # Найдет и локальные, и shared записи
 
-# Обновление shared KB
+# Обновление shared KB (когда выходит новая версия)
+git submodule update --remote --merge docs/knowledge-base/shared
+kb index -v
+```
+
+**Альтернатива: Clone (только для тестов/экспериментов)**
+
+```bash
+# Простой clone (только для quick start/тестов)
+git clone https://github.com/ozand/shared-knowledge-base.git \
+  docs/knowledge-base/shared
+
+# Обновление (вручную)
 cd docs/knowledge-base/shared
 git pull
 cd ../..
 kb index -v
 ```
+
+**📖 Смотрите:** [SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md) для детального сравнения подходов
 
 ---
 

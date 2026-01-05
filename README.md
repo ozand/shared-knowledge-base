@@ -29,8 +29,10 @@
 
 ### Quick Start
 
+**🎯 Recommended: Use Git Submodule** ✅
+
 ```bash
-# 1. Clone or add as submodule
+# 1. Add as submodule (best practice for multi-project setups)
 git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
 
 # 2. Copy kb.py tool
@@ -46,7 +48,14 @@ python docs/knowledge-base/tools/kb.py index -v
 python docs/knowledge-base/tools/kb.py search "async"
 ```
 
+**Alternative: Quick Clone** (for testing/learning only)
+```bash
+# Simple clone (not recommended for production)
+git clone https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+```
+
 **See [QUICKSTART.md](QUICKSTART.md) for detailed setup.**
+**See [SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md) for detailed comparison.**
 
 ### 📚 For Knowledge Base Curators
 
