@@ -1,4 +1,9 @@
-id: pg-migration-001
+version: "1.0"
+category: "postgresql"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "pg-migration-001"
 title: PostgreSQL Major Version Migration with pg_upgrade --link
 category: postgresql
 severity: critical
@@ -241,45 +246,45 @@ validation: |
 rollout_plan:
   preparation:
     - week: "1-2 weeks before migration"
-    tasks:
-      - Install target PostgreSQL version
-      - Test migration on staging environment
-      - Create backup of critical data
-      - Document custom extensions and configurations
-      - Plan maintenance window with stakeholders
+      tasks:
+        - Install target PostgreSQL version
+        - Test migration on staging environment
+        - Create backup of critical data
+        - Document custom extensions and configurations
+        - Plan maintenance window with stakeholders
 
   migration_day:
     - hour: "0-2 hours (maintenance window)"
-    steps:
-      - Stop applications using database
-      - Stop source PostgreSQL service
-      - Run pg_upgrade --check
-      - Run pg_upgrade --link
-      - Start target PostgreSQL service
-      - Update statistics
-      - Test applications
-      - Resume operations
+      steps:
+        - Stop applications using database
+        - Stop source PostgreSQL service
+        - Run pg_upgrade --check
+        - Run pg_upgrade --link
+        - Start target PostgreSQL service
+        - Update statistics
+        - Test applications
+        - Resume operations
 
   post_migration:
     - week: "1-2 weeks after migration"
-    tasks:
-      - Monitor logs for errors
-      - Analyze slow query logs
-      - Tune configuration if needed
-      - Remove old PostgreSQL installation (after 1-2 weeks)
-      - Document lessons learned
+      tasks:
+        - Monitor logs for errors
+        - Analyze slow query logs
+        - Tune configuration if needed
+        - Remove old PostgreSQL installation (after 1-2 weeks)
+        - Document lessons learned
 
   rollback_plan: |
-  ⚠️ ROLLBACK ONLY POSSIBLE FROM BACKUP after --link migration!
+    WARNING: ROLLBACK ONLY POSSIBLE FROM BACKUP after --link migration!
 
-  If critical issues occur after starting new version:
-  1. Stop PostgreSQL 18 service
-  2. Restore from backup (pg_basebackup or logical backup)
-  3. Update application connection strings if needed
-  4. Start PostgreSQL 15 service
-  5. Verify data integrity
+    If critical issues occur after starting new version:
+    1. Stop PostgreSQL 18 service
+    2. Restore from backup (pg_basebackup or logical backup)
+    3. Update application connection strings if needed
+    4. Start PostgreSQL 15 service
+    5. Verify data integrity
 
-  Cannot rollback to old cluster's data directory after --link migration!
+    Cannot rollback to old cluster's data directory after --link migration!
 
 sources:
   - title: "PostgreSQL Documentation - pg_upgrade"

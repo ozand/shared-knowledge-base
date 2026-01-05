@@ -1,4 +1,9 @@
-id: pg-perf-001
+version: "1.0"
+category: "postgresql"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "pg-perf-001"
 title: PostgreSQL 18 Performance Configuration for High-End Servers
 category: postgresql
 severity: high
@@ -126,11 +131,11 @@ rollout_plan:
       monitoring: "Adjust based on workload"
 
   rollback_plan: |
-  If issues occur:
-  1. Stop PostgreSQL service
-  2. Restore backup: postgresql.conf.backup_YYYYMMDD.txt
-  3. Start PostgreSQL service
-  4. Verify with validation queries above
+    If issues occur:
+    1. Stop PostgreSQL service
+    2. Restore backup: postgresql.conf.backup_YYYYMMDD.txt
+    3. Start PostgreSQL service
+    4. Verify with validation queries above
 
 sources:
   - title: "PostgreSQL 18 Documentation - Resource Consumption"

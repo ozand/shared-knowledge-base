@@ -406,11 +406,9 @@ patterns:
          - Calculate expected savings
          - Plan for maintenance window if needed
          - Prepare rollback plan
-
-         Expected improvements:
-         - Space: 20-40% reduction (depends on unused indexes)
-         - Performance: 2-100x query speedup
-         - Maintenance: Faster VACUUM/ANALYZE
+         - Expected space reduction by 20-40% (depends on unused indexes)
+         - Expected query speedup 2-100x
+         - Expected faster VACUUM and ANALYZE operations
 
       3. |
          **Index Optimization (15-30 minutes)**
@@ -433,11 +431,11 @@ patterns:
          **Space Reclamation (30-60 minutes)**
 
          ```sql
-         -- Option A: VACUUM FULL (requires exclusive lock, 30-60 min)
+         -- Option A - VACUUM FULL requires exclusive lock (30-60 min)
          VACUUM FULL beauty_sw_json;
 
-         -- Option B: pg_repack (online, no locks, 1-2 hours) - RECOMMENDED
-         # Install pg_repack extension first
+         -- Option B - pg_repack is online with no locks (1-2 hours) - RECOMMENDED
+         -- Install pg_repack extension first
          pg_repack -t beauty_sw_json -k -o o_drive -d sw -h localhost -U postgres
 
          -- Monitor progress
@@ -500,16 +498,16 @@ patterns:
       - "Document before/after metrics"
 
     risks_and_mitigations:
-      risk: "VACUUM FULL locks table (no reads/writes)"
+      - risk: "VACUUM FULL locks table (no reads/writes)"
         mitigation: "Use pg_repack or schedule during maintenance window"
 
-      risk: "DROP INDEX blocked by active queries"
+      - risk: "DROP INDEX blocked by active queries"
         mitigation: "Check pg_stat_activity, wait for completion or terminate"
 
-      risk: "Unexpected query plan changes"
+      - risk: "Unexpected query plan changes"
         mitigation: "Benchmark critical queries before/after, keep statistics"
 
-      risk: "Insufficient disk space for VACUUM FULL"
+      - risk: "Insufficient disk space for VACUUM FULL"
         mitigation: "Ensure 2x table size available, use pg_repack instead"
 
     tags: ["postgresql", "optimization", "vacuum", "indexes", "performance", "workflow"]
@@ -654,16 +652,16 @@ patterns:
       - "Run VACUUM ANALYZE after load completes"
 
     troubleshooting:
-      issue: "Frequent timeout errors"
+      - issue: "Frequent timeout errors"
         solution: "Increase statement_timeout or reduce batch_size"
 
-      issue: "Out of memory errors"
+      - issue: "Out of memory errors"
         solution: "Reduce batch_size, limit workers"
 
-      issue: "Slow overall performance"
+      - issue: "Slow overall performance"
         solution: "Increase workers, use COPY instead of INSERT"
 
-      issue: "Inconsistent failures"
+      - issue: "Inconsistent failures"
         solution: "Check network stability, add retry logic"
 
     tags: ["postgresql", "jsonb", "data-loading", "batch-processing", "performance"]
