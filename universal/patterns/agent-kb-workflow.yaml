@@ -1,0 +1,345 @@
+# Agent Knowledge Base Workflow Patterns
+# How agents should use Shared Knowledge Base effectively
+
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "AGENT-WORKFLOW-001"
+    title: "Knowledge Base Issue Resolution - Why GitHub Issues Stay Open"
+    severity: "high"
+    scope: "universal"
+    tags: ["agent", "workflow", "github-issues", "kb-maintenance", "quality-assurance"]
+
+    problem: |
+      GitHub Issue #3 created for 5 YAML errors remained OPEN despite being fixable.
+      Status: Only 2/5 errors fixed (40% completion).
+
+      Root cause: No clear ownership and workflow for KB maintenance issues.
+
+      **Issue #3 Status Analysis (2026-01-06):**
+      - ❌ postgresql/errors.yaml (line 410) - NOT FIXED
+      - ✅ universal/patterns/clean-architecture.yaml - FIXED
+      - ✅ framework/fastapi/patterns/websocket.yaml - FIXED
+      - ❌ postgresql/patterns/migration-upgrade.yaml (lines 243-244) - NOT FIXED
+      - ❌ postgresql/patterns/performance-tuning.yaml (lines 130-131) - NOT FIXED
+
+      **Result:** Issue stayed OPEN for days with no activity.
+
+    root_cause: |
+      The KB migration agent created issue #3 but:
+      1. No clear assignment to KB Curator agent
+      2. No automated triggering of fixes
+      3. No SLA or priority system
+      4. No recurring review of open issues
+      5. Agent that created issue assumed "someone else will fix it"
+
+      **Missing component:** Active maintenance workflow, not passive issue tracking.
+
+    solution:
+      immediate_fixes:
+        description: "Fix the 3 remaining YAML errors"
+        files:
+          - path: "postgresql/errors.yaml"
+            line: 410
+            error: "mapping values are not allowed here"
+            fix: "Use single quotes for values with special characters like colons"
+
+          - path: "postgresql/patterns/migration-upgrade.yaml"
+            lines: "243-244"
+            error: "while parsing a block collection, expected <block end>"
+            fix: "Check indentation for block sequence/scalar"
+
+          - path: "postgresql/patterns/performance-tuning.yaml"
+            lines: "130-131"
+            error: "could not find expected ':'"
+            fix: "Fix key syntax, ensure proper YAML key format"
+
+      workflow_improvement:
+        description: "Prevent future stale issues"
+
+        phase_1_agent_creates_issue:
+          agent: "Migration Agent"
+          steps: |
+            1. Detect YAML errors during migration
+            2. Create GitHub issue with full details
+            3. ADD LABELS: priority-high, kb-maintenance, yaml-errors
+            4. ASSIGN to specific agent/team (not unassigned!)
+            5. Set milestone (e.g., "KB Maintenance v3.0.1")
+            6. Add comment: "@kb-curator Please triage and fix"
+
+        phase_2_curator_triage:
+          agent: "KB Curator Agent"
+          triggers:
+            - "New issue with label 'kb-maintenance'"
+            - "Daily scheduled review"
+            - "Milestone approaching"
+          steps: |
+            1. Review issue within 24 hours
+            2. Assign severity/priority if not set
+            3. Estimate effort (small: 1-2h, medium: 1 day, large: 2-3 days)
+            4. Schedule fix or delegate
+            5. Update issue with plan
+
+        phase_3_fix_and_verify:
+          agent: "KB Curator Agent"
+          steps: |
+            1. Fix YAML syntax errors
+            2. Validate: python tools/kb.py validate <file>
+            3. Re-run migration: python scripts/init_metadata.py
+            4. Verify 100% success
+            5. Commit and push fixes
+            6. Comment on issue with fix details
+            7. Close issue
+
+        phase_4_continuous_monitoring:
+          agent: "Maintenance Agent (scheduled)"
+          frequency: "Daily"
+          steps: |
+            1. List open KB maintenance issues
+            2. Check age (7+ days = stale)
+            3. Priority: age > 7 days → escalate
+            4. Auto-comment on stale issues
+            5. Create weekly report
+
+    prevention:
+      automated_checks:
+        description: "Prevent YAML errors before commit"
+
+        pre_commit_hook:
+          enabled: true
+          script: |
+            # .git/hooks/pre-commit
+            # Validate all changed YAML files
+            git diff --cached --name-only | grep '\.yaml$' | while read file; do
+              python tools/kb.py validate "$file" || exit 1
+            done
+
+        ci_validation:
+          enabled: true
+          script: |
+            # .github/workflows/kb-validation.yml
+            name: Validate KB Entries
+            on: [push, pull_request]
+            jobs:
+              validate:
+                runs-on: ubuntu-latest
+                steps:
+                  - uses: actions/checkout@v3
+                  - name: Validate YAML files
+                    run: |
+                      pip install pyyaml
+                      python tools/kb.py validate .
+
+    best_practices:
+      - item: "Never create unassigned issues"
+        reason: "No ownership = no action"
+
+      - item: "Always add labels and milestones",
+        reason: "Enables tracking and prioritization"
+
+      - item: "Set SLA: Critical issues = 24h, High = 3 days, Medium = 1 week"
+        reason: "Prevents stale issues"
+
+      - item: "Daily review of open maintenance issues",
+        reason: "Catch problems early"
+
+      - item: "Close issues immediately after fix",
+        reason: "Don't let issue count grow"
+
+      - item: "Document YAML syntax patterns",
+        reason: "Prevent recurring errors"
+
+    yaml_syntax_patterns:
+      common_errors:
+        error_1:
+          pattern: "Colon in value without quotes"
+          wrong: 'key: "value with : colon"'
+          right: "key: 'value with : colon'"
+          explanation: "Use single quotes for values with special characters"
+
+        error_2:
+          pattern: "Incorrect block indentation"
+          wrong: |
+            items:
+            - name: "Item 1"
+            description: "Bad indentation"
+          right: |
+            items:
+              - name: "Item 1"
+                description: "Correct indentation"
+          explanation: "Maintain consistent indentation (2 spaces per level)"
+
+        error_3:
+          pattern: "Invalid key characters"
+          wrong: "key 1: value"
+          right: "key_1: value"
+          explanation: "Use underscores, not spaces in keys"
+
+    references:
+      - title: "GitHub Issue #3"
+        url: "https://github.com/ozand/shared-knowledge-base/issues/3"
+      - title: "YAML Specification"
+        url: "https://yaml.org/spec/1.2/spec.html"
+      - title: "KB Migration Pattern"
+        url: "https://github.com/ozand/shared-knowledge-base/blob/main/universal/patterns/kb-migration.yaml"
+
+    real_world_example:
+      title: "Issue #3 - Lessons Learned"
+      timeline:
+        "2026-01-06": "Issue created by migration agent"
+        "2026-01-06": "2/5 files fixed automatically (unknown how)"
+        "2026-01-06": "3/5 files still broken, issue stale"
+        "Pending": "KB Curator needs to fix remaining files"
+
+      lessons:
+        - "Creating issue ≠ fixing problem"
+        - "Need active ownership, not passive tracking"
+        - "Automated validation prevents issues"
+        - "SLA prevents stale issues"
+        - "Labels and milestones enable tracking"
+
+  - id: "AGENT-WORKFLOW-002"
+    title: "Agent Responsibilities for Shared Knowledge Base"
+    severity: "medium"
+    scope: "universal"
+    tags: ["agent", "responsibilities", "workflow", "kb-usage"]
+
+    problem: |
+      Agents unclear about when and how to use Shared Knowledge Base.
+      Common mistakes:
+      - Creating local KB entries that should be shared
+      - Not validating YAML before committing
+      - Forgetting to push universal entries to shared repo
+      - Creating issues without proper ownership
+
+    solution:
+      agent_types:
+        migration_agent:
+          responsibilities:
+            - "Clone KB repository"
+            - "Initialize metadata"
+            - "Validate YAML files"
+            - "Create GitHub issues for errors (with ownership!)"
+            - "Document errors in KB if pattern discovered"
+
+          workflow: |
+            1. Clone KB: git clone https://github.com/ozand/shared-knowledge-base.git
+            2. Validate: python tools/kb.py validate .
+            3. If errors found:
+               - Create issue with labels: priority-high, kb-maintenance
+               - Assign: @kb-curator
+               - Set milestone
+               - Comment with full error details
+            4. If patterns found:
+               - Document as KB-MIGRATION-XXX
+               - Validate new entry
+               - Commit and push to shared repo
+
+        curator_agent:
+          responsibilities:
+            - "Monitor GitHub issues"
+            - "Fix YAML errors within 24h (critical), 3 days (high)"
+            - "Validate all entries"
+            - "Maintain quality standards"
+            - "Close issues when complete"
+
+          workflow: |
+            1. Daily: Check open issues with label 'kb-maintenance'
+            2. Triage: Assign priority if missing
+            3. Fix: Correct YAML errors
+            4. Validate: python tools/kb.py validate <file>
+            5. Test: Re-run migration, verify 100% success
+            6. Commit: git commit -m "Fix YAML error in <file>"
+            7. Close issue with fix details
+
+        user_agent:
+          responsibilities:
+            - "Use KB to find solutions"
+            - "Document new patterns in appropriate scope"
+            - "Validate before commit"
+            - "Push universal entries to shared repo immediately"
+
+          workflow: |
+            1. Search KB first: python tools/kb.py search "error"
+            2. If found → use solution
+            3. If not found → solve problem
+            4. Document as YAML entry
+            5. Determine scope (universal vs project)
+            6. Validate: python tools/kb.py validate <file>
+            7. If universal:
+               - Push to shared repo immediately
+               - Rebuild index
+            8. If project-specific:
+               - Add to local KB
+               - Mark: local_only: true
+
+    decision_tree:
+      title: "Should I create a KB entry?"
+
+      questions:
+        - question: "Is this a common error pattern?"
+          yes: "Create in shared KB (scope: universal or language)"
+          no: "Next question →"
+
+        - question: "Is this specific to my project infrastructure?"
+          yes: "Create in local KB (scope: project)"
+          no: "Next question →"
+
+        - question: "Would other developers benefit from this solution?"
+          yes: "Create in shared KB"
+          no: "Create in local KB"
+
+      scope_guide:
+        universal: "Cross-language patterns (Git, testing, architecture)"
+        python: "Python-specific errors and patterns"
+        javascript: "JavaScript-specific errors and patterns"
+        docker: "Docker-specific errors and patterns"
+        postgresql: "PostgreSQL-specific errors and patterns"
+        framework: "Framework-specific (Django, FastAPI, React)"
+        project: "Project-specific (NOT shared)"
+
+    validation_checklist:
+      before_committing:
+        - "YAML validates: python tools/kb.py validate <file>"
+        - "Required fields present: id, title, severity, scope, problem, solution"
+        - "ID format correct: CATEGORY-NNN"
+        - "No duplicates: Check existing IDs"
+        - "Appropriate scope chosen"
+        - "Universal entries pushed to shared repo"
+
+      after_committing:
+        - "Index rebuilt: python tools/kb.py index"
+        - "Search works: python tools/kb.py search <keyword>"
+        - "Metadata generated: *_meta.yaml exists"
+        - "No YAML errors in output"
+
+    quality_standards:
+      completeness:
+        - "Problem description clear"
+        - "Symptoms listed"
+        - "Root cause explained"
+        - "Solution with code example"
+        - "Prevention tips"
+        - "References to related issues"
+
+      accuracy:
+        - "Code examples tested"
+        - "Commands verified"
+        - "Links working"
+        - "No typos in IDs/paths"
+
+      clarity:
+        - "Title descriptive"
+        - "Structure logical"
+        - "Language clear"
+        - "No jargon without explanation"
+
+    references:
+      - title: "CLAUDE.md - Clean Code Principles"
+        url: "https://github.com/ozand/shared-knowledge-base/blob/main/for-claude-code/CLAUDE.md"
+      - title: "Curator Documentation"
+        url: "https://github.com/ozand/shared-knowledge-base/tree/main/curator"
+      - title: "Quality Standards"
+        url: "https://github.com/ozand/shared-knowledge-base/blob/main/curator/QUALITY_STANDARDS.md"
