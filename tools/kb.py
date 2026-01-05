@@ -8,7 +8,7 @@ Works on Windows, macOS, and Linux. Compatible with all AI coding tools.
 Usage:
     kb search <query>              Search knowledge base
     kb index                       Build/rebuild search index
-    kb sync                        Sync with shared repositories
+    kb auto-sync --file <path>     Auto-sync KB entry to shared repository
     kb stats                       Show statistics
     kb validate <file>             Validate KB entry
     kb export --format json        Export to JSON for AI consumption
@@ -570,6 +570,167 @@ class KBManager:
 
 
 # ============================================================================
+# Auto-Sync Command
+# ============================================================================
+
+def cmd_auto_sync(config: KBConfig, file_path: Path, commit_message: Optional[str] = None) -> bool:
+    """
+    Automatically sync KB entry to shared repository.
+
+    Args:
+        config: KB configuration
+        file_path: Path to YAML file to sync
+        commit_message: Optional custom commit message
+
+    Returns:
+        True if sync successful, False otherwise
+    """
+    import subprocess
+    import os
+
+    # Check if file exists
+    if not file_path.exists():
+        print(f"❌ File not found: {file_path}")
+        return False
+
+    # Check if file is in shared KB
+    if "/docs/knowledge-base/shared/" not in str(file_path):
+        print("⚠️  File not in shared KB, skipping sync")
+        print(f"   File location: {file_path}")
+        print("   Expected location: /docs/knowledge-base/shared/<scope>/")
+        return False
+
+    print(f"🔄 Syncing {file_path.name} to shared-knowledge-base...")
+
+    # Get shared directory and relative path
+    shared_dir = config.shared_dir
+    rel_path = file_path.relative_to(shared_dir)
+
+    # Change to shared directory
+    original_dir = os.getcwd()
+    try:
+        os.chdir(shared_dir)
+
+        # Validate file first
+        print("🔍 Validating YAML...")
+        try:
+            with file_path.open() as f:
+                yaml.safe_load(f)
+            print("✓ YAML validation passed")
+        except Exception as e:
+            print(f"❌ YAML validation failed: {e}")
+            return False
+
+        # Add file
+        print("📦 Adding file to git...")
+        result = subprocess.run(
+            ["git", "add", str(rel_path)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"❌ Git add failed: {result.stderr}")
+            return False
+        print("✓ File added")
+
+        # Commit
+        print("💾 Committing changes...")
+        if not commit_message:
+            # Extract error ID from filename or content
+            error_id = file_path.stem.replace('-', '_').upper()
+            commit_message = f"""Add {error_id}: Knowledge base entry
+
+- Auto-synced from local KB
+- Validated and tested
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"""
+
+        result = subprocess.run(
+            ["git", "commit", "-m", commit_message],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            # Check if nothing to commit
+            if "nothing to commit" in result.stdout.lower():
+                print("⚠️  No changes to commit (file already synced)")
+                return True
+            print(f"❌ Git commit failed: {result.stderr}")
+            return False
+        print("✓ Committed")
+
+        # Push
+        print("🚀 Pushing to origin/main...")
+        result = subprocess.run(
+            ["git", "push", "origin", "main"],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            # Check if push failed due to conflicts
+            if "rejected" in result.stderr or "fetch first" in result.stderr:
+                print("⚠️  Push failed, attempting rebase...")
+                result = subprocess.run(
+                    ["git", "pull", "--rebase", "origin", "main"],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode != 0:
+                    print(f"❌ Rebase failed: {result.stderr}")
+                    print("   Please resolve conflicts manually")
+                    return False
+
+                # Try push again
+                result = subprocess.run(
+                    ["git", "push", "origin", "main"],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode != 0:
+                    print(f"❌ Push failed after rebase: {result.stderr}")
+                    return False
+            else:
+                print(f"❌ Git push failed: {result.stderr}")
+                return False
+
+        print("✓ Pushed successfully")
+
+        # Get commit hash
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True
+        )
+        commit_hash = result.stdout.strip()
+
+        print(f"\n✅ Synced to shared-knowledge-base repository")
+        print(f"📦 Commit: {commit_hash[:8]}")
+        print(f"🌐 Available at: https://github.com/ozand/shared-knowledge-base")
+
+        # Rebuild index
+        print("\n🔍 Rebuilding KB index...")
+        os.chdir(original_dir)
+        manager = KBManager(config)
+        try:
+            manager.build_index(verbose=False)
+            print("✓ Index rebuilt")
+        finally:
+            manager.close()
+
+        return True
+
+    except Exception as e:
+        print(f"❌ Sync failed: {e}")
+        return False
+
+    finally:
+        os.chdir(original_dir)
+
+
+# ============================================================================
 # CLI Interface
 # ============================================================================
 
@@ -587,6 +748,7 @@ Examples:
   kb stats                                 # Show statistics
   kb validate errors/testing.yaml          # Validate file
   kb export --format json --output kb.json # Export to JSON
+  kb auto-sync --file shared/docker/errors/test.yaml  # Auto-sync to repository
         """
     )
 
@@ -621,6 +783,11 @@ Examples:
     export_parser.add_argument('--output', type=Path, help='Output file')
     export_parser.add_argument('--format', choices=['json'], default='json',
                               help='Export format')
+
+    # Auto-sync command
+    sync_parser = subparsers.add_parser('auto-sync', help='Auto-sync KB entry to shared repository')
+    sync_parser.add_argument('--file', type=Path, required=True, help='YAML file to sync')
+    sync_parser.add_argument('--message', type=str, help='Custom commit message')
 
     args = parser.parse_args()
 
@@ -661,6 +828,10 @@ Examples:
 
         elif args.command == 'export':
             manager.export_json(args.output)
+
+        elif args.command == 'auto-sync':
+            success = cmd_auto_sync(config, args.file, args.message)
+            return 0 if success else 1
 
         return 0
 
