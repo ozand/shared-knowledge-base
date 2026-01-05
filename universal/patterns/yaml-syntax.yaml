@@ -1,0 +1,289 @@
+# YAML Syntax Patterns
+# Common YAML errors and prevention strategies
+
+version: "1.0"
+category: "yaml-patterns"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "YAML-001"
+    title: "Common YAML Syntax Errors in Knowledge Base Entries"
+    severity: "high"
+    scope: "universal"
+    tags: ["yaml", "syntax", "validation", "kb-entries", "errors"]
+
+    problem: |
+      Knowledge Base entries frequently fail YAML validation due to common syntax errors.
+      These prevent metadata generation and block KB functionality.
+
+      **Real example:** GitHub Issue #3 had 5 YAML files with validation errors blocking metadata initialization.
+      Status: 2/5 fixed by unknown agent, 3/5 fixed by curator agent (40% → 100%).
+
+    common_errors:
+      error_1:
+        name: "Colons in Block Scalars"
+        severity: "high"
+        pattern: "Using colons in text within block scalars (| or >)"
+
+        wrong_example: |
+          steps: |
+            Planning Phase:
+              Expected improvements:  # ← Colon parsed as key!
+                - Space: 20-40%
+
+        right_example: |
+          steps: |
+            Planning Phase:
+              Expected outcomes:  # ← No colon, OR
+              OR restructure as list:
+                - Expected space: 20-40%
+
+        explanation: |
+          In YAML block scalars (starting with | or >), colons are interpreted as key-value mappings.
+          Any text with colon after it will be treated as a new key, causing syntax errors.
+
+        solutions:
+          - solution_1: "Remove colon from text"
+            example: "Expected improvements → Expected outcomes"
+
+          - solution_2: "Make it a list item"
+            example: |
+              - Expected improvements:
+                  - Space: 20-40%
+
+          - solution_3: "Use plain text list without headers"
+            example: |
+              - Expected space reduction by 20-40%
+              - Query speedup 2-100x
+
+      error_2:
+        name: "Missing Dashes in List Items"
+        severity: "high"
+        pattern: "Forgetting dash (-) before list items in nested structures"
+
+        wrong_example: |
+          risks_and_mitigations:
+            risk: "VACUUM FULL locks table"  # ← Missing dash!
+              mitigation: "Use pg_repack"
+            risk: "DROP INDEX blocked"          # ← Missing dash!
+              mitigation: "Terminate queries"
+
+        right_example: |
+          risks_and_mitigations:
+            - risk: "VACUUM FULL locks table"    # ✓ Has dash
+              mitigation: "Use pg_repack"
+            - risk: "DROP INDEX blocked"        # ✓ Has dash
+              mitigation: "Terminate queries"
+
+        explanation: |
+          In YAML, list items must start with a dash (-). When creating key-value pairs
+          within lists, each item must still begin with a dash, even though they look like mappings.
+
+        detection: |
+          Search for lines like:
+            key: "value"
+              key: "value"
+
+          Should be:
+            - key: "value"
+              key: "value"
+
+      error_3:
+        name: "Missing Wrapper in Pattern Files"
+        severity: "medium"
+        pattern: "Pattern files lacking patterns:/errors: wrapper"
+
+        wrong_structure: |
+          id: "pattern-001"
+          title: "Pattern Title"
+          # ... rest of entry
+
+        right_structure: |
+          version: "1.0"
+          category: "pattern-category"
+          last_updated: "2026-01-06"
+
+          patterns:
+            - id: "pattern-001"
+              title: "Pattern Title"
+              # ... rest of entry
+
+        explanation: |
+          Knowledge Base validator expects either `errors:` or `patterns:` section at the root level.
+          Individual entries must be nested inside these sections.
+
+        fix: |
+          Add wrapper:
+          - Add `version:`, `category`, `last_updated` at top
+          - Add `patterns:` or `errors:` section
+          - Indent all entries under the section
+
+      error_4:
+        name: "Indentation Errors in Nested Structures"
+        severity: "medium"
+        pattern: "Inconsistent indentation breaking YAML structure"
+
+        wrong_example: |
+          rollout_plan:
+            preparation:
+              - week: "1-2 weeks before"
+              tasks:        # ← Wrong indentation!
+                - Install PostgreSQL
+
+        right_example: |
+          rollout_plan:
+            preparation:
+              - week: "1-2 weeks before"
+                tasks:      # ← Correct indentation
+                  - Install PostgreSQL
+
+        explanation: |
+          YAML is indentation-sensitive (like Python). Nested items must be indented consistently.
+          Common rule: 2 spaces per indentation level.
+
+      error_5:
+        name: "Colons in SQL Comments within Block Scalars"
+        severity: "medium"
+        pattern: "Using colons in SQL comments inside YAML block scalars"
+
+        wrong_example: |
+          steps: |
+            ```sql
+            -- Option A: VACUUM FULL (requires lock)  # ← Colon!
+            ```
+
+        right_example: |
+          steps: |
+            ```sql
+            -- Option A - VACUUM FULL requires lock   # ← No colon
+            ```
+
+        explanation: |
+          Block scalars preserve all content, including SQL comments. Colons in comments
+          are still parsed as YAML key separators, even within ```sql blocks.
+
+    validation_checklist:
+      before_saving:
+        - "Run: python tools/kb.py validate file.yaml"
+        - "Check for colons in block scalars"
+        - "Verify list items have dashes"
+        - "Ensure patterns:/errors: wrapper exists"
+        - "Check indentation is consistent"
+
+      automated_checks:
+        pre_commit_hook: |
+          # .git/hooks/pre-commit
+          # Validate all changed YAML files
+          git diff --cached --name-only | grep '\.yaml$' | while read file; do
+            python tools/kb.py validate "$file" || exit 1
+          done
+
+        ci_validation: |
+          # .github/workflows/kb-validation.yml
+          name: Validate KB Entries
+          on: [push, pull_request]
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v3
+                - name: Validate YAML
+                  run: |
+                    pip install pyyaml
+                    python tools/kb.py validate .
+
+    prevention_strategies:
+      - strategy_1: "Use linters"
+        tools:
+          - "yamllint - Python YAML linter"
+          - "VS Code YAML extension - Real-time validation"
+          - "Pre-commit hooks - Automated validation"
+
+      - strategy_2: "Follow templates"
+        action: "Always start from validated template"
+        templates:
+          - "Use tools/kb.py create --template to generate new entry"
+          - "Copy existing validated entry as starting point"
+
+      - strategy_3: "Validate frequently"
+        frequency: "Before every commit"
+        command: "python tools/kb.py validate <file>"
+
+      - strategy_4: "Learn YAML syntax"
+        resources:
+          - "https://yaml.org/spec/1.2/spec.html"
+          - "https://www.learnyaml.org/"
+          - "KB's own validation errors as examples"
+
+    real_world_fixes:
+      example_1:
+        file: "postgresql/errors.yaml"
+        lines: "410-413, 501-511, 655-665"
+        errors_fixed: 3
+        fixes:
+          - "Removed colons from block scalar headers"
+          - "Added dashes before risk: keys"
+          - "Added dashes before issue: keys"
+        commit: "c023036"
+
+      example_2:
+        file: "postgresql/patterns/migration-upgrade.yaml"
+        lines: "243-270"
+        errors_fixed: 2
+        fixes:
+          - "Fixed indentation for tasks: under week:"
+          - "Fixed indentation for steps: under hour:"
+        commit: "c023036"
+
+      example_3:
+        file: "postgresql/patterns/performance-tuning.yaml"
+        lines: "1-6"
+        errors_fixed: 1
+        fixes:
+          - "Added patterns: wrapper"
+          - "Added version, category, last_updated"
+        commit: "c023036"
+
+    lessons_learned:
+      lesson_1: "YAML is indentation-sensitive, always use consistent spacing"
+      lesson_2: "Colons are special characters in YAML, avoid in text"
+      lesson_3: "Lists require dashes (-) even when they look like mappings"
+      lesson_4: "Always validate before committing"
+      lesson_5: "Use pre-commit hooks to catch errors early"
+
+    quick_reference:
+      dos:
+        - "✓ Use dashes before list items"
+        - "✓ Validate with kb.py validate"
+        - "✓ Follow existing templates"
+        - "✓ Check indentation (2 spaces per level)"
+        - "✓ Use patterns:/errors: wrapper"
+
+      donts:
+        - "✗ Use colons in block scalar text"
+        - "✗ Skip dashes in nested lists"
+        - "✗ Guess YAML syntax, always validate"
+        - "✗ Mix tabs and spaces for indentation"
+        - "✗ Commit without validation"
+
+    testing_strategies:
+      local_testing:
+        step_1: "Create test YAML file"
+        step_2: "Run: python tools/kb.py validate test.yaml"
+        step_3: "Fix any errors reported"
+        step_4: "Validate again until passes"
+        step_5: "Commit file"
+
+      continuous_testing:
+        - "Enable pre-commit hooks"
+        - "Run validation in CI/CD"
+        - "Test on sample files before creating real entries"
+        - "Use YAML extensions in IDE"
+
+    references:
+      - title: "GitHub Issue #3 - 5 YAML Errors"
+        url: "https://github.com/ozand/shared-knowledge-base/issues/3"
+      - title: "YAML Specification"
+        url: "https://yaml.org/spec/1.2/spec.html"
+      - title: "YAML Lint"
+        url: "https://yamllint.readthedocs.io/"
