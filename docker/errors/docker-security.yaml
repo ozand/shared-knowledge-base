@@ -1,0 +1,131 @@
+version: "1.0"
+category: "docker-security"
+scope: "docker"
+last_updated: "2026-01-05"
+
+errors:
+  - id: "DOCKER-017"
+    title: "Passwords in Environment Variables"
+    severity: "critical"
+    scope: "docker"
+    problem: "Sensitive credentials stored in environment variables are visible in docker inspect, can leak in logs, and are accessible to any process with access to the container."
+    symptoms:
+      - "Passwords visible in docker inspect"
+      - "Secrets in docker-compose.yml files"
+      - "API keys in environment variables"
+    wrong_code: |
+      services:
+        postgres:
+          environment:
+            - "POSTGRES_PASSWORD=mysecretpassword"
+            - "POSTGRES_USER=admin"
+    correct_code: |
+      # Option 1: Use Docker Secrets (Swarm mode)
+      services:
+        postgres:
+          secrets:
+            - postgres_password
+          environment:
+            - "POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password"
+
+      secrets:
+        postgres_password:
+          external: true
+
+      # Option 2: Use .env file (not in git)
+      # docker-compose.yml:
+      services:
+        postgres:
+          environment:
+            - "POSTGRES_PASSWORD_FILE=${POSTGRES_PASSWORD}"
+          env_file:
+            - .env
+    solution_steps: |
+      1. Use Docker Secrets in Swarm mode
+      2. Use external secret managers (HashiCorp Vault, AWS Secrets Manager)
+      3. At minimum: use .env files (not committed to git)
+      4. Restrict file permissions: chmod 600 .env
+      5. Never commit secrets to git
+      6. Use .env.example templates
+    tags: ["docker", "security", "secrets", "credentials", "critical"]
+
+  - id: "DOCKER-018"
+    title: "Missing Network Isolation"
+    severity: "medium"
+    scope: "docker"
+    problem: "All containers on default network can communicate with each other. No segmentation between frontend and backend services. Compromised container can access internal services."
+    symptoms:
+      - "All containers on bridge network"
+      - "Frontend can reach database directly"
+      - "No network segmentation"
+    wrong_code: |
+      services:
+        frontend:
+          image: nginx:latest
+        backend:
+          image: myapi:latest
+        database:
+          image: postgres:latest
+        # All on same network - no isolation
+    correct_code: |
+      networks:
+        frontend:
+          driver: bridge
+        backend:
+          driver: bridge
+          internal: true  # No internet access
+
+      services:
+        frontend:
+          image: nginx:latest
+          networks:
+            - frontend
+
+        backend:
+          image: myapi:latest
+          networks:
+            - frontend
+            - backend
+
+        database:
+          image: postgres:latest
+          networks:
+            - backend  # Only accessible from backend
+    solution_steps: |
+      1. Create separate networks for frontend/backend
+      2. Make backend network internal (no internet)
+      3. Connect database only to backend network
+      4. Connect backend to both networks
+      5. Connect frontend only to frontend network
+      6. Test isolation: docker exec frontend ping database (should fail)
+    tags: ["docker", "networking", "security", "isolation", "best-practices"]
+
+  - id: "DOCKER-019"
+    title: "Running as Root User"
+    severity: "high"
+    scope: "docker"
+    problem: "Container running as root has full access to host system if compromised. Process can escape container with root privileges."
+    symptoms:
+      - "User: root in docker inspect"
+      - "Processes run as root inside container"
+      - "Security vulnerability if container breached"
+    wrong_code: |
+      services:
+        myservice:
+          image: myimage:latest
+          # Runs as root by default
+    correct_code: |
+      services:
+        myservice:
+          image: myimage:latest
+          user: "1000:1000"  # Use non-root user
+          volumes:
+            - ./data:/app/data
+          # Fix volume permissions
+    solution_steps: |
+      1. Create dedicated user in Dockerfile
+      2. Run with user: UID:GID in docker-compose.yml
+      3. Ensure volume permissions match: chown -R 1000:1000 ./data
+      4. Verify: docker exec CONTAINER whoami
+      5. Use read-only root filesystem where possible: read_only: true
+    tags: ["docker", "security", "root", "privileges", "best-practices"]
