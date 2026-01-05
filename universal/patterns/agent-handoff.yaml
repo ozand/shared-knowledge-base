@@ -373,7 +373,7 @@ patterns:
 
         labels:
           - "kb-improvement"
-          - "enhancement" (or "bug", "yaml-error")
+          - "enhancement"  # or "bug", "yaml-error"
           - "{language/framework}"
 
         body_sections:
