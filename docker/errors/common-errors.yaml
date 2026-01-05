@@ -5,7 +5,7 @@ scope: "docker"
 last_updated: "2026-01-04"
 
 errors:
-  - id: "DOCKER-PORT-001"
+  - id: "DOCKER-001"
     title: "Port Already in Use"
     severity: "medium"
     scope: "docker"
@@ -26,7 +26,7 @@ errors:
             - "3001:3000"  # Use different port
     tags: ["docker", "ports", "networking"]
 
-  - id: "DOCKER-NET-001"
+  - id: "DOCKER-002"
     title: "Container Cannot Resolve Hostname"
     severity: "high"
     scope: "docker"
@@ -41,7 +41,7 @@ errors:
       DATABASE_URL=postgres://postgres:5432/db  # Use service name
     tags: ["docker", "networking", "dns"]
 
-  - id: "DOCKER-VOL-001"
+  - id: "DOCKER-003"
     title: "Volume Mount Permission Denied"
     severity: "medium"
     scope: "docker"
