@@ -24,11 +24,23 @@ import sqlite3
 import sys
 import yaml
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import hashlib
 import re
+import os
+
+# Import metadata management modules
+try:
+    from kb_meta import MetadataManager
+    from kb_usage import UsageTracker
+    from kb_changes import ChangeDetector
+except ImportError:
+    # Modules not in path
+    MetadataManager = None
+    UsageTracker = None
+    ChangeDetector = None
 
 
 # ============================================================================
@@ -40,13 +52,40 @@ class KBConfig:
 
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path.cwd()
-        self.kb_dir = self.project_root / "docs" / "knowledge-base"
+
+        # Smart detection: check if we're in shared-knowledge-base repository
+        # (has entries in root directory vs docs/knowledge-base structure)
+        self.kb_dir = self._detect_kb_dir()
         self.shared_dir = self.kb_dir / "shared"
         self.cache_dir = self.kb_dir / ".cache"
         self.index_db = self.cache_dir / "kb_index.db"
 
         # Create cache directory if needed
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def _detect_kb_dir(self) -> Path:
+        """Detect KB directory - handles both standard and shared-kb-repo layouts."""
+        cwd = self.project_root
+
+        # Check for shared-knowledge-base repository layout (entries in root)
+        # Look for errors/ or patterns/ directories anywhere in the tree
+        has_kb_structure = any(
+            d.is_dir() and d.name in ['errors', 'patterns']
+            for d in cwd.rglob('*')
+            if '.git' not in str(d) and '__pycache__' not in str(d) and '.cache' not in str(d)
+        )
+
+        if has_kb_structure:
+            # This is the shared-knowledge-base repository itself
+            return cwd
+
+        # Standard project layout: docs/knowledge-base
+        standard_kb = cwd / "docs" / "knowledge-base"
+        if standard_kb.exists():
+            return standard_kb
+
+        # Fallback to docs/knowledge-base
+        return cwd / "docs" / "knowledge-base"
 
     @classmethod
     def from_file(cls, config_path: Path) -> 'KBConfig':
@@ -731,6 +770,368 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"""
 
 
 # ============================================================================
+# Metadata Commands (Phase 1)
+# ============================================================================
+
+def cmd_detect_changes(config: KBConfig) -> bool:
+    """
+    Detect changes since last scan.
+
+    Args:
+        config: KB configuration
+
+    Returns:
+        True if successful
+    """
+    if ChangeDetector is None:
+        print("❌ ChangeDetector module not available")
+        return False
+
+    detector = ChangeDetector(config.kb_dir, config.cache_dir)
+    changes = detector.detect_changes()
+    print(detector.get_changes_summary(changes))
+    return True
+
+
+def cmd_check_freshness(config: KBConfig, scope: Optional[str] = None) -> bool:
+    """
+    Check freshness of knowledge base entries.
+
+    Args:
+        config: KB configuration
+        scope: Optional scope filter
+
+    Returns:
+        True if successful
+    """
+    if MetadataManager is None:
+        print("❌ MetadataManager module not available")
+        return False
+
+    manager = MetadataManager(config.kb_dir)
+    all_entries = manager.get_all_entries_metadata()
+
+    if not all_entries:
+        print("📊 No metadata found. Run 'kb init-metadata' first.")
+        return False
+
+    now = datetime.now()
+    results = {
+        "critical": [],
+        "warning": [],
+        "upcoming": [],
+        "healthy": []
+    }
+
+    for entry_id, data in all_entries.items():
+        if scope and scope not in data['file']:
+            continue
+
+        entry_meta = data['metadata']
+
+        # Check version due date
+        next_check = entry_meta.get('next_version_check_due')
+        if next_check:
+            try:
+                due_date = datetime.fromisoformat(next_check.replace('Z', '+00:00'))
+                if due_date < now:
+                    results['critical'].append({
+                        'entry_id': entry_id,
+                        'file': data['file'],
+                        'reason': 'Version check overdue',
+                        'due_date': next_check,
+                        'days_overdue': (now - due_date).days
+                    })
+                    continue
+            except:
+                pass
+
+        # Check validation status
+        validation_status = entry_meta.get('validation_status')
+        if validation_status == 'needs_review':
+            last_reviewed = entry_meta.get('validated_at')
+            if last_reviewed:
+                try:
+                    review_date = datetime.fromisoformat(last_reviewed.replace('Z', '+00:00'))
+                    days_since = (now - review_date).days
+                    if days_since > 30:
+                        results['warning'].append({
+                            'entry_id': entry_id,
+                            'file': data['file'],
+                            'reason': 'Needs review',
+                            'days_since_review': days_since
+                        })
+                        continue
+                except:
+                    pass
+
+        # Check upcoming reviews
+        if next_check:
+            try:
+                due_date = datetime.fromisoformat(next_check.replace('Z', '+00:00'))
+                days_until = (due_date - now).days
+                if 0 <= days_until <= 30:
+                    results['upcoming'].append({
+                        'entry_id': entry_id,
+                        'file': data['file'],
+                        'next_review': next_check,
+                        'days_until': days_until
+                    })
+                    continue
+            except:
+                pass
+
+        # Entry is healthy
+        results['healthy'].append(entry_id)
+
+    # Print results
+    print(f"\n🔍 Freshness Check - {now.isoformat()}\n")
+    print(f"Critical: {len(results['critical'])}")
+    print(f"Warning: {len(results['warning'])}")
+    print(f"Upcoming: {len(results['upcoming'])}")
+    print(f"Healthy: {len(results['healthy'])}\n")
+
+    if results['critical']:
+        print("🚨 CRITICAL:")
+        for item in results['critical']:
+            print(f"  - {item['entry_id']}: {item['reason']}")
+            print(f"    Due: {item['due_date']} ({item['days_overdue']} days overdue)")
+            print(f"    File: {item['file']}")
+
+    if results['warning']:
+        print("\n⚠️  WARNING:")
+        for item in results['warning']:
+            print(f"  - {item['entry_id']}: {item['reason']} ({item['days_since_review']} days)")
+
+    if results['upcoming']:
+        print(f"\n📅 UPCOMING ({len(results['upcoming'])}):")
+        for item in results['upcoming'][:5]:
+            print(f"  - {item['entry_id']}: {item['days_until']} days")
+
+    return True
+
+
+def cmd_analyze_usage(config: KBConfig, days: int = 30) -> bool:
+    """
+    Analyze local usage patterns.
+
+    Args:
+        config: KB configuration
+        days: Number of days to analyze
+
+    Returns:
+        True if successful
+    """
+    if UsageTracker is None:
+        print("❌ UsageTracker module not available")
+        return False
+
+    tracker = UsageTracker(config.cache_dir)
+    summary = tracker.get_usage_summary(days=days)
+
+    print(f"\n📊 Usage Analysis (last {days} days)\n")
+    print(f"Total accesses: {summary['total_accesses']}")
+    print(f"Unique entries: {summary['entries_accessed']}")
+
+    if summary['top_entries']:
+        print(f"\n🔝 Top entries:")
+        for entry_id, count in summary['top_entries'][:10]:
+            print(f"  - {entry_id}: {count} accesses")
+
+    # Search gaps
+    gaps = tracker.detect_gaps(min_count=2)
+    if gaps:
+        print(f"\n🔍 Search gaps ({len(gaps)} found):")
+        for gap in gaps[:10]:
+            print(f"  - \"{gap['query']}\" ({gap['count']} searches) [{gap['priority']}]")
+
+    # Low quality, high usage
+    if MetadataManager:
+        meta_manager = MetadataManager(config.kb_dir)
+        all_entries = meta_manager.get_all_entries_metadata()
+
+        quality_lookup = {}
+        for entry_id, data in all_entries.items():
+            quality = data['metadata'].get('quality_score')
+            if quality is not None:
+                quality_lookup[entry_id] = quality
+
+        opportunities = tracker.get_low_quality_high_usage(quality_lookup)
+        if opportunities:
+            print(f"\n⚠️  High access, low quality:")
+            for opp in opportunities[:5]:
+                quality = opp['quality_score'] or 'Unknown'
+                print(f"  - {opp['entry_id']}: {opp['access_count']} accesses, quality: {quality}")
+
+    return True
+
+
+def cmd_update_metadata(config: KBConfig, entry_id: str, file_path: Path,
+                       updates: Dict[str, Any]) -> bool:
+    """
+    Update metadata for an entry.
+
+    Args:
+        config: KB configuration
+        entry_id: Entry identifier
+        file_path: Path to YAML file
+        updates: Dictionary of updates
+
+    Returns:
+        True if successful
+    """
+    if MetadataManager is None:
+        print("❌ MetadataManager module not available")
+        return False
+
+    manager = MetadataManager(config.kb_dir)
+    result = manager.update_entry_metadata(
+        file_path,
+        entry_id,
+        updates,
+        agent="cli",
+        reason="Manual update"
+    )
+
+    if result:
+        print(f"✓ Updated metadata for {entry_id}")
+        return True
+    else:
+        print(f"✗ Failed to update metadata for {entry_id}")
+        return False
+
+
+def cmd_init_metadata(config: KBConfig) -> bool:
+    """
+    Initialize metadata for all YAML files.
+
+    Args:
+        config: KB configuration
+
+    Returns:
+        True if successful
+    """
+    if MetadataManager is None:
+        print("❌ MetadataManager module not available")
+        return False
+
+    manager = MetadataManager(config.kb_dir)
+
+    # Find all YAML files
+    yaml_files = []
+    for ext in ['*.yaml', '*.yml']:
+        yaml_files.extend(config.kb_dir.rglob(ext))
+
+    # Skip meta files and cache
+    yaml_files = [f for f in yaml_files
+                 if '_meta.yaml' not in str(f)
+                 and '.cache' not in str(f)]
+
+    print(f"🔍 Initializing metadata for {len(yaml_files)} files...\n")
+
+    count = 0
+    for yaml_file in yaml_files:
+        result = manager.create_meta_file(yaml_file)
+        if result:
+            count += 1
+
+    print(f"\n✓ Created metadata for {count} files")
+    return True
+
+
+def cmd_reindex_metadata(config: KBConfig) -> bool:
+    """
+    Rebuild global metadata index.
+
+    Args:
+        config: KB configuration
+
+    Returns:
+        True if successful
+    """
+    if MetadataManager is None:
+        print("❌ MetadataManager module not available")
+        return False
+
+    manager = MetadataManager(config.kb_dir)
+    all_entries = manager.get_all_entries_metadata()
+
+    # Generate index
+    index = {
+        "version": "1.0",
+        "last_updated": datetime.now().isoformat() + "Z",
+        "total_entries": len(all_entries),
+        "entry_catalog": {},
+        "statistics": {
+            "by_scope": {},
+            "by_validation_status": {},
+            "by_quality": {}
+        }
+    }
+
+    # Build catalog
+    for entry_id, data in all_entries.items():
+        entry_meta = data['metadata']
+        file_path = data['file']
+
+        # Parse scope from file path
+        parts = Path(file_path).parts
+        scope = "unknown"
+        for part in parts:
+            if part in ['universal', 'python', 'javascript', 'docker', 'postgresql', 'framework']:
+                scope = part
+                break
+
+        index['entry_catalog'][entry_id] = {
+            "file": file_path,
+            "scope": scope,
+            "created_at": entry_meta.get('created_at'),
+            "last_modified": entry_meta.get('last_modified'),
+            "quality_score": entry_meta.get('quality_score'),
+            "validation_status": entry_meta.get('validation_status', 'unknown'),
+            "next_review_date": entry_meta.get('next_version_check_due')
+        }
+
+        # Statistics by scope
+        index['statistics']['by_scope'][scope] = \
+            index['statistics']['by_scope'].get(scope, 0) + 1
+
+        # Statistics by validation status
+        status = entry_meta.get('validation_status', 'unknown')
+        index['statistics']['by_validation_status'][status] = \
+            index['statistics']['by_validation_status'].get(status, 0) + 1
+
+        # Statistics by quality
+        quality = entry_meta.get('quality_score')
+        if quality is not None:
+            if quality >= 90:
+                level = 'excellent_90_plus'
+            elif quality >= 75:
+                level = 'good_75_89'
+            elif quality >= 60:
+                level = 'acceptable_60_74'
+            else:
+                level = 'needs_improvement'
+            index['statistics']['by_quality'][level] = \
+                index['statistics']['by_quality'].get(level, 0) + 1
+
+    # Save index
+    index_file = config.kb_dir / "_index.yaml"
+    with open(index_file, 'w', encoding='utf-8') as f:
+        yaml.dump(index, f, default_flow_style=False, sort_keys=False)
+
+    print(f"\n✓ Reindexed metadata")
+    print(f"  Total entries: {len(all_entries)}")
+    print(f"  Index saved to: {index_file}")
+    print(f"\n📊 Statistics:")
+    print(f"  By scope: {index['statistics']['by_scope']}")
+    print(f"  By validation: {index['statistics']['by_validation_status']}")
+    print(f"  By quality: {index['statistics']['by_quality']}")
+
+    return True
+
+
+# ============================================================================
 # CLI Interface
 # ============================================================================
 
@@ -789,6 +1190,29 @@ Examples:
     sync_parser.add_argument('--file', type=Path, required=True, help='YAML file to sync')
     sync_parser.add_argument('--message', type=str, help='Custom commit message')
 
+    # Metadata commands
+    init_meta_parser = subparsers.add_parser('init-metadata', help='Initialize metadata for all YAML files')
+    init_meta_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+
+    detect_changes_parser = subparsers.add_parser('detect-changes', help='Detect new/modified entries')
+    detect_changes_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+
+    freshness_parser = subparsers.add_parser('check-freshness', help='Check entry freshness and review status')
+    freshness_parser.add_argument('--scope', help='Filter by scope (python, docker, etc.)')
+
+    usage_parser = subparsers.add_parser('analyze-usage', help='Analyze local usage patterns')
+    usage_parser.add_argument('--days', type=int, default=30, help='Days to analyze (default: 30)')
+
+    update_meta_parser = subparsers.add_parser('update-metadata', help='Update metadata for an entry')
+    update_meta_parser.add_argument('--entry-id', required=True, help='Entry ID (e.g., IMPORT-001)')
+    update_meta_parser.add_argument('--file', type=Path, required=True, help='Path to YAML file')
+    update_meta_parser.add_argument('--quality-score', type=int, help='Set quality score (0-100)')
+    update_meta_parser.add_argument('--validation-status', choices=['needs_review', 'validated', 'outdated', 'deprecated'],
+                                   help='Set validation status')
+    update_meta_parser.add_argument('--tested-version', help='Set tested version (e.g., python-3.12)')
+
+    reindex_parser = subparsers.add_parser('reindex-metadata', help='Rebuild global metadata index')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -831,6 +1255,42 @@ Examples:
 
         elif args.command == 'auto-sync':
             success = cmd_auto_sync(config, args.file, args.message)
+            return 0 if success else 1
+
+        # Metadata commands
+        elif args.command == 'init-metadata':
+            success = cmd_init_metadata(config)
+            return 0 if success else 1
+
+        elif args.command == 'detect-changes':
+            success = cmd_detect_changes(config)
+            return 0 if success else 1
+
+        elif args.command == 'check-freshness':
+            success = cmd_check_freshness(config, scope=args.scope)
+            return 0 if success else 1
+
+        elif args.command == 'analyze-usage':
+            success = cmd_analyze_usage(config, days=args.days)
+            return 0 if success else 1
+
+        elif args.command == 'update-metadata':
+            updates = {}
+            if args.quality_score is not None:
+                updates['quality_score'] = args.quality_score
+            if args.validation_status:
+                updates['validation_status'] = args.validation_status
+            if args.tested_version:
+                # Parse version (e.g., "python-3.12" -> {"python": "3.12"})
+                parts = args.tested_version.split('-', 1)
+                if len(parts) == 2:
+                    updates['tested_versions'] = {parts[0]: parts[1]}
+
+            success = cmd_update_metadata(config, args.entry_id, args.file, updates)
+            return 0 if success else 1
+
+        elif args.command == 'reindex-metadata':
+            success = cmd_reindex_metadata(config)
             return 0 if success else 1
 
         return 0

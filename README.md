@@ -39,6 +39,25 @@ python docs/knowledge-base/tools/kb.py search "async"
 
 **See [QUICKSTART.md](QUICKSTART.md) for detailed setup.**
 
+### 📚 For Knowledge Base Curators
+
+**Are you maintaining this knowledge base?** See the [Curator Documentation Index](CURATOR_DOCS_INDEX.md) for:
+
+- 🎯 **[AGENT.md](AGENT.md)** - Curator role definition and responsibilities
+- 🛠️ **[SKILLS.md](SKILLS.md)** - Available skills (audit-quality, find-duplicates, research-enhance, etc.)
+- 📋 **[WORKFLOWS.md](WORKFLOWS.md)** - Standard operating procedures
+- ⭐ **[QUALITY_STANDARDS.md](QUALITY_STANDARDS.md)** - Entry quality rubric (0-100)
+- 💬 **[PROMPTS.md](PROMPTS.md)** - Reusable AI prompt templates
+- 🚀 **[README_CURATOR.md](README_CURATOR.md)** - Quick start guide for curators
+
+**Key capabilities:**
+- Quality assurance and validation
+- Duplicate detection and merging
+- Deep research enhancement (Perplexity, Gemini, etc.)
+- Gap analysis and knowledge expansion
+- Version updates and deprecation
+- Cross-reference optimization
+
 ### What's Inside
 
 **Supported Languages:**
