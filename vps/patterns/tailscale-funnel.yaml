@@ -1,0 +1,152 @@
+# Tailscale Funnel Patterns
+# Exposing local services securely through Tailscale
+
+version: "1.0"
+category: "vpn-tunneling"
+last_updated: "2026-01-05"
+
+patterns:
+  - id: "VPS-TS-001"
+    title: "Expose Local Services via Tailscale Funnel"
+    severity: "medium"
+    scope: "vps"
+
+    description: |
+      Use Tailscale Funnel to expose local VPS services to the internet securely
+      without opening public ports or configuring DNS.
+
+    pattern:
+      code: |
+        # 1. Quick expose (one-liner)
+        sudo tailscale-serve 3000
+
+        # This exposes local port 3000 as:
+        # https://<tailscale-node-name>.ts.net
+
+        # 2. Interactive mode (recommended)
+        sudo tailscale-funnel
+
+        # Features:
+        # - List active funnels
+        # - Add new funnel
+        # - Remove funnel
+        # - View access logs
+
+      explanation: |
+        Tailscale Funnel creates a secure tunnel from your Tailscale node to
+        the internet, authenticated with your Tailscale account. No public
+        ports needed, no DNS configuration required.
+
+    use_cases:
+      - "Expose development server temporarily"
+      - "Share web app for testing without deployment"
+      - "Access admin interfaces from anywhere"
+      - "Demo applications to clients"
+      - "Remote debugging"
+
+    security_considerations:
+      code: |
+        # 1. Authentication required
+        # Only users in your Tailscale network can access
+
+        # 2. Access logs are available
+        tailscale status --json | jq '.funnel'
+
+        # 3. Can restrict to specific users
+        # In Tailscale admin console:
+        # - ACLs can limit who accesses funnel
+        # - Review audit logs regularly
+
+        # 4. HTTPS is automatic
+        # All traffic is encrypted end-to-end
+        # Valid SSL certificate included
+
+    common_ports:
+      code: |
+        # Development servers
+        sudo tailscale-serve 3000   # Node/Express
+        sudo tailscale-serve 8000   # Django/FastAPI
+        sudo tailscale-serve 5000   # Flask
+
+        # Admin interfaces
+        sudo tailscale-serve 8080   # File Browser
+        sudo tailscale-serve 54321  # X-ui panel
+
+        # Custom applications
+        sudo tailscale-serve 9000   # Custom app
+
+    troubleshooting:
+      code: |
+        # Check if funnel is active
+        tailscale funnel status
+
+        # View URL
+        tailscale funnel list
+
+        # Check if port is in use locally
+        sudo ss -tlnp | grep :3000
+
+        # If "address already in use":
+        # 1. Find what's using the port
+        sudo lsof -i :3000
+
+        # 2. Either stop conflicting service or use different port
+        sudo tailscale-serve 3001
+
+        # Check Tailscale status
+        tailscale status
+
+    automation:
+      code: |
+        # Start funnel on boot (systemd service)
+        sudo tee /etc/systemd/system/tailscale-funnel.service << 'EOF'
+        [Unit]
+        Description=Tailscale Funnel for Port 3000
+        After=network.target tailscaled.service
+
+        [Service]
+        Type=simple
+        ExecStart=/usr/bin/tailscale funnel --bg --https=443 localhost:3000
+        Restart=on-failure
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
+        sudo systemctl enable tailscale-funnel
+        sudo systemctl start tailscale-funnel
+
+    alternatives:
+      code: |
+        # Option 1: Tailscale Funnel (easiest)
+        sudo tailscale-serve 3000
+
+        # Option 2: Nginx reverse proxy + Tailscale
+        # Expose Nginx via Tailscale, proxy to backend
+        location / {
+            proxy_pass http://localhost:3000;
+        }
+
+        # Option 3: SSH tunnel
+        ssh -R 3000:localhost:3000 user@remote-server
+
+        # Option 4: ngrok (if Tailscale unavailable)
+        ngrok http 3000
+
+    best_practices:
+      - "Use only for temporary access (development/testing)"
+      - "Remove funnel when not needed: tailscale funnel --https=443 --reset"
+      - "Monitor access logs regularly"
+      - "Use strong authentication on exposed services"
+      - "Keep Tailscale client updated"
+      - "Document active funnels in runbook"
+
+    related_issues:
+      - "VPS-NET-001: Port conflicts"
+      - "VPS-SEC-002: Docker service security"
+      - "VPS-BP-004: Security in layers"
+
+    references:
+      - "tailscale-serve.sh script"
+      - "tailscale-funnel.sh script"
+      - "vps-admin tailscale-status"

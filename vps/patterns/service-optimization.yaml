@@ -1,0 +1,147 @@
+# Service Optimization Patterns
+# Identifying and removing unnecessary services to free resources
+
+version: "1.0"
+category: "performance-optimization"
+last_updated: "2026-01-05"
+
+patterns:
+  - id: "VPS-OPT-001"
+    title: "Service Audit and Resource Optimization"
+    severity: "medium"
+    scope: "vps"
+
+    description: |
+      Systematic approach to identifying unnecessary services, measuring their
+      resource consumption, and safely disabling them to free CPU and memory.
+
+    pattern:
+      code: |
+        # 1. List all active services with resource usage
+        systemctl status --no-pager | head -n 20
+
+        # 2. Check memory usage by specific services
+        ps aux --sort=-%mem | head -20
+
+        # 3. Find services using significant memory
+        for svc in $(systemctl list-units --type=service --state=running | \
+            awk '{print $1}' | grep -E "\.service$" | head -10); do
+            pid=$(systemctl show $svc -p MainPID | cut -d= -f2)
+            if [ "$pid" != "0" ]; then
+                mem=$(ps -p $pid -o rss= 2>/dev/null || echo "0")
+                [ "$mem" != "0" ] && echo "$svc: $((mem/1024))MB"
+            fi
+        done | sort -t: -k2 -rn
+
+      explanation: |
+        On a 2GB RAM VPS, every MB matters. Common unnecessary services:
+        - snap.docker.dockerd (80MB) - duplicate of Docker
+        - fwupd (28MB) - firmware updater (not needed on VPS)
+        - multipathd (26MB) - multipath storage (not needed for VPS)
+
+    safety_checklist:
+      code: |
+        # Before disabling any service, verify:
+
+        # 1. Is it critical for VPS operation?
+        # KEEP: sshd, nginx, xray, tailscale, docker, fail2ban
+
+        # 2. Is it redundant?
+        # Check: systemctl status docker | grep snap
+        # If snap Docker exists alongside apt Docker, disable snap.
+
+        # 3. Is it needed for this environment?
+        # Firmware updaters (fwupd) not needed on VPS
+        # Multipath (multipathd) not needed for single-path storage
+
+        # 4. Check dependencies
+        systemctl show <service> -p Requires,Wants,After
+
+    disable_procedure:
+      code: |
+        # 1. Stop the service
+        sudo systemctl stop <service-name>
+
+        # 2. Verify system is stable
+        # Wait 5-10 minutes, check:
+        uptime
+        free -h
+        systemctl --failed
+
+        # 3. If stable, disable from auto-start
+        sudo systemctl disable <service-name>
+
+        # 4. Verify improvement
+        free -h  # Should show more available memory
+        uptime   # Load average should decrease
+
+    rollback:
+      code: |
+        # If issues occur after disabling service:
+        sudo systemctl start <service-name>
+        sudo systemctl enable <service-name>
+
+        # Check if service was really needed
+        journalctl -u <service-name> --since "10 minutes ago"
+
+    specific_examples:
+      code: |
+        # Example 1: Disable snap Docker (duplicate)
+        sudo systemctl stop snap.docker.dockerd
+        sudo systemctl disable snap.docker.dockerd
+        # Result: Frees 80MB RAM
+
+        # Example 2: Disable firmware updater
+        sudo systemctl stop fwupd
+        sudo systemctl disable fwupd
+        # Result: Frees 28MB RAM
+
+        # Example 3: Disable multipath daemon
+        sudo systemctl stop multipathd
+        sudo systemctl disable multipathd
+        # Result: Frees 26MB RAM
+
+        # Total improvement: ~134MB RAM freed
+
+    verification:
+      code: |
+        # After optimization, verify:
+        free -h                    # More available memory
+        systemctl list-units --state=running | wc -l  # Fewer services
+        uptime                     # Lower load average
+        vps-monitor                # Overall system health
+
+    monitoring:
+      code: |
+        # Add to daily monitoring script
+        check_service_memory() {
+            echo "=== Top Services by Memory ==="
+            ps aux --sort=-%mem | head -10 | \
+                awk '{printf "%10s %6sMB  %s\n", $1, int($6/1024), $11}'
+        }
+
+        # Check for new services after reboot
+        diff_services() {
+            systemctl list-units --type=service --state=running | \
+                awk '{print $1}' > /tmp/current-services.txt
+
+            if [ -f /tmp/baseline-services.txt ]; then
+                diff /tmp/baseline-services.txt /tmp/current-services.txt
+            fi
+        }
+
+    best_practices:
+      - "Always stop service first, observe system stability before disabling"
+      - "Keep documentation of what was disabled and why"
+      - "Test after reboots to ensure no critical dependencies"
+      - "Monitor for 1-2 weeks before removing packages entirely"
+      - "Document rollback procedures"
+
+    related_issues:
+      - "VPS-MEM-002: High memory usage by unnecessary services"
+      - "VPS-MEM-001: Swap optimization"
+      - "VPS-BP-002: Incremental optimization approach"
+
+    references:
+      - "vps-optimize-services.sh script"
+      - "vps-monitor.sh script"

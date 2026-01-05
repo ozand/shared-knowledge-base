@@ -1,0 +1,74 @@
+# X-ray VLESS VPN Management Patterns
+# Best practices for managing X-ray VPN with Reality protocol
+
+version: "1.0"
+category: "vpn-management"
+last_updated: "2026-01-05"
+
+patterns:
+  - id: "VPS-VPN-001"
+    title: "X-ray Client Management and Inbound Monitoring"
+    severity: "high"
+    scope: "vps"
+
+    description: |
+      Efficient management of X-ray VLESS VPN clients with Reality protocol,
+      including viewing active connections, managing inbounds, and troubleshooting.
+
+    pattern:
+      code: |
+        # 1. Quick status check
+        systemctl status x-ui.service
+
+        # 2. View all inbound connections
+        xray-client-manager list-inbounds
+
+        # 3. Check X-ray configuration
+        /usr/local/bin/xray -c /usr/local/etc/xray/config.json -test
+
+        # 4. View recent logs
+        journalctl -u x-ui.service -n 50
+
+        # 5. Restart service if needed
+        systemctl restart x-ui.service
+
+      explanation: |
+        X-ui panel provides web interface for managing X-ray VLESS inbounds.
+        Multiple ports support different Reality configurations for redundancy.
+
+    common_ports:
+      - "443 - Standard HTTPS (primary)"
+      - "444 - Alternative HTTPS"
+      - "11257 - Custom port"
+      - "40643 - High port"
+      - "49464 - High port"
+
+    troubleshooting:
+      code: |
+        # Check if ports are listening
+        sudo ss -tlnp | grep xray
+
+        # Verify configuration syntax
+        /usr/local/bin/xray -c /usr/local/etc/xray/config.json -test
+
+        # View errors in logs
+        journalctl -u x-ui.service --since "1 hour ago" | grep -i error
+
+        # Check x-ui web interface (usually port 54321)
+        curl -I http://localhost:54321
+
+    integration:
+      code: |
+        # Via vps-admin tool
+        vps-admin xray-status       # Check service status
+        vps-admin xray-check        # Validate configuration
+        vps-admin xray-clients      # View active clients
+        vps-admin xray-logs 100     # View recent logs
+
+    related_issues:
+      - "VPS-NET-001: Port conflicts with other services"
+      - "VPS-SEC-001: Scanner blocking in Nginx"
+
+    references:
+      - "xray-client-manager.sh script"
+      - "vps-admin.sh tool"

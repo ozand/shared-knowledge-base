@@ -1,0 +1,296 @@
+# VPS Networking and Service Port Error Patterns
+# Common port conflicts, security issues, and networking solutions
+
+version: "1.0"
+category: "networking-security"
+last_updated: "2026-01-05"
+
+errors:
+  - id: "VPS-NET-001"
+    title: "Port 8080 Already in Use - Docker Container Fails to Start"
+    severity: "high"
+    scope: "vps"
+
+    problem: |
+      Attempting to start Docker container (filebrowser) on port 8080 fails
+      because port is already occupied by ovpmd (OpenVPN Manager) service.
+
+    symptoms:
+      - Docker error: "port is already allocated"
+      - "Bind for 0.0.0.0:8080 failed: port is already allocated"
+      - Container fails to start with port conflict error
+
+    detection:
+      code: |
+        # Check what's using port 8080
+        sudo ss -tlnp | grep :8080
+
+        # Check with lsof
+        sudo lsof -i :8080
+
+        # Find process using port
+        sudo fuser 8080/tcp
+
+        # Check service status
+        systemctl status ovpmd
+
+    root_cause: |
+      ovpmd (OpenVPN Manager) service was running and listening on port 8080,
+      preventing Docker container from binding to the same port.
+
+    solution:
+      code: |
+        # 1. Stop and disable the conflicting service
+        sudo systemctl stop ovpmd
+        sudo systemctl disable ovpmd
+
+        # 2. Verify port is free
+        sudo ss -tlnp | grep :8080
+
+        # 3. Start Docker container
+        cd /home/ozand/filebrowser
+        docker-compose up -d
+
+        # 4. Verify container is running
+        docker ps | grep filebrowser
+
+      explanation: |
+        ovpmd is an OpenVPN manager that may not be needed if using alternative
+        VPN solutions (X-ray VLESS, Tailscale). Disabling frees the port.
+
+    alternative_solution:
+      code: |
+        # Option 1: Change Docker container port
+        # Edit docker-compose.yml:
+        # ports:
+        #   - "127.0.0.1:8081:80"  # Use 8081 instead
+
+        # Option 2: Find alternative port for service
+        # Scan for available ports:
+        sudo ss -tln | awk '{print $4}' | grep -o '[0-9]*$' | sort -n | uniq
+
+      warning: "If ovpmd is actively needed, use alternative ports instead."
+
+    prevention:
+      code: |
+        # Create port inventory script
+        cat > /usr/local/bin/check-ports.sh << 'EOF'
+        #!/bin/bash
+        echo "=== Common Ports in Use ==="
+        for port in 80 443 8080 3000 5000 8000 9000; do
+            if sudo ss -tlnp | grep -q ":$port "; then
+                service=$(sudo ss -tlnp | grep ":$port " | awk '{print $6}' | head -1)
+                echo "Port $port: $service"
+            else
+                echo "Port $port: FREE"
+            fi
+        done
+        EOF
+
+        chmod +x /usr/local/bin/check-ports.sh
+
+        # Run before starting new services
+        sudo check-ports.sh
+
+      explanation: |
+        Maintaining an inventory of used ports prevents conflicts when
+        deploying new services.
+
+    related_issues:
+      - "VPS-SVC-001: Unnecessary services consuming resources"
+
+  - id: "VPS-SEC-001"
+    title: "Malicious Scanner Making 84% of HTTP Requests"
+    severity: "high"
+    scope: "vps"
+
+    problem: |
+      Chinese IP address 152.32.226.11 is aggressively scanning the server,
+      making 1107 out of 1311 total requests (84%). Scanner searches for
+      vulnerabilities like .git/config exposure, PHP exploits, and
+      Chinese application vulnerabilities.
+
+    symptoms:
+      - High request volume from single IP in Nginx logs
+      - Requests for .git/config, PHP files, Chinese app paths
+      - 404 errors for vulnerability probing
+      - Potential security risk if vulnerabilities exist
+
+    detection:
+      code: |
+        # Top IPs by request count
+        sudo awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -10
+
+        # Check what scanner is looking for
+        sudo grep 152.32.226.11 /var/log/nginx/access.log | tail -20
+
+        # Analyze request patterns
+        sudo grep 152.32.226.11 /var/log/nginx/access.log | awk -F'"' '{print $2}' | awk '{print $2}' | sort | uniq -c | sort -rn | head -20
+
+        # Use quick stats script
+        sudo nginx-stats
+
+    root_cause: |
+      Automated vulnerability scanner from Chinese IP probing web server for
+      common security issues (git exposure, PHP vulnerabilities, CMS exploits).
+
+    solution:
+      code: |
+        # 1. Create Nginx security configuration
+        sudo tee /etc/nginx/conf.d/security.conf << 'EOF'
+        # Block malicious scanners
+        deny 152.32.226.11;
+
+        # Hide Nginx version (security best practice)
+        server_tokens off;
+
+        # Rate limiting zone (define in http context)
+        limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
+        EOF
+
+        # 2. Test Nginx configuration
+        sudo nginx -t
+
+        # 3. Reload Nginx
+        sudo systemctl reload nginx
+
+        # 4. Verify block is active
+        sudo tail -f /var/log/nginx/access.log | grep 152.32.226.11
+        # Should see 403 Forbidden
+
+      explanation: |
+        Using 'deny' directive blocks IP at Nginx level before request reaches
+        application. server_tokens off hides version information.
+
+    hardening:
+      code: |
+        # Additional security measures
+        sudo tee -a /etc/nginx/conf.d/security.conf << 'EOF'
+
+        # Block access to sensitive files
+        location ~ /\.(git|svn|env) {
+            deny all;
+            return 404;
+        }
+
+        # Block common exploit paths
+        location ~* (wp-content|wp-admin|wp-includes|phpmyadmin|xmlrpc) {
+            deny all;
+            return 404;
+        }
+
+        # Rate limit for API endpoints
+        limit_req zone=one burst=20 nodelay;
+        EOF
+
+        sudo systemctl reload nginx
+
+    prevention:
+      code: |
+        # 1. Install and configure Fail2ban
+        sudo apt-get install fail2ban
+        sudo systemctl enable fail2ban
+        sudo systemctl start fail2ban
+
+        # 2. Create Nginx scanner filter
+        sudo tee /etc/fail2ban/filter.d/nginx-scanners.conf << 'EOF'
+        [Definition]
+        failregex = <HOST> -.*"(GET|POST).*\.(git|svn|env|config)
+        ignoreregex =
+        EOF
+
+        # 3. Configure jail
+        sudo tee /etc/fail2ban/jail.d/nginx-scanners.conf << 'EOF'
+        [nginx-scanners]
+        enabled = true
+        filter = nginx-scanners
+        action = iptables-multiport[name=ReqLimit, port="http,https"]
+        logpath = /var/log/nginx/access.log
+        maxretry = 5
+        findtime = 600
+        bantime = 86400
+        EOF
+
+        # 4. Restart Fail2ban
+        sudo systemctl restart fail2ban
+
+      explanation: |
+        Fail2ban automatically monitors logs and bans IPs that show suspicious
+        patterns (multiple vulnerability probes in short time).
+
+    monitoring:
+      code: |
+        # Add to daily monitoring
+        check_top_ips() {
+            echo "=== Top 5 IPs by request count ==="
+            awk '{print $1}' /var/log/nginx/access.log | \
+                sort | uniq -c | sort -rn | head -5
+        }
+
+        # Check for new suspicious IPs
+        detect_scanners() {
+            awk '{print $1}' /var/log/nginx/access.log | \
+                sort | uniq -c | sort -rn | \
+                awk '$1 > 100 {print $2 " - " $1 " requests"}'
+        }
+
+    verification:
+      steps:
+        - "Check Nginx logs for blocked IP (should see 403 errors)"
+        - "Run nginx-stats to see current top IPs"
+        - "Verify scanner IP is no longer in top requesters"
+        - "Monitor for new scanners"
+
+    related_issues:
+      - "VPS-SEC-002: Rate limiting for API endpoints"
+      - "VPS-MON-001: Nginx analytics and monitoring"
+
+    references:
+      - "/etc/nginx/conf.d/security.conf"
+      - "nginx-stats command"
+      - "vps-admin.sh tool"
+
+  - id: "VPS-SEC-002"
+    title: "Exposing Docker Services Only to Localhost"
+    severity: "medium"
+    scope: "vps"
+
+    problem: |
+      Docker containers (like filebrowser) exposed to 0.0.0.0 are accessible
+      from internet, creating potential security risk if not properly authenticated.
+
+    symptoms:
+      - Service accessible from public IP
+      - Nginx reverse proxy not being used
+      - Direct access to container ports
+
+    solution:
+      code: |
+        # docker-compose.yml - Bind to localhost only
+        services:
+          filebrowser:
+            ports:
+              - "127.0.0.1:8080:80"  # Only accessible from localhost
+              # NOT: - "8080:80"  # This would expose to internet
+
+        # Then access via Nginx reverse proxy
+        # Nginx configuration:
+        location /files/ {
+            proxy_pass http://127.0.0.1:8080/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+      explanation: |
+        Binding to 127.0.0.1 means service only accessible from localhost.
+        Access through Nginx reverse proxy allows:
+        - SSL/TLS encryption
+        - Authentication
+        - Rate limiting
+        - Access control
+
+    prevention:
+      - "Always bind Docker services to 127.0.0.1 unless public access needed"
+      - "Use Nginx reverse proxy for public access"
+      - "Implement authentication at proxy level"
+      - "Enable HTTPS only"

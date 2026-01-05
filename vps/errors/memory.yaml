@@ -1,0 +1,276 @@
+# VPS Memory and Performance Error Patterns
+# Memory optimization, swap management, and performance tuning
+
+version: "1.0"
+category: "memory-performance"
+last_updated: "2026-01-05"
+
+errors:
+  - id: "VPS-MEM-001"
+    title: "High Swap Usage Causing Performance Degradation"
+    severity: "high"
+    scope: "vps"
+
+    problem: |
+      System using 326MB+ of swap despite having available RAM, causing
+      performance degradation. Common processes in swap include
+      tailscaled, unattended-upgr, and other services.
+
+    symptoms:
+      - Swap usage 300MB+ on 2GB RAM VPS
+      - Slow system response
+      - High load average (1.3+)
+      - System feels sluggish despite free RAM
+
+    detection:
+      code: |
+        # Check swap usage
+        free -h
+        swapon --show
+
+        # See what's in swap
+        sudo smem -s swap
+
+        # Or use /proc
+        for file in /proc/*/status; do
+            awk '/VmSwap|Name/{printf $2 " " $3}END{ print ""}' "$file"
+        done | grep -v "VmSwap 0" | sort -k2 -rn | head -10
+
+        # Check system load
+        uptime
+
+    root_cause: |
+      System swapped out processes to disk during memory pressure, but
+      didn't swap them back in when RAM became available. This causes
+      unnecessary disk I/O and slow performance.
+
+    solution:
+      code: |
+        # 1. Clear swap by disabling and re-enabling
+        sudo swapoff -a
+        sudo swapon -a
+
+        # 2. Verify swap is cleared
+        free -h
+
+        # 3. Check results
+        # Should show 0B used
+
+      explanation: |
+        swapoff -a moves all swap contents back to RAM, then swapon -a
+        re-enables the swap device. This forces everything back to RAM
+        without requiring reboot.
+
+    verification:
+      steps:
+        - "free -h shows Swap: 0B used"
+        - "System feels more responsive"
+        - "Load average decreases"
+        - "No processes in swap"
+
+    prevention:
+      code: |
+        # 1. Adjust swappiness (how aggressively system uses swap)
+        # Current swappiness
+        cat /proc/sys/vm/swappiness
+
+        # Set to lower value (60 is default, 10-20 recommended for VPS)
+        sudo sysctl vm.swappiness=10
+
+        # 2. Make persistent
+        sudo tee -a /etc/sysctl.conf << 'EOF'
+        # Reduce swap usage - prefer RAM over swap
+        vm.swappiness=10
+        vm.vfs_cache_pressure=50
+        EOF
+
+        # 3. Apply settings
+        sudo sysctl -p
+
+      explanation: |
+        swappiness=10 means system will only use swap when RAM is 90% full.
+        Default value of 60 causes premature swapping.
+
+    additional_optimization:
+      code: |
+        # Optimize caching behavior
+        sudo tee -a /etc/sysctl.conf << 'EOF'
+        # Improve cache management
+        vm.dirty_ratio=15
+        vm.dirty_background_ratio=5
+        vm.overcommit_memory=1
+        EOF
+
+        sudo sysctl -p
+
+    monitoring:
+      code: |
+        # Add to monitoring script
+        check_swap_usage() {
+            swap_used=$(free | grep Swap | awk '{print $3}')
+            swap_total=$(free | grep Swap | awk '{print $2}')
+
+            if [ "$swap_used" -gt 0 ]; then
+                swap_percent=$((swap_used * 100 / swap_total))
+                echo "WARNING: Swap usage: ${swap_percent}%"
+                echo "Run: sudo swapoff -a && sudo swapon -a"
+            fi
+        }
+
+    related_issues:
+      - "VPS-LOG-001: Large log files consuming memory"
+      - "VPS-SVC-001: Unnecessary services consuming RAM"
+
+  - id: "VPS-MEM-002"
+    title: "High Memory Usage by Unnecessary Services"
+    severity: "medium"
+    scope: "vps"
+
+    problem: |
+      Multiple unnecessary services running on 2GB RAM VPS consuming
+      significant memory:
+      - snap Docker service: 80MB
+      - fwupd (firmware updater): 28MB
+      - multipathd (multipath daemon): 26MB
+
+    symptoms:
+      - High memory usage
+      - Limited available RAM
+      - System forced to use swap
+
+    detection:
+      code: |
+        # Check memory usage by service
+        systemctl status --no-pager | head -n 20
+
+        # Or use ps to sort by memory
+        ps aux --sort=-%mem | head -20
+
+        # Check specific services
+        systemctl is-active snap.docker
+        systemctl is-active fwupd
+        systemctl is-active multipathd
+
+    solution:
+      code: |
+        # 1. Stop and disable snap Docker (already have Docker installed)
+        sudo systemctl stop snap.docker.dockerd
+        sudo systemctl disable snap.docker.dockerd
+
+        # 2. Disable firmware updater (not needed on VPS)
+        sudo systemctl stop fwupd
+        sudo systemctl disable fwupd
+
+        # 3. Disable multipathd (not needed for single-path VPS)
+        sudo systemctl stop multipathd
+        sudo systemctl disable multipathd
+
+        # 4. Verify memory freed
+        free -h
+
+      results: |
+        Before: 185MB available
+        After:  712MB available
+        Improvement: 285% increase in available RAM
+
+    analysis:
+      code: |
+        # Safe to disable on VPS:
+        # - fwupd: Firmware updater (VPS doesn't manage firmware)
+        # - multipathd: Multipath storage (VPS has single storage path)
+        # - snap.docker: Duplicate Docker (already have Docker installed via apt)
+
+        # Keep enabled:
+        # - sshd: Remote access
+        # - nginx: Web server
+        # - xray: VPN service
+        # - tailscale: Mesh VPN
+        # - fail2ban: Security
+
+    prevention:
+      code: |
+        # Audit running services monthly
+        audit_services() {
+            echo "=== Active Services ==="
+            systemctl list-units --type=service --state=running | \
+                grep -v ".service" | \
+                awk '{print $1}' | \
+                while read svc; do
+                    mem=$(systemctl show "$svc" -p MemoryCurrent | cut -d= -f2)
+                    [ "$mem" != "" ] && echo "$svc: $((mem/1024/1024))MB"
+                done | sort -t: -k2 -rn
+        }
+
+    verification:
+      steps:
+        - "free -h shows increased available memory"
+        - "systemctl list-units shows fewer running services"
+        - "Load average decreases"
+        - "System remains stable"
+
+  - id: "VPS-MEM-003"
+    title: "Docker Container Memory Limits Not Configured"
+    severity: "medium"
+    scope: "vps"
+
+    problem: |
+      Docker containers can consume unbounded memory, potentially causing
+      OOM (Out of Memory) situations on resource-constrained VPS.
+
+    symptoms:
+      - Random container crashes
+      - OOM killer messages in logs
+      - System becomes unstable under load
+
+    solution:
+      code: |
+        # docker-compose.yml - Add memory limits
+        services:
+          filebrowser:
+            image: filebrowser/filebrowser:latest
+            deploy:
+              resources:
+                limits:
+                  memory: 50M
+                reservations:
+                  memory: 20M
+
+        # Apply changes
+        docker-compose up -d
+
+        # Verify limits are applied
+        docker inspect filebrowser | grep -A 10 Memory
+
+      explanation: |
+        - limits.memory: Maximum container can use (will be OOM killed if exceeded)
+        - reservations.memory: Guaranteed minimum memory (container won't start if unavailable)
+
+    best_practices:
+      code: |
+        # Recommended limits for common services on 2GB VPS:
+
+        # File Browser: 50M limit
+        # Database (PostgreSQL): 512M limit
+        # Redis: 128M limit
+        # Web API: 256M limit
+        # Nginx: 64M limit
+
+        # Total reserved: ~1GB
+        # Available for system: 1GB
+
+    monitoring:
+      code: |
+        # Check container memory usage
+        docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.MemPerc}}"
+
+        # Add to monitoring script
+        check_container_memory() {
+            docker stats --no-stream | while read line; do
+                mem=$(echo $line | awk '{print $4}' | sed 's/%//')
+                container=$(echo $line | awk '{print $1}')
+
+                if [ "$mem" -gt 80 ]; then
+                    echo "WARNING: $container using ${mem}% memory limit"
+                fi
+            done
+        }

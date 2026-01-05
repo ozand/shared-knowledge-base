@@ -1,0 +1,179 @@
+# VPS Log Management Error Patterns
+# Common log-related issues and solutions for VPS administration
+
+version: "1.0"
+category: "log-management"
+last_updated: "2026-01-05"
+
+errors:
+  - id: "VPS-LOG-001"
+    title: "Massive Log File Consuming Disk Space (48GB 3xui.log)"
+    severity: "critical"
+    scope: "vps"
+
+    problem: |
+      The 3xui panel log file grew to 48GB, consuming significant disk space
+      and causing system to use swap memory. This impacted overall VPS performance.
+
+    symptoms:
+      - High disk usage (45GB+ consumed by single log file)
+      - System using swap despite available RAM
+      - Slow system performance and high load average
+      - df -h shows large /var/log partition usage
+
+    detection:
+      code: |
+        # Check largest files
+        sudo du -ah /var/log | sort -rh | head -20
+
+        # Check specific log file size
+        ls -lh /usr/local/x-ui/3xui.log
+
+        # Monitor swap usage
+        free -h
+        swapon --show
+
+    root_cause: |
+      X-ui panel logging excessive debug output without rotation.
+      Default logrotate configuration may not be active for this service.
+
+    solution:
+      code: |
+        # 1. Truncate log file (keep last 1000 lines)
+        sudo tail -n 1000 /usr/local/x-ui/3xui.log > /tmp/3xui.log.tmp
+        sudo mv /tmp/3xui.log.tmp /usr/local/x-ui/3xui.log
+
+        # 2. Remove old compressed logs
+        find /var/log -name "*.gz" -mtime +30 -delete
+
+        # 3. Clean systemd journal
+        sudo journalctl --vacuum-time=7d
+
+        # 4. Restart x-ui service
+        sudo systemctl restart x-ui
+
+        # 5. Verify results
+        ls -lh /usr/local/x-ui/3xui.log
+        df -h
+
+      explanation: |
+        Truncating to last 1000 lines preserves recent debugging info while
+        freeing 45GB+ disk space. Removing old compressed logs and journal
+        entries further reclaims space.
+
+    alternative_solution:
+      code: |
+        # Quick truncate (no history preservation)
+        sudo truncate -s 0 /usr/local/x-ui/3xui.log
+
+        # Or clear completely
+        echo "" | sudo tee /usr/local/x-ui/3xui.log
+
+      warning: "Use only if history is not needed. Cannot recover truncated data."
+
+    prevention:
+      code: |
+        # 1. Create logrotate configuration
+        sudo tee /etc/logrotate.d/x-ui << 'EOF'
+        /usr/local/x-ui/3xui.log {
+            daily
+            rotate 7
+            compress
+            delaycompress
+            missingok
+            notifempty
+            maxsize 100M
+            create 0640 root root
+            postrotate
+                systemctl reload x-ui >/dev/null 2>&1 || true
+            endscript
+        }
+        EOF
+
+        # 2. Test logrotate configuration
+        sudo logrotate -d /etc/logrotate.d/x-ui
+
+        # 3. Force rotation (test)
+        sudo logrotate -f /etc/logrotate.d/x-ui
+
+      explanation: |
+        Logrotate will keep 7 days of compressed logs, rotate daily,
+        and prevent any single log from exceeding 100MB.
+
+    monitoring:
+      code: |
+        # Add to monitoring script
+        check_log_sizes() {
+            alert_threshold=104857600  # 100MB in bytes
+
+            find /var/log /usr/local/x-ui -name "*.log" -size +$alert_threshold | while read log; do
+                size=$(du -h "$log" | cut -f1)
+                echo "WARNING: Large log file: $log ($size)"
+            done
+        }
+
+    verification:
+      steps:
+        - "Check log file size: ls -lh /usr/local/x-ui/3xui.log"
+        - "Verify swap usage: free -h (should show 0B used)"
+        - "Check disk space: df -h"
+        - "Monitor log growth: watch -n 60 'ls -lh /usr/local/x-ui/3xui.log'"
+
+    related_issues:
+      - "VPS-MEM-001: High swap usage affecting performance"
+      - "VPS-LOG-002: Journal disk usage optimization"
+
+    references:
+      - "vps-optimize-cleanup.sh script in /home/ozand/.claude/scripts/"
+      - "/etc/logrotate.d/ configuration examples"
+
+  - id: "VPS-LOG-002"
+    title: "Systemd Journal Consuming Excessive Disk Space"
+    severity: "medium"
+    scope: "vps"
+
+    problem: |
+      Systemd journal logs can grow unbounded and consume significant disk space
+      on VPS with limited storage.
+
+    symptoms:
+      - Large /var/log/journal/ directory
+      - High disk usage on root partition
+      - Old journal files dating back months
+
+    detection:
+      code: |
+        # Check journal disk usage
+        journalctl --disk-usage
+
+        # Current journal size
+        du -sh /var/log/journal/
+
+    solution:
+      code: |
+        # Vacuum journal - keep only last 7 days
+        sudo journalctl --vacuum-time=7d
+
+        # Or limit by size (keep only 500MB)
+        sudo journalctl --vacuum-size=500M
+
+    prevention:
+      code: |
+        # Configure persistent journal limits
+        sudo tee /etc/systemd/journald.conf.d/vps.conf << 'EOF'
+        [Journal]
+        SystemMaxUse=500M
+        RuntimeMaxUse=100M
+        MaxRetentionSec=7day
+        EOF
+
+        # Restart systemd-journald
+        sudo systemctl restart systemd-journald
+
+      explanation: |
+        These settings limit journal to 500MB on disk and 7 days retention,
+        preventing unbounded growth.
+
+    verification:
+      - "journalctl --disk-usage shows reduced size"
+      - "du -sh /var/log/journal/ shows smaller size"
