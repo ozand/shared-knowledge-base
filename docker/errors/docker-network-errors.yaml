@@ -1,0 +1,98 @@
+title: Docker Network and Container Management Errors
+scope: docker
+severity: medium
+category: docker-errors
+tags:
+  - docker
+  - networking
+  - containers
+  - docker-compose
+errors:
+  - id: "DOCKER-023"
+    title: "Container Name Conflicts on Recreation"
+    severity: "medium"
+    problem: |
+      Error when recreating containers: "Conflict. The container name '/xxx' is already in use"
+
+      **Symptoms:**
+      - `docker-compose up -d` fails with container name conflict
+      - Old containers exist with same names
+      - Containers are in "Exited" or "Restarting" state
+
+      **Root Cause:**
+      When containers fail or are stopped, `docker-compose` may leave them behind.
+      When trying to recreate, Docker detects name conflicts with existing containers.
+
+      **Common Scenarios:**
+      - Container crashed and wasn't cleaned up
+      - Previous `docker-compose up` attempt failed partway
+      - Manually created containers with same names
+      - Docker Compose version incompatibilities
+    wrong_code: |
+      # Attempting to recreate containers:
+      $ docker-compose up -d
+      Creating docker-api-1 ... error
+      ERROR: for docker-api-1  Conflict. The container name "/docker-api-1" is already in use
+
+      # Container exists in stopped/exited state:
+      $ docker ps -a | grep docker-api-1
+      68642cbff116   langgenius/dify-api:0.13.2   "command"   2 hours ago   Exited (1)   docker-api-1
+    correct_code: |
+      # 1. List containers with the target name:
+      docker ps -a | grep container_name
+
+      # 2. Stop and remove conflicting containers:
+      docker stop container_name 2>/dev/null || true
+      docker rm container_name 2>/dev/null || true
+
+      # 3. Handle multiple conflicts:
+      for container in container1 container2 container3; do
+        docker stop $container 2>/dev/null || true
+        docker rm $container 2>/dev/null || true
+      done
+
+      # 4. Now recreate with docker-compose:
+      docker-compose up -d
+
+      # 5. If docker-compose has issues, force recreate:
+      docker-compose up -d --force-recreate
+
+      # 6. Best practice - always clean up first:
+      docker-compose down
+      docker-compose up -d
+    diagnosis_steps: |
+      1. Find conflicting containers:
+         ```bash
+         docker ps -a --filter "name=target_name"
+         ```
+
+      2. Check container status:
+         ```bash
+         docker ps -a | grep "conflict_pattern"
+         ```
+
+      3. Inspect conflicting container:
+         ```bash
+         docker inspect conflicting_container --format '{{.State.Status}}'
+         ```
+
+      4. Remove all conflicts:
+         ```bash
+         docker ps -a --format "{{.Names}}" | grep "pattern" | xargs -I {} docker rm -f {}
+         ```
+
+      5. Clean Docker Compose state:
+         ```bash
+         cd /path/to/project
+         docker-compose down --remove-orphans
+         ```
+
+      6. Verify no conflicts remain:
+         ```bash
+         docker ps -a | grep "container_name"
+         # Should return empty
+         ```
+    related_entries:
+      - DOCKER-PATTERN-002
+      - DOCKER-020
+    references: []

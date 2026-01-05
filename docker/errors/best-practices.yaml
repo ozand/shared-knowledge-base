@@ -1,0 +1,59 @@
+title: Docker Best Practices and Common Issues
+scope: docker
+severity: medium
+category: docker-errors
+tags:
+  - docker
+  - best-practices
+  - configuration
+  - production
+errors:
+  - id: "DOCKER-024"
+    title: "Healthcheck Command Not Available in Container Image"
+    severity: "medium"
+    scope: "docker"
+    problem: |
+      Healthcheck configured to use a command that doesn't exist in the container image
+      (e.g., curl in minimal Python images). Container shows unhealthy even though
+      application is working correctly.
+
+      **Common Issue:** Minimal images (python:slim, alpine) don't include external tools like curl.
+    wrong_code: |
+      services:
+        notebooklm-mindmap:
+          image: python:3.11-slim  # Minimal image without curl
+          healthcheck:
+            test: ["CMD-SHELL", "curl --fail http://localhost:8501/_stcore/health"]
+            # Result: /bin/sh: 1: curl: not found
+    correct_code: |
+      services:
+        notebooklm-mindmap:
+          image: python:3.11-slim
+          healthcheck:
+            test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health').read()\""]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+            # Result: Uses Python's built-in urllib library
+    solution_steps: |
+      1. Check container logs for healthcheck errors: docker logs CONTAINER
+      2. Verify if command exists in image: docker run --rm IMAGE which curl
+      3. Find alternatives available in the base image:
+         - Python images: Use python -c "import urllib.request; ..."
+         - Node.js images: Use node -e "require('http').get('http://localhost:PORT/health')"
+         - Bash: Use /dev/tcp/HOST/PORT if bash available
+         - Always use built-in tools when possible
+      4. Update healthcheck in docker-compose.yml
+      5. Recreate container: docker-compose up -d
+      6. Verify: docker ps --format "table {{.Names}}\t{{.Status}}"
+    prevention_steps: |
+      1. Always verify commands exist in base image before using in healthcheck
+      2. Test healthcheck command locally: docker run --rm IMAGE <command>
+      3. Prefer built-in language libraries over external tools
+      4. Common alternatives:
+         - curl/wget → python urllib, node http, java net
+         - nc/netcat → bash /dev/tcp/... (if bash available)
+         - grep/sed → python string methods, node string methods
+      5. Read image documentation for available tools
+    tags: ["docker", "healthcheck", "minimal-images", "curl", "python", "best-practices"]

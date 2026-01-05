@@ -1,0 +1,156 @@
+title: Redis Configuration and Command Errors
+scope: universal
+severity: medium
+category: redis-errors
+tags:
+  - redis
+  - docker
+  - containers
+  - configuration
+errors:
+  - id: "REDIS-001"
+    title: "Redis Command Not Found in Container Logs"
+    severity: "medium"
+    problem: |
+      Redis container continuously restarts with error: "exec: line 24: redis: not found"
+
+      **Symptoms:**
+      - Container status: "Restarting (127)"
+      - Logs show: `redis: not found` or `exec: line 24: redis: not found`
+      - Container never becomes healthy
+
+      **Root Cause:**
+      The `command` in docker-compose.yml uses incorrect syntax:
+      - Wrong: `redis server --requirepass pass` (space instead of hyphen)
+      - Correct: `redis-server --requirepass pass` (with hyphen)
+
+      The redis:6-alpine entrypoint script tries to execute `redis` as a command,
+      but the actual binary is `redis-server` (with hyphen).
+
+    wrong_code: |
+      version: '3.8'
+      services:
+        redis:
+          image: redis:6-alpine
+          container_name: docker-redis-1
+          command: redis server --requirepass difyai123456  # ❌ WRONG!
+          healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+          networks:
+            - app-network
+
+      # Result:
+      # $ docker logs docker-redis-1
+      # /usr/local/bin/docker-entrypoint.sh: exec: line 24: redis: not found
+      # Container keeps restarting
+    correct_code: |
+      version: '3.8'
+      services:
+        redis:
+          image: redis:6-alpine
+          container_name: docker-redis-1
+          command: redis-server --requirepass difyai123456  # ✅ CORRECT!
+          healthcheck:
+            # ✅ Also need -a flag when password is set
+            test: ["CMD", "redis-cli", "-a", "difyai123456", "ping"]
+          networks:
+            - app-network
+
+      # Result:
+      # $ docker logs docker-redis-1
+      # Ready to accept connections tcp listeners
+      # Container becomes healthy
+    diagnosis_steps: |
+      1. Check container logs:
+         ```bash
+         docker logs container_name --tail 20
+         ```
+
+      2. Look for "not found" errors:
+         ```bash
+         docker logs container_name 2>&1 | grep "not found"
+         ```
+
+      3. Check if container is restarting:
+         ```bash
+         docker ps | grep container_name
+         # Shows "Restarting" status
+         ```
+
+      4. Inspect container command:
+         ```bash
+         docker inspect container_name --format '{{.Config.Cmd}}'
+         ```
+
+      5. Check docker-compose.yml command:
+         ```bash
+         grep -A 3 "command:" docker-compose.yml
+         ```
+
+      6. Verify correct redis binary:
+         ```bash
+         # In redis:6-alpine, the binary is:
+         docker run --rm redis:6-alpine which redis-server
+         # Output: /usr/local/bin/redis-server
+         ```
+
+      7. Fix the command:
+         ```bash
+         # Replace space with hyphen:
+         sed -i 's/redis server/redis-server/g' docker-compose.yml
+         ```
+
+      8. Fix healthcheck when password is used:
+         ```bash
+         # Must use -a flag:
+         test: ["CMD", "redis-cli", "-a", "password", "ping"]
+         ```
+
+      9. Recreate container:
+         ```bash
+         docker-compose up -d --force-recreate redis
+         ```
+
+      10. Verify health:
+          ```bash
+          docker ps | grep redis
+          # Should show "(healthy)" status
+          ```
+    related_entries:
+      - DOCKER-011
+      - DOCKER-PATTERN-002
+    references: []
+    additional_info: |
+      **Common Redis Commands:**
+
+      | Command | Purpose |
+      |---------|---------|
+      | `redis-server` | Start Redis server (✅ correct) |
+      | `redis-server --requirepass pass` | Start with password |
+      | `redis-server --appendonly yes` | Enable AOF persistence |
+      | `redis-cli ping` | Test connection (no password) |
+      | `redis-cli -a pass ping` | Test connection (with password) |
+
+      **Redis Container Images:**
+
+      - `redis:6-alpine` - Minimal, ~40MB
+      - `redis:7-alpine` - Latest stable, ~45MB
+      - `redis/redis-stack:latest` - Full-featured with RedisInsight, ~200MB
+
+      **Health Check Best Practices:**
+
+      ```yaml
+      # Without password:
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+      # With password:
+      healthcheck:
+        test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      ```

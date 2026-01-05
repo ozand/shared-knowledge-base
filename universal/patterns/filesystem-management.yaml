@@ -1,0 +1,400 @@
+title: File System and Organization Management
+scope: universal
+severity: low
+category: best-practices
+tags:
+  - filesystem
+  - organization
+  - monitoring
+  - automation
+patterns:
+  - id: "UNIVERSAL-006"
+    title: "Broken Symlink Detection and Prevention"
+    severity: "medium"
+    scope: "universal"
+    problem: |
+      Symbolic links (symlinks) with typos in target paths create broken links that:
+      - Don't point to valid locations
+      - Cause confusion when troubleshooting
+      - Lead to "No such file or directory" errors
+      - Create maintenance issues
+
+      **Common Causes:**
+      - Typos in symlink target path
+      - Target directory moved or deleted
+      - Case sensitivity issues (bolt.diy vs bolt.dyi)
+      - Relative vs absolute path confusion
+
+      **Example from Session:**
+      ```bash
+      /home/ozand/bolt.diy -> /home/ozand/projects/docker-deployments/bolt.dyi
+                                                                                    ^^^^^^^^^^^
+                                                                                   TYPO! Should be bolt.diy
+      ```
+    solution: |
+      **1. Detection Commands:**
+
+      Find all broken symlinks:
+      ```bash
+      # Find broken symlinks in directory
+      find /path/to/dir -xtype l
+
+      # Find broken symlinks showing target
+      find /path/to/dir -xtype l -exec ls -l {} \;
+
+      # Check if symlink target exists
+      if [ -e /path/to/symlink ]; then
+        echo "OK"
+      else
+        echo "BROKEN"
+      fi
+      ```
+
+      **2. Prevention When Creating Symlinks:**
+
+      Always verify target exists first:
+      ```bash
+      # ✅ CORRECT: Verify target exists
+      if [ -d /home/ozand/projects/docker-deployments/bolt.diy ]; then
+        ln -s /home/ozand/projects/docker-deployments/bolt.dyi \
+              /home/ozand/bolt.diy
+      else
+        echo "ERROR: Target does not exist!"
+      fi
+
+      # ❌ WRONG: Create without verification
+      ln -s /home/ozand/projects/docker-deployments/bolt.dyi \
+            /home/ozand/bolt.diy
+      # Result: Broken symlink if target has typo
+      ```
+
+      **3. Fixing Broken Symlinks:**
+
+      ```bash
+      # Remove broken symlink
+      rm /path/to/broken/symlink
+
+      # Recreate with correct target
+      ln -s /correct/target/path /path/to/symlink
+      ```
+
+      **4. Best Practices:**
+
+      - Use absolute paths for symlinks to avoid confusion
+      - Double-check target path spelling
+      - Verify target exists before creating symlink
+      - Test symlink immediately after creation
+      - Remove symlinks when target is permanently moved
+
+      **5. Automated Detection:**
+
+      Add to cron for weekly checks:
+      ```bash
+      # Weekly broken symlink scan
+      0 3 * * 0 find /home/ozand -xtype l >> /home/ozand/backups/symlink-check.log
+      ```
+
+    diagnosis_steps: |
+      1. List all symlinks:
+         ```bash
+         find /home/ozand -maxdepth 1 -type l
+         ```
+
+      2. Check each symlink target:
+         ```bash
+         for link in $(find /home/ozand -maxdepth 1 -type l); do
+           echo "$link -> $(readlink $link)"
+           if [ -e "$link" ]; then
+             echo "  ✅ OK"
+           else
+             echo "  ❌ BROKEN"
+           fi
+         done
+         ```
+
+      3. Find broken symlinks only:
+         ```bash
+         find /home/ozand -xtype l -ls
+         ```
+
+      4. Show symlink details:
+         ```bash
+         ls -la /path/to/symlink
+         stat /path/to/symlink
+         readlink /path/to/symlink
+         ```
+
+      5. Check specific symlink:
+         ```bash
+         test -e /path/to/symlink && echo "OK" || echo "BROKEN"
+         ```
+
+    benefits:
+      - Prevents "file not found" errors
+      - Cleaner filesystem (no broken links)
+      - Easier troubleshooting
+      - Better organization
+
+    tags: ["symlink", "filesystem", "troubleshooting", "organization"]
+    related_entries:
+      - UNIVERSAL-001
+
+  - id: "UNIVERSAL-007"
+    title: "Root Directory Temporary File Management"
+    severity: "medium"
+    scope: "universal"
+    problem: |
+      Temporary files (backups, archives, downloads) accumulating in root directory
+      violate Golden Rules and create:
+      - Clutter in home directory
+      - Large files wasting space (8 GB backups in root)
+      - Difficulty finding files when needed
+      - Violation of organizational standards
+
+      **Common Violators:**
+      - `*_backup_*.tar.gz` files (should be in /backups/)
+      - `*.zip`, `*.tar.gz` archives (should be in /archives/)
+      - `*.iso`, `*.dmg` download files (should be in Downloads/)
+      - Temporary build artifacts (should be in /tmp/)
+
+      **Real Example:**
+      ```bash
+      $ ls -lh /home/ozand/*.tar.gz
+      -rw-rw-r-- 1 ozand ozand 8.0G Jan 4 21:50 organization_backup_20260104_213329.tar.gz
+      -rw-rw-r-- 1 ozand ozand  13K Jan 4 22:38 supabase_backup_20260104_223819.tar.gz
+      ```
+    solution: |
+      **1. Golden Rules Policy:**
+
+      **Root Directory Rules:**
+      - ❌ NO temporary files (.tar.gz, .zip, etc.)
+      - ❌ NO backup files (*_backup_*.tar.gz)
+      - ❌ NO download files (.iso, .dmg, .exe)
+      - ✅ Config files allowed (.env, .yaml, .md)
+
+      **File Type Locations:**
+      - 📦 **Backups:** `/backups/<project>/<filename>.tar.gz`
+      - 🗄️ **Archives:** `/archives/<category>/<filename>.tar.gz`
+      - ⏳ **Temporary:** `/tmp/` (cleared on reboot)
+      - 📥 **Downloads:** `~/Downloads/` (XDG standard)
+
+      **2. Manual Cleanup:**
+
+      ```bash
+      # Move backups to correct location
+      mv /home/ozand/*backup*.tar.gz /home/ozand/backups/tmp/
+
+      # Move archives
+      mv /home/ozand/*.tar.gz /home/ozand/archives/
+
+      # Verify root is clean
+      ls -lh /home/ozand/*.tar.gz
+      # Should return: "No such file or directory"
+      ```
+
+      **3. Organizational Structure:**
+
+      ```
+      /home/ozand/
+      ├── backups/
+      │   ├── organization/         # Large backups (8GB+)
+      │   ├── supabase/             # Database backups
+      │   ├── docker/               # Docker volume backups
+      │   └── tmp/                  # Staging area before deletion
+      ├── archives/
+      │   ├── old-projects/         # Archived project code
+      │   ├── configs/              # Old configuration files
+      │   └── logs/                 # Compressed logs
+      └── [no files in root!]
+      ```
+
+      **4. Backup Script Standards:**
+
+      Always configure backup scripts to use correct paths:
+      ```bash
+      # ✅ CORRECT:
+      BACKUP_DIR="/home/ozand/backups/$(date +%Y-%m-%d)"
+      mkdir -p "$BACKUP_DIR"
+      tar -czf "$BACKUP_DIR/backup.tar.gz" /path/to/source
+
+      # ❌ WRONG:
+      tar -czf /home/ozand/backup_$(date +%Y%m%d).tar.gz /path/to/source
+      ```
+
+      **5. Automated Monitoring:**
+
+      See UNIVERSAL-008 for monitoring setup.
+
+    diagnosis_steps: |
+      1. Check for temporary files in root:
+         ```bash
+         ls -lh /home/ozand/*.tar.gz /home/ozand/*.zip 2>/dev/null
+         ```
+
+      2. Find large files in root:
+         ```bash
+         find /home/ozand -maxdepth 1 -type f -size +100M -exec ls -lh {} \;
+         ```
+
+      3. Categorize files by type:
+         ```bash
+         # Backups
+         ls /home/ozand/*backup*
+
+         # Archives
+         ls /home/ozand/*.tar.gz
+
+         # All temporary files
+         find /home/ozand -maxdepth 1 \( -name "*.tar.gz" -o -name "*.zip" -o -name "*.iso" \)
+         ```
+
+      4. Check file ages:
+         ```bash
+         find /home/ozand -maxdepth 1 -type f -mtime +7 -ls
+         ```
+
+      5. Verify correct locations:
+         ```bash
+         # Are files in /backups/?
+         ls /home/ozand/backups/
+
+         # Are files in /archives/?
+         ls /home/ozand/archives/
+         ```
+
+    benefits:
+      - Clean root directory (100% Golden Rules compliant)
+      - Organized backup storage
+      - Easy to find files when needed
+      - Automated monitoring prevents accumulation
+
+    tags: ["file-organization", "backup", "golden-rules", "cleanup"]
+    related_entries:
+      - UNIVERSAL-001
+      - UNIVERSAL-008
+
+  - id: "UNIVERSAL-008"
+    title: "Automated Monitoring Without Auto-Deletion"
+    severity: "low"
+    scope: "universal"
+    problem: |
+      Need to monitor root directory for temporary files accumulation, but
+      auto-deletion is too dangerous (can delete important files accidentally).
+
+      **Challenges:**
+      - Need to detect violations automatically
+      - Should NOT auto-delete (safety first)
+      - Must notify admin when issues found
+      - Should provide actionable information
+      - Requires minimal manual intervention
+
+      **Admin Philosophy:**
+      Monitor → Notify → Manual Review → Action
+      (NOT: Monitor → Auto-Delete → Regret)
+    solution: |
+      **1. Two-Script Approach:**
+
+      **Lightweight Notification Script** (for cron):
+      ```bash
+      #!/bin/bash
+      # /home/ozand/tools/cleanup-root-notify.sh
+
+      ROOT_DIR="/home/ozand"
+      PATTERNS=("*.tar.gz" "*.zip" "*backup*")
+
+      FOUND=0
+      for pattern in "${PATTERNS[@]}"; do
+        COUNT=$(find "$ROOT_DIR" -maxdepth 1 -name "$pattern" -type f 2>/dev/null | wc -l)
+        FOUND=$((FOUND + COUNT))
+      done
+
+      if [ $FOUND -gt 0 ]; then
+        # Create notification
+        echo "Found $FOUND file(s) in root" >> /home/ozand/backups/cleanup.log
+
+        # Desktop notification if logged in
+        [ -n "$DISPLAY" ] && notify-send "Root Cleanup" "$FOUND files in $ROOT_DIR" || true
+      fi
+      ```
+
+      **Interactive Cleanup Script** (manual use):
+      ```bash
+      #!/bin/bash
+      # /home/ozand/tools/cleanup-root-monitor.sh
+
+      # Scan for files
+      FOUND_FILES=()
+      for pattern in "${PATTERNS[@]}"; do
+        while IFS= read -r -d '' file; do
+          FOUND_FILES+=("$file")
+        done < <(find "$ROOT_DIR" -maxdepth 1 -name "$pattern" -type f -print0 2>/dev/null)
+      done
+
+      # Show details
+      for file in "${FOUND_FILES[@]}"; do
+        SIZE=$(du -h "$file" | cut -f1)
+        echo "  • $(basename "$file") (${SIZE})"
+      done
+
+      # Offer options
+      echo "Choose action:"
+      echo "  1. Show manual commands to run"
+      echo "  2. Move all to /backups/tmp/ for review"
+      echo "  3. Skip"
+
+      read -p "Choose [1/2/3]: " choice
+
+      case $choice in
+        1) echo "Commands to run manually:"; for f in "${FOUND_FILES[@]}"; do echo "mv \"$f\" /backups/tmp/"; done ;;
+        2) mkdir -p /home/ozand/backups/tmp; for f in "${FOUND_FILES[@]}"; do mv "$f" /home/ozand/backups/tmp/; done ;;
+        3) echo "Skipped"; ;;
+      esac
+      ```
+
+      **2. Cron Configuration:**
+
+      ```bash
+      # Daily check at 9:00 AM
+      0 9 * * * /home/ozand/tools/cleanup-root-notify.sh
+
+      # Optional: Weekly full scan report
+      0 10 * * 0 /home/ozand/tools/cleanup-root-monitor.sh >> /home/ozand/backups/weekly-report.log
+      ```
+
+      **3. Safety Features:**
+
+      - ✅ Never auto-deletes
+      - ✅ Always requires human confirmation
+      - ✅ Shows file details before action
+      - ✅ Logs all actions
+      - ✅ Move to /tmp staging area first
+      - ✅ Can skip if not sure
+
+      **4. Logging:**
+
+      ```bash
+      # Log format
+      [2026-01-05 09:00:00] Found 3 files in root
+      [2026-01-05 09:05:00] User chose option 2
+      [2026-01-05 09:05:30] Moved 3 files to /backups/tmp/
+      ```
+
+      **5. Benefits of This Approach:**
+
+      - **Safe**: No accidental deletions
+      - **Educational**: See patterns over time
+      - **Flexible**: Choose action each time
+      - **Auditable**: Full log history
+      - **Reversible**: Can undo from /tmp
+
+    benefits:
+      - Automated detection without risks
+      - Admin stays in control
+      - Learn patterns over time
+      - Fix root causes (e.g., backup scripts)
+      - Peaceful night's sleep (no auto-deletion anxiety)
+
+    tags: ["automation", "monitoring", "safety", "cron"]
+    related_entries:
+      - UNIVERSAL-007
+      - UNIVERSAL-001
