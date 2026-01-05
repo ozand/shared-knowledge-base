@@ -1,0 +1,582 @@
+# GitHub Workflow Patterns
+# Advanced GitHub workflows: hooks, releases, versioning
+
+version: "1.0"
+category: "github-workflow"
+last_updated: "2026-01-05"
+
+patterns:
+  - id: "GITHUB-001"
+    title: "Git Hooks with Python Scripts Fail on Windows"
+    severity: "medium"
+    scope: "universal"
+    tags: ["git", "hooks", "python", "windows"]
+
+    problem: |
+      Git hooks that execute Python scripts fail on Windows with error:
+      "Python was not found; run without arguments to install from
+      the Microsoft Store, or disable this shortcut from Settings"
+
+    root_cause: |
+      Git hooks execute scripts via shebang line, but on Windows:
+      1. Git hook execution environment has different PATH than interactive shell
+      2. Python aliases in WindowsApps (Microsoft Store) confuse git
+      3. Python executable path not in git's limited execution environment
+
+    affected_scenarios:
+      - "pre-commit hooks running Python linting/tests"
+      - "post-merge hooks running Python scripts"
+      - "commit-msg hooks using Python validators"
+
+    solutions:
+      temporary_disable:
+        description: "Temporarily disable hooks for commits"
+        workflow: |
+          # 1. Disable hooks
+          mv .git/hooks/pre-commit .git/hooks/pre-commit.bak
+          mv .git/hooks/post-merge .git/hooks/post-merge.bak
+
+          # 2. Make commits
+          git add .
+          git commit -m "commit message"
+
+          # 3. Restore hooks
+          mv .git/hooks/pre-commit.bak .git/hooks/pre-commit
+          mv .git/hooks/post-merge.bak .git/hooks/post-merge
+
+        pros: "Quick, works immediately"
+        cons: "Not automated, must remember to restore"
+
+      fix_shebang:
+        description: "Fix shebang to use Python launcher"
+        wrong_code: |
+          #!/usr/bin/python3
+          # OR
+          #!/path/to/python
+
+        correct_code: |
+          #!py -3
+
+        explanation: |
+          Use Python launcher (py.exe) which handles Python 3 resolution
+          correctly on Windows. Works cross-platform.
+
+        setup: |
+          # Ensure py launcher is installed:
+          winget install Python.Python.3.11
+
+    prevention:
+      description: "Make hooks optional and resilient"
+      example: |
+        #!/usr/bin/env python3
+        import sys
+
+        try:
+            # Import hook logic
+            from hook_module import main
+        except ImportError:
+            # If imports fail, exit successfully (don't block commit)
+            print("Hook dependencies not available, skipping...")
+            sys.exit(0)
+
+        main()
+
+    references:
+      - title: "Git Hooks on Windows"
+        url: "https://stackoverflow.com/questions/3207455/how-to-setup-git-hooks-to-work-on-windows"
+
+  - id: "GITHUB-002"
+    title: "Git Tag vs GitHub Release - Understanding the Difference"
+    severity: "medium"
+    scope: "universal"
+    tags: ["git", "github", "releases", "versioning"]
+
+    problem: |
+      Developers create git tags but don't see releases on GitHub Releases page.
+      Common misconception: "Creating a git tag automatically creates a GitHub Release"
+
+    explanation: |
+      Git tags and GitHub Releases are separate concepts:
+
+      **Git Tag** (git reference):
+      - Points to specific commit
+      - Created with: git tag v3.0
+      - Stored in git history
+      - Visible in: git log, GitHub commits page
+
+      **GitHub Release** (release object):
+      - Has title, description, release notes
+      - Can have binary attachments
+      - Visible on: GitHub Releases page
+      - Created via: gh release create OR GitHub web UI
+      - Links to git tag but is NOT created automatically
+
+    wrong_approach:
+      description: "Create tag and assume Release is created"
+      steps: |
+        git tag -a v3.0 -m "Release v3.0"
+        git push origin v3.0
+        # ❌ Nothing appears on GitHub Releases page!
+
+    correct_approach:
+      description: "Create tag AND GitHub Release"
+      steps: |
+        # 1. Update documentation
+        vim README.md  # Update version to 3.0
+        git add README.md
+        git commit -m "Release v3.0: Update docs"
+
+        # 2. Push commits
+        git push origin main
+
+        # 3. Create and push tag
+        git tag -a v3.0 -m "Release v3.0"
+        git push origin v3.0
+
+        # 4. Create GitHub Release
+        gh release create v3.0 \
+          --title "v3.0: Release Title" \
+          --notes "Release notes here..."
+
+    automated_workflow:
+      description: "Create release with notes from file"
+      script: |
+        #!/bin/bash
+        VERSION=$1
+        NOTES_FILE="RELEASE_NOTES.md"
+
+        # Update docs
+        sed -i "s/Version .*/Version $VERSION/" README.md
+        git add README.md
+        git commit -m "Release $VERSION: Update docs"
+        git push
+
+        # Create tag
+        git tag -a $VERSION -m "Release $VERSION"
+        git push origin $VERSION
+
+        # Create GitHub Release
+        gh release create $VERSION \
+          --title "Release $VERSION" \
+          --notes-file $NOTES_FILE
+
+    github_cli_usage:
+      installation: |
+        # Windows
+        winget install --id GitHub.cli
+
+        # Authenticate
+        gh auth login
+
+      create_basic_release: |
+        gh release create v1.0 \
+          --title "Version 1.0" \
+          --notes "Release notes here"
+
+      create_from_file: |
+        gh release create v1.0 \
+          --title "Version 1.0" \
+          --notes-file RELEASE_NOTES.md
+
+      create_with_assets: |
+        gh release create v1.0 \
+          --notes "Release" \
+          ./build/app.zip \
+          ./dist/installer.exe
+
+      create_prerelease: |
+        gh release create v1.0-beta \
+          --prerelease \
+          --notes "Beta release"
+
+    best_practices:
+      - item: "Always update README.md before creating release"
+      - item: "Use semantic versioning (v1.0.0)"
+      - item: "Include release notes with breaking changes"
+      - item: "Test release on beta channel first"
+      - item: "Keep CHANGELOG.md in sync with releases"
+
+    troubleshooting:
+      issue: "Release not visible on GitHub"
+      solution: |
+        # Check if tag exists
+        git tag -l
+
+        # Check if tag pushed
+        git ls-remote --tags origin
+
+        # Check if release exists
+        gh release list
+
+      issue: "Need to update release"
+      solution: |
+        # Delete old release and tag
+        gh release delete v1.0
+        git tag -d v1.0
+        git push origin :refs/tags/v1.0
+
+        # Recreate
+        # [follow correct_approach steps]
+
+    references:
+      - title: "About Git Hooks"
+        url: "https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks"
+      - title: "GitHub Releases API"
+        url: "https://docs.github.com/en/rest/releases/releases"
+      - title: "GitHub CLI Manual"
+        url: "https://cli.github.com/manual/"
+
+  - id: "GITHUB-003"
+    title: "Version Synchronization Across Documentation"
+    severity: "low"
+    scope: "universal"
+    tags: ["documentation", "versioning", "quality"]
+
+    problem: |
+      Documentation shows incorrect version after release:
+      - README.md displays "Version 2.0" when releasing v3.0
+      - Package files show old version numbers
+      - Users confused about actual version
+
+    detection:
+      automatic_script: |
+        #!/bin/bash
+        # scripts/check-version.sh
+
+        VERSION="3.0"
+        ERRORS=0
+
+        # Check README
+        if ! grep -q "$VERSION" README.md; then
+          echo "✗ README.md doesn't mention v$VERSION"
+          ERRORS=$((ERRORS + 1))
+        fi
+
+        # Check package files
+        for file in package.json __init__.py setup.py; do
+          if [ -f "$file" ] && ! grep -q "$VERSION" "$file"; then
+            echo "✗ $file doesn't mention v$VERSION"
+            ERRORS=$((ERRORS + 1))
+          fi
+        done
+
+        # Check all markdown files
+        for file in *.md; do
+          if grep -qi "version" "$file"; then
+            if ! grep -q "$VERSION" "$file"; then
+              echo "⚠️  $file mentions 'version' but not v$VERSION"
+            fi
+          fi
+        done
+
+        if [ $ERRORS -gt 0 ]; then
+          echo "✗ Version inconsistency detected!"
+          echo "  Please update files to mention v$VERSION"
+          exit 1
+        fi
+
+        echo "✓ All files consistent with v$VERSION"
+
+    pre_release_checklist:
+      - item: "Update version in README.md header"
+        check: "grep -n 'Version' README.md"
+
+      - item: "Update version in package files"
+        check: "grep -n 'version' package.json __init__.py"
+
+      - item: "Update CHANGELOG.md"
+        check: "head -30 CHANGELOG.md"
+
+      - item: "Verify git tag doesn't exist"
+        check: "git tag -l 'v3.0' | wc -l"
+
+      - item: "Run version check script"
+        check: "./scripts/check-version.sh"
+
+    git_tricks:
+      search_versions:
+        description: "Find all version mentions in code"
+        command: "grep -r 'version' --include='*.py' --include='*.md' --include='*.json' ."
+
+      replace_version:
+        description: "Replace old version with new (use with caution!)"
+        command: "sed -i 's/v2.0/v3.0/g' README.md"
+        warning: "Review changes before committing!"
+
+      version_history:
+        description: "Show when version was last changed"
+        command: "git log --follow -S 'v3.0' -- README.md"
+
+    prevention:
+      description: "Add version check to CI/CD"
+      example_ci: |
+        # .github/workflows/release-check.yml
+        name: Version Consistency Check
+        on: [pull_request]
+
+        jobs:
+          check-version:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@v3
+              - name: Check version consistency
+                run: |
+                  VERSION=$(grep '^version:' package.json | sed 's/.*: "\(.*\)"/\1/')
+                  if ! grep -q "$VERSION" README.md; then
+                    echo "Version $VERSION in package.json but not in README.md"
+                    exit 1
+                  fi
+
+    references:
+      - title: "Semantic Versioning"
+        url: "https://semver.org/"
+      - title: "Keep a Changelog"
+        url: "https://keepachangelog.com/"
+
+  - id: "GITHUB-004"
+    title: ".gitignore Patterns for Knowledge Base Projects"
+    severity: "info"
+    scope: "universal"
+    tags: ["git", "gitignore", "knowledge-base", "metadata"]
+
+    context: |
+      Knowledge Base projects have specific requirements:
+      - Metadata files must sync across users
+      - Cache data must stay local
+      - Auto-generated files should not be committed
+
+    wrong_approach:
+      description: "Ignore all generated files"
+      example: |
+        # .gitignore (wrong)
+        *_meta.yaml
+        *.yaml
+        .cache/
+
+      problem: |
+        This prevents metadata synchronization, breaking the knowledge
+        sharing system.
+
+    correct_approach:
+      description: "Carefully choose what to include/exclude"
+      complete_example: |
+        # ========== Python ==========
+        __pycache__/
+        *.py[cod]
+        *.so
+        .Python
+        *.egg-info/
+        dist/
+        build/
+
+        # ========== IDE ==========
+        .vscode/
+        .idea/
+        *.swp
+        *.swo
+
+        # ========== OS ==========
+        .DS_Store
+        Thumbs.db
+
+        # ========== KB Cache (local only) ==========
+        .cache/
+        .cache/**/*
+        *.db
+        *.sqlite
+
+        # ========== Generated Index (local only) ==========
+        _index.yaml
+        _index.yaml.bak
+
+        # ========== Local Config (not git-synced) ==========
+        .kb-config-local.yaml
+
+        # ========== JSON Exports (regenerable) ==========
+        kb-export.json
+        kb-snapshot.json
+
+        # ========== NOTE: Metadata files ARE committed ==========
+        # *_meta.yaml files ARE committed to git
+        # They contain metadata that syncs across users
+
+        # ========== Generated Documentation ==========
+        docs/
+
+    explanation:
+      metadata_files:
+        file_pattern: "*_meta.yaml"
+        action: "KEEP in git ✓"
+        reason: |
+          Metadata files track:
+          - Quality scores (0-100)
+          - Creation/modification timestamps
+          - Tested library versions
+          - Validation status
+
+          These MUST sync across all users to maintain consistency.
+
+      cache_directory:
+        file_pattern: ".cache/"
+        action: "Exclude from git ✗"
+        reason: |
+          Contains:
+          - usage.json (local usage analytics)
+          - file_hashes.json (change detection cache)
+          - versions.json (version cache)
+          - community/ (aggregated community data)
+
+          This is private data specific to each installation.
+
+      index_files:
+        file_pattern: "_index.yaml"
+        action: "Exclude from git ✗"
+        reason: "Auto-generated search index, can be regenerated with kb.py index"
+
+      local_config:
+        file_pattern: ".kb-config-local.yaml"
+        action: "Exclude from git ✗"
+        reason: "Machine-specific configuration (paths, local settings)"
+
+    best_practices:
+      - item: "Comment .gitignore entries to explain WHY"
+        example: |
+          # Local usage analytics (private to this installation)
+          .cache/
+
+      - item: "Keep .gitignore in version control"
+        reason: "Team-wide ignore rules"
+
+      - item: "Use .git/info/exclude for local-only ignores"
+        example: |
+          # File: .git/info/exclude
+          # This only affects YOUR local repo
+          my-local-test-file.txt
+          personal-notes.md
+
+    troubleshooting:
+      issue: "Metadata files not being committed"
+      check: |
+        # Verify .gitignore doesn't block *_meta.yaml
+        grep '_meta.yaml' .gitignore
+        # Should see comment, not pattern
+
+      fix: |
+        # Remove bad pattern from .gitignore
+        sed -i '/_meta.yaml/d' .gitignore
+
+    references:
+      - title: "Gitignore Documentation"
+        url: "https://git-scm.com/docs/gitignore"
+
+  - id: "GITHUB-005"
+    title: "Git Push Rejected - Remote Has Work You Don't Have"
+    severity: "medium"
+    scope: "universal"
+    tags: ["git", "push", "rebase", "conflicts"]
+
+    problem: |
+      Attempting to push fails with:
+      "To https://github.com/user/repo.git
+       ! [rejected]        main -> main (fetch first)
+       error: failed to push some refs"
+
+    explanation: |
+      Remote repository has commits that aren't in your local branch.
+      This happens when:
+      1. Someone else pushed while you were working
+      2. You're working on an outdated branch
+      3. Force push was used on remote
+
+    solutions:
+      rebase_workflow:
+        description: "Rebase your commits on top of remote (recommended)"
+        steps: |
+          # 1. Fetch latest from remote
+          git fetch origin
+
+          # 2. Rebase your local commits onto origin/main
+          git rebase origin/main
+
+          # 3. If conflicts occur, resolve them
+          # Edit conflicting files
+          git add <resolved-files>
+          git rebase --continue
+
+          # 4. After rebase completes, push
+          git push origin main
+
+        advantages:
+          - "Creates linear, clean history"
+          - "Standard practice for feature branches"
+          - "Easier to understand git log"
+
+        disadvantages:
+          - "Rewrites history (don't use if pushed to shared branch)"
+          - "Can be confusing for beginners"
+
+      merge_workflow:
+        description: "Merge remote changes into local branch"
+        steps: |
+          # 1. Pull with merge (no rebase)
+          git pull origin main --no-rebase
+
+          # 2. If conflicts occur, resolve them
+          # Edit conflicting files
+          git add <resolved-files>
+          git commit -m "Merge remote changes"
+
+          # 3. Push
+          git push origin main
+
+        advantages:
+          - "Preserves true history"
+          - "Easier to understand"
+          - "Safer for shared branches"
+
+        disadvantages:
+          - "Creates merge commits"
+          - "History becomes more complex"
+
+      force_push:
+        description: "Force push your local version (DANGER!)"
+        warning: |
+          ⚠️  ONLY use this if:
+          - You are the only one working on the branch
+          - You know remote commits should be discarded
+          - You're fixing a mistake you just pushed
+
+          NEVER force push to shared main branch!
+
+        steps: |
+          git push --force origin main
+
+        risks:
+          - "Loses other developers' work"
+          - "Creates inconsistent repos"
+          - "Hard to recover"
+
+    recommendations:
+      personal_projects: "Use rebase for cleaner history"
+      team_projects: "Use merge to preserve everyone's work"
+      emergency_only: "Force push only if absolutely necessary"
+
+    prevention:
+      describe: "Sync frequently to avoid large conflicts"
+      best_practice: |
+        # Before starting work
+        git pull origin main
+
+        # While working (every few hours)
+        git fetch origin
+        git rebase origin/main
+
+        # Before pushing
+        git pull --rebase origin main
+        git push
+
+    references:
+      - title: "Git Branching and Merging"
+        url: "https://www.atlassian.com/git/tutorials/using-branches/merging"
+      - title: "Rebasing Safely"
+        url: "https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase"
