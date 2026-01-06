@@ -1,0 +1,327 @@
+# Curator Issue Triage Workflow Pattern
+# Systematic process for triaging GitHub issues proposing new KB patterns
+
+version: "1.0"
+category: "curator-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "CURATOR-ISSUE-TRIAGE-001"
+    title: "Curator Issue Triage Workflow for Pattern Submissions"
+    severity: "high"
+    scope: "universal"
+    tags: ["curator", "triage", "issue-review", "workflow", "github-issues"]
+
+    problem: |
+      Curator receives GitHub issues proposing new Knowledge Base patterns but needs
+      systematic process to:
+      - Verify referenced files exist in repository
+      - Check for duplicate patterns in existing KB
+      - Handle incomplete submissions properly
+      - Make consistent decisions (accept/supersede/incomplete)
+
+      **Challenges:**
+      - Issues reference files that may not exist in repository
+      - Multiple issues may propose similar patterns
+      - Submissions may be incomplete or malformed
+      - Need to reserve pattern IDs for future submissions
+
+      **Impact without workflow:**
+      - Inconsistent decision-making
+      - Duplicate patterns in KB
+      - Lost contributions (incomplete issues not handled)
+      - Pattern ID conflicts
+
+    symptoms:
+      - Same content added multiple times
+      - Patterns superseded by existing content not detected
+      - Contributors unclear why submission rejected
+      - Missing files not detected until review stage
+
+    root_cause: |
+      1. No systematic triage process defined
+      2. File existence not verified early
+      3. Duplicate detection not thorough
+      4. Incomplete submissions not handled consistently
+
+    solution: |
+      **4-Phase Issue Triage Workflow:**
+
+      ## Phase 1: Verify File Existence (2 minutes)
+
+      **Step 1.1: Check exact file path**
+      ```bash
+      # From issue description, extract file path
+      ls -la universal/patterns/module-import-tool-scripts.yaml
+      # Exit code 2 = file not found
+      ```
+
+      **Step 1.2: Search for similar filenames**
+      ```bash
+      # Pattern search by keywords
+      find universal/patterns -name "*pre-commit*"
+      find python/errors -name "*import*"
+      find universal/patterns -name "*yaml*validation*"
+      ```
+
+      **Step 1.3: Decision point**
+      - **File exists:** → Phase 2 (Content Analysis)
+      - **File missing:** → Phase 4 (Incomplete Submission)
+
+      ## Phase 2: Content Analysis (5-10 minutes)
+
+      **Step 2.1: Search for similar content**
+      ```bash
+      # Search by keywords in existing patterns
+      grep -r "agent.*role.*confusion" universal/patterns/*.yaml
+      grep -r "submodule.*integration" universal/patterns/*.yaml
+      grep -r "verification.*integration" universal/patterns/*.yaml
+      ```
+
+      **Step 2.2: Read promising candidates**
+      ```bash
+      # Read files found in search
+      read agent-role-separation.yaml
+      read git-submodule-init.yaml
+      read kb-update.yaml
+      ```
+
+      **Step 2.3: Compare content overlap**
+      - **Exact duplicate:** Same problem, same solution
+      - **Partial overlap:** Similar topic, different aspects
+      - **Complementary:** Related but distinct
+      - **Unique:** No overlap found
+
+      ## Phase 3: Decision Making (2 minutes)
+
+      Use **Decision Matrix:**
+
+      | File Exists | Content Duplicate | Action |
+      |-------------|-------------------|---------|
+      | ✓ | ✓ (exact) | Close as "duplicate" |
+      | ✓ | ✓ (better coverage) | Close as "superseded by existing" |
+      | ✓ | ✗ | Accept and integrate |
+      | ✓ | Complementary | Accept, add cross-references |
+      | ✗ | - | Close as "incomplete", reserve ID |
+
+      **Example: Issue #11**
+      - Requested: AGENT-ROLE-001 (agent role confusion)
+      - Found: AGENT-ROLE-SEPARATION-001 (717 lines, comprehensive)
+      - Decision: Close as superseded (existing has better coverage)
+
+      **Example: Issue #14**
+      - Requested: YAML-VALIDATION-001 (automation)
+      - Found: YAML-001 (syntax validation)
+      - Decision: Complementary, not duplicate (different focus)
+
+      ## Phase 4: Incomplete Submission (2 minutes)
+
+      **When file doesn't exist:**
+
+      **Step 4.1: Add detailed comment**
+      ```markdown
+      ## 📋 Curator Review: Issue #XX
+
+      ### Status: ❌ Incomplete - YAML File Missing
+
+      **Problem:** The referenced YAML file does not exist in the repository.
+
+      ### Expected File
+      - **Path:** `universal/patterns/pattern-name.yaml`
+      - **Status:** ❌ File not found
+
+      ### Next steps for contributor:
+      1. Provide the actual YAML file content
+      2. Create GitHub issue with YAML embedded directly
+      3. Follow AGENT-HANDOFF-001 workflow
+
+      **Pattern ID XXX-YYY reserved** for future submission.
+
+      **Related patterns:**
+      - AGENT-HANDOFF-001 (proper contribution workflow)
+      - [List related existing patterns]
+      ```
+
+      **Step 4.2: Close issue**
+      ```bash
+      gh issue close <number> --comment "Closing as incomplete..."
+      ```
+
+      **Step 4.3: Reserve pattern ID**
+      - Add in comment: "Pattern ID XXX-YYY reserved"
+      - Prevents ID conflicts when resubmitted
+      - Maintains sequence in KB
+
+    best_practices:
+      - practice: "Always verify file existence first"
+        reason: "Saves time, prevents unnecessary content analysis"
+
+      - practice: "Use multiple search keywords"
+        reason: "Single keyword may miss related patterns"
+
+      - practice: "Read full content before deciding"
+        reason: "Title/tags may not reveal full scope"
+
+      - practice: "Document decision clearly"
+        reason: "Contributor learns why, improves future submissions"
+
+      - practice: "Reserve pattern IDs for incomplete"
+        reason: "Prevents conflicts, maintains sequence"
+
+      - practice: "Cross-reference complementary patterns"
+        reason: "Connects related knowledge, improves discoverability"
+
+    code_example: |
+      ```bash
+      # Complete triage workflow example
+
+      # Issue #12: PY-IMPORT-005 proposed
+
+      # Phase 1: Verify file exists
+      ls -la python/errors/module-import-tool-scripts.yaml
+      # Output: No such file or directory
+
+      # Phase 4: File missing - close as incomplete
+      gh issue comment 12 --body "❌ Incomplete - file not found...
+
+      Pattern ID PY-IMPORT-005 reserved for future submission."
+
+      gh issue close 12
+
+      # ---
+
+      # Issue #11: 3 patterns proposed (AGENT-ROLE, INTEGRATION, VERIFICATION)
+
+      # Phase 1: Check files (all missing, but check content anyway)
+
+      # Phase 2: Search for similar content
+      grep -r "agent.*role.*separation" universal/patterns/*.yaml
+      # Found: agent-role-separation.yaml
+
+      grep -r "git.*submodule" universal/patterns/*.yaml
+      # Found: git-submodule-init.yaml (just added in issue #16)
+
+      grep -r "verification.*integration\|update.*verification" universal/patterns/*.yaml
+      # Found: kb-update.yaml (has verification sections)
+
+      # Phase 3: Read and compare
+      read agent-role-separation.yaml  # 717 lines, comprehensive
+      read git-submodule-init.yaml     # Covers clone vs submodule
+      read kb-update.yaml              # Has verification checklists
+
+      # Phase 4: Decision - all superseded
+      gh issue close 11 --comment "All 3 patterns superseded by existing:
+
+      1. AGENT-ROLE-001 → AGENT-ROLE-SEPARATION-001 (717 lines)
+      2. INTEGRATION-001 → GIT-SUBMODULE-001 (complete integration)
+      3. VERIFICATION-001 → KB-UPDATE-001 (has verification)"
+      ```
+
+    real_world_examples:
+      example_1_superseded:
+        issue: "#11: 3 patterns from chat analysis"
+        requested:
+          - "AGENT-ROLE-001: Agent Role Confusion"
+          - "INTEGRATION-001: Wrong Integration Method"
+          - "VERIFICATION-001: Integration Method Verification"
+
+        found:
+          - "AGENT-ROLE-SEPARATION-001: 717 lines, comprehensive"
+          - "GIT-SUBMODULE-001: Complete integration guide"
+          - "KB-UPDATE-001: Has verification checklists"
+
+        decision: "Close as superseded"
+        reason: "Existing patterns provide better coverage"
+
+      example_2_incomplete:
+        issue: "#12: PY-IMPORT-005 Module Import Issues"
+        file_referenced: "python/errors/module-import-tool-scripts.yaml"
+        file_status: "Not found in repository"
+
+        action_taken:
+          - "Added comment explaining file missing"
+          - "Reserved pattern ID PY-IMPORT-005"
+          - "Closed as incomplete"
+
+        contributor_guidance:
+          - "Provide YAML content in issue body"
+          - "Follow AGENT-HANDOFF-001 workflow"
+          - "Don't reference external file paths"
+
+      example_3_complementary:
+        issue: "#14: YAML-VALIDATION-001"
+        requested: "YAML Validation in Automated Metadata Generation"
+
+        found: "YAML-001 (syntax validation in manual YAML)"
+        analysis: "Different focus (automation vs manual)"
+
+        decision: "Inclosed as incomplete (file missing)"
+        note: "Would be complementary to YAML-001 if resubmitted"
+
+    troubleshooting:
+      - symptom: "Search returns too many results"
+        solution: "Use more specific keywords or combine terms"
+
+      - symptom: "Can't tell if duplicate"
+        solution: "Read full content, compare section-by-section"
+
+      - symptom: "Pattern seems unique but similar exists"
+        solution: "Accept, but add cross-references to existing"
+
+      - symptom: "Multiple files with similar content"
+        solution: "Read all, determine if superseded or complementary"
+
+    anti_patterns:
+      - pattern: "Skip file existence check"
+        consequence: "Waste time analyzing non-existent files"
+
+      - pattern: "Search only by exact pattern name"
+        consequence: "Miss similar patterns with different names"
+
+      - pattern: "Close incomplete issues without comment"
+        consequence: "Contributor doesn't know why, can't fix"
+
+      - pattern: "Don't reserve pattern IDs"
+        consequence: "ID conflicts when resubmitted"
+
+      - pattern: "Read only title/tags"
+        consequence: "Miss full scope, incorrect duplicate decision"
+
+    lessons_learned: |
+      **From processing 5 issues in one session:**
+
+      ✅ **What worked:**
+      - Systematic file verification saved time
+      - Multiple keyword searches found duplicates
+      - Reading full content revealed true scope
+      - Clear comments helped contributors
+      - Pattern ID reservation prevented conflicts
+
+      ⚠️ **What could improve:**
+      - Automate file existence check
+      - Create search keyword templates
+      - Standardize comment templates
+      - Track triage decisions for future reference
+
+    related_patterns:
+      - CURATOR-DECISION-001 (Decision framework for accept/reject)
+      - PR-REVIEW-001 (PR review process, different from issue triage)
+      - AGENT-HANDOFF-001 (Submission workflow from Project Agent)
+      - AGENT-HANDOFF-FAILURE-001 (Common submission failures)
+      - AGENT-ROLE-SEPARATION-001 (Role boundaries: Project Agent vs Curator)
+
+    references:
+      - "Issue #11: 3 patterns superseded by existing"
+      - "Issue #12: PY-IMPORT-005 (incomplete, reserved)"
+      - "Issue #13: PRE-COMMIT-001 (incomplete, reserved)"
+      - "Issue #14: YAML-VALIDATION-001 (incomplete, reserved)"
+      - "Issue #16: 5 patterns accepted and integrated"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      reusable: true
+      severity_level: 1
+      difficulty: "intermediate"
+      pattern_type: "workflow"
+      applicable_to: ["curators", "knowledge-base-maintainers"]
