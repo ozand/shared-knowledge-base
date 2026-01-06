@@ -918,6 +918,102 @@ def cmd_check_freshness(config: KBConfig, scope: Optional[str] = None) -> bool:
     return True
 
 
+def cmd_check_updates(config: KBConfig) -> bool:
+    """
+    Check if Shared KB has updates available from remote repository.
+
+    Args:
+        config: KB configuration
+
+    Returns:
+        True if check completed (regardless of whether updates exist)
+    """
+    import subprocess
+
+    shared_dir = None
+
+    # Try to detect shared KB directory
+    # Option 1: Submodule
+    submodule_dir = config.project_root / "docs" / "knowledge-base" / "shared"
+    if submodule_dir.exists() and (submodule_dir / ".git").exists():
+        shared_dir = submodule_dir
+        is_submodule = True
+    else:
+        # Option 2: Standalone clone
+        standalone_dir = config.kb_dir
+        if standalone_dir.exists() and (standalone_dir / ".git").exists():
+            shared_dir = standalone_dir
+            is_submodule = False
+        else:
+            print("❌ Shared KB directory not found or not a git repository")
+            print("\n💡 Expected locations:")
+            print("   - docs/knowledge-base/shared/ (submodule)")
+            print("   - Or current KB directory if it's a git clone")
+            return False
+
+    print(f"🔍 Checking for Shared KB updates...")
+    print(f"📁 Location: {shared_dir}")
+    print(f"📦 Type: {'Submodule' if is_submodule else 'Plain clone'}\n")
+
+    # Fetch latest changes (don't merge)
+    fetch_result = subprocess.run(
+        ["git", "-C", str(shared_dir), "fetch", "origin"],
+        capture_output=True,
+        text=True
+    )
+
+    if fetch_result.returncode != 0:
+        print("⚠️  Could not fetch from remote (network or auth issue)")
+        print(f"   Error: {fetch_result.stderr.strip()}")
+        return False
+
+    # Check for new commits
+    log_result = subprocess.run(
+        ["git", "-C", str(shared_dir), "log", "HEAD..origin/main",
+         "--oneline", "--since", "1 month ago"],
+        capture_output=True,
+        text=True
+    )
+
+    if log_result.returncode != 0:
+        print("❌ Could not check for updates")
+        return False
+
+    if not log_result.stdout.strip():
+        print("✅ Shared KB is up to date (no new commits in last month)\n")
+        return True
+
+    # New commits available
+    commits = log_result.stdout.strip().split('\n')
+    num_commits = len(commits)
+
+    print(f"🆕 {num_commits} new update(s) available!\n")
+    print("Recent changes:")
+
+    for i, commit in enumerate(commits[:10], 1):
+        # Format: "hash message"
+        parts = commit.split(' ', 1)
+        commit_hash = parts[0][:7]
+        commit_msg = parts[1] if len(parts) > 1 else "No message"
+        print(f"  {i}. {commit_hash} - {commit_msg}")
+
+    if num_commits > 10:
+        print(f"\n  ... and {num_commits - 10} more")
+
+    print(f"\n💡 To update Shared KB:")
+    if is_submodule:
+        print("   git submodule update --remote --merge docs/knowledge-base/shared")
+    else:
+        print("   cd docs/knowledge-base/shared && git pull origin main")
+
+    print("\n⏰ Recommended update frequency:")
+    print("   - Active projects: Weekly or before major work")
+    print("   - Maintenance projects: Monthly")
+    print("   - Always update before using critical patterns\n")
+
+    return True
+
+
 def cmd_analyze_usage(config: KBConfig, days: int = 30) -> bool:
     """
     Analyze local usage patterns.
@@ -1207,6 +1303,8 @@ Examples:
     freshness_parser = subparsers.add_parser('check-freshness', help='Check entry freshness and review status')
     freshness_parser.add_argument('--scope', help='Filter by scope (python, docker, etc.)')
 
+    updates_parser = subparsers.add_parser('check-updates', help='Check for Shared KB updates from remote repository')
+
     usage_parser = subparsers.add_parser('analyze-usage', help='Analyze local usage patterns')
     usage_parser.add_argument('--days', type=int, default=30, help='Days to analyze (default: 30)')
 
@@ -1275,6 +1373,10 @@ Examples:
 
         elif args.command == 'check-freshness':
             success = cmd_check_freshness(config, scope=args.scope)
+            return 0 if success else 1
+
+        elif args.command == 'check-updates':
+            success = cmd_check_updates(config)
             return 0 if success else 1
 
         elif args.command == 'analyze-usage':
