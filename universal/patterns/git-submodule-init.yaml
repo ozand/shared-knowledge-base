@@ -178,9 +178,63 @@ patterns:
       - Submodule needs commit history
       - Cannot add submodule without initial commit
 
+    agent_usage: |
+      ⚠️ **CRITICAL FOR AI AGENTS:**
+
+      When working with git submodules, AI agents MUST follow these rules:
+
+      ❌ **FORBIDDEN:**
+      ```bash
+      # WRONG - Direct access to submodule
+      git -C docs/knowledge-base/shared fetch origin
+      cd docs/knowledge-base/shared && git pull
+      ```
+
+      ✅ **REQUIRED:**
+      ```bash
+      # CORRECT - Use submodule commands from project root
+      git submodule status docs/knowledge-base/shared
+      git submodule update --remote docs/knowledge-base/shared
+      ```
+
+      **Agent Workflow:**
+      1. **Always check status first:**
+         ```bash
+         git submodule status docs/knowledge-base/shared
+         ```
+         - Leading space = ✅ Good
+         - Minus sign = ❌ Not initialized
+         - Plus sign = ⚠️ Uncommitted changes
+
+      2. **Update using submodule commands:**
+         ```bash
+         git submodule update --remote docs/knowledge-base/shared
+         ```
+
+      3. **Verify update succeeded:**
+         ```bash
+         git submodule status docs/knowledge-base/shared
+         # Compare commit hash before/after
+         ```
+
+      **Why agents must use submodule commands:**
+      - Direct access breaks .gitmodules synchronization
+      - Doesn't update superproject's git link to submodule
+      - Can cause merge conflicts during updates
+      - Violates git submodule workflow design
+      - May lead to detached HEAD state
+
+      **See:**
+      - AGENT-DIRECT-SUBMODULE-ACCESS-001 (Complete anti-pattern)
+      - SUBMODULE-STATUS-INTERPRETATION-001 (Status interpretation)
+      - KB-UPDATE-001 (Update workflow)
+
     related_patterns:
       - KB-MIGRATION-001 (Knowledge Base Migration)
       - GIT-WORKFLOW-001 (General Git Workflow)
+      - AGENT-DIRECT-SUBMODULE-ACCESS-001 (Agent submodule access rules)
+      - SUBMODULE-STATUS-INTERPRETATION-001 (Understanding status output)
+      - KB-UPDATE-001 (Shared KB update process)
 
     references:
       - "https://git-scm.com/docs/git-submodule"
