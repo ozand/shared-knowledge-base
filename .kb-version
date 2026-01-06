@@ -1,0 +1,61 @@
+# Shared Knowledge Base Version Information
+#
+# This file tracks the current version of Shared KB.
+# Used for version comparison and update notifications.
+
+version: 3.1
+commit: 2896d4a
+commit_date: "2026-01-06"
+commit_message: "Add sparse checkout setup for submodules to exclude Curator content"
+
+statistics:
+  total_commits: 47
+  universal_patterns: 27
+  tech_patterns: 45
+  total_entries: 72
+
+directories:
+  universal: "Universal patterns (agent-workflow, quality-assurance, etc.)"
+  python: "Python-specific patterns and errors"
+  postgresql: "PostgreSQL patterns and errors"
+  docker: "Docker patterns and errors"
+  javascript: "JavaScript patterns and errors"
+  vps: "VPS/deployment patterns"
+
+features:
+  - "Sparse checkout support (excludes Curator files)"
+  - "Auto-check on agent bootstrap"
+  - "Update notification system"
+  - "Multi-entry key support (errors + patterns)"
+  - "Curator Decision Framework"
+  - "Role separation enforcement"
+
+last_major_updates:
+  - date: "2026-01-06"
+    feature: "Sparse checkout setup scripts"
+    commit: "2896d4a"
+
+  - date: "2026-01-06"
+    feature: "Auto-check updates command (kb.py check-updates)"
+    commit: "27cc159"
+
+  - date: "2026-01-06"
+    feature: "Curator Decision Framework (CURATOR-DECISION-001)"
+    commit: "de93da6"
+
+  - date: "2026-01-06"
+    feature: "Update mechanism analysis"
+    commit: "99f9736"
+
+compatibility:
+  min_agent_version: "1.0"
+  tested_with:
+    - "claude-code"
+    - "cursor-ai"
+  backwards_compatible: true
+
+maintenance:
+  status: "active"
+  update_frequency: "as needed"
+  curator_role: "Shared KB Curator Agent"
+  contribution_process: "GitHub Issues (AGENT-HANDOFF-001)"

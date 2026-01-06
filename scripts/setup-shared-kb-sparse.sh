@@ -70,6 +70,7 @@ scripts/
 # Base configuration
 .kb-config.yaml
 .gitignore.agents
+.kb-version
 SPARSE_EOF
 
 # Pull only specified content

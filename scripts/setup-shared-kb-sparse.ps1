@@ -78,6 +78,7 @@ scripts/
 # Base configuration
 .kb-config.yaml
 .gitignore.agents
+.kb-version
 "@
 
 Set-Content -Path "$sparseCheckoutDir/sparse-checkout" -Value $sparseCheckoutContent -NoNewline

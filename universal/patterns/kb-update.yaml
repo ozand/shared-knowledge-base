@@ -1,0 +1,468 @@
+# Shared KB Update Process for Projects
+
+version: "1.0"
+category: "knowledge-base"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "KB-UPDATE-001"
+    title: "Shared KB Update Process for Projects"
+    severity: "high"
+    scope: "universal"
+    tags: ["updates", "maintenance", "synchronization", "version-control"]
+
+    problem: |
+      Projects using Shared Knowledge Base need to stay current with
+      new patterns and improvements. However, there's no systematic
+      update mechanism, and agents don't know when their local KB is stale.
+
+      **Key Issues:**
+      - No version tracking
+      - No update notifications
+      - Manual git operations required
+      - Agents unaware of new patterns
+      - Knowledge gap grows over time
+
+    impact: |
+      - Projects work with outdated knowledge
+      - Missing new patterns and improvements
+      - Repeating solved problems
+      - Inconsistent solutions across projects
+
+    solution: |
+      Implement systematic update process with automated checking
+      and clear update workflows for different installation methods.
+
+    workflows:
+      git_submodule:
+        description: "Update when Shared KB is installed as git submodule"
+
+        check_for_updates:
+          manual: |
+            cd docs/knowledge-base/shared
+            git fetch origin
+            git log HEAD..origin/main --oneline
+
+          automated: |
+            python docs/knowledge-base/shared/tools/kb.py check-updates
+
+          auto_check_on_bootstrap: |
+            # Automatic check when agent session starts
+            python tools/kb-agent-bootstrap.py
+
+        update_command: |
+          git submodule update --remote --merge docs/knowledge-base/shared
+
+        what_happens: |
+          1. Fetches latest changes from remote
+          2. Merges changes into local submodule
+          3. Resolves conflicts if needed
+          4. Updates to latest commit
+
+        rollback: |
+          # If update breaks something
+          cd docs/knowledge-base/shared
+          git log --oneline -10  # Find previous commit
+          git checkout <previous-commit-hash>
+          cd ../..
+          git add docs/knowledge-base/shared
+          git commit -m "Rollback Shared KB to <commit-hash>"
+
+      plain_clone:
+        description: "Update when Shared KB is installed as plain git clone"
+
+        check_for_updates:
+          manual: |
+            cd docs/knowledge-base/shared
+            git fetch origin
+            git log HEAD..origin/main --oneline
+
+          automated: |
+            python docs/knowledge-base/shared/tools/kb.py check-updates
+
+          auto_check_on_bootstrap: |
+            # Automatic check when agent session starts
+            python tools/kb-agent-bootstrap.py
+
+        update_command: |
+          cd docs/knowledge-base/shared
+          git pull origin main
+
+        what_happens: |
+          1. Fetches latest changes from remote
+          2. Fast-forwards to latest commit
+          3. Updates working directory
+          4. Reports conflicts if any
+
+        resolve_conflicts: |
+          # If there are conflicts (rare in plain clone)
+          cd docs/knowledge-base/shared
+          git status  # See conflicted files
+          # Edit conflicted files
+          git add <resolved-files>
+          git commit  # Complete merge
+
+        rollback: |
+          # If update breaks something
+          cd docs/knowledge-base/shared
+          git reflog  # Find previous position
+          git reset --hard HEAD@{N}  # Where N is the reflog entry
+          # Or:
+          git checkout <previous-commit-hash>
+
+      sparse_checkout:
+        description: "Update with sparse checkout (excludes Curator files)"
+
+        check_for_updates:
+          automated: |
+            python docs/knowledge-base/shared/tools/kb.py check-updates
+
+        update_command: |
+          # Same as submodule or clone
+          git submodule update --remote --merge docs/knowledge-base/shared
+          # OR
+          cd docs/knowledge-base/shared && git pull origin main
+
+        verify_sparse_active: |
+          # Ensure sparse checkout still active after update
+          cd docs/knowledge-base/shared
+          git config core.sparseCheckout  # Should return "true"
+          ls .git/info/sparse-checkout  # Should exist
+
+        if_broken: |
+          # If update loads all files (sparse checkout broken)
+          cd docs/knowledge-base/shared
+          git config core.sparseCheckout true
+          cat > .git/info/sparse-checkout < sparse-checkout.example
+          git reset --hard HEAD
+          git checkout
+
+    recommended_frequency:
+      active_development: |
+        - Weekly during active development
+        - Before starting major work
+        - Before using critical patterns
+        - When encountering unfamiliar errors
+
+      maintenance_mode: |
+        - Monthly for maintenance projects
+        - Before releasing new versions
+        - When responding to support requests
+
+      always_update_before: |
+        - Using critical security patterns
+        - Implementing complex workflows
+        - Troubleshooting difficult issues
+        - Onboarding new team members
+
+    troubleshooting:
+      issue_1_network_error:
+        symptom: "Could not fetch from remote"
+        causes:
+          - "No internet connection"
+          - "GitHub repository inaccessible"
+          - "Firewall blocking git requests"
+          - "SSH key authentication issues (if using SSH)"
+
+        solutions:
+          - solution: "Check internet connection"
+            command: "ping github.com"
+
+          - solution: "Switch from SSH to HTTPS"
+            command: |
+              # In .gitmodules
+              url = https://github.com/ozand/shared-knowledge-base.git
+
+          - solution: "Use VPN or proxy if needed"
+
+          - solution: "Configure git proxy"
+            command: |
+              git config --global http.proxy http://proxy.example.com:8080
+
+      issue_2_merge_conflict:
+        symptom: "Automatic merge failed; fix conflicts"
+        causes:
+          - "Local changes in Shared KB directory"
+          - "Diverged history"
+          - "Both submodule and local modified same files"
+
+        solutions:
+          - solution: "Stash local changes first"
+            command: |
+              cd docs/knowledge-base/shared
+              git stash
+              git submodule update --remote --merge
+              # Apply stash back if needed
+              git stash pop
+
+          - solution: "Reset to clean state"
+            command: |
+              cd docs/knowledge-base/shared
+              git reset --hard origin/main
+              cd ../..
+              git add docs/knowledge-base/shared
+              git commit -m "Reset Shared KB to clean state"
+
+          - solution: "Resolve conflicts manually"
+            steps:
+              - "cd docs/knowledge-base/shared"
+              - "git status  # See conflicts"
+              - "Edit conflicted files, remove markers"
+              - "git add <resolved-files>"
+              - "git commit"
+
+      issue_3_submodule_detached:
+        symptom: "Submodule in detached HEAD state"
+        causes:
+          - "Manual git operations in submodule"
+          - "Incomplete update"
+          - "Checkout to specific commit"
+
+        solutions:
+          - solution: "Reattach to main branch"
+            command: |
+              cd docs/knowledge-base/shared
+              git checkout main
+              git pull origin main
+              cd ../..
+              git add docs/knowledge-base/shared
+              git commit -m "Reattach Shared KB to main"
+
+          - solution: "Use submodule update"
+            command: |
+              git submodule update --remote --merge docs/knowledge-base/shared
+
+      issue_4_sparse_checkout_broken:
+        symptom: "All files loaded, including curator/"
+        causes:
+          - "Sparse checkout config lost"
+          - ".git/info/sparse-checkout deleted"
+          - "core.sparseCheckout reset to false"
+
+        solutions:
+          - solution: "Re-enable sparse checkout"
+            command: |
+              cd docs/knowledge-base/shared
+              git config core.sparseCheckout true
+              cat > .git/info/sparse-checkout <<'EOF'
+              universal/
+              python/
+              postgresql/
+              docker/
+              javascript/
+              vps/
+              tools/
+              scripts/
+              README.md
+              GUIDE.md
+              AGENT_*.md
+              ROLE_SEPARATION_GUIDE.md
+              GITHUB_ATTRIBUTION_GUIDE.md
+              .kb-config.yaml
+              .gitignore.agents
+              EOF
+              git reset --hard HEAD
+              git checkout
+
+          - solution: "Use automated script"
+            command: |
+              bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+    best_practices:
+      practice_1_automate_checks: |
+        **Always enable automatic update checks on bootstrap**
+
+        Rationale: Agents are automatically notified when updates are available,
+        reducing the chance of working with stale knowledge.
+
+        Implementation:
+        - Ensure AGENT-AUTO-001 bootstrap is configured
+        - Run `python tools/kb-agent-bootstrap.py` on session start
+        - Or integrate into project's agent startup script
+
+      practice_2_update_before_major_work: |
+        **Update Shared KB before starting major work**
+
+        Rationale: Ensures you have access to the latest patterns and solutions,
+        especially for critical tasks.
+
+        Examples:
+        - Before implementing authentication system
+        - Before troubleshooting complex database issues
+        - Before performance optimization work
+        - Before onboarding new developers
+
+      practice_3_document_local_changes: |
+        **Never modify Shared KB files directly**
+
+        Rationale: Local modifications create merge conflicts and prevent updates.
+
+        Instead:
+        - Add project-specific patterns to project's local KB
+        - Use tags: local_only: true
+        - Contribute universal patterns via GitHub Issues
+
+      practice_4_test_after_update: |
+        **Test critical patterns after update**
+
+        Rationale: New versions may have changes that affect existing workflows.
+
+        Checklist:
+        - Verify key patterns still work
+        - Check for deprecated patterns
+        - Review new patterns added
+        - Update project documentation if needed
+
+      practice_5_rollback_plan: |
+        **Know how to rollback before updating**
+
+        Rationale: If update breaks something, you need quick recovery.
+
+        Preparation:
+        - Commit project state before updating Shared KB
+        - Know rollback commands for your setup (submodule vs clone)
+        - Test rollback process in non-critical environment
+
+      practice_6_update_frequency: |
+        **Match update frequency to project activity**
+
+        Guidelines:
+        - Active projects: Weekly or before major work
+        - Maintenance projects: Monthly
+        - Critical systems: Before any deployment
+        - Learning/onboarding: Always use latest
+
+    anti_patterns:
+      anti_pattern_1_ignore_updates:
+        wrong: "Never updating Shared KB"
+        consequences:
+          - "Missing new patterns and improvements"
+          - "Working with outdated solutions"
+          - "Repeating solved problems"
+          - "Knowledge gap grows over time"
+
+        correct: "Regular updates following recommended frequency"
+
+      anti_pattern_2_local_modifications:
+        wrong: "Modifying Shared KB files directly"
+        consequences:
+          - "Merge conflicts on every update"
+          - "Changes lost on update"
+          - "Cannot update cleanly"
+          - "Violates Shared KB principles"
+
+        correct: "Use project-local KB for project-specific patterns"
+
+      anti_pattern_3_blind_update:
+        wrong: "Updating without reviewing changes"
+        consequences:
+          - "Surprise breaking changes"
+          - "Missed migration requirements"
+          - "New patterns not discovered"
+
+        correct: "Check what changed, then update"
+        steps:
+          - "Run: python tools/kb.py check-updates"
+          - "Review commit summaries"
+          - "Plan for any breaking changes"
+          - "Then update"
+
+      anti_pattern_4_update_in_production:
+        wrong: "Updating Shared KB during critical production work"
+        consequences:
+          - "Unexpected behavior changes"
+          - "Production downtime risk"
+          - "Rollback complexity"
+
+        correct: "Update in development/staging first, test, then production"
+
+    integration_points:
+      point_1_automation: |
+        **Auto-Check on Bootstrap (AGENT-AUTO-001)**
+
+        Update checking is integrated into agent bootstrap:
+        - Automatically runs on session start
+        - Non-blocking (doesn't fail if network unavailable)
+        - Shows clear update notifications
+        - Provides update commands
+
+        Script: tools/kb-agent-bootstrap.py
+        Function: check_kb_updates()
+
+      point_2_command_line: |
+        **Manual Check Command**
+
+        Check for updates anytime:
+        ```bash
+        python tools/kb.py check-updates
+        ```
+
+        Features:
+        - Detects submodule vs clone
+        - Shows recent commits
+        - Provides update command
+        - Shows recommended frequency
+
+      point_3_ci_cd: |
+        **CI/CD Integration**
+
+        Check for updates in CI/CD pipeline:
+        ```yaml
+        # Example GitHub Actions
+        - name: Check Shared KB Updates
+          run: |
+            python docs/knowledge-base/shared/tools/kb.py check-updates
+        ```
+
+        Use cases:
+        - Warn about outdated KB in builds
+        - Suggest updates before deployment
+        - Track update compliance
+
+    related_patterns:
+      - id: "AGENT-AUTO-001"
+        title: "Agent Auto-Configuration from Shared KB"
+        relationship: "integrates"
+        explanation: |
+          KB-UPDATE-001's automated check is integrated into AGENT-AUTO-001
+          bootstrap process, ensuring agents are notified on session start.
+
+      - id: "SHARED-KB-SETUP-001"
+        title: "Shared KB Sparse Checkout Setup"
+        relationship: "complementary"
+        explanation: |
+          SHARED-KB-SETUP-001 configures sparse checkout to exclude Curator
+          files. KB-UPDATE-001 shows how to update while maintaining sparse checkout.
+
+      - id: "KB-INDEX-001"
+        title: "Supporting Multiple Entry Keys"
+        relationship: "related"
+        explanation: |
+          KB-INDEX-001 ensures both 'errors' and 'patterns' keys are indexed.
+          Updates to KB indexing are handled via KB-UPDATE-001 workflow.
+
+    references:
+      - title: "SHARED_KB_UPDATE_MECHANISMS_ANALYSIS.md"
+        description: "Detailed analysis of update mechanisms and gaps"
+
+      - title: "SUBMODULE_VS_CLONE.md"
+        description: "Comparison of submodule vs clone approaches"
+
+      - title: "SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md"
+        description: "Sparse checkout implementation to exclude Curator files"
+
+      - title: "tools/kb.py check-updates"
+        description: "Command-line tool to check for updates"
+
+      - title: "tools/kb-agent-bootstrap.py"
+        description: "Bootstrap script with automatic update checking"
+
+    version_history:
+      - version: "1.0"
+        date: "2026-01-06"
+        changes:
+          - "Initial pattern creation"
+          - "Documented workflows for submodule, clone, sparse checkout"
+          - "Added troubleshooting section"
+          - "Added best practices and anti-patterns"
+          - "Integrated with AGENT-AUTO-001 bootstrap"

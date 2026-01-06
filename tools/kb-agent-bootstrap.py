@@ -217,6 +217,84 @@ def parse_basic_yaml(file_path: Path) -> Dict[str, Any]:
     return result
 
 
+def check_kb_updates(kb_path: Path, quiet: bool = False) -> bool:
+    """
+    Check if Shared KB has updates available.
+
+    Non-blocking: Doesn't fail if check fails (network, auth, etc.)
+    """
+    # Check if KB is a git repository
+    git_dir = kb_path / ".git"
+    if not git_dir.exists():
+        return False
+
+    try:
+        # Fetch latest changes (don't merge)
+        fetch_result = subprocess.run(
+            ["git", "-C", str(kb_path), "fetch", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=10  # 10 second timeout
+        )
+
+        if fetch_result.returncode != 0:
+            # Network or auth issue - silently skip
+            return False
+
+        # Check for new commits
+        log_result = subprocess.run(
+            ["git", "-C", str(kb_path), "log", "HEAD..origin/main",
+             "--oneline", "--since", "1 month ago"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+
+        if log_result.returncode != 0:
+            return False
+
+        if not log_result.stdout.strip():
+            # No updates
+            return False
+
+        # New commits available
+        commits = log_result.stdout.strip().split('\n')
+        num_commits = len(commits)
+
+        if not quiet:
+            print(f"\n{'=' * 60}")
+            print(f"🆕 Shared KB Updates Available")
+            print(f"{'=' * 60}")
+            print(f"\n{num_commits} new update(s) available:")
+            for i, commit in enumerate(commits[:5], 1):
+                parts = commit.split(' ', 1)
+                commit_hash = parts[0][:7]
+                commit_msg = parts[1] if len(parts) > 1 else "No message"
+                print(f"  {i}. {commit_hash} - {commit_msg}")
+
+            if num_commits > 5:
+                print(f"\n  ... and {num_commits - 5} more")
+
+            # Detect if submodule or clone
+            is_submodule = (kb_path / ".git").is_dir()
+
+            print(f"\n💡 To update:")
+            if is_submodule:
+                print(f"   git submodule update --remote --merge {kb_path}")
+            else:
+                parent = kb_path.parent
+                print(f"   cd {kb_path} && git pull origin main")
+
+            print(f"\n⏰ Recommended: Update before starting major work")
+            print(f"{'=' * 60}\n")
+
+        return True
+
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        # Silently fail - update check is non-blocking
+        return False
+
+
 def load_instructions(kb_path: Path) -> Dict[str, Any]:
     """Load agent instructions from KB."""
     instructions_file = kb_path / "universal/agent-instructions/base-instructions.yaml"
@@ -394,6 +472,10 @@ def main():
                 "kb_path": kb_path,
             }
             config = apply_instructions(instructions, context)
+
+        # Step 4.5: Check for KB updates (non-blocking)
+        if kb_path:
+            check_kb_updates(kb_path, quiet=args.quiet)
 
     # Step 5: Save configuration
     if not args.dry_run:
