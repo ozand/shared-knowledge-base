@@ -385,6 +385,168 @@ patterns:
             ✅ No divergence from upstream
             ✅ Standard update workflow maintained
 
+      issue_6_plain_clone_not_git_repo:
+        symptom: "git submodule commands fail - 'not a git repository'"
+        example: |
+          git submodule update --remote --merge docs/knowledge-base/shared
+          fatal: not a git repository (or any of the parent directories)
+
+        causes:
+          - "Project not initialized as git repository"
+          - "Shared KB installed as plain clone, not submodule"
+          - "No .git directory in project root"
+
+        explanation: |
+          Project uses plain clone installation method:
+          - Shared KB added via: git clone https://github.com/...
+          - Not via: git submodule add
+          - Project root has no .git directory
+
+          Result:
+          - git submodule commands don't work from project root
+          - But shared/ directory IS a git repository
+          - Can update shared/ directly with git commands
+
+        solutions:
+          - solution: "Update shared/ directly (WORKAROUND)"
+            command: |
+              cd docs/knowledge-base/shared
+              git pull origin main
+
+            when_to_use: "Short-term, before git init"
+            pros:
+              - "Works immediately"
+              - "No setup required"
+            cons:
+              - "Manual process"
+              - "Must remember to update"
+              - "No submodule benefits"
+
+          - solution: "Initialize git and migrate to submodule (RECOMMENDED)"
+            steps: |
+              # 1. Initialize git for project
+              cd /path/to/project
+              git init
+
+              # 2. Create .gitignore
+              # (Exclude: venv, __pycache__, .idea, etc.)
+
+              # 3. Initial commit
+              git add .
+              git commit -m "Initial commit"
+
+              # 4. Remove old clone
+              rm -rf docs/knowledge-base/shared
+
+              # 5. Add as submodule (optionally with sparse checkout)
+              git submodule add https://github.com/ozand/shared-knowledge-base.git \
+                docs/knowledge-base/shared
+
+              # OR use automated sparse setup
+              bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+              # 6. Test
+              git submodule update --remote --merge docs/knowledge-base/shared
+
+            when_to_use: "When ready for professional setup"
+            pros:
+              - "git submodule update works"
+              - "Version pinning available"
+              - "Team collaboration enabled"
+              - "Can use sparse checkout"
+              - "Automatic update checks"
+            cons:
+              - "One-time setup required"
+              - "Takes ~5 minutes"
+
+          - solution: "Use sparse checkout during migration (OPTIMAL)"
+            steps: |
+              # Use automated script with sparse checkout
+              bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+            benefits:
+              - "Loads only patterns + agent guides"
+              - "Excludes Curator files (~22% savings)"
+              - "Clean context for Project Agents"
+              - "Role separation enforced"
+
+        real_world_example:
+          project: "PARSER"
+          situation: |
+            git submodule update --remote --merge docs/knowledge-base/shared
+            fatal: not a git repository
+
+            cd docs/knowledge-base/shared
+            git status
+            # On branch main
+            # Your branch is up to date with 'origin/main'
+
+          analysis: |
+            PARSER project:
+            - Not under git (no .git in root)
+            - Shared KB installed as plain clone
+            - But shared/ IS a git repository
+
+            Verification:
+            ls docs/knowledge-base/shared/.git
+            # Exists! It's a git repository
+
+          current_solution: |
+            # Update shared/ directly
+            cd docs/knowledge-base/shared
+            git pull origin main
+            # Already up to date
+
+          recommended_migration: |
+            1. Initialize git: cd /path/to/PARSER && git init
+            2. Initial commit: git add . && git commit -m "Initial"
+            3. Migrate to submodule: Remove old clone, add as submodule
+            4. Setup sparse checkout: Exclude Curator files
+            5. Test: git submodule update --remote --merge
+
+          benefits_of_migration:
+            - "✅ Standard submodule commands work"
+            - "✅ Clean context (sparse checkout)"
+            - "✅ Easy updates"
+            - "✅ Team collaboration"
+            - "✅ Automatic update checks"
+
+          timeline: |
+            Phase 1 (Current): Continue with plain clone
+            Phase 2 (When ready): Initialize git
+            Phase 3 (Migration): Add submodule + sparse checkout
+            Phase 4 (Long-term): Enable auto-update checks
+
+        decision_framework:
+          question: "Should project initialize git?"
+
+          checklist:
+            - question: "Is code stable?"
+              if_yes: "✅ Ready for git init"
+              if_no: "⏰ Wait until stable"
+
+            - question: "Will others work on it?"
+              if_yes: "✅ Git init recommended"
+              if_no: "❌ Local is fine"
+
+            - question: "Need collaboration?"
+              if_yes: "✅ Git required"
+              if_no: "❌ Local OK"
+
+            - question: "Want automatic updates?"
+              if_yes: "✅ Submodule helps"
+              if_no: "⚠️ Manual update OK"
+
+          recommendation: |
+            3+ YES answers: Initialize git ✅
+            1-2 YES answers: Can continue plain clone ⏰
+
+        see_also:
+          - "PLAIN_CLONE_PROJECT_ANALYSIS.md - Detailed PARSER analysis"
+          - "SUBMODULE_VS_CLONE.md - Comparison of approaches"
+          - "scripts/setup-shared-kb-sparse.sh - Automated setup"
+          - "SHARED_KB_UPDATE_MECHANISMS_ANALYSIS.md - Update mechanisms"
+
     best_practices:
       practice_1_automate_checks: |
         **Always enable automatic update checks on bootstrap**
