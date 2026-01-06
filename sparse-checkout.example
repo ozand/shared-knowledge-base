@@ -1,0 +1,81 @@
+# Sparse Checkout Configuration for Shared KB Submodule
+#
+# This file specifies which paths to include when using git sparse-checkout
+# with shared-knowledge-base as a submodule.
+#
+# Usage:
+#   cd docs/knowledge-base/shared
+#   git config core.sparseCheckout true
+#   cp sparse-checkout.example .git/info/sparse-checkout
+#   git checkout
+#
+# Result: Only needed content loaded, Curator files excluded
+
+# ========================================
+# Core Documentation (needed by agents)
+# ========================================
+README.md
+GUIDE.md
+QUICKSTART.md
+README_INTEGRATION.md
+
+# ========================================
+# Agent Guides (needed by agents)
+# ========================================
+AGENT_INTEGRATION_GUIDE.md
+AGENT_AUTOCONFIG_GUIDE.md
+ROLE_SEPARATION_GUIDE.md
+GITHUB_ATTRIBUTION_GUIDE.md
+
+# ========================================
+# Knowledge Base Patterns (MAIN CONTENT)
+# ========================================
+# Universal patterns
+universal/
+
+# Technology-specific patterns
+python/
+postgresql/
+docker/
+javascript/
+vps/
+
+# ========================================
+# Tools (needed by agents)
+# ========================================
+tools/
+scripts/
+
+# ========================================
+# Base Configuration
+# ========================================
+.kb-config.yaml
+.gitignore.agents
+
+# ========================================
+# EXCLUDED (Curator-only content)
+# ========================================
+# These files are NOT loaded by sparse-checkout:
+#
+# curator/                          - Curator agent instructions
+# *_ANALYSIS.md                      - Analysis documents
+# *_REPORT.md                        - Curator reports
+# CHAT_*.md                          - Chat analysis
+# CURATOR_*.md                       - Curator-specific
+# PARSER_*.md                        - Project analysis
+# PROJECT_*.md                       - Project analysis
+# SUBMODULE_*.md                     - Internal docs
+# CLEAN_STRUCTURE_*.md               - Proposals
+# LABELS_*.md                        - Internal tracking
+#
+# Generated files (excluded):
+# .agent-config.local                - Local config
+# .curator                           - Curator marker
+# _index*.yaml                       - Generated indices
+# .kb-config_meta.yaml               - Generated metadata
+#
+# Cache/temp (excluded):
+# .cache/
+# tmp/
+# .archive/
+# for-claude-code/

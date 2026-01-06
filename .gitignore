@@ -50,3 +50,4 @@ _index.yaml.bak
 
 # NOTE: docs/ directory is excluded (generated documentation)
 docs/
+.curator
