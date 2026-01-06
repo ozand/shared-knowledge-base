@@ -1,7 +1,7 @@
 # Base Agent Instructions
 # Auto-loaded by all agents from Shared KB
 
-version: "1.0"
+version: "1.1"
 last_updated: "2026-01-06"
 applies_to: "all_agents"
 
@@ -97,6 +97,170 @@ instructions:
 
       - check: "All required labels present"
         pass_if: "labels contain 'agent:*' and 'project:*'"
+
+  # Role Enforcement (CRITICAL)
+  role_enforcement:
+    enabled: true
+    priority: "CRITICAL"
+    pattern: "AGENT-ROLE-SEPARATION-001"
+    required_when: "always"
+
+    description: |
+      ⚠️ CRITICAL: Role-based access control for Shared Knowledge Base
+
+      Project Agents MUST follow these rules to maintain quality
+      and prevent role confusion.
+
+    role_definition:
+      project_agent:
+        role: "Contributes to Shared KB"
+        access: "Read-only access to shared-knowledge-base"
+        can_do:
+          - "Search KB: kb search '{query}'"
+          - "Validate YAML locally: kb validate entry.yaml"
+          - "Create GitHub issues with attribution"
+          - "Pull KB updates: git pull"
+        cannot_do:
+          - "❌ Commit to shared-knowledge-base"
+          - "❌ Create PR to shared-knowledge-base"
+          - "❌ Modify KB files directly"
+          - "❌ Fix KB errors directly"
+          - "❌ Add patterns directly to KB"
+        reason: "Curator maintains quality control via review process"
+
+      curator_agent:
+        role: "Maintains Shared KB"
+        access: "Read-write access to shared-knowledge-base"
+        can_do:
+          - "Review GitHub issues from project agents"
+          - "Validate YAML entries"
+          - "Enhance contributions"
+          - "Commit to shared-knowledge-base"
+          - "Create PRs for internal changes"
+        only_agent: "Curator is ONLY agent who commits to KB"
+
+    forbidden_actions:
+      - action: "git commit in shared-knowledge-base repository"
+        severity: "BLOCKED"
+        error: "Role violation: Use GitHub issue instead"
+        correct_action: "Create GitHub issue with YAML entry"
+
+      - action: "gh pr create to shared-knowledge-base"
+        severity: "BLOCKED"
+        error: "Role violation: Only Curator creates PRs"
+        correct_action: "Create GitHub issue instead"
+
+      - action: "Direct modification of KB files"
+        severity: "BLOCKED"
+        error: "Bypasses Curator quality control"
+        correct_action: "Follow AGENT-HANDOFF-001 workflow"
+
+      - action: "Fixing YAML errors in KB"
+        severity: "HIGH"
+        error: "Should report via issue, not fix"
+        correct_action: "Create issue describing the error"
+
+      - action: "Adding patterns directly to KB"
+        severity: "HIGH"
+        error: "Must go through review process"
+        correct_action: "Create issue with validated YAML entry"
+
+    correct_workflow:
+      pattern: "AGENT-HANDOFF-001"
+      when: "Contributing patterns to Shared KB"
+
+      steps:
+        - step: "Discover reusable pattern/improvement"
+          in: "Project repository"
+
+        - step: "Search KB first"
+          command: "kb search '{keywords}'"
+          verify: "If exists, don't create duplicate"
+
+        - step: "Create YAML entry locally"
+          location: "Project repository (not KB)"
+          template: "Follow KB structure"
+
+        - step: "Validate YAML"
+          command: "python tools/kb.py validate entry.yaml"
+          ensure: "No errors before creating issue"
+
+        - step: "Create GitHub issue with attribution"
+          repository: "shared-knowledge-base"
+          labels:
+            - "agent:{agent_type}"
+            - "project:{project_name}"
+            - "agent-type:{task_type}"
+            - "kb-improvement"
+            - "{category}"
+          template: "universal/agent-instructions/templates/issue-template.md"
+
+        - step: "Wait for Curator review"
+          expected_sla: "24 hours"
+
+        - step: "Curator validates and enhances"
+          by: "Curator Agent in shared-knowledge-base"
+
+        - step: "Curator commits to KB"
+          action: "Curator adds pattern with attribution"
+
+        - step: "Pull KB updates"
+          command: "cd docs/knowledge-base/shared && git pull"
+
+    technical_enforcement:
+      pre_commit_hook:
+        enabled: true
+        script: "tools/pre-commit-role-check.py"
+        blocks: "Non-curator commits to protected files"
+        bypass: "touch .curator (Curator only)"
+
+      protected_files:
+        - "universal/"
+        - "python/"
+        - "postgresql/"
+        - "javascript/"
+        - "docker/"
+        - "framework/"
+        - "tools/"
+        - "README.md"
+        - "VERSION"
+
+    real_world_example:
+      wrong:
+        scenario: "Project Agent updates KB to v3.1 directly"
+        what_happened:
+          - "Agent committed to shared-knowledge-base"
+          - "Agent fixed YAML errors"
+          - "Agent added patterns"
+          - "Agent created PR #7"
+        why_wrong:
+          - "❌ Violated AGENT-ROLE-SEPARATION-001"
+          - "❌ Bypassed Curator review"
+          - "❌ Quality control bypassed"
+        consequence: "Role confusion, potential quality issues"
+
+      correct:
+        scenario: "Project Agent discovers async timeout pattern"
+        steps:
+          - "Search KB: kb search 'async timeout'"
+          - "Not found"
+          - "Create YAML: async-timeout.yaml"
+          - "Validate: kb validate async-timeout.yaml"
+          - "Create GitHub issue with attribution"
+          - "Curator reviews (24h)"
+          - "Curator enhances and commits"
+          - "Project agent pulls updates"
+        result: "✅ Clean workflow, quality maintained"
+
+    references:
+      - pattern: "AGENT-ROLE-SEPARATION-001"
+        description: "Full role separation pattern with technical enforcement"
+
+      - pattern: "AGENT-HANDOFF-001"
+        description: "Cross-repository collaboration workflow"
+
+      - pattern: "GITHUB-ATTRIB-001"
+        description: "GitHub attribution for issues"
 
   # KB Contribution Workflow
   kb_contribution:

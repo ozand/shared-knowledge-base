@@ -1,0 +1,24 @@
+# ⚠️ CURATOR ONLY
+
+**This directory is maintained by the Curator Agent ONLY.**
+
+## Project Agents: DO NOT MODIFY
+
+**If you want to contribute:**
+1. Create YAML entry locally
+2. Validate: `python tools/kb.py validate entry.yaml`
+3. Create GitHub issue with attribution
+4. Follow AGENT-HANDOFF-001 workflow
+
+**Why?**
+- Curator maintains quality control
+- Prevents validation errors
+- Ensures consistent structure
+- Curator reviews all contributions
+
+**See:**
+- AGENT-ROLE-SEPARATION-001: Role separation pattern
+- AGENT-HANDOFF-001: Contribution workflow
+
+---
+**Violations will be blocked by pre-commit hook**

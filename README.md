@@ -20,6 +20,40 @@
 - ✅ **Automated Scripts** - Daily/weekly/monthly maintenance automation
 - ✅ **GitHub Issues Integration** - Automatic issue creation for migration errors (NEW)
 
+---
+
+## ⚠️ IMPORTANT: Role-Based Access Control
+
+**For Project Agents:**
+This repository is **READ-ONLY** for you. Follow these rules:
+
+- ❌ **DO NOT** create commits to shared-knowledge-base
+- ❌ **DO NOT** create PRs to shared-knowledge-base
+- ❌ **DO NOT** modify files directly
+- ✅ **DO** create GitHub issues for contributions
+- ✅ Follow AGENT-HANDOFF-001 workflow
+
+**How to Contribute:**
+1. Create YAML entry locally
+2. Validate: `python tools/kb.py validate entry.yaml`
+3. Create GitHub issue with attribution (GITHUB-ATTRIB-001)
+4. Wait for Curator review
+
+**For Curator Agent:**
+You are the **ONLY** agent who can commit to this repository:
+- ✅ Review issues from project agents
+- ✅ Validate and enhance contributions
+- ✅ Commit approved changes
+
+**Enforcement:** Pre-commit hooks block non-curator commits (AGENT-ROLE-SEPARATION-001)
+
+**Documentation:**
+- [AGENT-ROLE-SEPARATION-001](universal/patterns/agent-role-separation.yaml)
+- [AGENT-HANDOFF-001](universal/patterns/agent-handoff.yaml)
+- [GITHUB-ATTRIB-001](universal/patterns/github-agent-attribution.yaml)
+
+---
+
 **v2.0 Features:**
 - ✅ Cross-platform Python CLI (`kb.py`) - works on Windows/Mac/Linux
 - ✅ SQLite indexing - fast search with 1M+ entries
