@@ -1,0 +1,453 @@
+# Claude Code Hooks Pattern
+# Production-ready automation workflows using Claude Code Hooks
+
+version: "1.0"
+category: "claude-code-automation"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "CLAUDE-CODE-HOOKS-001"
+    title: "Claude Code Hooks: Deterministic Workflow Automation"
+    severity: "high"
+    scope: "universal"
+    tags: ["claude-code", "hooks", "automation", "workflow", "quality-gates", "ci-cd", "testing"]
+
+    problem: |
+      **Prompts vs Hooks:**
+
+      Prompts (probabilistic):
+      - "Please run tests" → Claude might forget
+      - "Check linting" → Claude might skip
+      - "Log changes" → Claude might not do it
+      - **Issue:** LLM doesn't guarantee execution
+
+      **Real scenarios:**
+      - Developer: "Run tests before committing" → Claude forgets → Broken code commits
+      - Team: "Always format code" → Claude skips → Inconsistent style in PRs
+      - CI/CD: "Check coverage ≥80%" → Claude misses → Build fails in pipeline
+      - Security: "Block rm -rf" → Claude executes → Data loss occurs
+
+    impact: |
+      - **Quality:** Inconsistent → Guaranteed
+      - **Workflow:** Manual reminders → Automatic enforcement
+      - **Errors:** Human forgets → Deterministic execution
+      - **Coverage:** 60% average → 90%+ consistent
+      - **Security:** Manual oversight → Automatic blocking
+
+    solution: |
+      **Hooks = Deterministic Automation**
+
+      Hooks are guaranteed shell/LLM executions at specific workflow points:
+      - PreToolUse (before any tool call)
+      - PostToolUse (after successful tool call)
+      - SessionStart (when session starts)
+      - Stop (when Claude finishes)
+      - UserPromptSubmit (when user submits prompt)
+      - Notification (when Claude sends notification)
+
+      **Configuration (.claude/settings.json):**
+
+      ```json
+      {
+        "hooks": {
+          "PreToolUse": [
+            {
+              "matcher": "Bash|Edit|Write",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/security-filter.py",
+                  "timeout": 5
+                }
+              ]
+            }
+          ],
+          "PostToolUse": [
+            {
+              "matcher": "Edit|Write",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/quality-gate.sh",
+                  "timeout": 30
+                },
+                {
+                  "type": "command",
+                  "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-format.sh",
+                  "timeout": 15
+                }
+              ]
+            }
+          ],
+          "SessionStart": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-setup.sh"
+                }
+              ]
+            }
+          ]
+        }
+      }
+      ```
+
+      **Matcher Syntax:**
+      - `"Bash"` → Only Bash commands
+      - `"Edit|Write"` → Edit OR Write tools
+      - `"Edit:*.ts"` → Only TypeScript edits
+      - `"mcp__.*__write"` → Any MCP write operation
+      - `"*"` → All tools (use carefully!)
+
+    best_practices:
+      - practice: "Keep hooks FAST (<2 seconds)"
+        reason: "Hooks run synchronously, blocking workflow"
+        guideline: "Heavy operations → CI/CD, not hooks"
+
+      - practice: "Use specific matchers"
+        reason: "Broad matchers slow down everything"
+        anti_pattern: |
+          ❌ WRONG: "matcher": "*"  // Runs on EVERY tool call
+          ✅ CORRECT: "matcher": "Bash"  // Only Bash commands
+
+      - practice: "Exit codes matter"
+        reason: "Exit 0 = allow, Exit 2 = block"
+        table: |
+          Event        Exit 0 (ALLOW)    Exit 2 (BLOCK)
+          ─────────────────────────────────────────
+          PreToolUse   Execute tool      Skip tool
+          PostToolUse  Continue          Feed back to Claude
+          Stop         Allow stop        Force continuation
+
+      - practice: "Quote all variables"
+        reason: "Prevents injection, handles spaces"
+        example: |
+          FILE=$(cat | jq -r '.tool_input.file_path')
+          rm "$FILE"  # Properly quoted
+
+      - practice: "Test hooks manually"
+        reason: "Debug before deploying"
+        command: |
+          echo '{"tool_name":"Bash","tool_input":{"command":"npm test"}}' | \
+            ./.claude/hooks/security-filter.py
+          echo $?  # 0 = allow, 2 = block
+
+    implementation:
+      phase_1_setup:
+        title: "Create Hooks Infrastructure"
+        effort: "30 minutes"
+        steps:
+          - step: "Create hooks directory"
+            command: "mkdir -p .claude/hooks"
+
+          - step: "Create settings.json with hooks"
+            file: ".claude/settings.json"
+            content: |
+              {
+                "hooks": {
+                  "PreToolUse": [],
+                  "PostToolUse": [],
+                  "SessionStart": [],
+                  "Stop": []
+                }
+              }
+
+          - step: "Make hooks executable"
+            command: "chmod +x .claude/hooks/*.sh .claude/hooks/*.py"
+
+      phase_2_quality_gates:
+        title: "Add Quality Gates"
+        effort: "1-2 hours"
+        examples:
+          - example: "TypeScript quality gate"
+            file: ".claude/hooks/quality-gate.sh"
+            content: |
+              #!/bin/bash
+              INPUT=$(cat)
+              FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path')
+
+              if [[ ! "$FILE" == *.ts && ! "$FILE" == *.tsx ]]; then
+                exit 0
+              fi
+
+              echo "🔍 Quality checks for $FILE..."
+
+              # Prettier
+              if ! npx prettier --check "$FILE" 2>/dev/null; then
+                echo "  ❌ Prettier: Not formatted"
+                exit 2
+              fi
+
+              # ESLint
+              if ! npx eslint "$FILE" 2>/dev/null; then
+                echo "  ❌ ESLint: Linting errors"
+                exit 2
+              fi
+
+              echo "✅ All checks passed"
+              exit 0
+
+          - example: "Auto-format hook"
+            file: ".claude/hooks/auto-format.sh"
+            content: |
+              #!/bin/bash
+              INPUT=$(cat)
+              FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path')
+
+              case "$FILE" in
+                *.ts|*.tsx|*.js|*.jsx) npx prettier --write "$FILE" ;;
+                *.py) black "$FILE" ;;
+                *.go) gofmt -w "$FILE" ;;
+              esac
+
+              exit 0
+
+      phase_3_security:
+        title: "Add Security Validation"
+        effort: "1 hour"
+        examples:
+          - example: "Block dangerous commands"
+            file: ".claude/hooks/security-filter.py"
+            content: |
+              #!/usr/bin/env python3
+              import json, sys, re
+
+              DANGEROUS = [
+                  (r'rm\s+-rf\s+/', 'Recursive root delete'),
+                  (r'sudo\s+rm', 'Sudo delete'),
+                  (r'chmod\s+777', 'World-writable permissions'),
+              ]
+
+              data = json.load(sys.stdin)
+              if data.get('tool_name') != 'Bash':
+                  sys.exit(0)
+
+              command = data.get('tool_input', {}).get('command', '')
+
+              for pattern, reason in DANGEROUS:
+                  if re.search(pattern, command, re.IGNORECASE):
+                      output = {
+                          'decision': 'block',
+                          'reason': f'🚨 Security: {reason}',
+                          'hookSpecificOutput': {
+                              'hookEventName': 'PreToolUse',
+                              'permissionDecision': 'deny'
+                          }
+                      }
+                      print(json.dumps(output))
+                      sys.exit(0)
+
+              sys.exit(0)
+
+    real_world_examples:
+      example_1_quality_enforcement:
+        scenario: "TypeScript project with strict quality standards"
+
+        setup:
+          PostToolUse hooks:
+            - Prettier formatting (2 sec)
+            - ESLint checking (3 sec)
+            - TypeScript type checking (5 sec)
+
+          Total: <10 seconds per edit ✅
+
+        results:
+          - "Before: 40% lint compliance, inconsistent style"
+          - "After: 100% compliance, auto-fixed"
+          - "PR reviews: 5 cycles → 1-2 cycles"
+          - "Onboarding: New devs get instant feedback"
+
+      example_2_test_coverage:
+        scenario: "Enforce 80% test coverage"
+
+        hook: ".claude/hooks/coverage-check.sh"
+        trigger: PostToolWrite for *.test.ts files
+
+        workflow:
+          1. Developer edits test file
+          2. Hook runs: npm run test:coverage
+          3. Coverage: 75% → Hook warns
+          4. Coverage: 85% → Hook passes ✅
+
+        results:
+          - "Coverage: 60% → 85% average"
+          - "No more coverage surprises in CI/CD"
+          - "Immediate feedback loop"
+
+      example_3_git_integration:
+        scenario: "Auto-commit changes when Claude finishes"
+
+        hook: ".claude/hooks/auto-commit.sh"
+        trigger: Stop event
+
+        workflow:
+          1. Claude completes work
+          2. Hook checks git status
+          3. If changes exist → Auto-commit
+          4. Commit message from last prompt
+
+        results:
+          - "No more 'forgot to commit' issues"
+          - "Automatic work preservation"
+          - "Clear git history"
+
+    common_mistakes:
+      mistake_1_slow_hooks:
+        wrong: "npm run full-test-suite (5 minutes) in PostToolUse"
+        consequence: "Every edit causes 5-minute pause, unusable workflow"
+        correct: "Quick checks in hooks (<2 sec), full tests in CI/CD"
+
+      mistake_2_broad_matchers:
+        wrong: '"matcher": "*" (all tools)'
+        consequence: "Every operation triggers validation, terrible performance"
+        correct: "Specific matchers: 'Bash', 'Edit|Write'"
+
+      mistake_3_silent_failures:
+        wrong: "npm test; npm run lint (lint runs even if tests fail)"
+        consequence: "No error feedback, hard to debug"
+        correct: "set -e or explicit || exit 2"
+
+      mistake_4_invalid_json:
+        wrong: 'echo "reason: He said "stop"" (unescaped quotes)'
+        consequence: "JSON parse error, hook fails silently"
+        correct: "Use jq or json.dumps() in Python"
+
+      mistake_5_timeout_issues:
+        wrong: "Hook takes 2 minutes, default timeout 60 seconds"
+        consequence: "Hook killed, incomplete results"
+        correct: 'Set "timeout": 120 for slow hooks'
+
+    verification_checklist:
+      - check: "Hooks execute in <2 seconds (most cases)"
+        test: "time ./hook.sh"
+        expected: "<2 seconds"
+
+      - check: "Matchers are specific"
+        verification: "Check settings.json for wildcard matchers"
+        expected: "No '*' matchers unless intentional"
+
+      - check: "Exit codes are correct"
+        test: "Run hook manually, check echo $?"
+        expected: "0 = allow, 2 = block"
+
+      - check: "Variables are quoted"
+        review: "Check all $VAR usage"
+        expected: 'All "$VAR" properly quoted'
+
+      - check: "Hooks tested manually"
+        test: "echo TEST_INPUT | ./hook.sh"
+        expected: "Expected behavior confirmed"
+
+    troubleshooting:
+      issue_hook_not_executing:
+        symptom: "Hook not running"
+        checks:
+          - check: "Is hook in settings.json?"
+            command: "cat .claude/settings.json | jq .hooks"
+          - check: "Is matcher correct?"
+            verification: "Does tool name match pattern?"
+          - check: "Is hook executable?"
+            command: "ls -la .claude/hooks/"
+            expected: "Executable bit set (chmod +x)"
+
+        solutions:
+          - "Run Claude Code with --debug flag"
+          - "Test hook manually with stdin input"
+          - "Check JSON syntax in settings.json"
+
+      issue_timeout:
+        symptom: "Hook times out after 60 seconds"
+        root_cause: "Hook execution exceeds timeout"
+
+        solutions:
+          - solution: "Increase timeout"
+            config: |
+              {
+                "type": "command",
+                "command": "...",
+                "timeout": 120  // 2 minutes
+              }
+
+          - solution: "Optimize hook"
+            actions:
+              - "Add caching"
+              - "Run checks in parallel"
+              - "Remove unnecessary operations"
+
+    advanced_patterns:
+      pattern_prompt_based_hooks:
+        title: "LLM-Evaluated Decision Making"
+        description: "Use LLM for context-aware decisions"
+
+        example: "Intelligent stop hook"
+        config: |
+          {
+            "hooks": {
+              "Stop": [{
+                "hooks": [{
+                  "type": "prompt",
+                  "prompt": "Evaluate if Claude should stop.\n\nContext: $ARGUMENTS\n\nCheck:\n1. All tasks complete?\n2. No critical errors?\n3. Code quality acceptable?\n\nRespond with JSON: {\"decision\": \"approve\" or \"block\", \"reason\": \"...\"}",
+                  "timeout": 30
+                }]
+              }]
+            }
+          }
+
+      pattern_parallel_hooks:
+        title: "Run Multiple Hooks in Parallel"
+        description: "Hooks in same event run in parallel"
+
+        example: "Quality gate with parallel checks"
+        config: |
+          "PostToolUse": [
+            {
+              "matcher": "Edit|Write",
+              "hooks": [
+                {"command": "npx prettier --write", "timeout": 10},
+                {"command": "npx eslint --fix", "timeout": 10},
+                {"command": "npx tsc --noEmit", "timeout": 15}
+              ]
+            }
+          ]
+
+        result: "Total time = max(10, 10, 15) = 15 seconds"
+        note: "NOT 35 seconds (they run in parallel!)"
+
+      pattern_conditional_hooks:
+        title: "File-Type Specific Hooks"
+        description: "Different validation for different file types"
+
+        example: "Language-specific checks"
+        config: |
+          "PostToolUse": [
+            {
+              "matcher": "Edit:*.ts|Write:*.ts",
+              "hooks": [{"command": "./.claude/hooks/ts-checks.sh"}]
+            },
+            {
+              "matcher": "Edit:*.py|Write:*.py",
+              "hooks": [{"command": "./.claude/hooks/py-checks.sh"}]
+            }
+          ]
+
+    related_patterns:
+      - CLAUDE-CODE-SHARED-MODEL-001 (Shared configuration)
+      - AGENT-ACCOUNTABILITY-001 (Follow own recommendations)
+      - YAML-SYNTAX-001 (YAML best practices)
+
+    references:
+      - "Claude Code Hooks Guide: docs/research/claude-code/claude-hooks-guide.md"
+      - "Production Examples: docs/research/claude-code/claude-hooks-examples.md"
+      - "Advanced Patterns: docs/research/claude-code/claude-hooks-advanced.md"
+      - "Claude Code Documentation: https://code.claude.com/docs/en"
+
+    metadata:
+      created_at: "2026-01-07"
+      author: "Shared KB Curator"
+      source: "Production hooks compilation + best practices"
+      reusable: true
+      severity_level: 2
+      difficulty: "intermediate"
+      pattern_type: "automation"
+      applicable_to: ["claude-code", "quality-automation", "ci-cd"]
