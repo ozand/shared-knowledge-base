@@ -63,8 +63,26 @@ You are the **ONLY** agent who can commit to this repository:
 
 ### Quick Start
 
-**🎯 Recommended: Use Git Submodule** ✅
+**🌟 Recommended (v3.1): Git Submodule with Sparse Checkout**
 
+**New in v3.1:** Sparse checkout excludes Curator files, loading only Project Agent content!
+
+```bash
+# Option 1: Automated setup (RECOMMENDED)
+# Linux/Mac:
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+# Windows (PowerShell):
+powershell -ExecutionPolicy Bypass -File \
+  C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
+
+# What it does:
+# ✅ Adds submodule with sparse checkout enabled
+# ✅ Loads only patterns + agent guides (excludes curator/)
+# ✅ Saves ~22% space + clean context for agents
+```
+
+**Option 2: Standard Git Submodule**
 ```bash
 # 1. Add as submodule (best practice for multi-project setups)
 git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
@@ -88,8 +106,10 @@ python docs/knowledge-base/tools/kb.py search "async"
 git clone https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
 ```
 
-**See [QUICKSTART.md](QUICKSTART.md) for detailed setup.**
-**See [SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md) for detailed comparison.**
+**Documentation:**
+- **[QUICKSTART.md](QUICKSTART.md)** - Detailed setup guide
+- **[SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md)** - Submodule vs Clone vs Sparse Checkout comparison
+- **[SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md](SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md)** - Why sparse checkout matters
 
 ### 📚 For Knowledge Base Curators
 

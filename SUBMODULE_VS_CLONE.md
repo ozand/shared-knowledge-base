@@ -125,6 +125,193 @@ git submodule update --init --recursive
 
 ---
 
+### ⚡ GIT SUBMODULE + SPARSE CHECKOUT (ОПТИМАЛЬНО 🌟)
+
+**Новое в v3.1: Sparse Checkout для Project Agents**
+
+#### Проблема: Context Contamination
+
+При обычном `git submodule` загружается **ВЕСЬ** репозиторий:
+- ✅ Паттерны (645 KB) - нужно агентам
+- ✅ Документация (102 KB) - нужно агентам
+- ✅ Инструменты (581 KB) - нужно агентам
+- ❌ **Curator/** (261 KB) - НЕ нужно агентам
+- ❌ **Анализ файлы** (~116 KB) - НЕ нужно агентам
+- ❌ **Отчеты** (~40 KB) - НЕ нужно агентам
+
+**Результат:** ~22% загруженного контента загрязняет контекст агентам!
+
+#### Решение: Sparse Checkout
+
+**Что делает sparse checkout:**
+- ✅ Загружает только нужные директории
+- ✅ Исключает Curator-специфичные файлы
+- ✅ Экономия ~22% размера
+- ✅ Чистый контент для Project Agents
+- ✅ Разделение ролей сохранено
+
+#### Установка с Sparse Checkout:
+
+**Способ 1: Автоматический скрипт (Рекомендуется ✅)**
+
+Linux/Mac:
+```bash
+cd /path/to/your/project
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+```
+
+Windows (PowerShell):
+```powershell
+cd C:\path\to\your\project
+powershell -ExecutionPolicy Bypass -File `
+  C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
+```
+
+**Что делает скрипт:**
+- ✅ Добавляет submodule
+- ✅ Включает sparse checkout
+- ✅ Создает конфигурацию (.git/info/sparse-checkout)
+- ✅ Загружает только нужный контент
+- ✅ Проверяет результат
+
+**Способ 2: Вручную**
+
+```bash
+# 1. Добавить submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git \
+  docs/knowledge-base/shared
+
+# 2. Включить sparse checkout
+cd docs/knowledge-base/shared
+git config core.sparseCheckout true
+
+# 3. Создать sparse-checkout конфигурацию
+cat > .git/info/sparse-checkout <<'EOF'
+# Core documentation
+README.md
+GUIDE.md
+QUICKSTART.md
+README_INTEGRATION.md
+
+# Agent guides
+AGENT_INTEGRATION_GUIDE.md
+AGENT_AUTOCONFIG_GUIDE.md
+ROLE_SEPARATION_GUIDE.md
+GITHUB_ATTRIBUTION_GUIDE.md
+
+# Patterns (MAIN CONTENT)
+universal/
+python/
+postgresql/
+docker/
+javascript/
+vps/
+
+# Tools
+tools/
+scripts/
+
+# Base configuration
+.kb-config.yaml
+.gitignore.agents
+.kb-version
+EOF
+
+# 4. Загрузить только указанное
+git pull origin main
+```
+
+#### Что загружается:
+
+**✅ Включается:**
+- Паттерны (universal/, python/, postgresql/, docker/, javascript/, vps/)
+- Документация (README.md, GUIDE.md, AGENT_*.md, ROLE_*.md)
+- Инструменты (tools/, scripts/)
+- Конфигурация (.kb-config.yaml, .gitignore.agents, .kb-version)
+
+**❌ Исключается:**
+- curator/ (Curator инструкции, промпты, workflow)
+- *_ANALYSIS.md (анализ документы)
+- *_REPORT.md (Curator отчеты)
+- CHAT_*.md (chat analysis)
+- CURATOR_*.md, PROJECT_*.md (анализ)
+- .agent-config.local, _index*.yaml (сгенерированные)
+
+#### Обновление со Sparse Checkout:
+
+```bash
+# Обновление работает как обычно
+git submodule update --remote --merge docs/knowledge-base/shared
+
+# Проверить что sparse checkout активен
+cd docs/knowledge-base/shared
+git config core.sparseCheckout  # Должен вернуть "true"
+ls .git/info/sparse-checkout     # Файл должен существовать
+
+# Если sparse checkout сломался (загрузились все файлы)
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+```
+
+#### Преимущества Sparse Checkout:
+
+| Аспект | Обычный Submodule | Submodule + Sparse |
+|--------|------------------|-------------------|
+| Контент для агентов | ✅ | ✅ |
+| Curator файлы видны? | ❌ Да | ✅ Нет |
+| Размер загруженного | ~1.7 MB | ~1.3 MB |
+| Контекст污染 (pollution) | ❌ ~22% | ✅ 0% |
+| Разделение ролей | ⚠️ Формальное | ✅ Фактическое |
+| Обновление | ✅ Стандартное | ✅ Стандартное |
+
+#### Когда использовать Sparse Checkout:
+
+**✅ Рекомендуется для:**
+- **ВСЕ** Project Agent setups (по умолчанию)
+- Production проекты
+- Team collaboration
+- Когда важен чистый контекст
+- При ограничениях на размер
+
+**❌ Не нужно для:**
+- Curator Agent setup (нужен полный доступ)
+- Локальной разработки Shared KB
+- Когда нужен полный repository
+
+#### Troubleshooting:
+
+**Проблема: Загрузились все файлы включая curator/**
+
+```bash
+# Решение 1: Пересоздать sparse checkout
+cd docs/knowledge-base/shared
+git config core.sparseCheckout true
+cat > .git/info/sparse-checkout < /path/to/sparse-checkout.example
+git reset --hard HEAD
+git checkout
+
+# Решение 2: Использовать автоматический скрипт
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+```
+
+**Проблема: Нельзя найти файл который должен быть включен**
+
+```bash
+# Проверить что в sparse-checkout конфиге
+cat docs/knowledge-base/shared/.git/info/sparse-checkout
+
+# Добавить missing path
+echo "missing/path/" >> docs/knowledge-base/shared/.git/info/sparse-checkout
+cd docs/knowledge-base/shared && git checkout
+```
+
+#### Документация:
+
+- **Полный анализ:** [SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md](SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md)
+- **Setup скрипты:** [scripts/README.md](scripts/README.md)
+- **Шаблон конфига:** [sparse-checkout.example](sparse-checkout.example)
+
+---
+
 ### 2. CLONE (АЛЬТЕРНАТИВА 🔄)
 
 #### Преимущества:
@@ -349,24 +536,59 @@ git pull origin main
 
 ## 📚 Сравнительная таблица
 
-| Feature | Submodule ✅ | Clone ❌ |
-|---------|-------------|----------|
-| **Version pinning** | ✅ Easy | ❌ Manual |
-| **Update workflow** | ✅ Standard | ❌ Manual merge |
-| **History cleanliness** | ✅ Separate | ❌ Mixed |
-| **Team collaboration** | ✅ Best practice | ⚠️ Conflicts |
-| **CI/CD integration** | ✅ Standard | ⚠️ Custom setup |
-| **Learning curve** | ⚠️ Slightly higher | ✅ Simple |
-| **Initial setup** | ⚠️ 2-3 commands | ✅ 1 command |
-| **Long-term maintenance** | ✅ Excellent | ❌ Problematic |
-| **Multi-project usage** | ✅ Perfect | ❌ Duplication |
-| **Rollback capability** | ✅ Easy | ⚠️ Manual |
+| Feature | Submodule + Sparse 🌟 | Submodule ✅ | Clone ❌ |
+|---------|---------------------|-------------|----------|
+| **Version pinning** | ✅ Easy | ✅ Easy | ❌ Manual |
+| **Update workflow** | ✅ Standard | ✅ Standard | ❌ Manual merge |
+| **History cleanliness** | ✅ Separate | ✅ Separate | ❌ Mixed |
+| **Team collaboration** | ✅ Best practice | ✅ Best practice | ⚠️ Conflicts |
+| **CI/CD integration** | ✅ Standard | ✅ Standard | ⚠️ Custom setup |
+| **Context pollution** | ✅ None (0%) | ❌ ~22% | ❌ ~22% |
+| **Size loaded** | ✅ ~1.3 MB | ⚠️ ~1.7 MB | ⚠️ ~1.7 MB |
+| **Curator files hidden** | ✅ Yes | ❌ No | ❌ No |
+| **Role separation** | ✅ Enforced | ⚠️ Formal | ⚠️ Formal |
+| **Learning curve** | ⚠️ Medium | ⚠️ Slightly higher | ✅ Simple |
+| **Initial setup** | ⚠️ Automated script | ⚠️ 2-3 commands | ✅ 1 command |
+| **Long-term maintenance** | ✅ Excellent | ✅ Excellent | ❌ Problematic |
+| **Multi-project usage** | ✅ Perfect | ✅ Perfect | ❌ Duplication |
+| **Rollback capability** | ✅ Easy | ✅ Easy | ⚠️ Manual |
+
+**Legend:**
+- 🌟 **Sparse Checkout** - Рекомендуется для Project Agents (v3.1+)
+- ✅ **Submodule** - Стандартный подход для всех проектов
+- ❌ **Clone** - Только для тестов/обучения
 
 ---
 
 ## 🎯 Final Recommendation
 
-### Для Production / Team Projects:
+### Для Production / Team Projects (с v3.1):
+**Используйте SUBMODULE + SPARSE CHECKOUT** 🌟
+
+**Почему это лучший выбор:**
+- ✅ Чистый контент для Project Agents (без Curator файлов)
+- ✅ Экономия ~22% размера
+- ✅ Автоматический setup через скрипты
+- ✅ Разделение ролей enforced на уровне файлов
+- ✅ Все преимущества submodule
+- ✅ Стандартное обновление
+
+**ROI:**
+- Initial: 1 минута (автоматический скрипт)
+- Ongoing: 0 минут (автоматически)
+- Long-term: Часы сэкономленного времени + чистый контекст
+
+**Быстрый старт:**
+```bash
+# Linux/Mac
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+# Windows
+powershell -ExecutionPolicy Bypass -File \
+  C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
+```
+
+### Для Production / Team Projects (стандартный подход):
 **Используйте SUBMODULE** - это инвестиция в будущее проекта
 
 **ROI:**
@@ -377,21 +599,28 @@ git pull origin main
 ### Для Quick Experiments:
 **Используйте CLONE** - но планируйте миграцию на submodule для serious проекта
 
-### Migration Path (Clone → Submodule):
+### Migration Path (Clone → Submodule + Sparse):
 
 ```bash
-# If you started with clone and want to switch to submodule:
+# If you started with clone and want to switch to submodule with sparse:
 
 # 1. Remove cloned KB
 rm -rf docs/knowledge-base/shared
 
-# 2. Add as submodule
-git submodule add https://github.com/ozand/shared-knowledge-base.git \
-  docs/knowledge-base/shared
+# 2. Run automated setup script (RECOMMENDED)
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+
+# OR manual setup:
+# git submodule add https://github.com/ozand/shared-knowledge-base.git \
+#   docs/knowledge-base/shared
+# cd docs/knowledge-base/shared
+# git config core.sparseCheckout true
+# cat > .git/info/sparse-checkout < /path/to/sparse-checkout.example
+# git pull origin main
 
 # 3. Commit
 git add docs/knowledge-base/shared .gitmodules
-git commit -m "Migrate KB from clone to submodule"
+git commit -m "Migrate KB to submodule with sparse checkout"
 ```
 
 ---
@@ -400,8 +629,16 @@ git commit -m "Migrate KB from clone to submodule"
 
 - [Git Submodules Documentation](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 - [GitHub Submodule Guide](https://github.blog/2016-02-01-working-with-submodules/)
+- [Sparse Checkout Documentation](https://git-scm.com/docs/git-sparse-checkout)
 - [Shared Knowledge Base Repo](https://github.com/ozand/shared-knowledge-base)
+- **[SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md](SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md)** - Полный анализ проблемы
+- **[scripts/README.md](scripts/README.md)** - Документация setup скриптов
 
 ---
 
-**Summary:** Submodule is the professional choice for Shared Knowledge Base integration. Clone is acceptable for quick tests, but submodule pays dividends immediately in team environments and long-term projects.
+**Summary (v3.1):**
+- **🌟 Submodule + Sparse Checkout** - Оптимальный выбор для Project Agents (чистый контекст, автоматический setup)
+- **✅ Submodule** - Стандартный профессиональный выбор для всех проектов
+- **❌ Clone** - Приемлем только для быстрых тестов и обучения
+
+Sparse checkout обеспечивает фактическое разделение ролей, запрещая Project Agentам видеть Curator-специфичные файлы.

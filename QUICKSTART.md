@@ -213,10 +213,35 @@ git commit -m "kb: Add CATEGORY-001 error"
 
 ## Синхронизация с Shared KB (опционально)
 
-**РЕКОМЕНДАЦИЯ:** Используйте **git submodule** для интеграции Shared KB
+**🌟 РЕКОМЕНДАЦИЯ (v3.1):** Используйте **git submodule + sparse checkout** для интеграции Shared KB
+
+**Новое в v3.1:** Sparse checkout исключает Curator файлы, загружая только контент для Project Agents!
+
+### Вариант 1: Автоматический setup с Sparse Checkout (РЕКОМЕНДУЕТСЯ ✅)
+
+**Linux/Mac:**
+```bash
+cd /path/to/your/project
+bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+cd C:\path\to\your\project
+powershell -ExecutionPolicy Bypass -File \
+  C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
+```
+
+**Что делает скрипт:**
+- ✅ Добавляет submodule с sparse checkout
+- ✅ Загружает только паттерны + agent guides
+- ✅ Исключает curator/, *_ANALYSIS.md, *_REPORT.md
+- ✅ Экономия ~22% размера + чистый контекст
+
+### Вариант 2: Стандартный Submodule
 
 ```bash
-# Добавить как submodule (РЕКОМЕНДУЕТСЯ ✅)
+# Добавить как submodule
 git submodule add https://github.com/ozand/shared-knowledge-base.git \
   docs/knowledge-base/shared
 
@@ -234,7 +259,16 @@ git submodule update --remote --merge docs/knowledge-base/shared
 kb index -v
 ```
 
-**Альтернатива: Clone (только для тестов/экспериментов)**
+**Проверка обновлений:**
+```bash
+# Автоматическая проверка при старте агента
+python docs/knowledge-base/shared/tools/kb-agent-bootstrap.py
+
+# Или вручную
+python docs/knowledge-base/shared/tools/kb.py check-updates
+```
+
+### Вариант 3: Clone (только для тестов/экспериментов)
 
 ```bash
 # Простой clone (только для quick start/тестов)
@@ -248,7 +282,10 @@ cd ../..
 kb index -v
 ```
 
-**📖 Смотрите:** [SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md) для детального сравнения подходов
+**📖 Документация:**
+- **[SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md)** - Детальное сравнение подходов
+- **[SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md](SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md)** - Почему sparse checkout важен
+- **[scripts/README.md](scripts/README.md)** - Документация setup скриптов
 
 ---
 
