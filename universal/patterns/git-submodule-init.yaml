@@ -1,0 +1,196 @@
+# Git Submodule Integration Pattern
+# Best practices for integrating git submodules into non-git repositories
+
+version: "1.0"
+category: "git-workflow"
+last_updated: "2025-01-06"
+
+patterns:
+  - id: "GIT-SUBMODULE-001"
+    title: "Git Submodule Integration in Non-Git Repository"
+    severity: "medium"
+    scope: "universal"
+    tags: ["git", "submodule", "integration", "repository", "version-control", "project-setup"]
+
+    problem: |
+      Attempting to add git submodule fails with error:
+      "fatal: not a git repository (or any of the parent directories)"
+
+      This occurs when trying to integrate tools that recommend:
+      ```bash
+      git submodule add https://github.com/user/repo.git path/to/submodule
+      ```
+
+      But the project directory is not initialized as a git repository.
+
+    symptoms:
+      - Error message "fatal: not a git repository" appears when running git submodule add
+      - Git commands fail in project directory
+      - .git directory does not exist
+      - No .gitmodules file
+
+    root_cause: |
+      1. Project directory never initialized with `git init`
+      2. Documentation assumes project is under git version control
+      3. Using tools designed for git repositories in non-git project
+
+    solution: |
+      **Option A: Git init + submodule (RECOMMENDED)** 🌟
+
+      For most projects, this is the BEST choice:
+
+      ```bash
+      # Initialize repository
+      git init
+
+      # Add all project files
+      git add .
+
+      # Create initial commit
+      git commit -m "Initial commit"
+
+      # Add submodule
+      git submodule add https://github.com/user/repo.git path/to/submodule
+      ```
+
+      **Benefits of this approach:**
+      - ✅ Easy updates: `git submodule update --remote --merge`
+      - ✅ Visible submodule change history
+      - ✅ Can fork Shared KB and contribute back
+      - ✅ Project becomes professional (VCS is standard)
+      - ✅ Ability to rollback changes
+      - ✅ Integration with CI/CD, GitHub Actions, etc.
+      - ✅ Easy to clone with submodule: `git clone --recursive`
+
+      **Option B: Git init with sensitive file protection**
+
+      If project has confidential data:
+
+      ```bash
+      # Initialize git
+      git init
+
+      # Create .gitignore to exclude sensitive files
+      cat > .gitignore << 'EOF'
+      # Environment variables
+      *.env
+      .env.local
+
+      # Config files with secrets
+      config/*.json
+      !config/*.example.json
+
+      # Logs
+      *.log
+      logs/
+
+      # Temporary files
+      *.tmp
+      *.temp
+      EOF
+
+      # Add and commit non-sensitive files
+      git add .
+      git commit -m "Initial commit"
+
+      # Add submodule
+      git submodule add https://github.com/user/repo.git path/to/submodule
+      ```
+
+      **Option C: Plain clone (ALTERNATIVE)**
+
+      Use ONLY if:
+      - Project is experimental/temporary
+      - Don't want to use git at all
+      - Need only quick solution without VCS
+
+      ```bash
+      # Clone directly instead of submodule
+      git clone https://github.com/user/repo.git path/to/submodule
+      ```
+
+      **Drawbacks of plain clone approach:**
+      - ❌ No submodule change history
+      - ❌ Manual updates (git pull inside each directory)
+      - ❌ No version pinning for submodule
+      - ❌ Cannot use `git clone --recursive`
+
+    prevention: |
+      - **Initialize git early** - when creating new project, do `git init` immediately
+      - Check git status before attempting submodule operations
+      - Use `git rev-parse --is-inside-work-tree` to verify git repo
+      - **git init should be default choice** for most projects
+      - Plain clone only for experimental/temporary projects
+      - Document git requirements in integration guides
+
+    code_example: |
+      ```bash
+      # Detect if project is git repository
+      if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+          echo "Not a git repository"
+          echo "Recommended: Initialize git with 'git init'"
+          echo ""
+          echo "Choose:"
+          echo "1. Initialize git + add submodule (RECOMMENDED) 🌟"
+          echo "2. Use plain clone (not recommended)"
+          read -p "Choice (1/2): " choice
+
+          if [ "$choice" = "1" ]; then
+              git init
+              git add .
+              git commit -m "Initial commit"
+              git submodule add https://github.com/user/repo.git path/to/submodule
+              echo "✅ Submodule added successfully"
+          else
+              # Use plain clone
+              git clone https://github.com/user/repo.git path/to/submodule
+              echo "⚠️  Using plain clone (recommended only for temporary projects)"
+          fi
+      fi
+      ```
+
+    best_practices: |
+      - **git init by default** - for most projects better to initialize git
+      - **Always check git status** before submodule operations
+      - **Use submodules over plain clone** - if project under git, use submodule
+      - **Document assumptions** clearly - specify git requirements in documentation
+      - **Provide .gitignore template** - to protect sensitive data
+      - **Consider project longevity** - long-term projects should be under VCS
+
+    when_to_use: |
+      Use this pattern when:
+      - Integrating Shared Knowledge Base or similar tools
+      - Setting up new project with external dependencies
+      - Documentation recommends `git submodule add`
+      - Project needs version control for professional development
+
+    anti_patterns: |
+      ❌ **Don't use plain clone for serious projects**
+      - No history tracking
+      - Manual updates required
+      - Not professional
+
+      ❌ **Don't skip .gitignore for sensitive files**
+      - Risk of committing secrets
+      - Always protect *.env, config files
+
+      ❌ **Don't forget initial commit**
+      - Submodule needs commit history
+      - Cannot add submodule without initial commit
+
+    related_patterns:
+      - KB-MIGRATION-001 (Knowledge Base Migration)
+      - GIT-WORKFLOW-001 (General Git Workflow)
+
+    references:
+      - "https://git-scm.com/docs/git-submodule"
+      - "https://github.com/ozand/shared-knowledge-base"
+      - "SUBMODULE_VS_CLONE.md"
+
+    metadata:
+      created_at: "2025-01-06"
+      author: "PARSER project"
+      reusable: true
+      severity_level: 2
+      difficulty: "elementary"
+      pattern_type: "integration"

@@ -1,0 +1,279 @@
+# Shared Knowledge Base YAML Format Pattern
+# Correct structure for Shared KB entries to ensure proper indexing
+
+version: "1.0"
+category: "knowledge-base"
+last_updated: "2025-01-06"
+
+patterns:
+  - id: "SHARED-KB-FORMAT-001"
+    title: "Shared Knowledge Base YAML Format for Proper Indexing"
+    severity: "medium"
+    scope: "universal"
+    tags: ["yaml", "shared-kb", "knowledge-base", "format", "structure", "indexing", "validation"]
+
+    problem: |
+      Custom YAML entries for Shared Knowledge Base are not being indexed by kb.py.
+      Validation fails with: "Missing 'errors' or 'patterns' section"
+
+      Entries work when validated individually but don't appear in search results.
+
+    symptoms:
+      - Error message appears: Missing 'errors' or 'patterns' section
+      - kb.py search returns no results for custom entries
+      - Only shared/community entries appear in search
+      - Index build succeeds but custom entries missing
+      - Validation passes but indexing fails
+
+    root_cause: |
+      **Incorrect YAML structure for Shared KB**
+
+      Wrong structure (what many expect):
+      ```yaml
+      id: "ERROR-001"
+      title: "Error Title"
+      category: "errors"
+      # ... rest of entry
+      ```
+
+      Correct structure (what Shared KB expects):
+      ```yaml
+      version: "1.0"
+      category: "error-category"
+      scope: "project-or-universal"
+      last_updated: "2025-01-06"
+
+      errors:
+        - id: "ERROR-001"
+          title: "Error Title"
+          # ... rest of entry
+      ```
+
+    solution: |
+      **Step 1: Understand Shared KB structure**
+
+      Shared KB expects a wrapper format with:
+      - Metadata section at top (version, category, scope, last_updated)
+      - Container section: `errors:` or `patterns:`
+      - List of entries under container
+
+      **Step 2: Use correct template**
+
+      ```yaml
+      # ✅ CORRECT - Shared KB format
+      version: "1.0"
+      category: "myproject-errors"  # Should end with -errors or -patterns
+      scope: "myproject"             # Project name or 'universal'
+      last_updated: "2025-01-06"
+
+      errors:
+        - id: "PROJECT-001"
+          title: "My Error Title"
+          severity: "high"
+          scope: "myproject"
+          problem: |
+            Detailed problem description
+          solution: |
+            Step-by-step solution
+          tags: ["tag1", "tag2"]
+      ```
+
+      **Step 3: File naming convention**
+
+      ```bash
+      # ✅ CORRECT
+      category/errors.yaml        # Single file per category
+      category/patterns.yaml      # Or patterns
+
+      # ❌ WRONG
+      category/errors/my-error.yaml  # Nested files not indexed
+      category/my-error.yaml          # Must be errors.yaml or patterns.yaml
+      ```
+
+      **Step 4: Organize by category**
+
+      ```
+      docs/knowledge-base/project/
+      ├── category1/
+      │   └── errors.yaml          # All category1 errors in one file
+      ├── category2/
+      │   └── errors.yaml          # All category2 errors in one file
+      └── category3/
+          └── patterns.yaml       # Or patterns
+      ```
+
+      **Step 5: Validate and test**
+
+      ```bash
+      # Validate your file
+      python docs/knowledge-base/tools/kb.py validate category/errors.yaml
+
+      # Should show: ✓ Validation passed
+
+      # Rebuild index
+      python docs/knowledge-base/tools/kb.py index
+
+      # Test search
+      python docs/knowledge-base/tools/kb.py search "keyword from your entry"
+
+      # Check stats
+      python docs/knowledge-base/tools/kb.py stats
+      ```
+
+    prevention: |
+      - **Study existing entries** before creating new ones
+      - **Copy working structure** from shared/category/errors.yaml
+      - **Validate frequently**: `kb.py validate category/errors.yaml`
+      - **Test after each change**: `kb.py search "keyword"`
+      - **Keep it simple**: One errors.yaml per category
+      - **Use examples from shared/** repository as templates
+
+    common_mistakes: |
+      1. **Missing wrapper section**
+         ```yaml
+         # ❌ WRONG - No errors/patterns container
+         id: "ERROR-001"
+         title: "Error"
+         ```
+
+      2. **Wrong nesting level**
+         ```yaml
+         # ❌ WRONG - Entry not under errors: list
+         version: "1.0"
+         errors:
+           category: "errors"
+           id: "ERROR-001"  # Should be: errors: - id: "ERROR-001"
+         ```
+
+      3. **Incorrect file naming**
+         ```bash
+         # ❌ WRONG - Individual files
+         category/errors/my-error.yaml
+
+         # ✅ CORRECT - Aggregated file
+         category/errors.yaml
+         ```
+
+      4. **Missing required metadata**
+         ```yaml
+         # ❌ WRONG - Missing version, category, scope
+         errors:
+           - id: "ERROR-001"
+
+         # ✅ CORRECT - Complete metadata
+         version: "1.0"
+         category: "myproject-errors"
+         scope: "myproject"
+         last_updated: "2025-01-06"
+         errors:
+           - id: "ERROR-001"
+         ```
+
+      5. **Unescaped colons in lists** (CRITICAL - causes validation errors)
+         ```yaml
+         # ❌ WRONG - Quoted string followed by text with colon
+         symptoms:
+           - "Error message" when running command:  # Colon after quotes!
+           - "String text": more text here             # Parses as key-value!
+
+         # ✅ CORRECT - No quotes, or colon inside string
+         symptoms:
+           - Error message appears when running command
+           - String text: more text here               # No quotes, or proper structure
+           - Alternative: Description includes "quoted text with colon"
+         ```
+         **Why this fails**: YAML parser interprets `"text" more:` as key-value pair
+         **Impact**: Validation fails with `expected <block end>, but found '<scalar>'`
+         **Solution**: Either put colon inside quotes, or rephrase without quotes
+
+    troubleshooting: |
+      ```bash
+      # 1. Validate your file
+      python docs/knowledge-base/tools/kb.py validate category/errors.yaml
+
+      # 2. Check structure against working example
+      cat docs/knowledge-base/shared/docker/errors/docker-best-practices.yaml | head -30
+
+      # 3. Rebuild index
+      python docs/knowledge-base/tools/kb.py index
+
+      # 4. Test search
+      python docs/knowledge-base/tools/kb.py search "keyword from your entry"
+
+      # 5. Check stats
+      python docs/knowledge-base/tools/kb.py stats
+      ```
+
+    code_example: |
+      ```bash
+      # Create new category with correct structure
+      mkdir -p docs/knowledge-base/project/mycategory
+
+      # Create errors.yaml with proper wrapper
+      cat > docs/knowledge-base/project/mycategory/errors.yaml << 'EOF'
+      version: "1.0"
+      category: "mycategory-errors"
+      scope: "mycategory"
+      last_updated: "2025-01-06"
+
+      errors:
+        - id: "MYCATEGORY-001"
+          title: "My First Error"
+          severity: "medium"
+          scope: "mycategory"
+          problem: "Description of problem"
+          solution: "Step-by-step solution"
+          tags: ["tag1", "tag2"]
+      EOF
+
+      # Validate
+      python docs/knowledge-base/tools/kb.py validate \
+        docs/knowledge-base/project/mycategory/errors.yaml
+
+      # Should show: ✓ Validation passed
+      ```
+
+    best_practices: |
+      - **Always use wrapper format** - version/category/scope at top
+      - **Container sections mandatory** - errors: or patterns:
+      - **One file per category** - errors.yaml or patterns.yaml
+      - **Study examples first** - look at shared/ repository
+      - **Validate frequently** - after each change
+      - **Test search** - ensure entries appear in results
+
+    when_to_use: |
+      Use this pattern when:
+      - Creating new Shared KB entries
+      - Migrating entries from old format
+      - Troubleshooting indexing issues
+      - Setting up project-specific knowledge base
+
+    anti_patterns: |
+      ❌ **Don't create individual files**
+      - my-error.yaml won't be indexed
+      - Use errors.yaml aggregated file
+
+      ❌ **Don't skip wrapper metadata**
+      - version, category, scope required
+      - Indexing will fail
+
+      ❌ **Don't forget container section**
+      - Must have errors: or patterns:
+      - List format required
+
+    related_patterns:
+      - GIT-SUBMODULE-001 (Git Submodule Integration)
+      - KB-MIGRATION-001 (Knowledge Base Migration)
+
+    references:
+      - "docs/knowledge-base/shared/docker/errors/docker-best-practices.yaml"
+      - "docs/knowledge-base/README.md"
+      - "README_INTEGRATION.md"
+
+    metadata:
+      created_at: "2025-01-06"
+      author: "PARSER project"
+      reusable: true
+      severity_level: 2
+      difficulty: "intermediate"
+      pattern_type: "format"

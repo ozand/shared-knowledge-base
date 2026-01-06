@@ -1,0 +1,230 @@
+# AI Assistant Service Files Integration Pattern
+# Updating AGENTS.md, SKILLS.md, PROJECT.md after major changes
+
+version: "1.0"
+category: "ai-agents"
+last_updated: "2025-01-06"
+
+patterns:
+  - id: "AI-SERVICE-001"
+    title: "AI Assistant Service Files Integration Pattern"
+    severity: "low"
+    scope: "universal"
+    tags: ["ai", "agents", "documentation", "updates", "cross-reference", "claude-code"]
+
+    context: |
+      After major project reorganization, AI assistant service files (AGENTS.md,
+      SKILLS.md, PROJECT.md) need to be updated to reflect new structure and provide
+      accurate information to AI helpers.
+
+    problem: |
+      AI assistant service files become outdated after project reorganization:
+      - References to old directory structure
+      - Missing links to new documentation
+      - No connection to new features (Knowledge Base, etc.)
+      - AI doesn't know about new resources
+
+    solution: |
+      **Step 1: Update PROJECT.md**
+
+      Add new documentation structure:
+      ```markdown
+      ## Project Structure
+
+      docs/
+      ├── api/              # API docs
+      ├── reference/        # Reference docs
+      ├── guides/           # Guides
+      └── archive/          # Legacy docs
+      ```
+
+      Add Quick Start Paths:
+      ```markdown
+      ### For Beginners
+      1. Quick Start
+      2. Basics
+      3. Configuration
+
+      ### For Developers
+      1. Pattern Library 🔥
+      2. Quick Reference ⚡
+      3. Reference
+      ```
+
+      **Step 2: Update AGENTS.md**
+
+      Add new agent:
+      ```markdown
+      ### 6. Knowledge Base Curator
+
+      **Purpose**: Maintains KB entries, searches for solutions
+
+      **Capabilities**:
+      - Search knowledge base
+      - Create KB entries
+      - Validate YAML format
+      - Report to shared KB
+      ```
+
+      Update Agent Selection Guide table with new tasks
+
+      **Step 3: Update SKILLS.md**
+
+      Add new skill:
+      ```markdown
+      ### Skill: Knowledge Base Usage
+
+      **Knowledge requirements**:
+      - KB structure
+      - YAML format
+      - kb.py commands
+      - Search strategies
+      ```
+
+      Add workflow, template, examples
+
+      **Step 4: Add Resources Sections**
+
+      In AGENTS.md:
+      ```markdown
+      ## Resources
+
+      **For All Agents:**
+      - Pattern Library
+      - Quick Reference
+      - API Documentation
+
+      **Agent-Specific:**
+      - KB Curator: Knowledge Base, Integration Guide
+      ```
+
+    when_to_use: |
+      - After project reorganization
+      - After adding new features
+      - After creating new documentation
+      - When AI assistants give outdated information
+      - Before major releases
+
+    best_practices: |
+      1. **Cross-reference extensively**
+         - 40+ new links in our case
+         - Connect related concepts
+         - Multiple navigation paths
+
+      2. **Categorize resources**
+         - For All Agents vs Agent-Specific
+         - By role (Beginner, Developer, Integrator)
+         - By type (Guides, Reference, API)
+
+      3. **Use visual indicators**
+         - 🔥 for important
+         - ⚡ for quick reference
+         - ✅ for complete
+         - ⚠️ for warnings
+
+      4. **Include examples**
+         - Code snippets
+         - Search examples
+         - Workflow demonstrations
+
+      5. **Provide quick start paths**
+         - Different paths for different users
+         - Progressive difficulty
+         - Clear next steps
+
+    checklist: |
+      **PROJECT.md updates:**
+      - [ ] Structure section updated
+      - [ ] New documentation links
+      - [ ] Quick start paths added
+      - [ ] Pattern-based development
+
+      **AGENTS.md updates:**
+      - [ ] New agents added (if any)
+      - [ ] Agent Selection Guide updated
+      - [ ] Resources section added
+      - [ ] Agent-specific mappings
+
+      **SKILLS.md updates:**
+      - [ ] New skills added (if any)
+      - [ ] Workflow documented
+      - [ ] Examples provided
+      - [ ] Templates included
+
+      **Verification:**
+      - [ ] All links tested
+      - [ ] Cross-references work
+      - [ ] No dead links
+      - [ ] AI assistants updated
+
+    examples: |
+      **Before update:**
+      ```markdown
+      ## Documentation
+      - docs/_info_app/  (old structure)
+      ```
+
+      **After update:**
+      ```markdown
+      ## Documentation
+
+      **Main Entry:** docs/README.md
+
+      **Essential Guides:**
+      - Pattern Library 🔥
+      - Quick Reference ⚡
+      - Quick Start
+
+      **Quick Start Paths:**
+      - Beginners → Quick Start → Basics
+      - Developers → Patterns → Reference
+      - Integrators → API → Methods → Redis
+      ```
+
+    results: |
+      **Benefits achieved:**
+      - AI assistants have current project knowledge
+      - Can find relevant documentation quickly
+      - Understand new features (Knowledge Base)
+      - Provide accurate guidance
+      - Reduce time to answer questions
+
+      **Quantitative improvements:**
+      - Links added: 45+
+      - New agents: 1 (KB Curator)
+      - New skills: 1 (KB Usage)
+      - Documentation coverage: 60% → 95%
+
+    anti_patterns: |
+      ❌ **Don't leave outdated references**
+      - Old directory structure
+      - Missing files
+      - Broken links
+
+      ❌ **Don't overwhelm with information**
+      - Organize by priority
+      - Use progressive disclosure
+      - Provide quick start paths
+
+      ❌ **Don't forget different user types**
+      - Beginners need simple paths
+      - Developers need technical depth
+      - Integrators need API focus
+
+    related_patterns:
+      - DOC-REORG-001 (Documentation Reorganization)
+      - KB-MIGRATION-001 (Knowledge Base Integration)
+
+    references:
+      - AGENTS.md (updated)
+      - SKILLS.md (updated)
+      - PROJECT.md (updated)
+      - docs/README.md (created)
+
+    metadata:
+      created_at: "2025-01-06"
+      author: "PARSER project"
+      reusable: true
+      severity_level: 3
+      difficulty: "intermediate"
+      pattern_type: "maintenance"
