@@ -156,6 +156,18 @@ patterns:
         - action: "Add patterns directly to KB"
           severity: "HIGH"
           reason: "Follow AGENT-HANDOFF-001 workflow"
+
+        - action: "Suggest or prepare Curator actions"
+          severity: "HIGH"
+          reason: "Role boundary violation even in suggestion form"
+          examples:
+            - "Providing gh issue create commands for Shared KB"
+            - "Writing 'Next Steps (Optional - for Curator Agent)' sections"
+            - "Preparing GitHub issue templates for shared-knowledge-base"
+          correct_approach: |
+            Project Agent role ends at documentation in project KB.
+            Let Curator decide if/when to create issues.
+            DO NOT suggest, prepare, or offer to do Curator work.
       ```
 
       **Correct Actions:**
@@ -446,10 +458,7 @@ patterns:
           - "✅ Discover improvements needed"
           - "✅ Create YAML entries for each pattern"
           - "✅ Validate locally"
-          - "✅ Create GitHub issue with attribution:"
-            - "  Title: 'Add 5 universal patterns for agent workflow'"
-            - "  Labels: agent:claude-code, project:PROJECT_NAME, kb-improvement"
-            - "  Body: Attach validated YAML entries"
+          - "✅ Create GitHub issue with proper attribution (Title, Labels, Body)"
           - "✅ Curator reviews and merges"
           - "✅ Curator credits Project Agent"
 
@@ -465,16 +474,62 @@ patterns:
           - "Searches KB: kb search 'asyncio timeout'"
           - "Not found → creates YAML entry"
           - "Validates: kb validate python/errors/async-timeout.yaml"
-          - "Creates GitHub issue:"
-            - "  Title: 'Add PYTHON-016: Async Timeout Pattern'"
-            - "  Labels: agent:claude-code, project:ECOMMERCE, agent-type:debugging"
-            - "  Body: Includes validated YAML"
+          - "Creates GitHub issue with proper Title, Labels, Body"
           - "Curator reviews (24h SLA)"
           - "Curator enhances: adds more examples"
           - "Curator commits: python/errors/async-timeout.yaml"
           - "Curator closes issue with attribution"
 
         result: "✅ Correct workflow, quality maintained"
+
+      example_3_suggesting_curator_actions:
+        scenario: "Project Agent suggests GitHub issue creation (APP SW case)"
+
+        what_agent_did:
+          - "✅ Extracted 4 PostgreSQL patterns from project"
+          - "✅ Validated no duplicates in Shared KB"
+          - "✅ Documented in project KB (correct!)"
+          - "❌ Added 'Next Steps (Optional - for Curator Agent)' section"
+          - "❌ Provided gh issue create command"
+
+        what_agent_suggested:
+          |
+          gh issue create \
+            --title "Add POSTGRES-011: Partitioned Table with Tiered Storage Lifecycle" \
+            --label "kb-improvement,enhancement,postgresql,partitioning" \
+            --body "..."
+
+        why_wrong:
+          - "❌ Agent suggested Curator work (even if didn't execute)"
+          - "❌ Provided gh command for Shared KB repository"
+          - "❌ Crossed role boundary in 'helpful' way"
+          - "❌ Violates AGENT-ROLE-SEPARATION-001"
+
+        what_should_have_done:
+          - "✅ Extract patterns from project"
+          - "✅ Document in project KB"
+          - "✅ Search Shared KB for duplicates"
+          - "⏸️ STOP HERE (role boundary)"
+          - "❌ DON'T suggest Curator actions"
+          - "❌ DON'T provide gh commands"
+          - "❌ DON'T prepare GitHub issues"
+
+        user_feedback:
+          feedback: "ты не Curator Agent а Project Agent для Shared KB"
+
+        agent_acknowledgement:
+          response: "✅ Моя роль - Project Agent"
+          realisation: "✅ НЕ должен предлагать вклады в Shared KB"
+
+        result:
+          actual: "⚠️ Caught before execution, corrected by user"
+          correct: "✅ Agent now understands role boundaries"
+          lesson: "Even suggesting Curator work violates role separation"
+
+        key_insight: |
+          "Helpful overstepping" is still overstepping.
+          Project Agent role ENDS at documentation.
+          Let Curator decide if/when to create issues.
 
     implementation_checklist:
       repository_protection:
