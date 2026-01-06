@@ -1,0 +1,568 @@
+# MCP Integration Pattern
+# Model Context Protocol for external system integration
+
+version: "1.0"
+category: "integration"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MCP-INTEGRATION-001"
+    title: "Model Context Protocol (MCP) Integration for Agents"
+    severity: "medium"
+    scope: "universal"
+    tags: ["mcp", "integration", "external-systems", "apis", "agents", "claude-code"]
+
+    problem: |
+      AI agents need to interact with external systems:
+      - GitHub (issues, PRs, repositories)
+      - Jira (tickets, projects)
+      - Slack (messages, channels)
+      - Databases (PostgreSQL, MongoDB)
+      - Custom tools and APIs
+
+      **Without MCP:**
+      - Each integration requires custom code
+      - No standardized interface
+      - Difficult to maintain
+      - Security risks (hardcoded tokens)
+      - No consistent error handling
+
+    impact: |
+      - **Development time:** 2-5x faster with MCP
+      - **Maintainability:** Standardized protocol, easier updates
+      - **Security:** Centralized token management
+      - **Reliability:** Consistent error handling
+      - **Extensibility:** Easy to add new integrations
+
+    solution: |
+      **Model Context Protocol (MCP):**
+
+      MCP is a standardized protocol for agents to connect to external systems.
+      It provides:
+      - Standard interface for integrations
+      - Secure token management
+      - Consistent error handling
+      - Bi-directional communication
+      - Pluggable architecture
+
+    implementation:
+      mcp_concept: |
+        MCP Architecture:
+
+        Claude Agent → MCP Server → External System
+
+        The agent doesn't need to know:
+        - How to authenticate with GitHub
+        - How to format Jira API requests
+        - How to handle Slack webhooks
+        - How to connect to PostgreSQL
+
+        The MCP Server handles all of this!
+
+      configuration_file: |
+        Location: .claude/mcp.json or ~/.claude/mcp.json
+
+        Structure:
+        {
+          "mcpServers": {
+            "server-name": {
+              "command": "node|python|bash",
+              "args": ["path/to/server.js"],
+              "env": {
+                "ENV_VAR": "${ENV_VAR}"
+              }
+            }
+          }
+        }
+
+      server_examples:
+        github_mcp_server: |
+          {
+            "mcpServers": {
+              "github": {
+                "command": "node",
+                "args": ["./tools/mcp-github.js"],
+                "env": {
+                  "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+                  "REPO": "myorg/myrepo"
+                }
+              }
+            }
+          }
+
+          Usage in agent:
+          - Read repository files
+          - Create/list issues
+          - Create/list pull requests
+          - Comment on PRs
+          - Get repository information
+
+        jira_mcp_server: |
+          {
+            "mcpServers": {
+              "jira": {
+                "command": "python3",
+                "args": ["./tools/mcp-jira.py"],
+                "env": {
+                  "JIRA_URL": "https://myorg.atlassian.net",
+                  "JIRA_TOKEN": "${JIRA_TOKEN}",
+                  "JIRA_PROJECT": "PROJ"
+                }
+              }
+            }
+          }
+
+          Usage in agent:
+          - Create tickets
+          - Update ticket status
+          - Add comments
+          - Get project information
+          - Search tickets
+
+        slack_mcp_server: |
+          {
+            "mcpServers": {
+              "slack": {
+                "command": "node",
+                "args": ["./tools/mcp-slack.js"],
+                "env": {
+                  "SLACK_TOKEN": "${SLACK_TOKEN}",
+                  "SLACK_CHANNEL": "#general"
+                }
+              }
+            }
+          }
+
+          Usage in agent:
+          - Send messages
+          - Get channel history
+          - Create channels
+          - Invite users
+
+        postgresql_mcp_server: |
+          {
+            "mcpServers": {
+              "postgres": {
+                "command": "node",
+                "args": ["./tools/mcp-postgres.js"],
+                "env": {
+                  "DATABASE_URL": "${DATABASE_URL}"
+                }
+              }
+            }
+          }
+
+          Usage in agent:
+          - Execute queries
+          - Get schema information
+          - Insert/update/delete data
+          - Transaction management
+
+        custom_mcp_server: |
+          Create your own MCP server:
+
+          1. Choose language (Node.js, Python, etc.)
+          2. Implement MCP protocol (STDIO/HTTP)
+          3. Define available tools/resources
+          4. Handle authentication
+          5. Error handling
+
+          Example (Node.js):
+          ```javascript
+          // tools/mcp-custom.js
+          const { MCPServer } = require('@modelcontextprotocol/sdk');
+
+          const server = new MCPServer({
+            name: "custom-api",
+            version: "1.0.0"
+          });
+
+          // Define tool
+          server.addTool({
+            name: "get_data",
+            description: "Get data from custom API",
+            inputSchema: {
+              type: "object",
+              properties: {
+                id: { type: "string" }
+              }
+            }
+          }, async (input) => {
+            // Call your API
+            const response = await fetch(`https://api.example.com/data/${input.id}`);
+            return await response.json();
+          });
+
+          server.start();
+          ```
+
+      agent_configuration: |
+        To use MCP in agents, add to tools list:
+
+        ```yaml
+        ---
+        name: issue-tracker-agent
+        tools:
+          - read
+          - write
+          - mcp:github           # Access GitHub via MCP
+          - mcp:jira             # Access Jira via MCP
+          - mcp:slack            # Access Slack via MCP
+        ---
+        ```
+
+        Agent workflow:
+        When user asks to "create a bug report":
+        1. Read the bug description
+        2. Create issue in GitHub using mcp:github
+           - POST /repos/{owner}/{repo}/issues
+        3. Link to Jira using mcp:jira
+           - POST /issues
+        4. Post notification in Slack using mcp:slack
+           - Send to #bugs channel
+        5. Update tracking spreadsheet
+
+      security_best_practices:
+        token_management: |
+          ✅ DO:
+          - Use environment variables (${GITHUB_TOKEN})
+          - Store tokens in .env file (gitignored)
+          - Use token with minimum required permissions
+          - Rotate tokens regularly
+          - Use different tokens for dev/prod
+
+          ❌ DON'T:
+          - Hardcode tokens in mcp.json
+          - Commit tokens to git
+          - Use personal tokens for production
+          - Share tokens across environments
+
+        permissions: |
+          Principle of Least Privilege:
+          - GitHub Token: Only repo:status, issues, PRs (NOT admin!)
+          - Jira Token: Only read/write for specific project
+          - Slack Token: Only chat:write, channels:read
+          - Database: Only specific tables, read-only when possible
+
+        authentication: |
+          Token storage:
+          Dev: .env file (gitignored)
+          Prod: Environment variables, secret management
+          CI/CD: Secure secrets (GitHub Secrets, AWS Secrets Manager)
+
+          Example .env:
+          ```
+          GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+          JIRA_TOKEN=eyJhbGciOiJIUzI1NiIs...
+          SLACK_TOKEN=xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx
+          DATABASE_URL=postgresql://user:pass@host:5432/db
+          ```
+
+      error_handling: |
+        MCP provides consistent error responses:
+
+        {
+          "error": {
+            "code": "AUTHENTICATION_FAILED",
+            "message": "Invalid GitHub token",
+            "details": {
+              "server": "github",
+              "action": "create_issue"
+            }
+          }
+        }
+
+        Agent should:
+        1. Catch MCP errors
+        2. Log error details
+        3. Provide user-friendly message
+        4. Suggest corrective action
+
+        Example:
+        ```
+        User: "Create GitHub issue"
+        Agent: Calls mcp:github.create_issue()
+        MCP: Returns AUTHENTICATION_FAILED error
+        Agent: "Failed to create issue: GitHub token is invalid.
+                Please check GITHUB_TOKEN environment variable."
+        ```
+
+      workflow_example: |
+        Complete workflow: Bug report from chat to Jira + GitHub + Slack
+
+        1. User: "Report bug: Login fails after password reset"
+
+        2. Agent processes:
+           - Parses bug description
+           - Identifies severity (medium)
+           - Gathers context (logs, screenshots)
+
+        3. Agent creates GitHub issue (mcp:github):
+           - Title: "Login fails after password reset"
+           - Body: Full description + context
+           - Labels: bug, authentication, medium-priority
+           - Assignee: @auth-team
+
+        4. Agent creates Jira ticket (mcp:jira):
+           - Project: AUTH
+           - Type: Bug
+           - Summary: "Login fails after password reset"
+           - Description: Link to GitHub issue
+           - Priority: Medium
+
+        5. Agent notifies Slack (mcp:slack):
+           - Channel: #auth-bugs
+           - Message: "New bug reported: Login fails after password reset.
+                      GitHub: #123, Jira: AUTH-456"
+
+        6. Agent confirms to user:
+           - "✅ Bug report created:
+              - GitHub issue #123
+              - Jira ticket AUTH-456
+              - Notified #auth-bugs in Slack"
+
+    best_practices:
+      - practice: "Use environment variables for tokens"
+        guideline: "Never hardcode tokens. Always use ${ENV_VAR}"
+        reason: "Security, flexibility, no git leaks"
+
+      - practice: "Implement proper error handling"
+        guideline: "Catch MCP errors, provide user-friendly messages"
+        reason: "Better user experience, easier debugging"
+
+      - practice: "Use minimum required permissions"
+        guideline: "Tokens should have least privileges needed"
+        reason: "Security, reduce risk surface"
+
+      - practice: "Test MCP servers before production"
+        guideline: "Test each MCP server independently"
+        reason: "Catch issues early, avoid production failures"
+
+      - practice: "Document MCP tools available"
+        guideline: "List all MCP tools in agent documentation"
+        reason: "Clarity for users and developers"
+
+      - practice: "Use MCP for all external integrations"
+        guideline: "Don't write custom API clients. Use MCP servers"
+        reason: "Standardization, maintainability, security"
+
+      - practice: "Monitor MCP server health"
+        guideline: "Track uptime, errors, response times"
+        reason: "Reliability, proactive issue detection"
+
+    anti_patterns:
+      - pattern: "Hardcoded tokens"
+        wrong: |
+          {
+            "env": {
+              "GITHUB_TOKEN": "ghp_1234567890"  # ❌ Hardcoded!
+            }
+          }
+        consequence: "Security risk, token leaked in git"
+        correct: |
+          {
+            "env": {
+              "GITHUB_TOKEN": "${GITHUB_TOKEN}"  # ✅ Environment variable
+            }
+          }
+
+      - pattern: "Excessive permissions"
+        wrong: "GitHub token with full repo admin access"
+        consequence: "Security risk, token can do too much"
+        correct: "GitHub token with only issues, PRs, status permissions"
+
+      - pattern: "No error handling"
+        wrong: "Call MCP server, assume success"
+        consequence: "Silent failures, poor user experience"
+        correct: |
+          try {
+            result = await mcp.github.createIssue(...);
+          } catch (error) {
+            log.error("Failed to create issue", error);
+            return "Failed: " + error.message;
+          }
+
+      - pattern: "Custom API clients instead of MCP"
+        wrong: "Write custom GitHub API client in agent"
+        consequence: "Duplication, maintenance burden, inconsistent"
+        correct: "Use mcp:github, leverage existing MCP server"
+
+      - pattern: "No documentation of MCP tools"
+        wrong: "Agent uses MCP tools without listing them"
+        consequence: "Unclear what integrations are available"
+        correct: |
+          ## MCP Tools
+          - mcp:github - Issues, PRs, repository access
+          - mcp:jira - Tickets, projects
+          - mcp:slack - Messages, channels
+          - mcp:postgres - Database queries
+
+    real_world_examples:
+      example_1_automated_pr_review:
+        scenario: "Automated PR review with GitHub + Slack integration"
+
+        mcp_servers:
+          - "GitHub: Read PR, post comments"
+          - "Jira: Update ticket status"
+          - "Slack: Notify team"
+
+        workflow:
+          trigger: "GitHub webhook: PR opened"
+          steps:
+            - "Read PR diff (mcp:github)"
+            - "Run code review agent"
+            - "Post review comment (mcp:github)"
+            - "Update Jira ticket (mcp:jira)"
+            - "Notify team in Slack (mcp:slack)"
+
+        result:
+          - "PR reviewed in 5 minutes"
+          - "Team notified instantly"
+          - "Jira ticket updated automatically"
+
+      example_2_bug_triage_system:
+        scenario: "Automated bug triage from Slack to Jira"
+
+        mcp_servers:
+          - "Slack: Read bug reports from #bugs channel"
+          - "Jira: Create tickets, assign to team"
+          - "GitHub: Link to related issues"
+
+        workflow:
+          trigger: "User posts bug report in Slack #bugs"
+          steps:
+            - "Read Slack message (mcp:slack)"
+            - "Parse bug details"
+            - "Create Jira ticket (mcp:jira)"
+            - "Assign based on component"
+            - "Reply in Slack with ticket number"
+
+        result:
+          - "Bugs triaged in <1 minute"
+          - "Automatic assignment to right team"
+          - "Users get immediate feedback"
+
+      example_3_database_query_agent:
+        scenario: "Agent that queries database and reports in Slack"
+
+        mcp_servers:
+          - "PostgreSQL: Execute queries"
+          - "Slack: Post reports"
+
+        workflow:
+          trigger: "Scheduled: Daily at 9 AM"
+          steps:
+            - "Query yesterday's signups (mcp:postgres)"
+            - "Query churn rate (mcp:postgres)"
+            - "Generate report"
+            - "Post to #metrics (mcp:slack)"
+
+        result:
+          - "Daily metrics automated"
+          - "Team sees stats every morning"
+          - "No manual work needed"
+
+    file_structure:
+      recommended_layout: |
+        .claude/
+        ├── mcp.json                      ← MCP configuration
+        ├── tools/
+        │   ├── mcp-github.js            ← GitHub MCP server
+        │   ├── mcp-jira.py              ← Jira MCP server
+        │   ├── mcp-slack.js             ← Slack MCP server
+        │   └── mcp-postgres.js          ← PostgreSQL MCP server
+        ├── agents/
+        │   └── issue-tracker-agent.md   ← Agent that uses MCP
+        └── .env                         ← Environment variables (gitignored!)
+
+    testing:
+      unit_tests: |
+        Test MCP server independently:
+        - Mock external system
+        - Verify request/response format
+        - Test error handling
+
+      integration_tests: |
+        Test agent + MCP together:
+        - Use test environment (GitHub test repo)
+        - Verify agent can call MCP tools
+        - Check error handling
+
+      end_to_end_tests: |
+        Full workflow:
+        - Real external system (test environment)
+        - Complete workflow from trigger to completion
+        - Verify all integrations work
+
+    troubleshooting:
+      common_issues:
+        authentication_failed:
+          symptom: "MCP returns AUTHENTICATION_FAILED"
+          causes:
+            - "Token expired"
+            - "Invalid token"
+            - "Missing environment variable"
+          solutions:
+            - "Check token validity"
+            - "Verify ${ENV_VAR} is set"
+            - "Regenerate token if needed"
+
+        connection_timeout:
+          symptom: "MCP server doesn't respond"
+          causes:
+            - "Server not running"
+            - "Network issue"
+            - "Firewall blocking"
+          solutions:
+            - "Check MCP server is running"
+            - "Verify network connectivity"
+            - "Check firewall rules"
+
+        permission_denied:
+          symptom: "MCP returns PERMISSION_DENIED"
+          causes:
+            - "Token lacks permission"
+            - "Resource not accessible"
+          solutions:
+            - "Check token permissions"
+            - "Verify resource exists"
+            - "Update token scope"
+
+    benefits:
+      for_development:
+        - "Standardized interface"
+        - "Faster development (2-5x)"
+        - "Less custom code"
+        - "Easier maintenance"
+
+      for_security:
+        - "Centralized token management"
+        - "Consistent authentication"
+        - "Audit trail"
+        - "Least privilege enforcement"
+
+      for_reliability:
+        - "Consistent error handling"
+        - "Retry logic built-in"
+        - "Monitoring and alerting"
+        - "Graceful degradation"
+
+    related_patterns:
+      - AGENT-ORCHESTRATION-001 (Multi-agent coordination)
+      - SKILL-DESIGN-001 (Skill design)
+      - AGENT-TASK-TRACKING-001 (Task management)
+
+    references:
+      - "Model Context Protocol (MCP) Specification"
+      - "Claude Code MCP Documentation"
+      - "Claude Agents Guide: tmp/claude-agents-guide.md (MCP section)"
+
+    metadata:
+      created_at: "2026-01-07"
+      author: "Shared KB Curator"
+      source: "Claude Code documentation analysis"
+      reusable: true
+      severity_level: 3
+      difficulty: "intermediate"
+      pattern_type: "integration"
+      applicable_to: ["claude-code", "agents", "integrations", "apis"]

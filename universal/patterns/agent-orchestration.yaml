@@ -1,0 +1,549 @@
+# Agent Orchestration Pattern
+# Multi-agent coordination and orchestrator-worker pattern
+
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "AGENT-ORCHESTRATION-001"
+    title: "Multi-Agent Orchestration with Orchestrator-Worker Pattern"
+    severity: "high"
+    scope: "universal"
+    tags: ["agents", "orchestration", "multi-agent", "coordination", "parallel", "workflow"]
+
+    problem: |
+      Complex AI tasks require:
+      - Multiple specialized capabilities (security, architecture, testing, documentation)
+      - Parallel execution to complete faster
+      - Coordination between different specialists
+      - State management across the workflow
+      - Error handling and recovery
+
+      **Without orchestration:**
+      - Sequential execution (slow)
+      - Context pollution between tasks
+      - No specialization (one agent does everything)
+      - Difficult to track progress
+      - Poor error recovery
+
+    impact: |
+      - **Speed:** 3-5x faster with parallel agents
+      - **Quality:** Specialized agents produce better output
+      - **Maintainability:** Clear separation of concerns
+      - **Scalability:** Easy to add/remove agents
+      - **Cost:** 70% cheaper by using right model per task
+
+    solution: |
+      **Orchestrator-Worker Pattern:**
+
+      Use a main orchestrator agent that:
+      1. Understands the overall request
+      2. Breaks it into subtasks
+      3. Spawns specialized subagents
+      4. Coordinates execution (parallel when possible)
+      5. Aggregates and validates results
+      6. Handles errors and retries
+
+    implementation:
+      orchestrator_design:
+        role: "Strategic brain, not executor"
+        responsibilities:
+          - "Understand requirements and identify dependencies"
+          - "Plan execution phases"
+          - "Delegate to specialists"
+          - "Monitor progress and handle blockers"
+          - "Aggregate and validate results"
+          - "Handle errors and recovery"
+
+        model_choice: "Claude Opus 4 (best reasoning)"
+        tools: "Minimal (read, route, write)"
+
+        state_management: |
+          Maintain global state:
+          {
+            "request_id": "feature-name-001",
+            "status": "in_progress",
+            "phase": 2,
+            "agents": {
+              "security": {"status": "completed", "output": "security-design.md"},
+              "architecture": {"status": "completed", "output": "schema.sql"},
+              "implementation": {"status": "in_progress", "progress": "75%"},
+              "testing": {"status": "queued", "prerequisites": ["implementation"]}
+            },
+            "decisions": ["Use JWT", "PostgreSQL for production"],
+            "next_action": "Wait for implementation to finish"
+          }
+
+      subagent_design:
+        principles:
+          - "Specialization: Each agent expert in one domain"
+          - "Isolation: Each agent has own context"
+          - "Clear boundaries: No overlap between agents"
+          - "Focused tools: Only what's needed for domain"
+          - "Right model: Match model to task complexity"
+
+        agent_types:
+          architect_agent:
+            model: "Claude Sonnet 4"
+            tools: "[read, write, grep]"
+            scope: "System design, data models, APIs"
+            output: "ADR (Architecture Decision Record) + schema"
+
+          security_agent:
+            model: "Claude Sonnet 4"
+            tools: "[read, grep, report]"
+            scope: "Security patterns, compliance, threat modeling"
+            output: "Security review + patterns"
+
+          implementation_agent:
+            model: "Claude Sonnet 4"
+            tools: "[read, write, execute]"
+            scope: "Code generation, API implementation"
+            output: "Production-ready code"
+
+          testing_agent:
+            model: "Claude Sonnet 4"
+            tools: "[read, write, execute]"
+            scope: "Test generation, coverage validation"
+            output: "Comprehensive test suite"
+
+          documentation_agent:
+            model: "Claude Haiku 4"
+            tools: "[read, write]"
+            scope: "Documentation, examples"
+            output: "README + API docs"
+
+      orchestration_workflow:
+        phase_1_request_handling: |
+          1. Receive user request: "Implement OAuth2 login"
+          2. Analyze requirements
+          3. Identify dependencies
+          4. Plan execution phases
+          5. Estimate effort & risks
+
+        phase_2_delegation: |
+          Create task breakdown:
+
+          Phase 1: Security Design (Parallel)
+          - Security Agent: Review OAuth2 flows (2h)
+          - Architecture Agent: Design user schema (2h)
+
+          Phase 2: Implementation (After Phase 1)
+          - Implementation Agent: Code endpoints (4h)
+            Depends on: security-design.md + user-schema.sql
+
+          Phase 3: Testing (After Phase 2)
+          - Testing Agent: Write tests (3h)
+            Depends on: auth-api.ts
+            Success criteria: coverage ≥80%
+
+          Phase 4: Documentation (Parallel with Phase 3)
+          - Documentation Agent: Create docs (2h)
+
+        phase_3_parallel_execution: |
+          Spawn agents with:
+          - Clear task description
+          - Input files/context
+          - Expected output format
+          - Deadline
+          - Success criteria
+
+          Agents run in parallel when possible:
+          - Security Agent ✓ (2h)
+          - Architecture Agent ✓ (2h)
+          [Wait for both]
+          - Implementation Agent → (4h)
+          [Wait]
+          - Testing Agent + Documentation Agent (parallel) (2-3h)
+
+        phase_4_aggregation: |
+          When all agents complete:
+          1. Collect all outputs
+          2. Validate quality:
+             - Security design complete?
+             - Schema matches requirements?
+             - API follows security patterns?
+             - Tests passing with ≥80% coverage?
+             - Documentation accurate?
+          3. Check for conflicts
+          4. Verify dependencies satisfied
+          5. Aggregate into final deliverable
+
+        phase_5_validation: |
+          If validation fails:
+          Option 1: Re-run agent with feedback
+          - Provide failure reason
+          - Add additional context
+          - Allow 1 retry
+
+          Option 2: Use different agent/model
+          - Try with better model (Claude Opus)
+          - Escalate to human review
+          - Create issue for follow-up
+
+          If validation passes:
+          - Mark request as complete
+          - Update global state
+          - Return final result
+
+      communication_protocols:
+        orchestrator_to_subagent: |
+          Message format:
+          {
+            "task_id": "security-design-001",
+            "agent": "security-agent",
+            "task": "Review OAuth2 flows for security risks",
+            "input": {
+              "files": ["requirements.md"],
+              "context": "Implementing OAuth2 login"
+            },
+            "output_format": "markdown",
+            "output_location": "security-design.md",
+            "deadline": "T+2h",
+            "success_criteria": [
+              "All OAuth2 flows documented",
+              "Security risks identified",
+              "Mitigation strategies provided"
+            ]
+          }
+
+        subagent_to_orchestrator: |
+          Result format:
+          {
+            "task_id": "security-design-001",
+            "agent": "security-agent",
+            "status": "completed",
+            "output": "security-design.md",
+            "quality_score": 9.2,
+            "started": "T+0:00",
+            "completed": "T+1:45",
+            "decisions": [
+              "Use Authorization Code flow",
+              "Implement PKCE for mobile clients"
+            ],
+            "issues": [],
+            "next_actions": []
+          }
+
+        error_reporting: |
+          Failure format:
+          {
+            "task_id": "implementation-001",
+            "agent": "implementation-agent",
+            "status": "failed",
+            "error": "Missing dependency: security-design.md not found",
+            "retry_possible": true,
+            "suggested_action": "Re-run Security Agent first"
+          }
+
+    best_practices:
+      - practice: "Use parallel execution when possible"
+        guideline: "Identify independent tasks that can run simultaneously"
+        example: "Security + Architecture agents in Phase 1"
+        benefit: "3-5x faster completion"
+
+      - practice: "Match model to task complexity"
+        guideline: |
+          Opus 4: Planning, orchestration, complex reasoning
+          Sonnet 4: Coding, analysis, specialized work
+          Haiku 4: Routine tasks, documentation
+        benefit: "70% cost savings while maintaining quality"
+
+      - practice: "Maintain clear agent boundaries"
+        guideline: "Each agent has one clear domain. No overlap."
+        example: "Security Agent: Only security. Architecture Agent: Only design."
+        benefit: "No duplicated work, clear responsibilities"
+
+      - practice: "Use hooks for deterministic validation"
+        guideline: "Don't trust agent self-check. Use hooks for automatic validation."
+        example: "pre-commit hook: Run tests, check coverage, lint"
+        benefit: "Quality gates, no false positives"
+
+      - practice: "Implement proper error recovery"
+        guideline: "Don't fail entire workflow on single agent failure"
+        example: "Re-run agent with feedback, or escalate to human"
+        benefit: "Resilient system, graceful degradation"
+
+      - practice: "Track everything in state"
+        guideline: "Maintain global state of all agents, decisions, progress"
+        example: "state.json with status of all agents"
+        benefit: "Auditability, debugging, resumption"
+
+      - practice: "Use right tool permissions per agent"
+        guideline: "Each agent only gets tools needed for its domain"
+        example: "Security Agent: [read, grep, report] (no write!)"
+        benefit: "Security, risk mitigation"
+
+    anti_patterns:
+      - pattern: "Too much autonomy"
+        wrong: "Here's the codebase. Build the whole system."
+        consequence: "Agent gets lost, makes conflicting decisions, low quality"
+        correct: |
+          "Build authentication system with constraints:
+           1. Use JWT tokens
+           2. Passwords hashed with bcrypt
+           3. Tests must pass before commit
+           4. Get approval before merging"
+
+      - pattern: "Wrong model for task"
+        wrong: "Use Haiku 4 for complex architectural planning"
+        consequence: "Fails to understand nuances, poor decisions"
+        correct: |
+          Opus 4: Planning, orchestration
+          Sonnet 4: Coding, specialized work
+          Haiku 4: Routine tasks
+
+      - pattern: "Context overflow in orchestrator"
+        wrong: "Orchestrator maintains ALL details of all subagents"
+        consequence: "Context overflow, quality degrades"
+        correct: |
+          Orchestrator maintains ONLY:
+          - Completed: Phase 1 (spec.md)
+          - In Progress: Phase 2 (implementation)
+          - Pending: Phase 3 (testing)
+          Each subagent manages their own context
+
+      - pattern: "No validation gates"
+        wrong: "Trust agent self-check: 'Does this look correct?'"
+        consequence: "Agent says yes but it's wrong. No external validation."
+        correct: |
+          Use hooks for automatic validation:
+          - Run tests (must pass)
+          - Check coverage (≥80%)
+          - Run linter (0 errors)
+          - Security scan (0 critical issues)
+
+      - pattern: "Unclear agent boundaries"
+        wrong: "Do whatever you think is best"
+        consequence: "Overlap, duplicated work, conflicting implementations"
+        correct: |
+          - Security Agent: Only security decisions
+          - Architecture Agent: Only design decisions
+          - Implementation Agent: Only coding
+          Clear boundaries, clear handoffs
+
+    real_world_examples:
+      example_1_oauth2_implementation:
+        scenario: "Implement OAuth2 login feature"
+
+        team:
+          - "Orchestrator Agent (Opus 4): Planning & coordination"
+          - "Security Agent (Sonnet 4): OAuth2 flow design"
+          - "Architecture Agent (Sonnet 4): User schema design"
+          - "Implementation Agent (Sonnet 4): API coding"
+          - "Testing Agent (Sonnet 4): Test generation"
+          - "Documentation Agent (Haiku 4): Docs & examples"
+
+        workflow:
+          phase_1_parallel_design:
+            tasks:
+              - "Security Agent (2h): OAuth2 flow review"
+              - "Architecture Agent (2h): User schema design"
+            total_time: "2h (parallel)"
+
+          phase_2_implementation:
+            tasks:
+              - "Implementation Agent (4h): Code auth endpoints"
+            depends_on: "security-design.md + user-schema.sql"
+            total_time: "4h"
+
+          phase_3_parallel_testing_docs:
+            tasks:
+              - "Testing Agent (3h): Test suite (85% coverage)"
+              - "Documentation Agent (2h): README + API docs"
+            total_time: "3h (parallel)"
+
+        results:
+          total_time: "9 hours (2 + 4 + 3)"
+          vs_single_agent: "~40 hours (sequential)"
+          speed_improvement: "4.4x faster"
+          cost: "$37 (mixed models) vs $4000 (40h @ $100/h)"
+          cost_savings: "100x cheaper"
+
+      example_2_parallel_code_review:
+        scenario: "Automated PR review system"
+
+        agents:
+          - "PR Watcher: Detects new PRs, triggers workflow"
+          - "Style Reviewer: Linting, naming, patterns"
+          - "Security Reviewer: SQLi, XSS, auth issues"
+          - "Performance Reviewer: N+1, bundles, loops"
+          - "Architecture Reviewer: Design patterns, separation"
+          - "Aggregator: Combines all reviews, posts comment"
+
+        workflow:
+          trigger: "GitHub webhook → PR created"
+          parallel_review: "4 reviewers work simultaneously (5 min)"
+          aggregation: "Aggregator combines feedback (1 min)"
+          posting: "Posts comprehensive review as single comment"
+
+        results:
+          review_time: "6 minutes total"
+          vs_human: "~2 hours (human reviewer)"
+          coverage: "All domains checked, nothing missed"
+          consistency: "Same standards every time"
+
+      example_3_security_audit_parallel:
+        scenario: "Comprehensive security audit of codebase"
+
+        agents:
+          - "SQL Injection Agent: Grep for SQL patterns"
+          - "XSS Agent: Grep for innerHTML, eval"
+          - "Secrets Agent: Grep for passwords, API keys"
+          - "Dependencies Agent: Check outdated packages"
+          - "Config Agent: Check insecure configurations"
+          - "Report Aggregator: Compile findings"
+
+        workflow:
+          parallel_search: "5 agents search simultaneously (2 min)"
+          analysis: "Each agent analyzes their findings (3 min)"
+          aggregation: "Aggregator compiles security report (2 min)"
+
+        results:
+          total_time: "7 minutes"
+          vs_manual: "~4 hours (manual audit)"
+          coverage: "5 agents = 5x coverage"
+          consistency: "No human fatigue, thorough every time"
+
+    file_structure:
+      recommended_layout: |
+        .claude/
+        ├── agents/
+        │   ├── orchestrator.md          ← Main orchestrator config
+        │   │   ├── description: "Delegates tasks"
+        │   │   ├── model: "claude-opus-4"
+        │   │   └── tools: [read, route]
+        │   │
+        │   ├── code-review-agent.md     ← Specialist agent
+        │   │   ├── description: "Reviews code"
+        │   │   ├── model: "claude-sonnet-4"
+        │   │   └── tools: [grep, read, comment]
+        │   │
+        │   ├── security-agent.md        ← Specialist agent
+        │   │   ├── description: "Audits security"
+        │   │   ├── model: "claude-sonnet-4"
+        │   │   └── tools: [grep, read, report]
+        │   │
+        │   └── state.json               ← Global state
+        │       ├── current_task
+        │       ├── completed_subtasks
+        │       ├── pending_work
+        │       └── decisions
+        │
+        ├── skills/                       ← Skills (called by agents)
+        │   ├── testing/
+        │   ├── documentation/
+        │   └── refactoring/
+        │
+        ├── hooks/                        ← Lifecycle hooks
+        │   ├── post-agent-run.sh        ← After agent completes
+        │   └── error-recovery.sh        ← On agent failure
+        │
+        └── mcp/                          ← External integrations
+            ├── github.server
+            ├── jira.server
+            └── slack.server
+
+    testing:
+      unit_tests: |
+        Test each agent independently:
+        - Mock external systems
+        - Verify agent produces correct output
+        - Example: "Security agent detects SQL injection"
+
+      integration_tests: |
+        Test agents working together:
+        - Use real (test) systems
+        - Verify coordination works
+        - Example: "Orchestrator + Agents complete feature"
+
+      end_to_end_tests: |
+        Full workflow validation:
+        - Production-like environment
+        - From request to deployment
+        - Example: "Feature request → ready in production"
+
+      evaluation_metrics:
+        completeness:
+          - "Did agent finish assigned task? Y/N"
+          - "Did it produce required output? Y/N"
+          - "Is output in correct format? Y/N"
+
+        correctness:
+          - "Does output match specification?"
+          - "Are there errors or incomplete parts?"
+          - "Would this pass code review? Y/N"
+
+        quality:
+          - "Readability (can humans understand?)"
+          - "Performance (efficient code/queries?)"
+          - "Security (safe, no vulnerabilities?)"
+
+        cost:
+          - "Tokens used"
+          - "Time taken"
+          - "API calls made"
+
+    monitoring:
+      performance_metrics:
+        - "Success rate (%)"
+        - "Error rate (%)"
+        - "Average completion time"
+        - "P95, P99 latency"
+        - "Cost per execution"
+
+      quality_metrics:
+        - "Output quality score (0-10)"
+        - "Rework rate (%)"
+        - "User satisfaction (1-5)"
+        - "Bug discovery rate"
+
+      alerts:
+        - "Error rate spike (>5%)"
+        - "Latency spike (>5min)"
+        - "Cost anomaly (>2x expected)"
+        - "Agent timeout"
+        - "MCP connection failure"
+
+    benefits:
+      performance:
+        - "3-5x faster (parallel execution)"
+        - "70% cost savings (right model per task)"
+        - "Better quality (specialized agents)"
+
+      maintainability:
+        - "Clear separation of concerns"
+        - "Easy to add/remove agents"
+        - "Independent agent updates"
+
+      reliability:
+        - "Resilient to agent failure"
+        - "Graceful error recovery"
+        - "Deterministic validation"
+
+      scalability:
+        - "Add more agents as needed"
+        - "Handle complex workflows"
+        - "Production-ready deployment"
+
+    related_patterns:
+      - SKILL-DESIGN-001 (Skill design best practices)
+      - AGENT-TASK-TRACKING-001 (Task tracking in agents)
+      - PROGRESSIVE-DISCLOSURE-001 (Context optimization)
+      - MCP-INTEGRATION-001 (External system integration)
+
+    references:
+      - "Claude Code Agents Documentation"
+      - "Claude Agents Guide: tmp/claude-agents-guide.md (1,251 lines)"
+      - "Orchestrator-Worker Pattern"
+
+    metadata:
+      created_at: "2026-01-07"
+      author: "Shared KB Curator"
+      source: "Claude Code Agents Guide analysis"
+      reusable: true
+      severity_level: 2
+      difficulty: "advanced"
+      pattern_type: "architecture"
+      applicable_to: ["claude-code", "agents", "multi-agent-systems", "orchestration"]
