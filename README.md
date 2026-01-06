@@ -54,6 +54,46 @@ You are the **ONLY** agent who can commit to this repository:
 
 ---
 
+## 🤖 For AI Agents
+
+**Quick Start Guide for AI Agents:**
+
+**⚠️ CRITICAL RULES:**
+1. ✅ Always use `git submodule` commands (NEVER `git -C` or `cd` into submodule)
+2. ✅ Verify state before referencing (check issues/PRs with `gh issue view`)
+3. ✅ Check submodule status before operations
+4. ❌ Never commit to shared-knowledge-base (unless you're Curator)
+
+**Quick Reference:**
+```bash
+# Update Shared KB (CORRECT workflow)
+git submodule status docs/knowledge-base/shared
+git submodule update --remote docs/knowledge-base/shared
+
+# Verify before referencing
+gh issue view NUMBER --json state,title
+
+# Search KB
+kb search '{query}'
+```
+
+**📖 Complete Guide:** [AGENT-QUICK-START.md](AGENT-QUICK-START.md)
+
+**Key Patterns for Agents:**
+- [AGENT-DIRECT-SUBMODULE-ACCESS-001](universal/patterns/agent-direct-submodule-access.yaml) - Submodule access rules
+- [STALE-CONTEXT-001](universal/patterns/stale-context.yaml) - Verify before referencing
+- [SUBMODULE-STATUS-INTERPRETATION-001](universal/patterns/submodule-status-interpretation.yaml) - Understanding status
+- [AGENT-HANDOFF-FAILURE-001](universal/patterns/agent-handoff-failures.yaml) - Common submission mistakes
+
+**Agent Instructions:**
+All agents auto-load `universal/agent-instructions/base-instructions.yaml` with:
+- Submodule access rules (forbidden/required commands)
+- Role-based access control (Project Agent vs Curator)
+- GitHub attribution requirements
+- Quality standards and workflows
+
+---
+
 **v2.0 Features:**
 - ✅ Cross-platform Python CLI (`kb.py`) - works on Windows/Mac/Linux
 - ✅ SQLite indexing - fast search with 1M+ entries
