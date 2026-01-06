@@ -1,0 +1,626 @@
+# Claude Code Shared Model Pattern
+# Best practices for organizing .claude files across multiple projects and teams
+
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "CLAUDE-CODE-SHARED-MODEL-001"
+    title: "Claude Code Shared Knowledge Model for Multiple Projects"
+    severity: "high"
+    scope: "universal"
+    tags: ["claude-code", "shared-knowledge", "configuration", "monorepo", "team-collaboration", "claude-md", "skills", "agents"]
+
+    problem: |
+      Teams using Claude Code across multiple projects face:
+      - Duplicated configuration in each project
+      - Inconsistent coding standards
+      - Knowledge silos (each developer works differently)
+      - Difficult onboarding for new team members
+      - No shared SKILLS or AGENTS across projects
+      - Token waste from loading redundant context
+
+      **Real scenarios:**
+      - New developer asks: "How do we structure components?" Gets 3 different answers
+      - Code reviews take 5 cycles due to style inconsistencies
+      - Test coverage varies from 10% to 80% across services
+      - Each project reinvents the same patterns
+
+    impact: |
+      - **Onboarding:** Days instead of hours
+      - **Code Review:** 5 cycles → 1-2 cycles
+      - **Test Coverage:** 30% average → 80%+ consistent
+      - **Knowledge:** Lost when people leave → Preserved in .claude/
+      - **New Projects:** Start from scratch → Inherit shared standards
+
+    solution: |
+      **Shared Knowledge Model with Hierarchical Configuration**
+
+      ## Core Principle
+
+      Use **Project Scope** (.claude/ committed to git) for shared team knowledge:
+
+      ```
+      monorepo/
+      ├── .claude/                    ← SHARED BY ALL PROJECTS
+      │   ├── CLAUDE.md              (Navigation hub, ~300 lines)
+      │   ├── settings.json          (Feature flags)
+      │   ├── standards/             (Team knowledge)
+      │   ├── skills/                (Reusable capabilities)
+      │   ├── agents/                (Automation)
+      │   └── team/                  (Workflows, principles)
+      ├── packages/package-a/.claude/  (Package-specific)
+      └── services/api/.claude/         (Service-specific)
+      ```
+
+      **Configuration Hierarchy (priority order):**
+
+      1. **Local Scope** (highest priority)
+         - `.claude/*.local.*`
+         - NOT in git (.gitignore)
+         - Personal overrides
+
+      2. **Project Scope** ← **FOR SHARED KNOWLEDGE** ⭐
+         - `<repo>/.claude/`
+         - ✅ IN GIT (team shared)
+         - Standards, skills, agents
+
+      3. **User Scope**
+         - `~/.claude/`
+         - Personal preferences
+         - Not shared across PCs
+
+      4. **Enterprise Scope** (lowest priority)
+         - `/etc/claude/` or `C:\ProgramData\claude\`
+         - Corporate policies
+         - IT-managed
+
+    best_practices:
+      - practice: "Keep root CLAUDE.md lean (~300 lines)"
+        reason: "Acts as navigation hub, references detailed standards"
+        pattern: |
+          CLAUDE.md should:
+          - Point to @standards/architecture.md
+          - Point to @standards/coding-standards.md
+          - NOT contain all details (lazy loading)
+          - Be ~300 lines max
+
+      - practice: "Use progressive disclosure"
+        reason: "Load details on demand, save tokens"
+        workflow: |
+          1. Load CLAUDE.md (300 lines)
+          2. User references @standards/architecture.md
+          3. ONLY THEN load architecture.md
+          4. Result: Efficient token usage
+
+      - practice: "Single source of truth"
+        reason: "Avoid duplication, prevent inconsistencies"
+        example: |
+          ❌ WRONG: Error handling rules in:
+             - CLAUDE.md
+             - standards/error-handling.md
+             - docs/best-practices.md
+
+          ✅ CORRECT: error-handling.md (authoritative)
+             All others: @standards/error-handling.md
+
+      - practice: "Commit .claude/ to git, exclude .local files"
+        reason: "Team shares standards, individuals keep personal overrides"
+        gitignore: |
+          .claude/*.local.*
+          .claude/.local/
+          # But .claude/ itself IS committed!
+
+      - practice: "Create reusable SKILLS"
+        reason: "Eliminate repetitive prompting"
+        examples: |
+          - testing/ (SKILL.md for test generation)
+          - refactoring/ (SKILL.md for code improvement)
+          - documentation/ (SKILL.md for doc generation)
+
+      - practice: "Automate with AGENTS"
+        reason: "Reduce manual work, enforce standards"
+        examples: |
+          - code-review-agent (PR review automation)
+          - deployment-agent (deploy orchestration)
+          - testing-agent (test optimization)
+
+    implementation:
+      phase_1_foundation:
+        title: "Setup Root Configuration"
+        effort: "2-4 hours"
+        steps:
+          - step: "Create root .claude/ structure"
+            files:
+              - file: ".claude/CLAUDE.md"
+                purpose: "Navigation hub"
+                size: "~300 lines"
+
+              - file: ".claude/settings.json"
+                purpose: "Feature enablement"
+                content: |
+                  {
+                    "skills.enabled": ["testing", "refactoring"],
+                    "agents.enabled": ["code-review"]
+                  }
+
+          - step: "Create standards directory"
+            files:
+              - ".claude/standards/architecture.md"
+              - ".claude/standards/coding-standards.md"
+              - ".claude/standards/testing-guidelines.md"
+              - ".claude/standards/api-standards.md"
+              - ".claude/standards/deployment.md"
+
+          - step: "Create CLAUDE.md with references"
+            template: |
+              # Project Knowledge
+
+              ## Architecture
+              See @standards/architecture.md
+
+              ## Coding Standards
+              See @standards/coding-standards.md
+
+              ## Testing
+              See @standards/testing-guidelines.md
+              Use /testing skill to generate tests
+
+          - step: "Commit to git"
+            command: |
+              git add .claude/
+              git commit -m "Add shared Claude Code configuration"
+
+      phase_2_skills:
+        title: "Create Reusable SKILLS"
+        effort: "4-8 hours"
+        steps:
+          - step: "Create testing skill"
+            structure: |
+              .claude/skills/testing/
+              ├── SKILL.md          (Skill definition)
+              ├── templates/        (Test templates)
+              └── patterns.md       (Test patterns)
+
+          - step: "Document in SKILL.md"
+            sections:
+              - "What this skill does"
+              - "When to use it"
+              - "Examples"
+              - "Patterns to follow"
+
+          - step: "Enable in settings.json"
+            config: |
+              {
+                "skills.enabled": ["testing"]
+              }
+
+      phase_3_automation:
+        title: "Add AGENTS for Automation"
+        effort: "1-2 days"
+        steps:
+          - step: "Create code-review agent"
+            file: ".claude/agents/code-review-agent.md"
+            purpose: "Automate PR review"
+            workflow: |
+              Trigger: GitHub webhook on PR
+              Actions:
+              - Load standards from .claude/standards/
+              - Review PR for violations
+              - Post comments with @standard references
+              - Link specific rules violated
+
+          - step: "Start simple, iterate"
+            advice: |
+              Begin with 1-2 specific agents
+              Test thoroughly
+              Monitor feedback
+              Improve iteratively
+
+    scaling_guide:
+      team_1_3_developers:
+        structure: "Single repo, simple .claude/"
+        setup: "2-4 hours"
+        maintenance: "1 hour/month"
+        config: |
+          .claude/
+          ├── CLAUDE.md (200 lines)
+          ├── standards/ (all-in-one file)
+          └── skills/ (1-2 basic)
+
+      team_3_10_developers:
+        structure: "Monorepo with shared root"
+        setup: "1-2 days"
+        maintenance: "4-6 hours/month"
+        config: |
+          .claude/ (root)
+          ├── CLAUDE.md (300 lines)
+          ├── standards/ (split by domain)
+          ├── skills/ (testing, refactoring, docs)
+          ├── agents/ (code review)
+          └── team/ (workflows, faq)
+
+          packages/*/.claude/ (specific)
+
+      team_10_30_developers:
+        structure: "Monorepo + services"
+        setup: "1 week"
+        maintenance: "8-12 hours/month"
+        config: |
+          .claude/ (core)
+          ├── CLAUDE.md (250 lines - lean!)
+          ├── standards/ (comprehensive)
+          ├── skills/ (10+ skills)
+          ├── agents/ (automation everywhere)
+          ├── references/ (APIs, schemas)
+          └── team/ (comprehensive docs)
+
+      team_30_100_developers:
+        structure: "Multi-service platform with MCP"
+        setup: "2 weeks + MCP implementation"
+        maintenance: "20-30 hours/month"
+        config: |
+          .claude/ (minimal - 150 lines!)
+          ├── CLAUDE.md (navigation only)
+          ├── standards/ (strict requirements)
+          ├── shared-skills/ (company-wide)
+          ├── shared-agents/ (automation)
+          └── references/ (via MCP)
+
+          domain-specific .claude/ (FE, BE, platform)
+          knowledge-base/ (MCP-powered)
+
+        insight: |
+          Root CLAUDE.md gets SMALLER as team grows!
+          Standards live in separate files
+          MCP provides dynamic context loading
+          Result: No token waste, infinite scale
+
+    real_world_examples:
+      example_1_monorepo_frontend_backend:
+        scenario: "Monorepo with Frontend and Backend teams"
+
+        structure: |
+          .claude/ (shared core)
+          ├── standards/
+          │   ├── architecture.md
+          │   ├── coding-standards.md
+          │   └── testing-guidelines.md
+          ├── skills/
+          │   └── testing/SKILL.md
+          └── agents/
+              └── code-review-agent.md
+
+          packages/frontend/.claude/
+          └── CLAUDE.md (FE-specific: "Use React + TypeScript")
+
+          services/backend/.claude/
+          └── CLAUDE.md (BE-specific: "Use FastAPI + Pydantic")
+
+        workflow:
+          - "Frontend dev: Uses shared standards + FE CLAUDE.md"
+          - "Backend dev: Uses shared standards + BE CLAUDE.md"
+          - "Both: Use same testing Skill → consistent test style"
+          - "PR review: code-review-agent enforces shared standards"
+
+        results:
+          - "Onboarding: Days → Hours"
+          - "Code review: 5 cycles → 1-2 cycles"
+          - "Test coverage: 30% → 80%+"
+          - "Consistency: No → Yes"
+
+      example_2_new_developer_onboarding:
+        scenario: "New developer joins team"
+
+        without_shared_model:
+          - "Asks: 'How do we structure components?'"
+          - "Gets 3 different answers from 3 people"
+          - "Confused, inconsistent code"
+          - "Onboarding: 1 week"
+
+        with_shared_model:
+          - "Reads CLAUDE.md (5 min)"
+          - "Reads architecture standard (30 min)"
+          - "Ready to code!"
+          - "Onboarding: 1 hour"
+
+        lesson: |
+          Shared knowledge reduces onboarding from 1 week to 1 hour.
+          Everyone gets same answer from same source of truth.
+
+      example_3_feature_development_workflow:
+        scenario: "5-day feature development"
+
+        day_1_planning:
+          - "Developer checks CLAUDE.md"
+          - "Reads @standards/architecture.md"
+          - "Creates PLAN.md following patterns"
+
+        day_2_3_development:
+          - "Uses /testing skill to generate tests"
+          - "Code matches standards automatically"
+          - "Consistent structure"
+
+        day_4_testing:
+          - "Testing Skill generates matching tests"
+          - "80%+ coverage achieved"
+          - "Follows team test patterns"
+
+        day_5_code_review:
+          - "code-review agent checks standards"
+          - "Only real issues discussed"
+          - "Each comment links to @standard"
+          - "Approved in 1-2 cycles"
+
+        day_6_deploy:
+          - "deployment agent orchestrates"
+          - "Following deployment.md standard"
+          - "Automated validation & deployment"
+
+        result: |
+          Same workflow, ANY developer, ANY project.
+          Standards ensure consistency.
+          Skills speed up repetitive tasks.
+          Agents automate the boring stuff.
+
+    common_mistakes:
+      mistake_1_everything_in_root_claude_md:
+        wrong: "2000 lines in CLAUDE.md with all details"
+        consequence: "2000 lines loaded every session (wasteful!)"
+        correct: "Keep root ~300 lines, link to details"
+        pattern: |
+          CLAUDE.md (300 lines) → @standards/ (detailed)
+          Only referenced files loaded on demand
+
+      mistake_2_duplicating_rules:
+        wrong: "Same rule in CLAUDE.md, standards/, docs/"
+        consequence: "Updates missed, inconsistency spreads"
+        correct: "Single source of truth, others reference it"
+        pattern: |
+          error-handling.md (authoritative)
+          All others: @standards/error-handling.md
+
+      mistake_3_deep_nested_references:
+        wrong: "CLAUDE.md → ref1.md → ref2.md → ref3.md"
+        consequence: "Claude partially reads, loses context"
+        correct: "One level deep from CLAUDE.md"
+        pattern: |
+          CLAUDE.md → reference files (direct)
+          reference files → other references OK
+
+      mistake_4_not_committing_claude:
+        wrong: ".claude/ in .gitignore"
+        consequence: "Each dev has different standards!"
+        correct: "Commit standards, exclude .local files"
+        gitignore: |
+          .claude/         → IN GIT (shared)
+          .claude/*.local  → .gitignore (personal)
+
+      mistake_5_unused_skills:
+        wrong: "10 skills created, nobody uses them"
+        consequence: "Manual work continues, skills ignored"
+        correct: "Start with 1-2 essential skills, document usage"
+        examples: |
+          - testing skill first
+          - Expand based on feedback
+          - Document how to use each skill
+
+      mistake_6_unreliable_agents:
+        wrong: "code-review agent comments wrong issues"
+        consequence: "Developers disable it, lose automation"
+        correct: "Start simple, test thoroughly, monitor feedback"
+        advice: |
+          - First agent: Very specific task
+          - Test thoroughly before deploying
+          - Monitor and fix issues quickly
+
+      mistake_7_ignoring_feedback:
+        wrong: "Standards created by leadership, dev team says 'too strict'"
+        consequence: "Team ignores standards, works around them"
+        correct: "Feedback loop, iterate based on real problems"
+        pattern: |
+          - Monthly reviews
+          - "This standard doesn't work because..."
+          - Show team they matter
+          - Update based on feedback
+
+      mistake_8_not_maintaining:
+        wrong: "Standards written 6 months ago, reality changed"
+        consequence: "Standards outdated, ignored"
+        correct: "Quarterly updates"
+        pattern: |
+          - Review standards each quarter
+          - Update based on new tools/patterns
+          - Remove obsolete rules
+          - Add lessons learned
+
+    verification_checklist:
+      - check: "Root CLAUDE.md is ~300 lines or less"
+        command: "wc -l .claude/CLAUDE.md"
+        expected: "Less than 400 lines"
+
+      - check: ".claude/ is committed to git"
+        command: "git ls-files .claude/ | grep -c ."
+        expected: "Multiple files tracked"
+
+      - check: ".local files are gitignored"
+        command: "cat .gitignore | grep '.claude/.*local'"
+        expected: "Patterns present"
+
+      - check: "No rule duplication"
+        verification: "Search for same rule in multiple files"
+        expected: "Each rule has single source of truth"
+
+      - check: "Skills are discoverable"
+        test: "List all /skills in Claude Code"
+        expected: "Skills appear in autocomplete"
+
+      - check: "New developer can onboard quickly"
+        test: "Time new dev from zero to first commit"
+        expected: "Less than 1 day"
+
+    code_example:
+      setup_script: |
+        #!/bin/bash
+        # Setup Shared Claude Code Configuration
+
+        # Step 1: Create directory structure
+        mkdir -p .claude/{standards,skills,agents,team}
+
+        # Step 2: Create CLAUDE.md
+        cat > .claude/CLAUDE.md <<'EOF'
+        # Project Knowledge
+
+        ## Quick Start
+        This repo uses shared Claude Code configuration.
+
+        ## Architecture
+        See @standards/architecture.md
+
+        ## Coding Standards
+        See @standards/coding-standards.md
+
+        ## Testing
+        See @standards/testing-guidelines.md
+        Use /testing skill to generate tests
+
+        ## Deployment
+        See @standards/deployment.md
+        EOF
+
+        # Step 3: Create standards template
+        cat > .claude/standards/architecture.md <<'EOF'
+        # Architecture Standards
+
+        ## Principles
+        1. Separation of concerns
+        2. DRY (Don't Repeat Yourself)
+        3. SOLID principles
+
+        ## Project Structure
+        [Your project structure here]
+        EOF
+
+        # Step 4: Create settings.json
+        cat > .claude/settings.json <<'EOF'
+        {
+          "skills.enabled": ["testing", "refactoring"],
+          "agents.enabled": ["code-review"]
+        }
+        EOF
+
+        # Step 5: Create testing skill
+        mkdir -p .claude/skills/testing
+        cat > .claude/skills/testing/SKILL.md <<'EOF'
+        # Testing Skill
+
+        Generates tests following team standards.
+
+        ## Usage
+        /testing generate <file>
+
+        ## Patterns
+        - Arrange-Act-Assert structure
+        - Descriptive test names
+        - Mock external dependencies
+        - 80%+ coverage target
+        EOF
+
+        # Step 6: Commit to git
+        git add .claude/
+        git commit -m "Add shared Claude Code configuration"
+
+        echo "✅ Shared Claude Code configuration created!"
+        echo "📖 Next: Edit .claude/standards/ with your team standards"
+
+    troubleshooting:
+      issue_1_claude_not_seeing_standards:
+        symptom: "Claude Code doesn't use team standards"
+        checks:
+          - check: "Is .claude/ in git?"
+            command: "git ls-files .claude/ | wc -l"
+            expected: "Non-zero"
+
+          - check: "Is CLAUDE.md in .claude/?"
+            command: "ls -la .claude/CLAUDE.md"
+            expected: "File exists"
+
+          - check: "Are you in Claude Code project?"
+            verification: "Check project settings in Claude Code"
+
+        solutions:
+          - solution: "Rebuild Claude Code index"
+            command: "Restart Claude Code, reload project"
+
+          - solution: "Check file references"
+            test: "Verify @standards/ references are correct paths"
+
+      issue_2_skill_not_discoverable:
+        symptom: "/testing skill not found"
+        checks:
+          - check: "Is skill enabled in settings.json?"
+            command: "cat .claude/settings.json | grep testing"
+            expected: "testing in skills.enabled"
+
+          - check: "Does SKILL.md exist?"
+            command: "ls -la .claude/skills/testing/SKILL.md"
+            expected: "File exists"
+
+        solutions:
+          - solution: "Enable skill in settings.json"
+            config: |
+              {
+                "skills.enabled": ["testing"]
+              }
+
+          - solution: "Restart Claude Code"
+            action: "Reload project to pick up new skills"
+
+      issue_3_team_ignoring_standards:
+        symptom: "Developers not following shared standards"
+        root_causes:
+          - "Standards not communicated"
+          - "Too strict/complex"
+          - "Not easily discoverable"
+          - "Outdated patterns"
+
+        solutions:
+          - solution: "Improve discoverability"
+            actions:
+              - "Link CLAUDE.md in README.md"
+              - "Add to onboarding checklist"
+              - "Reference in code review template"
+
+          - solution: "Simplify standards"
+            actions:
+              - "Remove nice-to-have rules"
+              - "Focus on critical standards"
+              - "Provide examples for each rule"
+
+          - solution: "Gather feedback"
+            actions:
+              - "Monthly team review"
+              - "What doesn't work?"
+              - "Iterate based on feedback"
+
+    related_patterns:
+      - SHARED-KB-SETUP-001 (Shared KB sparse checkout)
+      - GIT-SUBMODULE-001 (Submodule integration)
+      - AGENT-HANDOFF-001 (Cross-project collaboration)
+
+    references:
+      - "Claude Code Docs: https://code.claude.com/docs/en"
+      - "Claude Skills: https://www.claudeskills.org/docs/agent-skills"
+      - "Using CLAUDE.md: https://claude.com/blog/using-claude-md-files"
+      - "Best practices: https://www.anthropic.com/engineering/claude-code-best-practices"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      source: "Perplexity research v17 + best practices compilation"
+      reusable: true
+      severity_level: 2
+      difficulty: "intermediate"
+      pattern_type: "architecture"
+      applicable_to: ["teams", "monorepos", "multi-project", "claude-code-users"]
