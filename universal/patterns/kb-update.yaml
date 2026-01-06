@@ -1,6 +1,6 @@
 # Shared KB Update Process for Projects
 
-version: "1.0"
+version: "1.1"
 category: "knowledge-base"
 last_updated: "2026-01-06"
 
@@ -750,6 +750,201 @@ patterns:
           - "SUBMODULE_UPDATE_FEATURE_BRANCH_ANALYSIS.md - Full analysis"
           - "KB-UPDATE-001 issue_5 - Feature branch troubleshooting"
 
+      example_3_migration_v2_to_v3:
+        project: "VPS Knowledge Base (personal project)"
+        scenario: "Migration from plain clone v2.0 to git submodule v3.0"
+        date: "2026-01-06"
+
+        before_migration:
+          location: "/home/ozand/knowledge-base"
+          version: "v2.0.0-13-g5ec545a"
+          installation: "Plain git clone"
+          structure: "Mixed shared + VPS-specific content"
+          problems:
+            - "Shared and VPS content mixed together"
+            - "Manual updates required (file copying)"
+            - "Doesn't follow v3.0 best practices"
+            - "No clear separation of concerns"
+
+        migration_steps:
+          - step: "Backup old version"
+            command: "mv /home/ozand/knowledge-base /home/ozand/knowledge-base-v2-backup"
+            result: "Safe backup created"
+
+          - step: "Create new v3.0 structure"
+            command: |
+              mkdir -p /home/ozand/vps-knowledge/docs/knowledge-base/{project/{errors,patterns},tools}
+              cd /home/ozand/vps-knowledge && git init
+            result: "New structure with git initialized"
+
+          - step: "Add Shared KB as submodule"
+            command: |
+              git submodule add git@github.com:ozand/shared-knowledge-base.git \
+                docs/knowledge-base/shared
+            result: "Latest v3.0 obtained (v3.0-10-gc023036)"
+
+          - step: "Migrate VPS-specific content"
+            command: |
+              cp -r /home/ozand/knowledge-base-v2-backup/vps/* \
+                docs/knowledge-base/project/
+            result: "27 VPS YAML files migrated"
+
+          - step: "Setup tools and configuration"
+            command: |
+              cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/
+              mkdir -p docs/knowledge-base/.cache
+            result: "Tools ready, .kb-config.yaml created"
+
+          - step: "Build index and verify"
+            command: "python3 docs/knowledge-base/tools/kb.py index -v"
+            result: "47 entries indexed (19 VPS + 28 shared)"
+
+          - step: "Maintain backward compatibility"
+            command: |
+              ln -sf /home/ozand/vps-knowledge /home/ozand/knowledge-base
+            result: "Old path still works via symlink"
+
+          - step: "Update integration scripts"
+            files_updated:
+              - "~/.claude/skills/vps-admin.sh (path updates)"
+              - "~/.claude/scripts/kb-weekly-index-v3.sh (new script)"
+            result: "All commands work with new paths"
+
+          - step: "Create documentation"
+            files_created:
+              - "README.md (usage guide)"
+              - "MIGRATION_V3.md (detailed migration doc)"
+              - "update-shared-kb.sh (automation script)"
+            result: "Comprehensive documentation"
+
+          - step: "Commit to git"
+            command: "git add . && git commit -m 'Initial VPS KB setup with Shared KB v3.0'"
+            result: "18 files committed, clean state"
+
+        after_migration:
+          location: "/home/ozand/vps-knowledge"
+          version: "v3.0-10-gc023036"
+          installation: "Git submodule"
+          structure: |
+            docs/knowledge-base/
+            ├── shared/    → Submodule (community maintained)
+            └── project/   → VPS-specific (locally maintained)
+
+        statistics_comparison:
+          before: "v2.0.0-13-g5ec545a | 55 entries (with duplicates) | Plain clone"
+          after: "v3.0-10-gc023036 | 47 entries (unique) | Git submodule"
+          time_investment: "~15 minutes"
+          downtime: "None (seamless migration)"
+
+        verification_tests:
+          - test: "Index building"
+            command: "python3 docs/knowledge-base/tools/kb.py index -v"
+            result: "✅ 47 entries indexed"
+
+          - test: "Statistics"
+            command: "vps-admin kb-stats"
+            result: "✅ 19 VPS + 28 shared entries"
+
+          - test: "Search - VPS patterns"
+            command: "vps-admin kb-search 'vps'"
+            result: "✅ 16 results found"
+
+          - test: "Search - Specific issue"
+            command: "vps-admin kb-search 'port conflict'"
+            result: "✅ 2 results found"
+
+          - test: "Update command"
+            command: "./update-shared-kb.sh"
+            result: "✅ Automated update works"
+
+        outcome: |
+          ✅ Successfully migrated from v2.0 plain clone to v3.0 submodule
+          ✅ Clean separation: shared/ vs project/
+          ✅ Easy updates: git submodule update --remote
+          ✅ All functionality preserved
+          ✅ Zero downtime (symlink compatibility)
+          ✅ Comprehensive documentation
+          ✅ Automated updates enabled
+
+        lessons_learned:
+          - "Migration is straightforward (~15 minutes)"
+          - "Backup first prevents data loss"
+          - "Clean structure eliminates confusion"
+          - "Submodule simplifies updates significantly"
+          - "Backward compatibility reduces friction"
+          - "Documentation and automation are essential"
+          - "Multiple verification methods ensure confidence"
+
+        best_practices_demonstrated:
+          - practice: "Backup before migration"
+            evidence: "Old directory preserved as knowledge-base-v2-backup"
+
+          - practice: "Clean structure separation"
+            evidence: "shared/ (community) vs project/ (VPS-specific)"
+
+          - practice: "Git submodule usage"
+            evidence: "Standard update mechanism with version tracking"
+
+          - practice: "Comprehensive testing"
+            evidence: "5 different verification tests performed"
+
+          - practice: "Backward compatibility"
+            evidence: "Symlink maintains old path functionality"
+
+          - practice: "Documentation"
+            evidence: "3 documentation files created (README, MIGRATION_V3, script)"
+
+          - practice: "Automation"
+            evidence: "Update script + weekly index script + cron template"
+
+        key_benefits:
+          benefit_1_updates:
+            before: "Manual file copying from upstream"
+            after: "git submodule update --remote (one command)"
+
+          benefit_2_structure:
+            before: "Mixed content, unclear ownership"
+            after: "Clear separation: shared (read-only) vs project (editable)"
+
+          benefit_3_version_tracking:
+            before: "Manual version tracking (git describe)"
+            after: "Automatic via git submodule (git status)"
+
+          benefit_4_community:
+            before: "Isolated, manual updates"
+            after: "Receives community improvements automatically"
+
+        update_workflow_v3:
+          manual: |
+            cd /home/ozand/vps-knowledge
+            git submodule update --remote docs/knowledge-base/shared
+            vps-admin kb-index
+
+          automated: |
+            ./update-shared-kb.sh
+
+          what_gets_updated:
+            shared_kb: "All community patterns, bug fixes, features"
+            project_kb: "NOT affected - safe to edit"
+
+        next_steps_optional:
+          - option: "Enable sparse checkout (v3.1)"
+            benefit: "Exclude Curator files, save ~22% space"
+            command: "See SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md"
+
+          - option: "Add auto-update check (v3.1)"
+            benefit: "Automatic notification of updates"
+            command: "python3 docs/knowledge-base/shared/tools/kb-agent-bootstrap.py"
+
+          - option: "Setup cron job"
+            benefit: "Weekly automatic index rebuild"
+            command: "sudo cp /tmp/kb-weekly-v3.cron /etc/cron.d/kb-weekly-index"
+
+        see_also:
+          - "VPS_MIGRATION_V2_TO_V3_ANALYSIS.md - Complete migration analysis"
+          - "README_INTEGRATION.md - Integration guide for new projects"
+          - "SUBMODULE_VS_CLONE.md - Comparison of installation methods"
+
     integration_points:
       point_1_automation: |
         **Auto-Check on Bootstrap (AGENT-AUTO-001)**
@@ -825,6 +1020,9 @@ patterns:
       - title: "SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md"
         description: "Sparse checkout implementation to exclude Curator files"
 
+      - title: "VPS_MIGRATION_V2_TO_V3_ANALYSIS.md"
+        description: "Complete analysis of successful v2.0 to v3.0 migration"
+
       - title: "tools/kb.py check-updates"
         description: "Command-line tool to check for updates"
 
@@ -832,11 +1030,21 @@ patterns:
         description: "Bootstrap script with automatic update checking"
 
     version_history:
+      - version: "1.1"
+        date: "2026-01-06"
+        changes:
+          - "Added example_3: VPS migration v2.0 to v3.0"
+          - "Documented complete migration workflow with 10 steps"
+          - "Added before/after comparison and statistics"
+          - "Added 5 verification tests"
+          - "Added next steps for v3.1 features (sparse checkout, auto-update)"
+
       - version: "1.0"
         date: "2026-01-06"
         changes:
           - "Initial pattern creation"
           - "Documented workflows for submodule, clone, sparse checkout"
-          - "Added troubleshooting section"
+          - "Added troubleshooting section with 6 issues"
           - "Added best practices and anti-patterns"
           - "Integrated with AGENT-AUTO-001 bootstrap"
+          - "Added success examples 1 and 2"
