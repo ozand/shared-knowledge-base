@@ -1,0 +1,488 @@
+# GitHub Agent Attribution Pattern
+# Making agents and projects visible in GitHub Issues and PRs
+
+version: "1.0"
+category: "github"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "GITHUB-ATTRIB-001"
+    title: "GitHub Agent and Project Attribution in Issues and PRs"
+    severity: "medium"
+    scope: "universal"
+    tags: ["github", "attribution", "agent", "project", "issue", "pr", "metadata"]
+
+    problem: |
+      When AI agents create GitHub Issues or PRs on behalf of projects:
+      - GitHub shows only repository owner (e.g., "ozand") as creator
+      - No indication of which agent created the issue
+      - No indication of which project/agent initiated the work
+      - Hard to track which agents are most active
+      - Difficult to give credit to specific agents
+      - Anonymous nature makes collaboration opaque
+
+      **Current State:**
+      - GitHub UI shows: "ozand opened this issue 2 hours ago"
+      - Reality: Claude Code agent in PARSER project created it
+      - Gap: No way to see real creator without digging into issue body
+
+    symptoms:
+      - Agent attribution hidden in issue body (if at all)
+      - No GitHub labels for agent/project identification
+      - Hard to filter issues by agent
+      - Can't track agent activity over time
+      - Credit and recognition issues
+
+    root_cause: |
+      1. **GitHub Limitation:** Issues created via API/CLI use repo owner credentials
+      2. **No Standard Template:** No consistent place for agent metadata
+      3. **Missing Labels:** No systematic use of labels for attribution
+      4. **Anonymous by Default:** Agents don't proactively identify themselves
+      5. **Bottom-of-Body Placement:** "Created by" buried at end, hard to see
+
+    solution: |
+      **Multi-Layer Attribution Strategy:**
+
+      ## Layer 1: Prominent "Created By" Section (Top of Issue)
+
+      **Place at VERY TOP of issue body:**
+
+      ```markdown
+      ---
+      **Created By:** 🤖 Claude Code (Agent)
+      **Project:** PARSER
+      **Agent Session:** <session-hash>
+      **Date:** 2026-01-06T14:30:00Z
+      **Agent Type:** Code Generation / Problem Solving
+      ---
+
+      # Add CATEGORY-NNN: Descriptive Title
+      ```
+
+      **Why top?**
+      - Immediately visible in GitHub UI
+      - Shows before scrolling
+      - Can't be missed
+
+      ## Layer 2: GitHub Labels for Agent and Project
+
+      **Add labels when creating issue:**
+
+      ```bash
+      gh issue create \
+        --label "agent:claude-code" \
+        --label "project:PARSER" \
+        --label "agent-type:code-generation" \
+        --title "Add PYTHON-015: Async Timeout Error"
+      ```
+
+      **Label Categories:**
+
+      **Agent Labels:**
+      - `agent:claude-code` - Claude Code agent
+      - `agent:cursor-ai` - Cursor AI agent
+      - `agent:copilot` - GitHub Copilot agent
+      - `agent:curator` - Shared KB Curator agent
+      - `agent:human` - Human-created (for reference)
+
+      **Project Labels:**
+      - `project:PARSER` - PARSER project
+      - `project:APARSER` - AParser project
+      - `project:VPS-Monitoring` - VPS monitoring project
+      - `project:shared-kb` - Shared KB itself
+      - `project:unknown` - Unknown project (fallback)
+
+      **Agent Type Labels:**
+      - `agent-type:code-generation` - Code generation tasks
+      - `agent-type:debugging` - Debugging issues
+      - `agent-type:refactoring` - Refactoring tasks
+      - `agent-type:documentation` - Documentation updates
+      - `agent-type:review` - Code review/PR review
+
+      **Benefits of Labels:**
+      - ✅ Filterable: `gh issue list --label "agent:claude-code"`
+      - ✅ Visible in issue list view
+      - ✅ Color-coded (can assign colors)
+      - ✅ GitHub UI supports it natively
+      - ✅ Queryable via GitHub API
+
+      ## Layer 3: Detailed Metadata Section
+
+      **Add after "Created By" section:**
+
+      ```markdown
+      ## Agent Metadata
+
+      **Agent:** Claude Code (Sonnet 4.5)
+      **Agent ID:** claude-sonnet-4-5-20251101
+      **Session:** session-abc123def456
+      **Project:** PARSER
+      **Project Type:** Python Web Scraping
+      **Task:** Add error pattern to Shared KB
+
+      **Context:**
+      - Agent discovered error during development
+      - Searched Shared KB: pattern not found
+      - Created YAML entry following KB template
+      - Validated locally before creating issue
+
+      **Agent Confidence:** High (tested solution)
+      **Human Review:** Required before merge
+      ```
+
+      ## Layer 4: Comment Attribution
+
+      **When agent adds comments, use this format:**
+
+      ```markdown
+      **_Comment by 🤖 Claude Code (PARSER project)_**
+
+      I noticed this issue while working on...
+      ```
+
+      **This makes comments:**
+      - Searchable by agent name
+      - Filterable in GitHub UI
+      - Clear who said what
+
+    issue_template:
+      header: |
+        ---
+        **Created By:** 🤖 {{agent_name}}
+        **Project:** {{project_name}}
+        **Agent Type:** {{agent_type}}
+        **Session:** {{session_hash}}
+        **Date:** {{iso_timestamp}}
+        ---
+
+      title: "{{entry_type}} {{entry_id}}: {{entry_title}}"
+
+      labels:
+        - "agent:{{agent_slug}}"
+        - "project:{{project_slug}}"
+        - "agent-type:{{agent_type}}"
+        - "kb-improvement"
+        - "{{category}}"
+
+      body: |
+        ## Agent Metadata
+
+        **Agent:** {{agent_name}} ({{agent_model}})
+        **Agent ID:** {{agent_id}}
+        **Session:** {{session_hash}}
+        **Project:** {{project_name}}
+        **Project Type:** {{project_type}}
+        **Task:** {{task_description}}
+
+        **Context:**
+        {{context_description}}
+
+        ---
+
+        ## Proposed KB Entry
+
+        **Type:** {{entry_type}}
+
+        **Category:** {{category}}
+
+        **Entry ID:** {{entry_id}}
+
+        **Title:** {{entry_title}}
+
+        ## YAML Entry
+
+        ```yaml
+        {{yaml_entry}}
+        ```
+
+        ## Validation
+
+        ✅ Validated using: python tools/kb.py validate
+
+        ## Real-World Example
+
+        **Project:** {{project_name}}
+
+        **Scenario:** {{scenario}}
+
+        **Problem:** {{problem}}
+
+        **Solution:** {{solution}}
+
+        ## Benefit
+
+        {{benefit}}
+
+        ## Suggested Scope
+
+        **Scope:** {{suggested_scope}}
+
+        **Reason:** {{scope_reason}}
+
+        ## Additional Notes
+
+        {{additional_notes}}
+
+        ---
+
+        **Attribution:**
+        - **Created by:** 🤖 {{agent_name}}
+        - **Project:** {{project_name}}
+        - **Session:** {{session_hash}}
+        - **Date:** {{iso_timestamp}}
+        - **Status:** Ready for review ✅
+
+    pr_template:
+      header: |
+        ---
+        **Created by:** 🤖 {{agent_name}}
+        **Project:** {{project_name}}
+        **Agent Type:** {{agent_type}}
+        **Session:** {{session_hash}}
+        **Date:** {{iso_timestamp}}
+        ---
+
+      title: "{{change_type}}: {{change_description}}"
+
+      labels:
+        - "agent:{{agent_slug}}"
+        - "project:{{project_slug}}"
+        - "agent-type:{{agent_type}}"
+        - "enhancement"
+
+      body: |
+        ## Agent Metadata
+
+        **Agent:** {{agent_name}} ({{agent_model}})
+        **Agent ID:** {{agent_id}}
+        **Session:** {{session_hash}}
+        **Project:** {{project_name}}
+        **Task:** {{task_description}}
+
+        **Context:**
+        {{context_description}}
+
+        ---
+
+        ## Summary
+
+        {{summary}}
+
+        ## Changes
+
+        {{changes_description}}
+
+        ## Files Changed
+
+        {{files_changed}}
+
+        ## Testing
+
+        {{testing_description}}
+
+        ## Benefits
+
+        {{benefits}}
+
+        ## Type of Change
+
+        - [ ] Bug fix
+        - [ ] New feature
+        - [ ] Breaking change
+        - [ ] Documentation update
+
+        ---
+
+        **Attribution:**
+        - **Created by:** 🤖 {{agent_name}}
+        - **Project:** {{project_name}}
+        - **Session:** {{session_hash}}
+        - **Date:** {{iso_timestamp}}
+
+    implementation:
+
+      github_cli:
+        create_issue: |
+          gh issue create \
+            --label "agent:claude-code" \
+            --label "project:PARSER" \
+            --label "agent-type:code-generation" \
+            --label "kb-improvement" \
+            --title "Add PYTHON-015: Async Timeout Error" \
+            --body "issue-template.md"
+
+        create_pr: |
+          gh pr create \
+            --label "agent:claude-code" \
+            --label "project:PARSER" \
+            --label "agent-type:refactoring" \
+            --title "Refactor: Improve error handling" \
+            --body "pr-template.md"
+
+      label_management:
+        create_agent_labels: |
+          # Create standard agent labels
+          gh label create "agent:claude-code" --color "0366d6" --description "Created by Claude Code agent"
+          gh label create "agent:cursor-ai" --color "fbca04" --description "Created by Cursor AI agent"
+          gh label create "agent:copilot" --color "1d76db" --description "Created by GitHub Copilot"
+          gh label create "agent:curator" --color "e99695" --description "Created by Shared KB Curator"
+          gh label create "agent:human" --color "7057ff" --description "Created by human"
+
+        create_project_labels: |
+          # Create project-specific labels
+          gh label create "project:PARSER" --color "d4c5f9" --description "From PARSER project"
+          gh label create "project:APARSER" --color "d4c5f9" --description "From AParser project"
+          gh label create "project:shared-kb" --color "d4c5f9" --description "From Shared KB project"
+
+        create_agent_type_labels: |
+          # Create agent type labels
+          gh label create "agent-type:code-generation" --color "5319e7" --description "Code generation task"
+          gh label create "agent-type:debugging" --color "5319e7" --description "Debugging task"
+          gh label create "agent-type:refactoring" --color "5319e7" --description "Refactoring task"
+          gh label create "agent-type:documentation" --color "5319e7" --description "Documentation task"
+          gh label create "agent-type:review" --color "5319e7" --description "Review task"
+
+    best_practices:
+      - practice: "Put 'Created By' at VERY TOP of issue"
+        reason: "Immediately visible in GitHub UI"
+
+      - practice: "Use consistent agent label format"
+        reason: "Easy to filter: agent:claude-code"
+
+      - practice: "Include session hash"
+        reason: "Can track specific agent sessions"
+
+      - practice: "Use project labels"
+        reason: "Filter by source project"
+
+      - practice: "Add agent type labels"
+        reason: "Categorize by task type"
+
+      - practice: "Be specific in agent name"
+        reason: "Distinguish between agent types/versions"
+
+    anti_patterns:
+      - pattern: "Bury 'Created by' at bottom of issue"
+        consequence: "Hard to see, easily missed"
+
+      - pattern: "No labels for agent/project"
+        consequence: "Can't filter or track attribution"
+
+      - pattern: "Generic 'Created by: Agent'"
+        consequence: "Don't know which agent or project"
+
+      - pattern: "No session information"
+        consequence: "Can't track specific sessions"
+
+    examples:
+      example_1:
+        scenario: "Claude Code agent in PARSER project creates issue"
+        agent: "Claude Code (Sonnet 4.5)"
+        project: "PARSER"
+        session: "session-abc123"
+
+        issue_title: "Add PYTHON-015: Async Timeout Error"
+
+        labels:
+          - "agent:claude-code"
+          - "project:PARSER"
+          - "agent-type:debugging"
+          - "kb-improvement"
+          - "python"
+
+        issue_header: |
+          ---
+          **Created By:** 🤖 Claude Code (Sonnet 4.5)
+          **Project:** PARSER
+          **Agent Type:** Debugging
+          **Session:** session-abc123
+          **Date:** 2026-01-06T14:30:00Z
+          ---
+
+        github_ui_shows: "ozand opened this issue 2 hours ago"
+        issue_body_shows: "Created By: 🤖 Claude Code (Sonnet 4.5) - PARSER project"
+
+      example_2:
+        scenario: "Shared KB Curator creates PR"
+        agent: "Claude Code (Curator Agent)"
+        project: "shared-knowledge-base"
+        session: "session-def456"
+
+        pr_title: "Add PR review process to Curator documentation"
+
+        labels:
+          - "agent:claude-code"
+          - "project:shared-kb"
+          - "agent-type:documentation"
+          - "enhancement"
+
+        pr_header: |
+          ---
+          **Created By:** 🤖 Claude Code (Shared KB Curator)
+          **Project:** shared-knowledge-base
+          **Agent Type:** Documentation Update
+          **Session:** session-def456
+          **Date:** 2026-01-06T15:00:00Z
+          ---
+
+    visibility_improvements:
+      before: |
+        GitHub UI: "ozand opened this issue 2 hours ago"
+        Issue body: "... Created by: Project Agent (PARSER) [at very bottom]"
+
+      after: |
+        GitHub UI: "ozand opened this issue 2 hours ago"
+        Issue body first line: "**Created By:** 🤖 Claude Code (Sonnet 4.5) - PARSER project"
+        Labels: "agent:claude-code, project:PARSER, agent-type:debugging"
+
+      benefits:
+        - "Agent visible immediately when opening issue"
+        - "Labels visible in issue list view"
+        - "Filterable by agent: `gh issue list --label 'agent:claude-code'`"
+        - "Filterable by project: `gh issue list --label 'project:PARSER'`"
+        - "Track agent activity over time"
+        - "Give credit where due"
+
+    tools_and_automation:
+      github_cli:
+        setup_labels: |
+          # One-time setup: Create attribution labels
+          ./scripts/setup-attribution-labels.sh
+
+        create_with_attribution: |
+          # Create issue with full attribution
+          gh issue create \
+            --label "agent:claude-code" \
+            --label "project:$PROJECT_NAME" \
+            --label "agent-type:code-generation" \
+            --body-file issue-template.md
+
+        list_by_agent: |
+          # Filter issues by agent
+          gh issue list --label "agent:claude-code" --state all
+
+        list_by_project: |
+          # Filter issues by project
+          gh issue list --label "project:PARSER" --state all
+
+      analytics:
+        agent_activity: |
+          # Track agent activity over time
+          gh issue list --state all --json agent,labels,createdAt | \
+            jq -r '.[] | "\(.agent) - \(.createdAt)"' | sort | uniq -c
+
+    related_patterns:
+      - id: "AGENT-HANDOFF-001"
+        title: "Cross-Repository Agent Collaboration Pattern"
+
+      - id: "PR-REVIEW-001"
+        title: "Pull Request Review Process"
+
+    references:
+      - title: "GitHub Labels Documentation"
+        url: "https://docs.github.com/en/issues/using-labels-and-milestones"
+
+      - title: "GitHub CLI Issue Documentation"
+        url: "https://cli.github.com/manual/gh_issue_create"
+
+languages: [en]

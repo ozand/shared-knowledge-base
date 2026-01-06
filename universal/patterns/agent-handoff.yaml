@@ -120,13 +120,24 @@ patterns:
 
           **Title:** "Add CATEGORY-NNN: Descriptive Title"
 
-          **Labels:**
+          **Labels (IMPORTANT - for agent attribution):**
+          - agent:claude-code (or agent:cursor-ai, agent:copilot, etc.)
+          - project:<PROJECT_NAME> (e.g., project:PARSER)
+          - agent-type:code-generation (or debugging, refactoring, documentation)
           - kb-improvement
           - enhancement (or bug, yaml-error)
           - <language/framework> (python, postgresql, etc.)
 
           **Body:**
           ```markdown
+          ---
+          **Created By:** 🤖 {{Agent Name}} (e.g., Claude Code, Cursor AI)
+          **Project:** {{PROJECT_NAME}}
+          **Agent Type:** {{task_type}} (Code Generation, Debugging, etc.)
+          **Session:** {{session_hash}} (optional, for tracking)
+          **Date:** {{YYYY-MM-DD}}
+          ---
+
           ## Proposed KB Entry
 
           **Type:** Error / Pattern
@@ -171,10 +182,16 @@ patterns:
 
           ---
 
-          **Created by:** Project Agent (<project-name>)
-          **Date:** 2026-01-06
+          **Attribution:**
+          - **Created by:** 🤖 {{Agent Name}}
+          - **Project:** {{PROJECT_NAME}}
+          - **Session:** {{session_hash}}
+          - **Date:** {{YYYY-MM-DD}}
           **Ready for review:** ✅
           ```
+
+          **IMPORTANT:** The "Created By" section at the TOP makes agent attribution
+          immediately visible in GitHub UI. The labels make it filterable.
 
           4. Submit issue
 

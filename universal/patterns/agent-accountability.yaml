@@ -312,6 +312,11 @@ patterns:
       - ✅ "Docs updated based on experience"
       - ✅ "Credibility maintained"
 
+    related_patterns:
+      - id: "GITHUB-ATTRIB-001"
+        title: "GitHub Agent and Project Attribution in Issues and PRs"
+        description: "Making agents visible in GitHub Issues and PRs"
+
     references:
       - title: "PARSER_PROJECT_AGENT_ANALYSIS.md"
         description: "Analysis of agent not following own git init recommendation"
