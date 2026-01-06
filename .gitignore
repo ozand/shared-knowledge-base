@@ -41,6 +41,11 @@ kb-snapshot.json
 .session-*
 .agent-cache/
 
+# Claude Code local configuration (team config is committed)
+.claude/*.local
+.claude/*.local.*
+.claude/.local/
+
 # Generated index files (auto-generated, not git-synced)
 _index.yaml
 _index.yaml.bak
