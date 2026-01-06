@@ -130,17 +130,24 @@ class KBEntry:
         """Create KBEntry instances from YAML file."""
         entries = []
 
+        # Support both 'errors' and 'patterns' keys
+        entries_key = None
         if 'errors' in data:
-            for error in data['errors']:
+            entries_key = 'errors'
+        elif 'patterns' in data:
+            entries_key = 'patterns'
+
+        if entries_key:
+            for entry_data in data[entries_key]:
                 entry = cls(
-                    id=error.get('id', 'UNKNOWN'),
-                    title=error.get('title', 'Untitled'),
+                    id=entry_data.get('id', 'UNKNOWN'),
+                    title=entry_data.get('title', 'Untitled'),
                     category=data.get('category', 'unknown'),
-                    severity=error.get('severity', 'unknown'),
-                    scope=error.get('scope', 'project'),
+                    severity=entry_data.get('severity', 'unknown'),
+                    scope=entry_data.get('scope', 'project'),
                     file_path=str(file_path),
-                    content=yaml.dump(error),
-                    tags=error.get('tags', []),
+                    content=yaml.dump(entry_data),
+                    tags=entry_data.get('tags', []),
                     created=data.get('last_updated'),
                     modified=data.get('last_updated')
                 )
