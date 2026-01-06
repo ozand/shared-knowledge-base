@@ -262,6 +262,136 @@ instructions:
       - pattern: "GITHUB-ATTRIB-001"
         description: "GitHub attribution for issues"
 
+  # Git Submodule Access (CRITICAL)
+  submodule_access:
+    enabled: true
+    priority: "CRITICAL"
+    pattern: "AGENT-DIRECT-SUBMODULE-ACCESS-001"
+    required_when: "working_with_git_submodules"
+
+    description: |
+      ⚠️ CRITICAL: Never use direct git commands on submodule directories.
+
+      AI agents MUST use git submodule commands to maintain workflow integrity.
+      Direct access breaks .gitmodules synchronization and submodule state.
+
+    forbidden_patterns:
+      - pattern: "git -C .*submodule"
+        severity: "BLOCKED"
+        error: "Direct submodule access forbidden"
+        correct_action: "Use 'git submodule <command> <path>' from project root"
+
+      - pattern: "cd .*submodule.*git"
+        severity: "BLOCKED"
+        error: "Bypasses .gitmodules synchronization"
+        correct_action: "Use 'git submodule <command> <path>' from project root"
+
+      - pattern: "git -C docs/knowledge-base/shared"
+        severity: "BLOCKED"
+        error: "Specific forbidden path for Shared KB"
+        correct_action: "Use 'git submodule status docs/knowledge-base/shared'"
+
+      - pattern: "cd docs/knowledge-base/shared && git"
+        severity: "BLOCKED"
+        error: "Direct cd into submodule forbidden"
+        correct_action: "Stay in project root, use submodule commands"
+
+    required_workflow:
+      for_submodule_operations:
+        - step: "Always check submodule status first"
+          command: "git submodule status <path>"
+          example: "git submodule status docs/knowledge-base/shared"
+          interpret_output: "See SUBMODULE-STATUS-INTERPRETATION-001"
+
+        - step: "Update submodule using submodule commands"
+          command: "git submodule update --remote <path>"
+          example: "git submodule update --remote docs/knowledge-base/shared"
+
+        - step: "Initialize if needed"
+          command: "git submodule update --init --recursive <path>"
+          example: "git submodule update --init --recursive docs/knowledge-base/shared"
+
+        - step: "Verify update succeeded"
+          command: "git submodule status <path>"
+          check: "Compare commit hash before/after"
+
+      verification_rules:
+        - rule: "Never cd into submodule directory"
+          check: "Command does not contain 'cd docs/knowledge-base/shared'"
+          pass_if: "Working from project root"
+
+        - rule: "Always use git submodule prefix"
+          check: "Command starts with 'git submodule'"
+          pass_if: "Submodule commands used"
+
+        - rule: "Use relative paths from project root"
+          check: "Path is relative, not absolute"
+          example: "docs/knowledge-base/shared (not /home/user/docs/...)"
+
+        - rule: "Check status before operations"
+          check: "First command is 'git submodule status'"
+          pass_if: "Status verified before update"
+
+    real_world_examples:
+      wrong:
+        scenario: "User asks 'обнови статус Share KB'"
+        agent_response: |
+          ```bash
+          # WRONG - Direct access to submodule
+          git -C /home/ozand/docs/knowledge-base/shared fetch origin
+          git -C /home/ozand/docs/knowledge-base/shared log HEAD..origin/main
+          python3 /home/ozand/docs/knowledge-base/shared/tools/kb.py stats
+          ```
+        why_wrong:
+          - "❌ Used 'git -C' with submodule path"
+          - "❌ Bypassed git submodule workflow"
+          - "❌ Didn't check submodule status first"
+          - "❌ Risk of detached HEAD state"
+        consequence: "Breaks .gitmodules synchronization, submodule state corrupted"
+
+      correct:
+        scenario: "User asks 'обнови статус Share KB используя git submodule commands'"
+        agent_response: |
+          ```bash
+          # CORRECT - Use submodule commands from project root
+          git submodule status docs/knowledge-base/shared
+          git submodule update --remote docs/knowledge-base/shared
+          python3 docs/knowledge-base/shared/tools/kb.py stats
+          ```
+        why_correct:
+          - "✅ Used 'git submodule' commands"
+          - "✅ Checked status before update"
+          - "✅ Worked from project root"
+          - "✅ Maintained submodule integrity"
+        result: "Proper submodule workflow, state synchronized"
+
+      lesson: "Be explicit about workflow requirements. Say 'using git submodule commands' not just 'update status'"
+
+    why_this_matters:
+      explanation: |
+        Git submodules are special:
+        - Submodule has its own .git/ directory
+        - Superproject tracks submodule commit hash
+        - .gitmodules file contains submodule configuration
+        - git submodule commands maintain this relationship
+
+        Direct access breaks this:
+        - .gitmodules not updated
+        - Superproject's git link not updated
+        - Can cause merge conflicts
+        - May lead to detached HEAD state
+        - Violates submodule workflow design
+
+    references:
+      - pattern: "AGENT-DIRECT-SUBMODULE-ACCESS-001"
+        description: "Complete anti-pattern with troubleshooting"
+
+      - pattern: "SUBMODULE-STATUS-INTERPRETATION-001"
+        description: "Understanding git submodule status output"
+
+      - pattern: "KB-UPDATE-001"
+        description: "Shared KB update process with verification"
+
   # KB Contribution Workflow
   kb_contribution:
     enabled: true
