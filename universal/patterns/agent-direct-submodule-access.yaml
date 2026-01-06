@@ -1,0 +1,340 @@
+# Agent Direct Submodule Access Pattern
+# Preventing agents from bypassing git submodule commands
+
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "AGENT-DIRECT-SUBMODULE-ACCESS-001"
+    title: "Agent Direct Submodule Access Anti-Pattern"
+    severity: "high"
+    scope: "universal"
+    tags: ["agent", "submodule", "git", "workflow", "direct-access", "anti-pattern"]
+
+    problem: |
+      AI agents bypass git submodule commands and work directly with submodule
+      directories, breaking submodule workflow integrity.
+
+      **Real example from chat:**
+      User: "обнови статус Share KB"
+
+      Agent response:
+      ```bash
+      # WRONG - Direct access to submodule
+      git -C /home/ozand/docs/knowledge-base/shared fetch origin
+      git -C /home/ozand/docs/knowledge-base/shared log HEAD..origin/main
+      python3 /home/ozand/docs/knowledge-base/shared/tools/kb.py stats
+      ```
+
+      **Correct approach:**
+      ```bash
+      # CORRECT - Use submodule commands from project root
+      git submodule status docs/knowledge-base/shared
+      git submodule update --remote docs/knowledge-base/shared
+      python3 docs/knowledge-base/shared/tools/kb.py stats
+      ```
+
+    symptoms:
+      - Using `git -C docs/knowledge-base/shared` commands
+      - Using `cd docs/knowledge-base/shared && git`
+      - Direct python calls to submodule tools
+      - Not using `git submodule status` before operations
+      - Bypassing .gitmodules synchronization
+
+    root_cause: |
+      1. **No explicit instruction:** User doesn't specify "use git submodule"
+      2. **Path of least resistance:** Direct access seems simpler
+      3. **Lack of submodule awareness:** Agent doesn't understand git submodules
+      4. **No forbidden patterns:** Agent instructions don't prohibit direct access
+
+      **Why this is dangerous:**
+      - Breaks .gitmodules synchronization
+      - May lead to detached HEAD state in submodule
+      - Doesn't update superproject's git link to submodule
+      - Can cause merge conflicts during updates
+      - Violates git submodule workflow design
+
+    solution: |
+      **Always Use Git Submodule Commands:**
+
+      ## Forbidden Patterns
+
+      ❌ **NEVER use direct git commands on submodule directory:**
+      ```bash
+      # WRONG
+      git -C docs/knowledge-base/shared fetch origin
+      cd docs/knowledge-base/shared && git pull
+      cd docs/knowledge-base/shared && git status
+      ```
+
+      ✅ **ALWAYS use git submodule commands:**
+      ```bash
+      # CORRECT - From project root
+      git submodule status docs/knowledge-base/shared
+      git submodule update --remote docs/knowledge-base/shared
+      git submodule update --init --recursive docs/knowledge-base/shared
+      ```
+
+      ## Correct Workflow
+
+      **Step 1: Check submodule status**
+      ```bash
+      # From project root (parent of docs/)
+      git submodule status docs/knowledge-base/shared
+      # Output: c023036... (v3.0-10-gc023036)
+      ```
+
+      **Step 2: Update submodule**
+      ```bash
+      # Fetch and merge latest changes
+      git submodule update --remote docs/knowledge-base/shared
+      ```
+
+      **Step 3: Verify update**
+      ```bash
+      # Check status again
+      git submodule status docs/knowledge-base/shared
+      # Should show same commit if no updates, or new commit if updated
+      ```
+
+      **Step 4: Use KB tools**
+      ```bash
+      # Now safe to use tools in submodule
+      python3 docs/knowledge-base/shared/tools/kb.py stats
+      ```
+
+      ## Why Submodule Commands Matter
+
+      Git submodules are special:
+      - Submodule has its own .git/ directory
+      - Superproject tracks submodule commit hash
+      - `.gitmodules` file contains submodule configuration
+      - `git submodule` commands maintain this relationship
+
+      **Direct access breaks this:**
+      ```
+      Superproject (your repo)
+      ├── .gitmodules  (not updated by direct access)
+      ├── .git/config  (submodule link not updated)
+      └── docs/knowledge-base/shared/
+          └── .git/ (separate repo, updated independently)
+      ```
+
+      **Submodule commands maintain this:**
+      ```
+      Superproject (your repo)
+      ├── .gitmodules  (✅ referenced)
+      ├── .git/config  (✅ submodule link updated)
+      └── docs/knowledge-base/shared/
+          └── .git/ (✅ synchronized)
+      ```
+
+    code_example: |
+      ```bash
+      # WRONG AGENT WORKFLOW
+      update_kb_status() {
+        cd /home/ozand/docs/knowledge-base/shared
+        git fetch origin
+        git log HEAD..origin/main --oneline
+        python3 tools/kb.py stats
+      }
+
+      # CORRECT AGENT WORKFLOW
+      update_kb_status() {
+        # Stay in project root
+        git submodule status docs/knowledge-base/shared
+        git submodule update --remote docs/knowledge-base/shared
+        python3 docs/knowledge-base/shared/tools/kb.py stats
+      }
+      ```
+
+    best_practices:
+      - practice: "Always use git submodule commands"
+        reason: "Maintains submodule integrity"
+
+      - practice: "Work from project root"
+        reason: "Submodule commands expect relative path from root"
+
+      - practice: "Never cd into submodule directory"
+        reason: "Breaks submodule workflow"
+
+      - practice: "Check status before operations"
+        workflow: |
+          1. git submodule status path/to/submodule
+          2. git submodule update --remote path/to/submodule
+          3. git submodule status path/to/submodule (verify)
+
+      - practice: "Use explicit paths in submodule commands"
+        example: |
+          # Explicit - ✅
+          git submodule update --remote docs/knowledge-base/shared
+
+          # Not explicit - ❌
+          cd docs/knowledge-base/shared
+          git pull
+
+    real_world_examples:
+      example_1_direct_access_in_chat:
+        scenario: User asks "обнови статус Share KB"
+        agent_response: |
+          Agent used direct access:
+          git -C /home/ozand/docs/knowledge-base/shared fetch origin
+          python3 /home/ozand/docs/knowledge-base/shared/tools/kb.py stats
+
+        problem: |
+          - Bypassed git submodule workflow
+          - Didn't update .gitmodules
+          - Didn't check submodule status first
+          - Risk of detached HEAD state
+
+        correct_approach: |
+          git submodule status docs/knowledge-base/shared
+          git submodule update --remote docs/knowledge-base/shared
+          python3 docs/knowledge-base/shared/tools/kb.py stats
+
+        lesson: |
+          Always use git submodule commands from project root,
+          never work directly in submodule directory
+
+      example_2_explicit_vs_implicit:
+        implicit_request: |
+          "обнови статус Share KB"
+          → Agent chooses direct access (simpler but wrong)
+
+        explicit_request: |
+          "обнови статус Shared KB используя git submodule commands"
+          → Agent uses submodule commands (correct)
+
+        lesson: |
+          Be explicit about workflow requirements.
+          Say "using git submodule commands" not just "update status"
+
+    prevention:
+      - prevention: "Add to agent instructions"
+        implementation: |
+          In agent-instructions/base-instructions.yaml:
+          ```yaml
+          forbidden_patterns:
+            - pattern: "git -C .*submodule.*fetch"
+              reason: "Bypasses submodule workflow"
+
+            - pattern: "cd .*submodule.*git pull"
+              reason: "Breaks .gitmodules synchronization"
+
+          required_workflow:
+            for_submodule_operations:
+              - "git submodule status <path>"
+              - "git submodule update --remote <path>"
+              - "git submodule update --init --recursive <path>"
+          ```
+
+      - prevention: "Be explicit in requests"
+        practice: |
+          ❌ "Update Shared KB status"
+          ✅ "Update Shared KB status using git submodule commands"
+
+      - prevention: "Verify commands before execution"
+        check: |
+          Before running any git command on submodule:
+          1. Is it prefixed with "git submodule"?
+          2. Is path relative from project root?
+          3. Does it avoid "cd" into submodule?
+
+      - prevention: "Add validation step"
+        implementation: |
+          Before executing workflow:
+          ```python
+          if "git submodule" not in command and "shared/" in command:
+            raise ValueError(
+              "Direct submodule access forbidden. "
+              "Use 'git submodule <command> <path>' instead"
+                                    )
+          ```
+
+    troubleshooting:
+      - symptom: "Agent uses direct git commands on submodule"
+        check: "Look for 'git -C' or 'cd <submodule> && git'"
+        fix: "Replace with 'git submodule <command> <path>'"
+
+      - symptom: ".gitmodules not updated"
+        cause: "Direct access bypassed submodule commands"
+        fix: |
+          git submodule absorbgit docs/knowledge-base/shared
+          git add .gitmodules
+          git commit -m "Fix .gitmodules after direct access"
+
+      - symptom: "Submodule in detached HEAD state"
+        cause: "Direct checkout in submodule"
+        fix: |
+          git submodule update --init docs/knowledge-base/shared
+          git checkout main
+          cd docs/knowledge-base/shared
+          git checkout main
+          cd ../..
+          git add docs/knowledge-base/shared
+          git commit -m "Reattach submodule to main"
+
+    anti_patterns:
+      - pattern: "Use 'git -C' with submodule paths"
+        consequence: "Breaks submodule workflow integrity"
+
+      - pattern: "cd into submodule directory before git operations"
+        consequence: "Bypasses .gitmodules synchronization"
+
+      - pattern: "Direct python calls without submodule check"
+        consequence: "May operate on stale submodule state"
+
+      - pattern: "Assume simplest approach is correct"
+        consequence: "Submodules require special handling"
+
+      - pattern: "Skip explicit workflow instructions"
+        consequence: "Agent chooses wrong approach"
+
+    lessons_learned: |
+      **From analyzed chat:**
+
+      What went wrong:
+      - Agent used `git -C /home/ozand/docs/knowledge-base/shared fetch`
+      - Agent didn't use `git submodule status` first
+      - Agent chose direct access (simpler) over correct workflow
+
+      Root causes:
+      - User request not explicit: "обнови статус" vs "обнови используя submodule"
+      - Agent lacks submodule awareness
+      - Path of least resistance: direct access seems easier
+      - No forbidden patterns in agent instructions
+
+      Prevention for future:
+      - Always specify "using git submodule commands"
+      - Add forbidden patterns to agent instructions
+      - Include validation for submodule operations
+      - Teach agents proper submodule workflow
+
+    when_to_use: |
+      Use this pattern when:
+      - Working with git submodules in any project
+      - Creating agent instructions for repository management
+      - Reviewing agent workflows for submodules
+      - Troubleshooting submodule synchronization issues
+      - Teaching agents proper git submodule usage
+
+    related_patterns:
+      - GIT-SUBMODULE-001 (Submodule integration)
+      - KB-UPDATE-001 (Submodule update process)
+      - SUBMODULE-STATUS-INTERPRETATION-001 (Status understanding)
+      - AGENT-ROLE-SEPARATION-001 (Role boundaries)
+
+    references:
+      - "Git docs: https://git-scm.com/docs/git-submodule"
+      - "Chat analysis: Agent direct access to Shared KB submodule (2026-01-06)"
+      - "Issue #11: Closed as superseded (context reference)"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      reusable: true
+      severity_level: 1
+      difficulty: "intermediate"
+      pattern_type: "anti-pattern"
+      applicable_to: ["ai-agents", "git-users", "submodule-users"]
