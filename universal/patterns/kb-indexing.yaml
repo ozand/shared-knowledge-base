@@ -1,0 +1,389 @@
+# Knowledge Base Indexing Patterns
+# Indexing, search, and entry discovery patterns
+
+version: "1.0"
+category: "knowledge-base"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "KB-INDEX-001"
+    title: "Supporting Multiple Entry Keys in KBIndex for Full Coverage"
+    severity: "high"
+    scope: "universal"
+    tags: ["indexing", "search", "kb-entry", "patterns-key", "discoverability"]
+
+    problem: |
+      Knowledge Base files with different root keys (errors: vs patterns:)
+      were not uniformly indexed, causing significant portions of the KB
+      to be invisible to search.
+
+      **Real example:** After migration to clean structure, files in
+      `universal/patterns/` were not indexed, making 37 entries (+79% of
+      universal patterns) undiscoverable via search.
+
+      **Impact:**
+      - Before fix: 47 total entries indexed, universal/patterns/: NOT INDEXED
+      - After fix: 84 total entries indexed (+37!), universal/patterns.: NOW INDEXED
+      - Categories missing: github-workflow (5), agent-workflow (4), knowledge-base (2), ai-agents (1)
+
+    root_cause: |
+      The KBEntry.from_yaml() method in tools/kb.py only checked for 'errors'
+      key, completely ignoring 'patterns' key.
+
+      **Code location:** tools/kb.py line 133
+
+      **Before (BUGGY):**
+      ```python
+      if 'errors' in data:
+          for error in data['errors']:
+              # Process entry...
+      # ❌ If data has 'patterns' instead of 'errors', NOTHING IS PROCESSED!
+      ```
+
+      **Why this happened:**
+      - Original KB design used only 'errors' key
+      - Later introduced 'patterns' key for pattern files
+      - KBEntry.from_yaml() never updated to support both keys
+      - No test coverage for patterns key path
+
+    detection:
+      symptoms:
+        - symptom_1: "kb.py stats shows incorrect total count"
+          check: "Compare expected vs actual entry count"
+
+        - symptom_2: "Search doesn't find entries in certain directories"
+          check: "python tools/kb.py search <term> --scope universal"
+
+        - symptom_3: "Some categories completely missing from stats"
+          check: "python tools/kb.py stats | grep category"
+
+      verification_script: |
+        #!/bin/bash
+        # Verify all YAML files are indexed
+
+        echo "Checking indexing coverage..."
+
+        # Count actual YAML files
+        YAML_FILES=$(find . -name "*.yaml" -type f | wc -l)
+        echo "YAML files found: $YAML_FILES"
+
+        # Count indexed entries
+        INDEXED=$(python tools/kb.py stats | grep "Total entries" | awk '{print $3}')
+        echo "Indexed entries: $INDEXED"
+
+        # Expected ratio: ~2-3 entries per file (depends on file structure)
+        EXPECTED_MIN=$((YAML_FILES * 1))
+
+        if [ "$INDEXED" -lt "$EXPECTED_MIN" ]; then
+            echo "⚠️  Possible indexing issue: $INDEXED < $EXPECTED_MIN"
+            echo "Run: python tools/kb.py search '' --verbose"
+        else
+            echo "✓ Indexing looks normal"
+        fi
+
+    solutions:
+      fix_kb_entry_from_yaml:
+        description: "Update KBEntry.from_yaml() to support both keys"
+        file: "tools/kb.py"
+        lines: "129-156"
+
+        code_before: |
+          # Original buggy code (line 129-156)
+          @classmethod
+          def from_yaml(cls, yaml_path: Path) -> List['KBEntry']:
+              with yaml_path.open() as f:
+                  data = yaml.safe_load(f)
+
+              entries = []
+
+              # ❌ ONLY CHECKS 'errors' KEY!
+              if 'errors' in data:
+                  for error in data['errors']:
+                      entry = cls(
+                          id=error.get('id', 'UNKNOWN'),
+                          title=error.get('title', 'Untitled'),
+                          category=data.get('category', 'unknown'),
+                          # ... rest of field mapping
+                      )
+                      entries.append(entry)
+
+              return entries
+
+        code_after: |
+          # Fixed code (supports both 'errors' and 'patterns')
+          @classmethod
+          def from_yaml(cls, yaml_path: Path) -> List['KBEntry']:
+              with yaml_path.open() as f:
+                  data = yaml.safe_load(f)
+
+              entries = []
+
+              # ✅ DETECT WHICH KEY EXISTS
+              entries_key = None
+              if 'errors' in data:
+                  entries_key = 'errors'
+              elif 'patterns' in data:
+                  entries_key = 'patterns'
+
+              # ✅ PROCESS WHATEVER KEY EXISTS
+              if entries_key:
+                  for entry_data in data[entries_key]:
+                      entry = cls(
+                          id=entry_data.get('id', 'UNKNOWN'),
+                          title=entry_data.get('title', 'Untitled'),
+                          category=data.get('category', 'unknown'),
+                          scope=entry_data.get('scope', 'project'),
+                          severity=entry_data.get('severity', 'medium'),
+                          tags=entry_data.get('tags', []),
+                          problem=entry_data.get('problem', ''),
+                          solution=entry_data.get('solution', ''),
+                          file_path=str(yaml_path),
+                          source_hash=cls._compute_hash(yaml_path)
+                      )
+                      entries.append(entry)
+
+              return entries
+
+        explanation: |
+          Key changes:
+          1. Detect which key exists ('errors' or 'patterns')
+          2. Use generic variable name (entries_key) instead of hardcoded 'errors'
+          3. Process entries from whichever key was found
+          4. Maintain backward compatibility (still works with old 'errors' files)
+
+      rebuild_index:
+        description: "Rebuild KB index after code fix"
+        steps: |
+          # 1. Remove old index database
+          rm .cache/kb_index.db
+
+          # 2. Rebuild from scratch
+          python tools/kb.py index -v
+
+          # 3. Verify new count
+          python tools/kb.py stats
+
+          # Expected output:
+          # Total entries: 84 (was 47)
+          # universal/patterns/: NOW INDEXED
+
+      automated_test:
+        description: "Add test to prevent regression"
+        test_file: "tests/test_kb_indexing.py"
+        code: |
+          import pytest
+          from pathlib import Path
+          from tools.kb import KBEntry
+
+          def test_indexing_supports_both_keys():
+              """Test that both 'errors' and 'patterns' keys are indexed"""
+
+              # Test with 'errors' key
+              errors_yaml = Path('/tmp/test_errors.yaml')
+              errors_yaml.write_text('''
+              version: "1.0"
+              category: "test"
+              errors:
+                - id: "TEST-001"
+                  title: "Test Error"
+                  severity: "high"
+              ''')
+              errors_entries = KBEntry.from_yaml(errors_yaml)
+              assert len(errors_entries) == 1
+              assert errors_entries[0].id == "TEST-001"
+
+              # Test with 'patterns' key
+              patterns_yaml = Path('/tmp/test_patterns.yaml')
+              patterns_yaml.write_text('''
+              version: "1.0"
+              category: "test"
+              patterns:
+                - id: "TEST-002"
+                  title: "Test Pattern"
+                  severity: "medium"
+              ''')
+              patterns_entries = KBEntry.from_yaml(patterns_yaml)
+              assert len(patterns_entries) == 1
+              assert patterns_entries[0].id == "TEST-002"
+
+              # Both should work identically
+              assert len(errors_entries) == len(patterns_entries)
+
+    impact:
+      before_fix:
+        total_entries: 47
+        universal_patterns_indexed: 0
+        categories_missing:
+          - "github-workflow (5 entries)"
+          - "agent-workflow (4 entries)"
+          - "knowledge-base (2 entries)"
+          - "ai-agents (1 entry)"
+
+      after_fix:
+        total_entries: 84
+        universal_patterns_indexed: 21
+        new_categories_visible:
+          - "github-workflow: 5 entries"
+          - "agent-workflow: 4 entries"
+          - "knowledge-base: 2 entries"
+          - "ai-agents: 1 entry"
+          - "project-organization: 2 entries"
+          - "documentation: 1 entry"
+
+      improvement:
+        entry_increase: "+37 entries (+79%)"
+        discoverability: "100% of YAML files now indexed"
+        search_coverage: "All universal patterns now findable"
+
+    prevention:
+      design_principle: "Support multiple keys, don't hardcode single key"
+
+      code_review_checklist:
+        - "Check for hardcoded key names (e.g., if 'errors' in data)"
+        - "Use generic variable names (entries_key, not errors_key)"
+        - "Add test coverage for all supported key variants"
+        - "Document all supported keys in docstring"
+
+      automated_prevention:
+        pre_commit_hook: |
+          # .git/hooks/pre-commit
+          # Run after modifying tools/kb.py
+
+          if git diff --cached --name-only | grep -q "tools/kb.py"; then
+              echo "Testing KB indexing after kb.py changes..."
+              python tests/test_kb_indexing.py || {
+                  echo "❌ KB indexing tests failed!"
+                  echo "   Your changes may have broken entry indexing"
+                  exit 1
+              }
+              echo "✓ KB indexing tests passed"
+          fi
+
+    related_patterns:
+      - id: "SHARED-KB-FORMAT-001"
+        title: "Shared KB YAML Format for Proper Indexing"
+        relationship: "complementary"
+        explanation: |
+          SHARED-KB-FORMAT-001 covers YAML structure (version/category/patterns:),
+          while KB-INDEX-001 covers code logic for processing those structures.
+
+      - id: "YAML-001"
+        title: "Common YAML Syntax Errors"
+        relationship: "related"
+        explanation: |
+          YAML-001 covers syntax errors that block validation,
+          KB-INDEX-001 covers indexing logic after validation passes.
+
+    best_practices:
+      - practice_1: "Don't hardcode key names, detect and use generic variables"
+        example: "entries_key = data.get('errors') or data.get('patterns')"
+
+      - practice_2: "Support all valid variations documented in spec"
+        example: "If spec allows 'errors:' or 'patterns:', support both"
+
+      - practice_3: "Add test coverage for each supported variant"
+        example: "test_errors_key(), test_patterns_key(), test_both_keys()"
+
+      - practice_4: "Maintain backward compatibility when adding support"
+        example: "Don't remove 'errors' support when adding 'patterns' support"
+
+    anti_patterns:
+      anti_pattern_1:
+        description: "Hardcoding single key name"
+        wrong_code: |
+          if 'errors' in data:
+              for error in data['errors']:
+                  # process...
+
+        correct_code: |
+          entries_key = None
+          if 'errors' in data:
+              entries_key = 'errors'
+          elif 'patterns' in data:
+              entries_key = 'patterns'
+
+          if entries_key:
+              for entry_data in data[entries_key]:
+                  # process...
+
+        why_wrong: "Breaks when new key types added, causes silent failures"
+
+      anti_pattern_2:
+        description: "Assuming all files use same structure"
+        wrong_assumption: "All KB files have 'errors:' key"
+
+        correct_approach: "Check file structure, support documented variations"
+
+        why_wrong: "Causes entries to be silently skipped during indexing"
+
+    real_world_example:
+      context: "GitHub Issue #10 - Indexing Bug Fix"
+
+      problem_reported: |
+        "Files in universal/patterns/ not indexed by kb.py stats"
+
+      investigation: |
+          $ python tools/kb.py stats
+          Total entries: 47
+          # Expected: 84 based on file count
+
+          $ find universal/patterns -name "*.yaml" | wc -l
+          21 files
+          # Should have ~21+ entries from these files
+
+      root_cause_found: |
+          # tools/kb.py line 133
+          if 'errors' in data:
+              for error in data['errors']:
+                  # ...
+          # universal/patterns/*.yaml use 'patterns:' key, not 'errors:'
+          # All 21 files were being skipped!
+
+      fix_applied: |
+          # Updated KBEntry.from_yaml() to support both keys
+          # See code_after in solutions section above
+
+      result: |
+          $ rm .cache/kb_index.db
+          $ python tools/kb.py index -v
+          Indexing: 84 entries
+
+          $ python tools/kb.py stats
+          Total entries: 84 (was 47!)
+
+      commit: "ea341d3 - fix: Support patterns key in KBEntry.from_yaml"
+
+    troubleshooting:
+      issue: "Entries not appearing in search results"
+      diagnosis_steps: |
+        1. Check if files are indexed:
+           python tools/kb.py stats
+
+        2. Look for missing categories:
+           python tools/kb.py stats | grep -E "github-workflow|agent-workflow"
+
+        3. Verify file structure:
+           cat universal/patterns/github-workflow.yaml | head -20
+
+        4. Check for key support:
+           grep -A 5 "def from_yaml" tools/kb.py
+
+      fix: "Apply KB-INDEX-001 fix (support both 'errors' and 'patterns' keys)"
+
+      verify: |
+        # Rebuild index
+        rm .cache/kb_index.db
+        python tools/kb.py index -v
+
+        # Search should now find entries
+        python tools/kb.py search "github" --scope universal
+
+    references:
+      - title: "GitHub Issue #10 - Files in universal/patterns/ not indexed"
+        url: "https://github.com/ozand/shared-knowledge-base/issues/10"
+
+      - title: "Commit ea341d3 - Fix for patterns key support"
+        url: "https://github.com/ozand/shared-knowledge-base/commit/ea341d3"
+
+      - title: "SHARED-KB-FORMAT-001 - YAML format specification"
+        url: "universal/patterns/shared-kb-yaml-format.yaml"

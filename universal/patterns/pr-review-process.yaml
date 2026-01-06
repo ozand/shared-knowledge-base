@@ -393,6 +393,16 @@ patterns:
       - id: "PROJECT-ORG-002"
         title: "Git Submodule vs Clone Decision Matrix"
 
+      - id: "QUALITY-PROCESS-001"
+        title: "Quality vs Process Separation in Contribution Evaluation"
+        relationship: "complementary"
+        explanation: |
+          QUALITY-PROCESS-001 provides decision framework for evaluating
+          contributions (quality vs process matrix). PR-REVIEW-001 provides
+          step-by-step review process. Use both together: QUALITY-PROCESS
+          for WHAT decision to make (merge/close/recreate), PR-REVIEW for
+          HOW to conduct the review.
+
     references:
       - title: "GitHub PR Review Documentation"
         url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests"

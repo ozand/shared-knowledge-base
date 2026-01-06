@@ -580,3 +580,439 @@ patterns:
         url: "https://www.atlassian.com/git/tutorials/using-branches/merging"
       - title: "Rebasing Safely"
         url: "https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase"
+
+  - id: "GITHUB-006"
+    title: "GitHub API Timeout and Connectivity Handling"
+    severity: "medium"
+    scope: "universal"
+    tags: ["github-api", "timeout", "retry", "resilience", "network"]
+
+    problem: |
+      GitHub CLI (gh) commands fail due to network timeouts, connectivity issues,
+      or API unavailability, causing automated workflows to fail unexpectedly.
+
+      **Real example:** When closing Issue #10, connection timeout occurred:
+      ```
+      Post "https://api.github.com/graphql": dial tcp 140.82.121.6:443: connectex:
+      A connection attempt failed because the connected party did not properly
+      respond after a period of time, or established connection failed to respond
+      ```
+
+    affected_scenarios:
+      - "Automated issue closure in CI/CD pipelines"
+      - "Bulk PR operations via scripts"
+      - "Curator workflows processing multiple issues"
+      - "GitHub release automation"
+      - "Label management and updates"
+
+    solutions:
+      python_retry_with_backoff:
+        description: "Python retry decorator with exponential backoff"
+        code: |
+          import time
+          import subprocess
+          from functools import wraps
+          from typing import Callable, Any
+
+          def retry_github_command(max_retries: int = 3, base_delay: float = 1.0):
+              """
+              Retry decorator for GitHub CLI commands with exponential backoff.
+
+              Args:
+                  max_retries: Maximum number of retry attempts
+                  base_delay: Base delay in seconds (multiplied by 2^attempt)
+              """
+              def decorator(func: Callable) -> Callable:
+                  @wraps(func)
+                  def wrapper(*args, **kwargs) -> Any:
+                      last_exception = None
+
+                      for attempt in range(max_retries):
+                          try:
+                              return func(*args, **kwargs)
+                          except (subprocess.CalledProcessError,
+                                OSError,
+                                TimeoutError) as e:
+                              last_exception = e
+
+                              if attempt < max_retries - 1:
+                                  delay = base_delay * (2 ** attempt)
+                                  print(f"  ⚠️  GitHub API failed (attempt {attempt + 1}/{max_retries})")
+                                  print(f"  🔄 Retrying in {delay:.1f}s...")
+                                  time.sleep(delay)
+                              else:
+                              print(f"  ❌ All {max_retries} attempts failed")
+
+                      raise last_exception
+                  return wrapper
+              return decorator
+          return decorator
+
+          # Usage:
+          @retry_github_command(max_retries=3, base_delay=2.0)
+          def close_issue(issue_number: int, comment: str):
+              cmd = [
+                  'gh', 'issue', 'close', str(issue_number),
+                  '--comment', comment
+              ]
+              subprocess.run(cmd, check=True, capture_output=True)
+
+          # Try it:
+          close_issue(10, "Issue resolved")
+        pros: "Automatic retry, exponential backoff prevents API overload"
+        cons: "Requires Python, adds code complexity"
+
+      bash_retry_wrapper:
+        description: "Bash function to retry commands"
+        code: |
+          #!/bin/bash
+          # retry_github.sh - Retry GitHub CLI commands with backoff
+
+          retry_gh() {
+              local max_attempts=$1
+              shift
+              local command=("$@")
+
+              for ((attempt=1; attempt<=max_attempts; attempt++)); do
+                  echo "🔄 Attempt $attempt/$max_attempts: ${command[*]}"
+
+                  if "${command[@]}"; then
+                      echo "✅ Success on attempt $attempt"
+                      return 0
+                  else
+                      exit_code=$?
+                      if [ $attempt -lt $max_attempts ]; then
+                          delay=$((2 ** (attempt - 1)))
+                          echo "⚠️  Failed (exit code: $exit_code)"
+                          echo "⏳ Waiting ${delay}s before retry..."
+                          sleep $delay
+                      else
+                          echo "❌ All $max_attempts attempts failed"
+                          return $exit_code
+                      fi
+                  fi
+              done
+          }
+
+          # Usage examples:
+          retry_gh 3 gh issue close 10 --comment "Resolved"
+          retry_gh 3 gh pr create --title "Fix bug" --body "Description"
+          retry_gh 3 gh release create v1.0 --notes "Release notes"
+        pros: "Pure bash, works in scripts, simple to understand"
+        cons: "No exponential backoff (unless enhanced), bash syntax limitations"
+
+      graceful_degradation:
+        description: "Queue failed operations for manual retry"
+        python_code: |
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          class PendingOperations:
+              """Queue GitHub operations that failed due to connectivity"""
+
+              def __init__(self, queue_file: Path = Path('.pending_operations.json')):
+                   self.queue_file = queue_file
+                   self.queue = self._load_queue()
+
+              def _load_queue(self):
+                   if self.queue_file.exists():
+                       with self.queue_file.open() as f:
+                           return json.load(f)
+                   return []
+
+              def _save_queue(self):
+                   with self.queue_file.open('w') as f:
+                       json.dump(self.queue, f, indent=2)
+
+              def add(self, operation: str, params: dict):
+                   """Add failed operation to queue"""
+                   self.queue.append({
+                       'operation': operation,
+                       'params': params,
+                       'timestamp': datetime.now().isoformat(),
+                       'retries': 0
+                   })
+                   self._save_queue()
+
+              def process(self, executor: Callable):
+                   """
+                   Process queued operations
+
+                   Args:
+                       executor: Function that takes (operation, params) and executes
+                   """
+                   remaining = []
+
+                   for item in self.queue:
+                       try:
+                           executor(item['operation'], item['params'])
+                           print(f"✅ Processed: {item['operation']}")
+                       except Exception as e:
+                           item['retries'] += 1
+                           if item['retries'] < 3:
+                               print(f"⚠️  Queued for later: {item['operation']}")
+                               remaining.append(item)
+                           else:
+                               print(f"❌ Gave up after 3 retries: {item['operation']}")
+
+                   self.queue = remaining
+                   self._save_queue()
+
+          # Usage:
+          pending = PendingOperations()
+
+          def close_issue_safe(issue_number: int, comment: str):
+              try:
+                  subprocess.run(['gh', 'issue', 'close', str(issue_number),
+                                '--comment', comment], check=True)
+              except Exception as e:
+                  print(f"⚠️  Failed to close issue #{issue_number}: {e}")
+                  pending.add('close_issue', {
+                      'issue': issue_number,
+                      'comment': comment
+                  })
+
+          # Later, when connectivity improves:
+          pending.process(lambda op, params: subprocess.run(
+              ['gh', 'issue', 'close', str(params['issue']),
+               '--comment', params['comment']],
+              check=True
+          ))
+        pros: "No work lost, can retry later, audit trail"
+        cons: "Requires manual re-run or scheduled job"
+
+      pre_flight_check:
+        description: "Check connectivity before attempting operations"
+        code: |
+          #!/bin/bash
+          # check_github_connectivity.sh
+
+          check_github() {
+              echo "🔍 Checking GitHub connectivity..."
+
+              # Test 1: DNS resolution
+              if ! nslookup api.github.com >/dev/null 2>&1; then
+                  echo "❌ Cannot resolve api.github.com"
+                  return 1
+              fi
+
+              # Test 2: TCP connection
+              if ! bash -c 'cat < /dev/null > /dev/tcp/api.github.com/443' 2>/dev/null; then
+                  echo "❌ Cannot connect to api.github.com:443"
+                  return 1
+              fi
+
+              # Test 3: gh CLI auth
+              if ! gh auth status >/dev/null 2>&1; then
+                  echo "❌ gh auth failed - not authenticated"
+                  return 1
+              fi
+
+              # Test 4: Simple API call
+              if ! gh api /user >/dev/null 2>&1; then
+                  echo "❌ GitHub API not responding"
+                  return 1
+              fi
+
+              echo "✅ GitHub connectivity confirmed"
+              return 0
+          }
+
+          # Usage in scripts:
+          if ! check_github; then
+              echo "⚠️  GitHub is not accessible, queuing operations"
+              # Queue operations or exit gracefully
+              exit 1
+          fi
+
+          # Proceed with GitHub operations
+          gh issue close 10 --comment "..."
+        pros: "Fail fast, clear error messages, prevents partial failures"
+        cons: "Adds latency, doesn't handle mid-operation failures"
+
+    best_practices:
+      - practice_1: "Use exponential backoff for retries"
+        reason: "Prevents API overload, gives network time to recover"
+
+      - practice_2: "Set maximum retry limit (3-5 attempts)"
+        reason: "Don't retry indefinitely, fail eventually"
+
+      - practice_3: "Log all retries with timestamps"
+        reason: "Debugging, audit trail, capacity planning"
+
+      - practice_4: "Check connectivity before bulk operations"
+        reason: "Fail fast instead of processing half the items"
+
+      - practice_5: "Queue failed operations for retry"
+        reason: "Don't lose work, can recover when connectivity returns"
+
+      - practice_6: "Use timeouts on all gh commands"
+        example: "gh issue close 10 --comment '...' --timeout 30"
+
+    anti_patterns:
+      anti_pattern_1:
+        description: "Infinite retry without backoff"
+        wrong_code: |
+          while ! gh issue close 10; do
+              echo "Retrying..."
+              # No delay, no limit
+          done
+
+        why_wrong: "Overloads API, never fails, wastes resources"
+
+        correct_approach: "Use retry with exponential backoff and max attempts"
+
+      anti_pattern_2:
+        description: "Silent failure handling"
+        wrong_code: |
+          try:
+              gh issue close 10
+          except:
+              pass  # Ignore all errors
+
+        why_wrong: "Loses work, no error visibility, can't debug"
+
+        correct_approach: "Log error, queue operation, raise alert"
+
+      anti_pattern_3:
+        description: "No timeout on long-running operations"
+        wrong_code: |
+          # May hang forever
+          subprocess.run(['gh', 'pr', 'create', ...])
+
+        why_wrong: "Script hangs indefinitely, blocks pipeline"
+
+        correct_code: |
+          subprocess.run(['gh', 'pr', 'create', ...], timeout=60)
+
+    implementation_example:
+      scenario: "Curator closing multiple issues after review"
+
+      without_resilience: |
+        # ❌ Fails completely on first network issue
+        issues = [8, 9, 10]
+        for issue in issues:
+            subprocess.run(['gh', 'issue', 'close', str(issue)])
+        # If issue 8 fails due to timeout, 9 and 10 never closed
+
+      with_resilience: |
+        # ✅ Handles failures gracefully
+        from retry_github import retry_github_command
+        import json
+
+        pending = PendingOperations()
+
+        @retry_github_command(max_retries=3, base_delay=2.0)
+        def close_issue(issue_number: int, comment: str):
+             subprocess.run(
+                 ['gh', 'issue', 'close', str(issue_number),
+                  '--comment', comment],
+                 check=True, timeout=30
+             )
+
+        # Process all issues
+        issues = {
+            8: "Closed: 5 patterns need YAML fixes",
+            9: "Closed: kb_config.py module merged",
+            10: "Closed: Indexing bug fixed"
+        }
+
+        for issue_number, comment in issues.items():
+            try:
+                close_issue(issue_number, comment)
+                print(f"✅ Closed issue #{issue_number}")
+            except Exception as e:
+                print(f"⚠️  Failed to close #{issue_number}: {e}")
+                pending.add('close_issue', {
+                    'issue': issue_number,
+                    'comment': comment
+                })
+
+        # Report queued operations
+        if pending.queue:
+            print(f"\n⚠️  {len(pending.queue)} operations queued for later:")
+            print(f"   Run: python process_pending.py")
+
+    monitoring:
+      metrics_to_track:
+        - metric: "GitHub API failure rate"
+          calculation: "failed_requests / total_requests"
+          threshold: "< 5%"
+
+        - metric: "Average retry count"
+          calculation: "sum(retries) / successful_requests"
+          threshold: "< 1.5"
+
+        - metric: "Pending operations queue size"
+          check: "len(pending.queue)"
+          alert_if: "> 10 operations"
+
+      logging_example: |
+         import logging
+
+         logging.basicConfig(
+             level=logging.INFO,
+             format='%(asctime)s - %(levelname)s - %(message)s',
+             handlers=[
+                 logging.FileHandler('github_operations.log'),
+                 logging.StreamHandler()
+             ]
+         )
+
+         # In retry decorator:
+         logging.warning(f"GitHub API failed (attempt {attempt + 1}): {e}")
+
+    related_patterns:
+      - id: "GITHUB-001"
+        title: "Git Hooks with Python Scripts Fail on Windows"
+        relationship: "related"
+        explanation: "Both deal with GitHub operations in automation"
+
+      - id: "GITHUB-005"
+        title: "Git Push Rejected"
+        relationship: "related"
+        explanation: "Both cover network-related git operations failures"
+
+    real_world_examples:
+      example_1:
+        context: "Issue #10 closure failure"
+        error: "Post https://api.github.com/graphql: dial tcp 140.82.121.6:443: connectex"
+
+        workaround_used: |
+          # Manually closed when connectivity returned
+          gh issue close 10 --comment "..."
+        # Comment with detailed explanation was already in tmp/issue-10-comment.md
+
+        better_approach: |
+          # Should have used retry decorator
+          @retry_github_command(max_retries=3)
+          def close_issue_with_comment():
+              with open('tmp/issue-10-comment.md') as f:
+                  comment = f.read()
+              subprocess.run(['gh', 'issue', 'close', '10',
+                            '--comment', comment], check=True)
+
+    troubleshooting:
+      issue: "Intermittent GitHub API failures"
+      diagnosis: |
+        1. Check GitHub status: https://www.githubstatus.com/
+        2. Test connectivity: check_github()
+        3. Review logs: tail -f github_operations.log
+        4. Check rate limits: gh api /rate_limit
+
+      solutions:
+        - solution_1: "Implement retry logic (see solutions above)"
+        - solution_2: "Check for GitHub API incidents"
+        - solution_3: "Verify network stability"
+        - solution_4: "Check gh authentication: gh auth status"
+
+    references:
+      - title: "GitHub CLI Manual"
+        url: "https://cli.github.com/manual/"
+      - title: "GitHub API Rate Limiting"
+        url: "https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting"
+      - title: "GitHub Status"
+        url: "https://www.githubstatus.com/"
+      - title: "Retry Pattern in Python"
+        url: "https://docs.python.org/3/library/functools.html#functools.wraps"
