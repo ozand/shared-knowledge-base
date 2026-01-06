@@ -1,0 +1,157 @@
+# Stale Context Pattern for AI Agents
+# Preventing agents from using outdated information from previous sessions
+
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "STALE-CONTEXT-001"
+    title: "Stale Context in AI Agent Sessions"
+    severity: "medium"
+    scope: "universal"
+    tags: ["agent", "context", "stale-information", "session", "verification", "github"]
+
+    problem: |
+      AI agents reference information from previous sessions without verifying
+      current state, leading to actions based on outdated data.
+
+      Real example: Agent reports "Waiting for Issue #11 to merge 3 new patterns"
+
+      Reality - Issue #11 was closed as superseded in previous session!
+
+      Impact:
+      - Agent waits for issues already resolved
+      - References non-existent resources
+      - Takes actions based on incorrect assumptions
+      - Wastes time verifying outdated information
+
+    symptoms:
+      - Waiting for Issue XXX (but issue already closed)
+      - References to closed or merged PRs
+      - Mentions deprecated features
+      - Uses outdated commit hashes
+      - Assumes states that changed
+      - Next steps based on resolved issues
+
+    root_cause: |
+      1. Session isolation: Each agent session starts fresh
+      2. No state verification: Agent assumes previous context still valid
+      3. Long-lived references: Issue numbers mentioned in docs
+      4. No verification step: Don't check current state before referencing
+
+      Different from LLM-CONTEXT-001:
+      - LLM-CONTEXT-001: Technical context window limit (tokens dropped)
+      - STALE-CONTEXT-001: Informational staleness (data outdated)
+
+    solution: |
+      Always Verify Before Referencing:
+
+      Verification Checklist:
+
+      1. GitHub Issues:
+      ```bash
+      gh issue view NUMBER --json state,title
+      ```
+
+      2. Pull Requests:
+      ```bash
+      gh pr view NUMBER --json state,merged,title
+      ```
+
+      3. Files:
+      ```bash
+      ls -la path/to/file.yaml
+      ```
+
+      4. Commits:
+      ```bash
+      git log --oneline | grep HASH
+      ```
+
+    best_practices:
+      - Never assume state without verification
+      - Check current state before referencing
+      - Use verification checklist
+      - Document verification step
+      - Update documentation when state changes
+
+    code_example: |
+      ```bash
+      # WRONG: Assume issue state
+      echo "Waiting for Issue #11"
+
+      # CORRECT: Verify first
+      ISSUE_STATE=$(gh issue view 11 --json state --jq '.state')
+      if [ "$ISSUE_STATE" = "OPEN" ]; then
+        echo "Issue #11 still open"
+      else
+        echo "Issue #11 already $ISSUE_STATE"
+      fi
+      ```
+
+    real_world_examples:
+      example_1_stale_issue_reference:
+        scenario: Agent reports waiting for Issue #11
+        stale_context: Agent assumes Issue #11 is pending from previous session
+        verification: "gh issue view 11 --json state = CLOSED"
+        actual_state: Issue #11 closed as superseded, 3 patterns already covered
+        correct_response: Issue #11 already closed, patterns covered by existing entries
+        lesson: Always verify issue state before referencing
+
+      example_2_stale_file_reference:
+        scenario: Agent references module-import-tool-scripts.yaml
+        stale_context: Agent assumes file exists from previous session
+        verification: File does not exist in repository
+        actual_state: File never existed, Issue #12 closed as incomplete
+        correct_response: File does not exist, Pattern ID PY-IMPORT-005 reserved
+        lesson: Verify file existence before referencing
+
+    prevention:
+      - Add verification step to agent workflows
+      - Use dynamic queries instead of hardcoded references
+      - Document state changes when they occur
+      - Create session summaries with current state
+
+    anti_patterns:
+      - Assume issue state from previous session
+      - Reference files without verifying existence
+      - Use hardcoded issue numbers in responses
+      - Skip verification for efficiency
+      - Don't document state changes
+
+    lessons_learned: |
+      From analyzed chat session:
+
+      What went right:
+      - Verification commands executed
+      - Correct interpretation of status output
+      - Proper update workflow followed
+
+      What went wrong:
+      - Waiting for Issue #11 - but Issue #11 already closed
+      - No verification before mentioning issue
+      - Assumed state from previous session still valid
+
+      Prevention for future:
+      - Always verify issue state before referencing
+      - Add verification checklist to workflows
+      - Document current state in session summaries
+
+    related_patterns:
+      - LLM-CONTEXT-001 (Context window limits - technical)
+      - AGENT-HANDOFF-001 (Submission workflow)
+      - CURATOR-ISSUE-TRIAGE-001 (Issue triage process)
+
+    references:
+      - Chat analysis: submodule update session (2026-01-06)
+      - Issue #11: Closed as superseded
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      reusable: true
+      severity_level: 2
+      difficulty: "elementary"
+      pattern_type: "workflow"
+      applicable_to: ["ai-agents", "curators", "project-agents"]

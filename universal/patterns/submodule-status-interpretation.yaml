@@ -1,0 +1,336 @@
+# Git Submodule Status Interpretation Pattern
+# Understanding git submodule status output symbols and meanings
+
+version: "1.0"
+category: "git-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "SUBMODULE-STATUS-INTERPRETATION-001"
+    title: "Git Submodule Status Interpretation"
+    severity: "low"
+    scope: "universal"
+    tags: ["git", "submodule", "status", "interpretation", "verification", "troubleshooting"]
+
+    problem: |
+      `git submodule status` output uses cryptic symbols that are not intuitive.
+      Users don't understand what leading space, +, -, U symbols mean.
+
+      **Real example:**
+      ```
+      c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Questions:**
+      - Is this good or bad?
+      - What does leading space mean?
+      - What if I see + or - prefix?
+      - What does "v3.0-10-gc023036" mean?
+
+    symptoms:
+      - Unclear if submodule is properly initialized
+      - Confusion about uncommitted changes
+      - Don't know if update succeeded
+      - Misinterpretation leads to unnecessary actions
+
+    root_cause: |
+      Git uses compact single-character symbols for status:
+      - Space (no symbol) = good
+      - Minus (-) = bad
+      - Plus (+) = warning
+      - U/B letters = conflict indicators
+
+      These are not self-explanatory to new users.
+
+    solution: |
+      **Git Submodule Status Format:**
+
+      ```
+      <symbol><commit-hash> <path> (<describe>)
+      ```
+
+      **Examples:**
+      ```
+       c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      -c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      +c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      ## Status Symbols Reference
+
+      | Symbol | Meaning | Action Required |
+      |--------|---------|-----------------|
+      | (space) | ✅ Properly initialized, up to date | None |
+      | - | ❌ Not initialized | `git submodule init` |
+      | + | ⚠️ Uncommitted changes in submodule | Commit or stash |
+      | -U | ❌ Merge conflict | Resolve conflict |
+      | -B | ❌ Both modified (similar to -U) | Resolve conflict |
+      | -R | ⚠️ Rebase in progress | Complete or abort rebase |
+      | -<number> | ⚠️ Multiple commits ahead | Update submodule |
+
+      ## Detailed Examples
+
+      **Example 1: Correct (leading space)**
+      ```
+       c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Analysis:**
+      - Leading space = properly initialized ✅
+      - Commit: c023036
+      - Path: docs/knowledge-base/shared
+      - Describe: v3.0-10-gc023036 (10 commits ahead of v3.0 tag)
+
+      **Status:** ✅ Healthy, no action needed
+
+      **Example 2: Not initialized (- prefix)**
+      ```
+      -c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Analysis:**
+      - Minus sign = not initialized ❌
+      - Submodule exists in .gitmodules but not checked out
+
+      **Action required:**
+      ```bash
+      git submodule init docs/knowledge-base/shared
+      git submodule update docs/knowledge-base/shared
+      ```
+
+      **Example 3: Uncommitted changes (+ prefix)**
+      ```
+      +c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Analysis:**
+      - Plus sign = uncommitted changes in submodule ⚠️
+
+      **Cause:**
+      - Modified files in docs/knowledge-base/shared/
+      - New commits made in submodule
+      - Stashed changes in submodule
+
+      **Action required:**
+      ```bash
+      # Option 1: Commit changes
+      cd docs/knowledge-base/shared
+      git add .
+      git commit -m "Update submodule content"
+      cd ../..
+      git add docs/knowledge-base/shared
+
+      # Option 2: Discard changes
+      cd docs/knowledge-base/shared
+      git reset --hard HEAD
+      cd ../..
+
+      # Option 3: Stash changes
+      cd docs/knowledge-base/shared
+      git stash
+      cd ../..
+      ```
+
+      **Example 4: Merge conflict (-U suffix)**
+      ```
+      -U c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Analysis:**
+      - U suffix = merge conflict ❌
+
+      **Action required:**
+      ```bash
+      cd docs/knowledge-base/shared
+      git status  # See conflicted files
+      # Edit files, remove conflict markers
+      git add <resolved-files>
+      git commit
+      cd ../..
+      git add docs/knowledge-base/shared
+      ```
+
+      **Example 5: Multiple commits ahead (-<number>)**
+      ```
+      -3 c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      ```
+
+      **Analysis:**
+      - Number = 3 commits ahead of tracked branch
+
+      **Action:**
+      ```bash
+      git submodule update --merge docs/knowledge-base/shared
+      # OR
+      git submodule update --rebase docs/knowledge-base/shared
+      ```
+
+      ## Describe Format
+
+      The `(<describe>)` part shows relative position to tags:
+
+      ```
+      v3.0-10-gc023036
+      │    │  │
+      │    │  └─ Commit hash prefix
+      │    └──── 10 commits ahead of tag
+      └───────── Tag name
+      ```
+
+      **Examples:**
+      - `v3.0-10-gc023036` = 10 commits after v3.0 tag
+      - `v3.1-0-gc023036` = Exactly at v3.1 tag
+      - `v3.0-5-gabcdef` = 5 commits after v3.0
+
+      This helps identify version without running `git describe` in submodule.
+
+    code_example: |
+      ```bash
+      # Complete verification workflow
+
+      # 1. Check submodule status
+      git submodule status
+      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+
+      # 2. Interpret result
+      # Leading space = good ✅
+      # No + symbol = no uncommitted changes ✅
+      # v3.0-10-g = 10 commits ahead (effectively v3.1)
+
+      # 3. Verify commit details
+      cd docs/knowledge-base/shared
+      git log --oneline -1
+      # Output: c023036 Update to v3.1
+
+      # 4. Compare with upstream
+      git fetch origin
+      git log HEAD..origin/main --oneline
+      # (No output = already up to date) ✅
+
+      # 5. Update if needed
+      cd ../..
+      git submodule update --remote docs/knowledge-base/shared
+      # (No output = no changes) ✅
+
+      # 6. Verify status again
+      git submodule status
+      # Still: c023036... (no change = already was up to date)
+      ```
+
+    verification_checklist:
+      - check: "Leading character is space (not - or +)"
+        command: "git submodule status | head -c1"
+        expected: Space character
+        action_if_fail: "Initialize or commit submodule changes"
+
+      - check: "No uncommitted changes"
+        command: "git submodule status | grep '+'"
+        expected: "No output"
+        action_if_fail: "Commit or stash changes in submodule"
+
+      - check: "No merge conflicts"
+        command: "git submodule status | grep 'U'"
+        expected: "No output"
+        action_if_fail: "Resolve merge conflicts"
+
+      - check: "Commit hash matches expected"
+        command: "git submodule status | awk '{print $1}'"
+        expected: "<expected-hash>"
+        action_if_fail: "Update submodule"
+
+    troubleshooting:
+      - symptom: "Always shows - prefix (not initialized)"
+        solution: |
+          Run: git submodule init
+          Run: git submodule update
+
+      - symptom: "Always shows + prefix (uncommitted changes)"
+        cause: "Modifying files in submodule directory"
+        solution: |
+          cd docs/knowledge-base/shared
+          git status  # See what changed
+          git add .
+          git commit -m "Update submodule"
+          cd ../..
+          git add docs/knowledge-base/shared
+
+      - symptom: "Status changes after submodule update"
+        cause: "Submodule ref updated to new commit"
+        normal_behavior: "This is expected after successful update"
+
+      - symptom: "Can't tell if update succeeded"
+        solution: |
+          Compare hashes before/after:
+          BEFORE=$(git submodule status | awk '{print $1}')
+          git submodule update --remote docs/knowledge-base/shared
+          AFTER=$(git submodule status | awk '{print $1}')
+          [ "$BEFORE" = "$AFTER" ] && echo "No change" || echo "Updated"
+
+    best_practices:
+      - practice: "Always check status before updates"
+        command: "git submodule status"
+
+      - practice: "Understand symbol meanings"
+        reference: "Keep symbol table handy (space=good, -=bad, +=warning)"
+
+      - practice: "Commit submodule changes before updating"
+        reason: "Prevents conflicts, cleaner history"
+
+      - practice: "Use describe info for version identification"
+        tip: "v3.0-10-g = approximately version between v3.0 and v3.1"
+
+      - practice: "Document expected commit hash"
+        tip: "Note expected hash in docs, verify during updates"
+
+    quick_reference: |
+      ```
+      Symbol | Meaning        | Example
+      -------|----------------|------------------------
+      (space)| ✅ Good        |  c023036 path (tag-10-ghash)
+      -      | ❌ Not init    | -c023036 path (tag-10-ghash)
+      +      | ⚠️  Uncommitted | +c023036 path (tag-10-ghash)
+      U      | ❌ Conflict    | -Uc023036 path (tag-10-ghash)
+      -<num> | ⚠️  Ahead      | -3c023036 path (tag-10-ghash)
+      ```
+
+    anti_patterns:
+      - pattern: "Assume - prefix means submodule is broken"
+        reality: "Just not initialized, run git submodule init"
+
+      - pattern: "Panic when seeing + prefix"
+        reality: "Just uncommitted changes, normal if you're working in submodule"
+
+      - pattern: "Ignore status symbols"
+        consequence: "Miss important warnings about submodule state"
+
+      - pattern: "Run update when status shows - prefix"
+        better: "Initialize first with git submodule init"
+
+      - pattern: "Assume no output means error"
+        reality: "No output from update = already up to date (good!)"
+
+    when_to_use: |
+      Use this pattern when:
+      - Running `git submodule status`
+      - Verifying submodule health
+      - Troubleshooting submodule issues
+      - Learning git submodule workflow
+      - Teaching teammates about submodules
+
+    related_patterns:
+      - KB-UPDATE-001 (Shared KB update process)
+      - GIT-SUBMODULE-001 (Submodule integration)
+      - KB-UPDATE-001 (has verification example)
+
+    references:
+      - "Git docs: https://git-scm.com/docs/git-submodule"
+      - "KB-UPDATE-001: Shared KB Update Process"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      reusable: true
+      severity_level: 3
+      difficulty: "elementary"
+      pattern_type: "reference"
+      applicable_to: ["git-users", "devops", "developers"]
