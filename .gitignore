@@ -35,6 +35,12 @@ kb-snapshot.json
 # Local configuration files (not git-synced)
 .kb-config-local.yaml
 
+# Agent auto-generated configuration (not git-synced)
+.agent-config.local
+.agent-config.local.*
+.session-*
+.agent-cache/
+
 # Generated index files (auto-generated, not git-synced)
 _index.yaml
 _index.yaml.bak
