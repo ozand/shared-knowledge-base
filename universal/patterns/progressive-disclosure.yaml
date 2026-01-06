@@ -1,0 +1,487 @@
+# Progressive Disclosure Pattern
+# Efficient context loading for AI systems through layered information
+
+version: "1.0"
+category: "workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "PROGRESSIVE-DISCLOSURE-001"
+    title: "Progressive Disclosure for Efficient Context Loading"
+    severity: "high"
+    scope: "universal"
+    tags: ["context", "llm", "token-optimization", "documentation", "claude-code", "skills", "projects", "performance"]
+
+    problem: |
+      AI systems waste tokens by loading all available information upfront,
+      even when most of it won't be used in the current session.
+
+      **Symptoms:**
+      - Full documentation loaded (2000+ lines) when user asks simple question
+      - Context window filled with irrelevant details
+      - Slow response times due to large context
+      - Token costs unnecessarily high
+      - Information overload confuses the AI
+
+      **Real example:**
+      User: "How do I run tests?"
+
+      ❌ **Without Progressive Disclosure:**
+      - Loads: 2000 lines of documentation
+      - Includes: Architecture, deployment, monitoring, etc.
+      - Token cost: 2000+ tokens
+      - Response time: Slow (large context)
+
+      ✅ **With Progressive Disclosure:**
+      - Loads: 300 lines of CLAUDE.md (navigation hub)
+      - Includes: Reference to @standards/testing.md
+      - Token cost: 300 tokens
+      - Load testing standard ONLY when user asks details
+      - Response time: Fast (small context)
+
+    impact: |
+      - **Token usage:** 70-85% reduction (300 vs 2000 lines)
+      - **Response speed:** 2-3x faster (smaller context)
+      - **Cost reduction:** Proportional to token savings
+      - **Accuracy:** Improved (less noise, clearer signal)
+      - **Maintainability:** Easier to update documentation
+      - **User experience:** Faster, more relevant responses
+
+    root_cause: |
+      1. **"Load everything" mindset:** Fear of missing information
+      2. **Monolithic documentation:** Single file with all details
+      3. **No layered structure:** Flat hierarchy, all files equal
+      4. **Manual prompting:** Users expect to provide full context
+      5. **Lack of references:** No @references to detailed docs
+      6. **Misunderstanding:** Think AI needs all info upfront
+
+    solution: |
+      **Progressive Disclosure Architecture:**
+
+      Layer information with **lazy loading** (load on demand):
+
+      ```
+      Layer 1: Navigation Hub (~300 lines)
+      └─ CLAUDE.md
+          ├── Overview: "What is this project?"
+          ├── Quick start: "How to get started?"
+          ├── References: @standards/architecture.md
+          └── NOT: Full architecture details
+
+      Layer 2: Domain Standards (~500-1000 lines each)
+      └─ standards/architecture.md (LOADED ON DEMAND)
+          ├── Detailed architecture patterns
+          ├── Design decisions
+          ├── Diagrams
+          └── References to implementation files
+
+      Layer 3: Implementation Details
+      └─ docs/architecture/api-specs.md (LOADED WHEN NEEDED)
+          ├── Complete API documentation
+          └── Code examples
+      ```
+
+      **Key Principle:**
+      - **Layer 1 ALWAYS loaded** (navigation)
+      - **Layer 2+ loaded ON DEMAND** (when referenced)
+      - **References use @syntax** (@file.md)
+      - **User gets relevant info ONLY**
+
+    implementation:
+      step_1_create_navigation_hub:
+        action: "Create lean CLAUDE.md"
+        guidelines: |
+          - Keep it 250-350 lines max
+          - Focus on: What, Where, How to find details
+          - Use @references extensively
+          - Include: Quick start, overview, links
+
+        example: |
+          # CLAUDE.md (~300 lines)
+
+          # Project Knowledge
+
+          ## Quick Start
+          New to project? Read @standards/onboarding.md
+
+          ## Architecture
+          Overview: Microservices with event bus
+          Details: @standards/architecture.md
+
+          ## Testing
+          Quick guide: Run `npm test`
+          Full guide: @standards/testing-guidelines.md
+
+          ## Deployment
+          Process: @standards/deployment.md
+
+          ## Skills
+          Available: /testing, /refactoring, /documentation
+
+      step_2_create_domain_standards:
+        action: "Create detailed standard files"
+        location: "standards/ directory"
+        guidelines: |
+          - Each file: 500-1500 lines (focused domain)
+          - Cross-reference between standards
+          - Include examples and anti-patterns
+          - Link to implementation docs
+
+        structure: |
+          standards/
+          ├── architecture.md (system design)
+          ├── coding-standards.md (code style)
+          ├── testing-guidelines.md (test patterns)
+          ├── api-standards.md (API contracts)
+          ├── deployment.md (deploy process)
+          └── security.md (security practices)
+
+      step_3_use_reference_syntax:
+        action: "Use @references for lazy loading"
+        syntax: "@path/to/file.md"
+
+        examples: |
+          # Reference single file
+          See @standards/architecture.md for details
+
+          # Reference section in file
+          See @standards/architecture.md#api-design
+
+          # Reference multiple files
+          Documentation:
+          - @standards/architecture.md
+          - @standards/coding-standards.md
+          - @docs/api-specs.md
+
+      step_4_verify_efficiency:
+        action: "Measure token usage"
+        metrics: |
+          - Layer 1 size: Should be 250-350 lines
+          - Layer 1 tokens: ~300-400 tokens
+          - Full context load: < 1000 tokens initially
+          - On-demand loads: Only when needed
+
+        verification: |
+          # Test simple question
+          User: "How do I run tests?"
+
+          # Before progressive disclosure
+          Tokens: 2000+ (all documentation loaded)
+
+          # After progressive disclosure
+          Tokens: 300 (CLAUDE.md only)
+          + If user asks details: +500 (@standards/testing.md)
+          Total: 800 (60% reduction)
+
+    best_practices:
+      - practice: "Keep navigation hub minimal"
+        guideline: "250-350 lines max, focus on pointers"
+        reason: "Fast load, clear navigation"
+
+      - practice: "Use @references extensively"
+        guideline: "Link to detailed docs, don't duplicate"
+        reason: "Single source of truth, lazy loading"
+
+      - practice: "Group related info"
+        guideline: "One standard file per domain"
+        reason: "Cohesive, maintainable, loadable together"
+
+      - practice: "Cross-reference standards"
+        guideline: "@standards/architecture.md in testing docs"
+        reason: "Connected knowledge, no duplication"
+
+      - practice: "Update references when renaming"
+        guideline: "Search for @old-path, replace with @new-path"
+        reason: "Broken references break lazy loading"
+
+    real_world_examples:
+      example_1_monorepo_shared_knowledge:
+        scenario: "Monorepo with shared .claude/ configuration"
+
+        without_progressive_disclosure:
+          structure: |
+            .claude/
+            └── CLAUDE.md (2000 lines)
+                ├── All architecture
+                ├── All coding standards
+                ├── All testing guidelines
+                ├── All deployment process
+                └── All team workflows
+
+          problems:
+            - "Loads 2000 lines every session"
+            - "Slow startup: 3-5 seconds"
+            - "High token cost: 2000+ tokens"
+            - "Hard to maintain: single file"
+            - "Information overload"
+
+        with_progressive_disclosure:
+          structure: |
+            .claude/
+            ├── CLAUDE.md (300 lines)
+            │   ├── Quick start
+            │   ├── @standards/architecture.md
+            │   ├── @standards/coding-standards.md
+            │   ├── @standards/testing-guidelines.md
+            │   └── @standards/deployment.md
+            └── standards/
+                ├── architecture.md (800 lines)
+                ├── coding-standards.md (600 lines)
+                ├── testing-guidelines.md (700 lines)
+                └── deployment.md (500 lines)
+
+          benefits:
+            - "Loads 300 lines every session ✅"
+            - "Fast startup: <1 second ✅"
+            - "Low token cost: 300 tokens initially ✅"
+            - "Easy to maintain: separate files ✅"
+            - "Load on demand: Only what's needed ✅"
+
+          results:
+            - "Token reduction: 85% (300 vs 2000)"
+            - "Speed improvement: 3x faster"
+            - "Maintainability: Each domain separate"
+
+      example_2_claude_code_skills:
+        scenario: "Claude Code Skills system"
+
+        architecture: |
+          .claude/skills/
+          ├── testing/
+          │   ├── SKILL.md (200 lines - definition)
+          │   ├── templates/ (example test files)
+          │   └── patterns.md (test patterns)
+          └── refactoring/
+              ├── SKILL.md (150 lines)
+              ├── patterns/ (refactor patterns)
+              └── examples/ (before/after)
+
+        lazy_loading: |
+          # Discovery phase (session start)
+          Scan: .claude/skills/*/SKILL.md
+          Load: SKILL.md files (headers only)
+          Tokens: ~50-100 per skill
+
+          # Usage phase (user invokes /testing)
+          User: "Help me write tests"
+          Claude: Discovers /testing skill
+          Load: /testing/SKILL.md (full content)
+          Load: /testing/templates/ (only if referenced)
+          Tokens: ~500-800 (only testing skill)
+
+          # Other skills NOT loaded
+          /refactoring: Not loaded (not relevant)
+          /documentation: Not loaded (not relevant)
+
+        benefits:
+          - "Fast startup: Scan headers only"
+          - "Relevant loading: Only active skill loaded"
+          - "No waste: Unused skills stay dormant"
+
+      example_3_documentation_site:
+        scenario: "Large documentation site (1000+ pages)"
+
+        flat_approach: |
+          docs/
+          └── all-docs.md (50,000 lines)
+
+          User search: "How to authenticate?"
+          Result: Loads 50,000 lines (wast!)
+
+        progressive_disclosure: |
+          docs/
+          ├── index.md (300 lines - hub)
+          │   ├── @guides/authentication.md
+          │   ├── @guides/authorization.md
+          │   ├── @references/api.md
+          │   └── @guides/deployment.md
+          ├── guides/
+          │   ├── authentication.md (800 lines)
+          │   ├── authorization.md (600 lines)
+          │   └── deployment.md (700 lines)
+          └── references/
+              └── api.md (2000 lines)
+
+          User search: "How to authenticate?"
+          Result:
+          - Loads: index.md (300 lines)
+          - Finds: @guides/authentication.md
+          - Loads: authentication.md (800 lines)
+          - Total: 1100 lines (98% reduction!)
+
+    code_example:
+      navigation_hub:
+        file: ".claude/CLAUDE.md"
+        content: |
+          # Project Knowledge
+
+          ## Quick Start
+          New to project? Read @standards/onboarding.md
+
+          ## Architecture
+          **Overview:** Microservices with event-driven communication
+          **Details:** @standards/architecture.md
+          **Diagrams:** @docs/architecture/diagrams.md
+
+          ## Development Workflow
+          1. Read @standards/coding-standards.md
+          2. Follow @standards/testing-guidelines.md
+          3. Use /testing skill to generate tests
+
+          ## Available Skills
+          - /testing - Test generation
+          - /refactoring - Code improvement
+          - /documentation - Doc generation
+
+      domain_standard:
+        file: ".claude/standards/testing-guidelines.md"
+        content: |
+          # Testing Guidelines
+
+          ## Philosophy
+          We test at three levels: unit, integration, e2e
+
+          ## Unit Testing
+          See @docs/testing/unit.md for details
+
+          ## Integration Testing
+          See @docs/testing/integration.md for details
+
+          ## E2E Testing
+          See @docs/testing/e2e.md for details
+
+          ## Coverage Requirements
+          - Unit: 80%+ coverage
+          - Integration: 70%+ coverage
+          - E2E: Critical paths only
+
+          ## Tools
+          - Jest: Unit tests
+          - Supertest: API tests
+          - Cypress: E2E tests
+
+          ## Anti-Patterns
+          ❌ Don't test implementation details
+          ❌ Don't mock everything
+          ❌ Don't test third-party code
+
+          See @standards/testing-anti-patterns.md for more
+
+    verification:
+      token_usage_check:
+        test: "Measure context load for simple question"
+
+        metrics:
+          - "Initial context size (tokens)"
+          - "CLAUDE.md size (lines)"
+          - "Response time (seconds)"
+
+        benchmarks:
+          good: "Initial context < 500 tokens"
+          acceptable: "Initial context < 1000 tokens"
+          bad: "Initial context > 1500 tokens"
+
+      reference_validation:
+        test: "Verify all @references resolve"
+
+        method: |
+          # Extract all @references
+          grep -r "@[a-zA-Z/_-]*\.md" .claude/
+
+          # Check each file exists
+          for ref in $(grep -ohr "@[a-zA-Z/_-]*\.md" .claude/); do
+            file="${ref#@}"
+            if [ ! -f "$file" ]; then
+              echo "❌ Broken reference: $ref"
+            fi
+          done
+
+    troubleshooting:
+      issue_broken_references:
+        symptom: "@reference shows file not found"
+
+        cause: "File renamed/moved, references not updated"
+
+        solution: |
+          # Find all references to old path
+          grep -r "@old/path/file.md" .
+
+          # Replace with new path
+          find . -type f -exec sed -i 's/@old\/path\/file/@new\/path\/file/g' {} +
+
+      issue_information_not_found:
+        symptom: "User asks question, Claude doesn't have info"
+
+        possible_causes:
+          - "Info exists but not referenced in CLAUDE.md"
+          - "Info in wrong file (poor organization)"
+          - "Reference broken (file not found)"
+
+        solutions:
+          - "Add @reference in CLAUDE.md"
+          - "Reorganize: Move info to appropriate domain file"
+          - "Fix broken reference path"
+
+      issue_loading_too_much:
+        symptom: "Context > 1500 tokens on simple question"
+
+        diagnosis: |
+          # Check CLAUDE.md size
+          wc -l .claude/CLAUDE.md
+          # Should be < 400 lines
+
+          # Check for embedded docs
+          grep -c "^## " .claude/CLAUDE.md
+          # Should be < 20 sections (overview only)
+
+        solutions:
+          - "Move details to separate standard files"
+          - "Replace details with @references"
+          - "Keep CLAUDE.md lean (navigation only)"
+
+    anti_patterns:
+      - pattern: "Monolithic CLAUDE.md"
+        wrong: "2000+ lines with all documentation"
+        consequence: "Wasteful token usage, slow loading"
+        correct: "300 lines navigation hub + @references"
+
+      - pattern: "Duplicate information"
+        wrong: "Same rule in CLAUDE.md and standard files"
+        consequence: "Update burden, inconsistency risk"
+        correct: "Single source of truth, @reference everywhere"
+
+      - pattern: "Deep nesting"
+        wrong: "@ref1 → @ref2 → @ref3"
+        consequence: "Confusing, hard to maintain"
+        correct: "@ref1 (includes all needed info)"
+
+      - pattern: "No references"
+        wrong: "All docs in one folder, flat structure"
+        consequence: "Can't lazy load, everything loads"
+        correct: "Hub with @references to domain files"
+
+      - pattern: "Vague file names"
+        wrong: "@info.md (what info?)"
+        consequence: "Unclear what's in the file"
+        correct: "@standards/testing-guidelines.md (precise)"
+
+    related_patterns:
+      - LLM-CONTEXT-001 (Context exhaustion management)
+      - CLAUDE-CODE-SHARED-MODEL-001 (Shared configuration)
+      - AGENT-TASK-TRACKING-001 (Task organization)
+      - DOC-SYNC-001 (Documentation synchronization)
+
+    references:
+      - "Claude Docs: https://docs.anthropic.com"
+      - "Claude Code: https://code.claude.com/docs/en"
+      - "Perplexity research: Claude Code best practices (v17)"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      source: "Perplexity research compilation + best practices"
+      reusable: true
+      severity_level: 2
+      difficulty: "intermediate"
+      pattern_type: "architecture"
+      applicable_to: ["documentation", "claude-code", "llm-applications", "knowledge-bases"]
