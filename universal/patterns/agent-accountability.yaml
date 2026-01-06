@@ -1,0 +1,325 @@
+# Agent Self-Accountability Pattern
+# Ensuring agents follow their own recommendations and documentation
+
+version: "1.0"
+category: "ai-agents"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "AGENT-ACCOUNTABILITY-001"
+    title: "Agent Self-Accountability - Following Own Recommendations"
+    severity: "high"
+    scope: "universal"
+    tags: ["agent", "accountability", "consistency", "documentation", "best-practices"]
+
+    problem: |
+      AI agents often create excellent documentation and recommendations but fail to
+      follow them in practice, leading to:
+
+      - **Documentation-Action Gap:** Agent writes best practices but doesn't follow them
+      - **Credibility Loss:** Users notice inconsistency between docs and actions
+      - **Suboptimal Outcomes:** Recommendations ignored by agent itself
+      - **Learning Failure:** Agent doesn't benefit from its own knowledge
+
+      **Real Example:**
+      In PARSER project, agent created INT-001 recommending "git init + submodule (RECOMMENDED)"
+      but then used plain clone instead, violating its own recommendation.
+
+    symptoms:
+      - Agent documentation conflicts with agent actions
+      - Agent creates patterns it doesn't follow
+      - Users point out inconsistencies
+      - Agent has to fix its own violations later
+      - Credibility decreases over time
+
+    root_cause: |
+      1. **Documentation and Action Decoupled:** Creating docs ≠ following docs
+      2. **No Self-Check Mechanism:** Agent doesn't verify actions against docs
+      3. **Context Switch:** Agent writes docs in one context, acts in another
+      4. **Recommendation vs Implementation Gap:** Easier to write than do
+      5. **Missing Accountability Loop:** No feedback when agent violates docs
+
+    solution: |
+      **Agent Self-Accountability Framework:**
+
+      ## Phase 1: Documentation Creation
+
+      **When creating recommendations:**
+      1. Make recommendations **actionable** and **specific**
+      2. Include **compliance checklist** in documentation
+      3. Mark **critical recommendations** with clear indicators
+      4. Provide **examples** of following the recommendation
+
+      Example:
+      ```yaml
+      recommendation: "Use git init + submodule"
+        critical: true
+        priority: "HIGH"
+        compliance_checklist:
+          - "Run: git init"
+          - "Add: git submodule add ..."
+          - "Verify: .gitmodules exists"
+        anti_pattern: "Using plain clone"
+      ```
+
+      ## Phase 2: Action Verification (BEFORE Acting)
+
+      **Before taking action:**
+      1. **Search own documentation:**
+         ```bash
+         # Search for relevant recommendations
+         kb search "<current task keywords>"
+         ```
+
+      2. **Check compliance checklist:**
+         - Am I following documented best practices?
+         - Are there critical recommendations I'm violating?
+         - Does my action match documented patterns?
+
+      3. **Document deviation if necessary:**
+         - If not following docs, explain why
+         - Update docs if recommendation was wrong
+         - Don't silently violate
+
+      ## Phase 3: Post-Action Reflection
+
+      **After completing task:**
+      1. **Self-Check Question:**
+         - "Did I follow my own recommendations?"
+         - "Did I violate documented best practices?"
+         - "Should I update docs based on this experience?"
+
+      2. **If violated recommendation:**
+         - Document why (was it wrong? impractical?)
+         - Update docs if needed
+         - Or correct action if docs were right
+
+      3. **Update documentation:**
+         - Add lessons learned
+         - Refine recommendations based on reality
+         - Document exceptions
+
+      ## Implementation: Self-Accountability Checklist
+
+      **For agents to follow:**
+
+      1. **Before Acting:**
+         - [ ] Search KB for relevant patterns
+         - [ ] Read recommendations
+         - [ ] Plan action according to docs
+
+      2. **While Acting:**
+         - [ ] Follow documented best practices
+         - [ ] Use recommended approaches
+         - [ ] Document deviations if necessary
+
+      3. **After Acting:**
+         - [ ] Verify compliance with docs
+         - [ ] Update docs if recommendation was wrong
+         - [ ] Add lessons learned
+
+      ## Examples
+
+      **Example 1: Git Integration (PARSER Project)**
+
+      **Documentation Created:**
+      ```yaml
+      INT-001: Git Submodule Integration
+      recommendation: "git init + submodule (RECOMMENDED) 🌟"
+      benefits:
+        - "Easy updates"
+        - "Professional project"
+      ```
+
+      **Agent Action:**
+      - Used plain clone instead ❌
+      - Violated own recommendation ❌
+      - Result: Suboptimal setup
+
+      **Should Have Done:**
+      1. Before integrating Shared KB: search KB for "submodule"
+      2. Find INT-001 / PROJECT-ORG-002
+      3. Follow recommendation: `git init`
+      4. Use submodule approach
+      5. Result: Professional setup matching docs
+
+      **Example 2: YAML Best Practices**
+
+      **Documentation Created:**
+      ```yaml
+      YAML-001: Common YAML Syntax Errors
+      recommendation: "Always validate YAML before committing"
+      command: "python tools/kb.py validate <file>"
+      ```
+
+      **Agent Action:**
+      - Created YAML file ❌
+      - Forgot to validate ❌
+      - Validation failed ❌
+      - Had to fix errors
+
+      **Should Have Done:**
+      1. Before committing: check YAML-001
+      2. Run validation: `kb validate file.yaml`
+      3. Fix errors before commit
+      4. Clean commit history
+
+      ## Prevention Strategies
+
+      **For Agent Developers:**
+
+      1. **Add Self-Check to Agent Instructions:**
+         ```
+         BEFORE acting:
+         1. Search your knowledge base for relevant patterns
+         2. Read documented best practices
+         3. Plan action according to documentation
+
+         AFTER acting:
+         1. Verify you followed your own recommendations
+         2. Update docs if recommendation was wrong
+         3. Document lessons learned
+         ```
+
+      2. **Implement Compliance Checks:**
+         - Add pre-action hook: checks KB before acting
+         - Add post-action hook: verifies compliance
+         - Log violations for review
+
+      3. **Create Feedback Loops:**
+         - Track agent recommendations vs actions
+         - Flag inconsistencies automatically
+         - Generate compliance reports
+
+      **For Documentation:**
+
+      1. **Make Recommendations Actionable:**
+         - Include specific commands
+         - Provide compliance checklist
+         - Mark critical recommendations
+         - Give concrete examples
+
+      2. **Add Self-Check Questions:**
+         - "Before you proceed: did you check X?"
+         - "After you finish: did you verify Y?"
+
+      3. **Document Exceptions:**
+         - When it's OK to violate recommendation
+         - What circumstances require deviation
+         - How to get approval for exceptions
+
+    best_practices:
+      - practice: "Search KB before acting"
+        reason: "Find existing recommendations"
+
+      - practice: "Follow documented patterns"
+        reason: "Maintain consistency"
+
+      - practice: "Update wrong recommendations"
+        reason: "Keep docs accurate"
+
+      - practice: "Document deviations"
+        reason: "Explain why different approach"
+
+      - practice: "Self-reflect after actions"
+        reason: "Learn and improve"
+
+    anti_patterns:
+      - pattern: "Write docs, don't follow them"
+        consequence: "Credibility loss, suboptimal outcomes"
+
+      - pattern: "Assume docs are for others only"
+        consequence: "Agent misses own best practices"
+
+      - pattern: "Silent violations"
+        consequence: "No learning, docs become outdated"
+
+      - pattern: "Documentation without actionability"
+        consequence: "Can't be followed in practice"
+
+      - pattern: "No self-check mechanism"
+        consequence: "Violations go unnoticed"
+
+    accountability_checklist:
+      pre_action:
+        - step: "Search knowledge base"
+          question: "What does my documentation say about this?"
+
+        - step: "Read relevant patterns"
+          question: "What best practices apply?"
+
+        - step: "Plan compliance"
+          question: "How will I follow my recommendations?"
+
+      post_action:
+        - step: "Verify compliance"
+          question: "Did I follow my own recommendations?"
+
+        - step: "Check for violations"
+          question: "Did I violate documented best practices?"
+
+        - step: "Update or correct"
+          question: "Should I update docs or correct action?"
+
+    real_world_examples:
+      example_1:
+        project: "PARSER"
+        violation: "Agent recommended git init, used plain clone"
+        severity: "medium"
+        consequence: "Suboptimal setup, not following own advice"
+        lesson: "Always check KB before acting"
+        reference: "PARSER_PROJECT_AGENT_ANALYSIS.md"
+
+      example_2:
+        project: "Shared KB"
+        violation: "Agent wrote YAML best practices, didn't validate"
+        severity: "low"
+        consequence: "Validation errors, had to fix"
+        lesson: "Follow own validation rules"
+        reference: "YAML-001"
+
+    implementation:
+      for_agent_developers:
+        - item: "Add self-check to agent system prompts"
+          priority: "HIGH"
+
+        - item: "Implement pre-action KB search"
+          priority: "HIGH"
+
+        - item: "Add post-action compliance verification"
+          priority: "MEDIUM"
+
+        - item: "Track and report violations"
+          priority: "MEDIUM"
+
+      for_documentation:
+        - item: "Include compliance checklists"
+          priority: "HIGH"
+
+        - item: "Mark critical recommendations"
+          priority: "HIGH"
+
+        - item: "Document exceptions explicitly"
+          priority: "MEDIUM"
+
+        - item: "Add self-check questions"
+          priority: "MEDIUM"
+
+    success_criteria:
+      - ✅ "Agent follows documented recommendations"
+      - ✅ "Actions match documentation"
+      - ✅ "Violations are documented or corrected"
+      - ✅ "Docs updated based on experience"
+      - ✅ "Credibility maintained"
+
+    references:
+      - title: "PARSER_PROJECT_AGENT_ANALYSIS.md"
+        description: "Analysis of agent not following own git init recommendation"
+
+      - title: "PROJECT-ORG-002"
+        description: "Git Submodule vs Clone Decision Matrix"
+
+      - title: "AGENT-HANDOFF-001"
+        description: "Cross-Repository Agent Collaboration Pattern"
+
+languages: [en, ru]

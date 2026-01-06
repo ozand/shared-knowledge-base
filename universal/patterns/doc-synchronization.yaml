@@ -1,0 +1,400 @@
+# Multi-File Documentation Synchronization Pattern
+# Keeping multiple documentation files consistent when updating
+
+version: "1.0"
+category: "documentation"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "DOC-SYNC-001"
+    title: "Multi-File Documentation Synchronization Pattern"
+    severity: "medium"
+    scope: "universal"
+    tags: ["documentation", "synchronization", "consistency", "updates", "multi-file"]
+
+    problem: |
+      Documentation often spans multiple related files. When updating one aspect,
+      developers forget to update all related files, leading to:
+
+      - **Inconsistency:** Different docs say different things
+      - **Confusion:** Users don't know which doc is current
+      - **Outdated Information:** Old docs reference removed features
+      - **Maintenance Burden:** Hard to keep everything in sync
+      - **Credibility Issues:** Contradictory information reduces trust
+
+      **Real Example:**
+      When adding PR review process to Shared KB Curator documentation:
+      - Updated: AGENT.md (added Section 2: PR Review)
+      - Updated: SKILLS.md (added review-pr skill)
+      - Updated: WORKFLOWS.md (added Workflow 7: PR Review)
+      - Created: pr-review-process.yaml (new pattern)
+      - All files needed consistent information
+
+    symptoms:
+      - Contradictory information across files
+      - Some docs updated, others not
+      - Users ask "which doc is correct?"
+      - Cross-references point to non-existent sections
+      - Outdated examples in some files
+
+    root_cause: |
+      1. **No File Dependency Map:** Don't know which files are related
+      2. **No Update Checklist:** Forget which files need updates
+      3. **Incremental Updates:** Update one file at a time, lose track
+      4. **Cross-Reference Blindness:** Don't check what references changed content
+      5. **Missing Documentation:** Don't document file relationships
+
+    solution: |
+      **Multi-File Documentation Synchronization Process:**
+
+      ## Phase 1: Map Documentation Dependencies
+
+      **Before making changes:**
+      1. **Identify all related files:**
+         ```bash
+         # Find all documentation files
+         find . -name "*.md" -type f | grep -E "(README|GUIDE|AGENT|SKILLS|WORKFLOWS)"
+
+         # Check for cross-references
+         grep -r "see also:" *.md
+         grep -r "reference:" *.md
+         ```
+
+      2. **Create dependency map:**
+         ```
+         AGENT.md ← defines role
+           ↓
+         SKILLS.md ← skills for role
+           ↓
+         WORKFLOWS.md ← workflows using skills
+           ↓
+         patterns/*.yaml ← specific patterns
+         ```
+
+      3. **Document relationships:**
+         - Which files reference which?
+         - Which files are derived from others?
+         - Which files must be updated together?
+
+      ## Phase 2: Create Update Checklist
+
+      **For each change type:**
+
+      **Change Type: New Responsibility/Skill**
+      - ✅ Update AGENT.md (Core Responsibilities section)
+      - ✅ Update SKILLS.md (Add new skill)
+      - ✅ Update WORKFLOWS.md (Add workflow if needed)
+      - ✅ Create pattern file (if applicable)
+      - ✅ Update PROMPTS.md (if affects agent behavior)
+      - ✅ Update README.md (if user-facing)
+
+      **Change Type: New Process/Workflow**
+      - ✅ Update WORKFLOWS.md (Add workflow)
+      - ✅ Update SKILLS.md (Add skill if needed)
+      - ✅ Update AGENT.md (If affects responsibilities)
+      - ✅ Create pattern file (Document process)
+      - ✅ Update README.md (If user-facing)
+
+      **Change Type: New Tool/Feature**
+      - ✅ Update README.md (Add feature overview)
+      - ✅ Update GUIDE.md (Add usage instructions)
+      - ✅ Update WORKFLOWS.md (Add workflow)
+      - ✅ Update SKILLS.md (Add skill)
+      - ✅ Create pattern (if best practice)
+
+      **Change Type: Breaking Change**
+      - ✅ Update README.md (Warning)
+      - ✅ Update GUIDE.md (Migration instructions)
+      - ✅ Update WORKFLOWS.md (Updated steps)
+      - ✅ Update all affected patterns
+      - ✅ Update migration guide (if exists)
+
+      ## Phase 3: Execute Updates Systematically
+
+      **Update Strategy:**
+
+      1. **Start with source file:**
+         - Make primary change in authoritative file
+         - Example: AGENT.md for role changes
+
+      2. **Propagate to dependents:**
+         - Update files that depend on source
+         - Follow dependency map
+
+      3. **Check cross-references:**
+         ```bash
+         # Find all references to changed sections
+         grep -r "Section 2:" *.md
+         grep -r "PR Review" *.md
+         ```
+
+      4. **Update cross-references:**
+         - Fix broken references
+         - Add new references if needed
+
+      5. **Validate consistency:**
+         - Read all updated files
+         - Check for contradictions
+         - Verify terminology consistency
+
+      ## Phase 4: Verification
+
+      **Post-Update Checklist:**
+      - [ ] All related files updated
+      - [ ] No contradictions between files
+      - [ ] Cross-references work
+      - [ ] Terminology consistent
+      - [ ] Examples updated everywhere
+      - [ ] No orphaned references
+      - [ ] Table of contents updated (if any)
+
+      **Example: Adding PR Review to Curator Docs**
+
+      **Change:** Add PR review as Curator responsibility
+
+      **Files to Update:**
+      1. **AGENT.md** (Source file)
+         - Added Section 2: Pull Request Review & Quality Control
+         - Inserted between sections 1 and 2
+         - Renumbered sections 2-6 → 3-7
+
+      2. **SKILLS.md** (Depends on AGENT.md)
+         - Added Skill: review-pr
+         - Detailed process (5 phases)
+         - Review categories
+         - Examples from PR #6, PR #4
+
+      3. **WORKFLOWS.md** (Depends on SKILLS.md)
+         - Added Workflow 7: Pull Request Review
+         - 11-step process
+         - Review template
+         - Success criteria
+
+      4. **pr-review-process.yaml** (New pattern)
+         - Pattern ID: PR-REVIEW-001
+         - Complete process documentation
+         - Checklists, examples, anti-patterns
+
+      **Cross-Reference Check:**
+      ```bash
+      # Verify all files reference PR review
+      grep -i "pr review" curator/*.md
+      grep -i "pull request" curator/*.md
+
+      # Check for consistent terminology
+      grep "review-pr" curator/SKILLS.md
+      grep "Workflow 7" curator/WORKFLOWS.md
+      ```
+
+      **Result:** All files synchronized, consistent information
+
+    update_strategies:
+      - strategy_1: "Dependency Mapping"
+        description: "Map which files depend on which"
+        steps:
+          - "Find all cross-references"
+          - "Create dependency graph"
+          - "Document relationships"
+          - "Follow graph when updating"
+
+      - strategy_2: "Update Bundling"
+        description: "Update related files together"
+        steps:
+          - "Make all changes in one session"
+          - "Commit related files together"
+          - "Reference all changes in commit message"
+        example: |
+          git add AGENT.md SKILLS.md WORKFLOWS.md pr-review-process.yaml
+          git commit -m "Add PR review to Curator documentation
+          - AGENT.md: Added Section 2 (PR Review responsibility)
+          - SKILLS.md: Added review-pr skill
+          - WORKFLOWS.md: Added Workflow 7 (PR Review process)
+          - pr-review-process.yaml: Created PR-REVIEW-001"
+
+      - strategy_3: "Atomic Commits"
+        description: "One logical change per commit"
+        rule: "All related files in single commit"
+        anti_pattern: "Spread across multiple commits"
+
+      - strategy_4: "Reference Checking"
+        description: "Find and update all cross-references"
+        commands:
+          - "grep -r 'see also:' *.md"
+          - "grep -r 'reference:' *.md"
+          - "grep -r 'for more:' *.md"
+
+    checklists:
+      pre_update:
+        - "Map all affected files"
+        - "List all cross-references"
+        - "Create update checklist"
+        - "Plan update order"
+
+      during_update:
+        - "Update source file first"
+        - "Follow dependency order"
+        - "Update all references"
+        - "Check for contradictions"
+
+      post_update:
+        - "Verify all files updated"
+        - "Check cross-references work"
+        - "Validate consistency"
+        - "Test examples in all files"
+        - "Update table of contents"
+        - "Commit related files together"
+
+    common_mistakes:
+      mistake_1:
+        name: "Updating Only One File"
+        severity: "high"
+        example: "Update AGENT.md, forget SKILLS.md"
+        consequence: "Inconsistent documentation"
+
+      mistake_2:
+        name: "Missing Cross-Reference Updates"
+        severity: "medium"
+        example: "Section renamed, references not updated"
+        consequence: "Broken links, confusion"
+
+      mistake_3:
+        name: "Spread Across Multiple Commits"
+        severity: "low"
+        example: "Commit AGENT.md, then SKILLS.md separately"
+        consequence: "Hard to track complete change"
+
+      mistake_4:
+        name: "Inconsistent Terminology"
+        severity: "medium"
+        example: "PR review in one file, pull request review in another"
+        consequence: "Search fails, users confused"
+
+      mistake_5:
+        name: "Forgetting Examples"
+        severity: "low"
+        example: "Update process, old examples in other files"
+        consequence: "Misleading documentation"
+
+    best_practices:
+      - practice: "Map documentation dependencies"
+        reason: "Know which files are related"
+
+      - practice: "Create update checklist"
+        reason: "Don't forget any files"
+
+      - practice: "Update related files together"
+        reason: "Maintain consistency"
+
+      - practice: "Commit related files in single commit"
+        reason: "Atomic changes, easier to track"
+
+      - practice: "Use consistent terminology"
+        reason: "Searchability, clarity"
+
+      - practice: "Check cross-references"
+        reason: "No broken links"
+
+      - practice: "Validate examples in all files"
+        reason: "Accuracy, consistency"
+
+    real_world_example:
+      project: "Shared Knowledge Base"
+      change: "Add PR review process to Curator documentation"
+      date: "2026-01-06"
+
+      files_updated:
+        - file: "curator/AGENT.md"
+          changes: "Added Section 2, renumbered 3-7"
+
+        - file: "curator/SKILLS.md"
+          changes: "Added review-pr skill (+145 lines)"
+
+        - file: "curator/WORKFLOWS.md"
+          changes: "Added Workflow 7 (+234 lines)"
+
+        - file: "universal/patterns/pr-review-process.yaml"
+          changes: "Created PR-REVIEW-001 (+438 lines)"
+
+      verification:
+        - "✅ All files mention PR review"
+        - "✅ Consistent terminology used"
+        - "✅ Cross-references work"
+        - "✅ Examples consistent across files"
+        - "✅ Single commit for all changes"
+
+      commit: "13615a6"
+      commit_message: "docs: Add PR review process to Curator responsibilities and workflows"
+
+    tools_and_automation:
+      grep:
+        purpose: "Find cross-references"
+        commands:
+          - "grep -r 'see also:' *.md"
+          - "grep -r 'reference:' *.md"
+          - "grep -r 'for more information:' *.md"
+
+      find:
+        purpose: "List all documentation files"
+        commands:
+          - "find . -name '*.md' -type f"
+          - "find . -name '*.yaml' -type f"
+
+      git:
+        purpose: "Track related changes together"
+        commands:
+          - "git add <related-files>"
+          - "git commit -m 'comprehensive message'"
+
+    validation:
+      consistency_checks:
+        - check: "Terminology consistent"
+          method: "grep for key terms across files"
+
+        - check: "Cross-references work"
+          method: "Click all links, verify references"
+
+        - check: "No contradictions"
+          method: "Read all files, compare statements"
+
+        - check: "Examples updated"
+          method: "Verify examples in each file"
+
+      automated_checks:
+        - "Search for broken references"
+        - "Check for inconsistent terminology"
+        - "Find orphaned sections"
+        - "Validate cross-file links"
+
+    success_criteria:
+      - ✅ "All related files updated"
+      - ✅ "No contradictions between files"
+      - ✅ "Cross-references work correctly"
+      - ✅ "Terminology is consistent"
+      - ✅ "Examples updated everywhere"
+      - ✅ "Changes in single atomic commit"
+
+    anti_patterns:
+      - ❌ "Update one file, forget others"
+      - ❌ "Spread changes across multiple commits"
+      - ❌ "Ignore cross-references"
+      - ❌ "Use inconsistent terminology"
+      - ❌ "Don't verify consistency"
+
+    related_patterns:
+      - id: "AGENT-ACCOUNTABILITY-001"
+        title: "Agent Self-Accountability Pattern"
+
+      - id: "DOC-REORG-001"
+        title: "Multi-Phase Documentation Reorganization"
+
+      - id: "PR-REVIEW-001"
+        title: "Pull Request Review Process"
+
+    references:
+      - title: "Documentation Driven Development"
+        url: "https://www.writethedocs.org/"
+
+      - title: "Docs as Code"
+        url: "https://www.writethedocs.org/guide/docs-as-code/"
+
+languages: [en]

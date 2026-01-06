@@ -1,0 +1,439 @@
+# Isolated Environment Testing Pattern
+# Testing Pull Requests and changes in isolated environments
+
+version: "1.0"
+category: "testing"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "ISOLATED-TEST-001"
+    title: "Isolated Environment Testing for Code Changes"
+    severity: "high"
+    scope: "universal"
+    tags: ["testing", "isolated", "pr-review", "git", "safety", "quality-control"]
+
+    problem: |
+      Testing code changes directly in the main repository is dangerous:
+
+      - **Repository Contamination:** Test files, branches, build artifacts pollute repo
+      - **Difficult Cleanup:** Hard to undo all changes after testing
+      - **Git State Confusion:** Test branches mixed with real work
+      - **Build Artifact Pollution:** Cache files, binaries, __pycache__ added
+      - **Time-Consuming Cleanup:** Have to carefully revert everything
+      - **Risk of Accidental Commit:** Might commit test changes by mistake
+
+      **Real Example:**
+      When reviewing PR #6 (kb_config.py fix), testing in main repository would:
+      - Create test branches
+      - Add build artifacts
+      - Modify .git/config
+      - Risk contaminating git history
+
+    symptoms:
+      - Build artifacts in repository
+      - Test branches in git log
+      - .git/config modified
+      - Hard to clean up after testing
+      - Fear of breaking main repository
+
+    root_cause: |
+      1. **No Isolated Testing Strategy:** Test in-place by default
+      2. **Convenience Over Safety:** Easier to test in main repo
+      3. **No Cleanup Process:** Don't know how to cleanly test
+      4. **Git Ignorance:** Unfamiliar with git worktree or clone strategies
+      5. **Time Pressure:** Want to test quickly, skip isolation
+
+    solution: |
+      **Isolated Environment Testing Strategy:**
+
+      ## Strategy 1: Temporary Clone (RECOMMENDED) 🌟
+
+      **Best for:** PR review, one-off testing, quick validation
+
+      **Process:**
+      ```bash
+      # 1. Create temporary directory
+      cd /tmp
+      rm -rf pr-test
+      mkdir pr-test && cd pr-test
+
+      # 2. Clone repository (clean copy)
+      git clone git@github.com:user/repo.git .
+      # Note: '.' puts contents directly in pr-test, not pr-test/repo
+
+      # 3. Fetch PR branch
+      git fetch origin pull/<number>/head:pr-branch
+      git checkout pr-branch
+
+      # 4. Run tests
+      python tools/kb.py validate .
+      python tools/kb_patterns.py find-universal
+      # ... more tests
+
+      # 5. Delete entire directory when done
+      cd /tmp
+      rm -rf pr-test
+      ```
+
+      **Advantages:**
+      - ✅ Complete isolation from main repo
+      - ✅ Easy cleanup (delete directory)
+      - ✅ No git contamination
+      - ✅ Can test destructive operations
+      - ✅ Fresh clone every time
+      - ✅ Parallel testing (multiple /tmp/pr-test-2, etc.)
+
+      **Disadvantages:**
+      - ⚠️ Requires cloning (network time for large repos)
+      - ⚠️ Uses disk space (temporary)
+
+      **Example: PR Review**
+      ```bash
+      cd /tmp && rm -rf pr-6-test && mkdir pr-6-test && cd pr-6-test
+      git clone git@github.com:ozand/shared-knowledge-base.git .
+      git fetch origin pull/6/head:pr6-branch
+      git checkout pr6-branch
+
+      # Test changes
+      python tools/kb_patterns.py find-universal
+      python tools/kb_community.py report
+      python tools/kb_predictive.py suggest-entries
+      python tools/kb_issues.py scan
+
+      # All passed, can cleanup
+      cd /tmp && rm -rf pr-6-test
+      ```
+
+      ## Strategy 2: Git Worktree
+
+      **Best for:** Frequent testing, multiple branches, development
+
+      **Process:**
+      ```bash
+      # 1. Create worktree (linked to main repo)
+      git worktree add ../repo-pr-test pr-branch
+
+      # 2. Work in isolated directory
+      cd ../repo-pr-test
+
+      # 3. Run tests
+      python tools/test.py
+
+      # 4. When done, remove worktree
+      cd ../repo
+      git worktree remove ../repo-pr-test
+      ```
+
+      **Advantages:**
+      - ✅ No full clone needed (shares .git objects)
+      - ✅ Faster than clone for large repos
+      - ✅ Still isolated from main work
+      - ✅ Easy to remove
+
+      **Disadvantages:**
+      - ⚠️ Still shares git database
+      - ⚠️ More complex git commands
+
+      ## Strategy 3: Docker Container
+
+      **Best for:** Complete isolation, environment-specific testing
+
+      **Process:**
+      ```bash
+      # 1. Mount repo as volume
+      docker run -v $(pwd):/app -w /app python:3.11 bash
+
+      # 2. Inside container, make changes and test
+      git checkout pr-branch
+      python test.py
+
+      # 3. Exit container (changes discarded)
+      exit
+      ```
+
+      **Advantages:**
+      - ✅ Complete environment isolation
+      - ✅ No host contamination
+      - ✅ Reproducible environment
+      - ✅ Easy cleanup (docker rm)
+
+      **Disadvantages:**
+      - ⚠️ Requires Docker
+      - ⚠️ Heavier than just git clone
+
+      ## Strategy 4: Git Stash (For Small Tests)
+
+      **Best for:** Quick tests in current repo, minimal changes
+
+      **Process:**
+      ```bash
+      # 1. Stash current work
+      git stash push -u -m "Work before testing PR"
+
+      # 2. Checkout PR branch
+      git checkout pr-branch
+
+      # 3. Run tests
+      python test.py
+
+      # 4. Checkout main branch
+      git checkout main
+
+      # 5. Restore work
+      git stash pop
+
+      # OR if tests broke things, just discard:
+      # git checkout -f main
+      # git stash drop
+      ```
+
+      **Advantages:**
+      - ✅ Fast for small tests
+      - ✅ No cloning needed
+
+      **Disadvantages:**
+      - ❌ Risk of accidental commits
+      - ❌ Still modifies main repo git state
+      - ❌ Not truly isolated
+      - ❌ Dangerous if forget stash pop/drop
+
+      **Recommendation:** Only use Strategy 1 (Temporary Clone) for safety
+
+      ## Comparison Table
+
+      | Strategy | Isolation | Speed | Cleanup | Safety | Use Case |
+      |----------|-----------|-------|---------|--------|----------|
+      | **Temporary Clone** | ⭐⭐⭐⭐⭐ | Medium | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **PR Review (RECOMMENDED)** |
+      | **Git Worktree** | ⭐⭐⭐⭐ | Fast | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Frequent testing |
+      | **Docker** | ⭐⭐⭐⭐⭐ | Slow | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Environment-specific |
+      | **Git Stash** | ⭐⭐ | Fastest | ⭐⭐ | ⭐⭐ | Quick tests only |
+
+    best_practices:
+      - practice: "Always use isolated environment for PR review"
+        reason: "Complete safety, easy cleanup"
+
+      - practice: "Use /tmp for temporary clones"
+        reason: "Automatically cleaned on reboot"
+
+      - practice: "Delete test directory immediately after testing"
+        reason: "No leftover artifacts"
+
+      - practice: "Test destructive operations in clone"
+        reason: "Can't break main repo"
+
+      - practice: "Use descriptive directory names"
+        reason: "Easy to identify (pr-6-test, pr-4-test)"
+
+      - practice: "Parallel testing with separate directories"
+        reason: "Test multiple PRs simultaneously"
+
+    anti_patterns:
+      - pattern: "Testing in main repository"
+        consequence: "Pollution, hard cleanup, risky"
+
+      - pattern: "Forgetting to cleanup test directories"
+        consequence: "Disk space waste, confusion"
+
+      - pattern: "Using git stash for complex tests"
+        consequence: "Easy to make mistakes, lose work"
+
+      - pattern: "Committing test changes accidentally"
+        consequence: "Git history pollution, hard to undo"
+
+    workflow:
+      isolated_testing_checklist:
+        - step: "Create temporary directory"
+          location: "/tmp"
+          command: "cd /tmp && mkdir pr-test && cd pr-test"
+
+        - step: "Clone repository"
+          command: "git clone git@github.com:user/repo.git ."
+          note: "Period at end clones into current dir"
+
+        - step: "Fetch and checkout PR branch"
+          commands:
+            - "git fetch origin pull/<number>/head:pr-branch"
+            - "git checkout pr-branch"
+
+        - step: "Run tests"
+          example: |
+            python tools/kb.py validate .
+            python tools/kb_patterns.py find-universal
+            # ... more tests
+
+        - step: "Verify results"
+          question: "All tests passed?"
+
+        - step: "Cleanup"
+          commands:
+            - "cd /tmp"
+            - "rm -rf pr-test"
+          note: "Complete cleanup, no traces"
+
+      parallel_testing:
+        scenario: "Testing multiple PRs simultaneously"
+        process: |
+          cd /tmp
+          # PR #6
+          mkdir pr-6-test && cd pr-6-test
+          git clone git@github.com:user/repo.git .
+          git fetch origin pull/6/head:pr6 && git checkout pr6
+
+          # In another terminal
+          cd /tmp
+          # PR #4
+          mkdir pr-4-test && cd pr-4-test
+          git clone git@github.com:user/repo.git .
+          git fetch origin pull/4/head:pr4 && git checkout pr4
+
+          # Test both independently
+        advantage: "No interference between PRs"
+
+    real_world_examples:
+      example_1:
+        pr: "PR #6 - kb_config.py fix"
+        strategy: "Temporary Clone"
+        commands: |
+          cd /tmp && rm -rf pr6-test && mkdir pr6-test && cd pr6-test
+          git clone git@github.com:ozand/shared-knowledge-base.git .
+          git fetch origin pull/6/head:pr6 && git checkout pr6
+          python tools/kb_patterns.py find-universal
+          python tools/kb_community.py report
+        result: "All tests passed, clean cleanup"
+        reference: "PR6_REVIEW.md"
+
+      example_2:
+        pr: "PR #4 - 5 new patterns"
+        strategy: "Temporary Clone"
+        commands: |
+          cd /tmp && mkdir pr4-test && cd pr4-test
+          git clone git@github.com:ozand/shared-knowledge-base.git .
+          git fetch origin pull/4/head:pr4 && git checkout pr4
+          python tools/kb.py validate universal/patterns/*.yaml
+        result: "Validation passed, no pollution in main repo"
+        reference: "PARSER_PROJECT_AGENT_ANALYSIS.md"
+
+    safety_measures:
+      - measure_1: "Never test in main repository"
+        severity: "critical"
+        reason: "Risk of pollution and accidental commits"
+
+      - measure_2: "Always delete test directory after testing"
+        severity: "high"
+        reason: "No leftover artifacts, save disk space"
+
+      - measure_3: "Use /tmp, not home directory"
+        severity: "medium"
+        reason: "Cleaned on reboot, temporary by design"
+
+      - measure_4: "Verify you're in test directory before destructive tests"
+        severity: "high"
+        command: "pwd | grep /tmp"
+
+      - measure_5: "Don't create commits in test clone"
+        severity: "medium"
+        reason: "Can't push anyway, creates confusion"
+
+    troubleshooting:
+      - issue_1:
+        name: "Clone too slow"
+        solution: "Use git worktree for large repos"
+        command: "git worktree add ../repo-test pr-branch"
+
+      - issue_2:
+        name: "Disk space concerns"
+        solution: "Delete test directory immediately after use"
+        command: "cd /tmp && rm -rf pr-test"
+
+      - issue_3:
+        name: "Can't fetch PR branch"
+        solution: "Verify PR number and repository permissions"
+        command: "gh pr view <number> --json url"
+
+      - issue_4:
+        name: "Tests modify files in clone"
+        solution: "This is OK! Delete entire directory when done"
+        command: "rm -rf /tmp/pr-test"
+
+    tools:
+      git:
+        - command: "git clone"
+          purpose: "Create isolated copy"
+
+        - command: "git checkout"
+          purpose: "Switch to PR branch"
+
+        - command: "git fetch origin"
+          purpose: "Get PR branch"
+
+        - command: "git worktree add"
+          purpose: "Linked working tree (alternative to clone)"
+
+      utilities:
+        - command: "cd /tmp"
+          purpose: "Navigate to temp directory"
+
+        - command: "mkdir && cd"
+          purpose: "Create and enter test directory"
+
+        - command: "rm -rf"
+          purpose: "Clean up test directory"
+
+    success_criteria:
+      - ✅ "Main repository not modified"
+      - ✅ "No git pollution"
+      - ✅ "Easy cleanup (delete directory)"
+      - ✅ "Tests run successfully"
+      - ✅ "No accidental commits"
+      - ✅ "Can test destructive operations"
+
+    when_to_use:
+      use_cases:
+        - case: "PR Review"
+          strategy: "Temporary Clone"
+          reason: "Complete isolation"
+
+        - case: "Testing experimental changes"
+          strategy: "Temporary Clone"
+          reason: "Can break things safely"
+
+        - case: "Comparing multiple branches"
+          strategy: "Multiple clones"
+          reason: "Test simultaneously"
+
+        - case: "Quick validation"
+          strategy: "Git Stash (careful!)"
+          reason: "Fast but risky"
+
+    anti_patterns:
+      - anti_pattern: "Testing directly in main repository"
+        risks:
+          - "Accidental commits"
+          - "Git history pollution"
+          - "Difficult cleanup"
+          - "Build artifacts in repo"
+          - "Lost work if stash messed up"
+
+      - anti_pattern: "Using master branch for experiments"
+        risks:
+          - "Mix experimental with production"
+          - "Hard to undo"
+          - "Git state confusion"
+
+      - anti_pattern: "Forgetting which repo you're in"
+        risks:
+          - "Modifying wrong repository"
+          - "Commits in wrong branch"
+          - "Lost work"
+
+    references:
+      - title: "Git Worktree Documentation"
+        url: "https://git-scm.com/docs/git-worktree"
+
+      - title: "Git Clone Documentation"
+        url: "https://git-scm.com/docs/git-clone"
+
+      - title: "PR6_REVIEW.md"
+        description: "Real-world example of isolated testing"
+
+languages: [en]
