@@ -14,8 +14,10 @@ echo "🔧 Setting up Shared KB with sparse checkout..."
 echo ""
 
 # Configuration
-SHARED_KB_URL="https://github.com/ozand/shared-knowledge-base.git"
-SHARED_KB_DIR="docs/knowledge-base/shared"
+# Can be overridden via environment variable:
+# SHARED_KB_URL=https://github.com/custom/repo.git bash setup-shared-kb-sparse.sh
+SHARED_KB_URL="${SHARED_KB_URL:-https://github.com/ozand/shared-knowledge-base.git}"
+SHARED_KB_DIR="${SHARED_KB_DIR:-docs/knowledge-base/shared}"
 
 # Check if already exists
 if [ -d "$SHARED_KB_DIR/.git" ]; then

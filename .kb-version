@@ -4,13 +4,13 @@
 # Used for version comparison and update notifications.
 
 version: 3.1
-commit: 2896d4a
+commit: ea3afcf
 commit_date: "2026-01-06"
-commit_message: "Add sparse checkout setup for submodules to exclude Curator content"
+commit_message: "Add VPS migration v2 to v3 analysis and success example to KB-UPDATE-001"
 
 statistics:
-  total_commits: 47
-  universal_patterns: 27
+  total_commits: 53
+  universal_patterns: 24
   tech_patterns: 45
   total_entries: 72
 
@@ -29,10 +29,28 @@ features:
   - "Multi-entry key support (errors + patterns)"
   - "Curator Decision Framework"
   - "Role separation enforcement"
+  - "Migration examples and troubleshooting guides"
+  - "Clean documentation structure"
 
 last_major_updates:
   - date: "2026-01-06"
-    feature: "Sparse checkout setup scripts"
+    feature: "VPS migration v2 to v3 analysis + KB-UPDATE-001 example_3"
+    commit: "ea3afcf"
+
+  - date: "2026-01-06"
+    feature: "Documentation audit - README paths updated, archive created"
+    commit: "ea3afcf"
+
+  - date: "2026-01-06"
+    feature: "Sparse checkout setup scripts (configurable URLs)"
+    commit: "ea3afcf"
+
+  - date: "2026-01-06"
+    feature: "Archive structure - 7 analysis files moved"
+    commit: "ea3afcf"
+
+  - date: "2026-01-06"
+    feature: "Sparse checkout setup for submodules"
     commit: "2896d4a"
 
   - date: "2026-01-06"
@@ -42,10 +60,6 @@ last_major_updates:
   - date: "2026-01-06"
     feature: "Curator Decision Framework (CURATOR-DECISION-001)"
     commit: "de93da6"
-
-  - date: "2026-01-06"
-    feature: "Update mechanism analysis"
-    commit: "99f9736"
 
 compatibility:
   min_agent_version: "1.0"

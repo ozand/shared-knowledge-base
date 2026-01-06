@@ -205,7 +205,7 @@ This file was detected during KB validation or migration.
 ### References
 
 - [YAML Syntax Guide](https://yaml.org/spec/1.2/spec.html)
-- [KB Validation Guide](FOR_CLAUDE_CODE.md)
+- [KB Validation Guide](for-claude-code/README.md)
 
 ---
 
@@ -275,8 +275,8 @@ python tools/kb.py init-metadata
 
 ### References
 
-- [Metadata System](METADATA_ARCHITECTURE.md)
-- [FOR_CLAUDE_CODE.md](FOR_CLAUDE_CODE.md)
+- [Metadata System](curator/metadata/ARCHITECTURE.md)
+- [Claude Code Guide](for-claude-code/README.md)
 
 ---
 

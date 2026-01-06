@@ -113,14 +113,14 @@ git clone https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base
 
 ### 📚 For Knowledge Base Curators
 
-**Are you maintaining this knowledge base?** See the [Curator Documentation Index](CURATOR_DOCS_INDEX.md) for:
+**Are you maintaining this knowledge base?** See the [Curator Documentation Index](curator/INDEX.md) for:
 
-- 🎯 **[AGENT.md](AGENT.md)** - Curator role definition and responsibilities
-- 🛠️ **[SKILLS.md](SKILLS.md)** - Available skills (audit-quality, find-duplicates, research-enhance, etc.)
-- 📋 **[WORKFLOWS.md](WORKFLOWS.md)** - Standard operating procedures
-- ⭐ **[QUALITY_STANDARDS.md](QUALITY_STANDARDS.md)** - Entry quality rubric (0-100)
-- 💬 **[PROMPTS.md](PROMPTS.md)** - Reusable AI prompt templates
-- 🚀 **[README_CURATOR.md](README_CURATOR.md)** - Quick start guide for curators
+- 🎯 **[AGENT.md](curator/AGENT.md)** - Curator role definition and responsibilities
+- 🛠️ **[SKILLS.md](curator/SKILLS.md)** - Available skills (audit-quality, find-duplicates, research-enhance, etc.)
+- 📋 **[WORKFLOWS.md](curator/WORKFLOWS.md)** - Standard operating procedures
+- ⭐ **[QUALITY_STANDARDS.md](curator/QUALITY_STANDARDS.md)** - Entry quality rubric (0-100)
+- 💬 **[PROMPTS.md](curator/PROMPTS.md)** - Reusable AI prompt templates
+- 🚀 **[README.md](curator/README.md)** - Quick start guide for curators
 
 **Key capabilities:**
 - Quality assurance and validation
@@ -308,21 +308,21 @@ Powered by SQLite FTS5.
 
 **Getting Started:**
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[FOR_CLAUDE_CODE.md](FOR_CLAUDE_CODE.md)** - Complete guide for Claude Code (v3.0)
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment instructions
+- **[for-claude-code/README.md](for-claude-code/README.md)** - Complete guide for Claude Code (v3.0)
+- **[README_INTEGRATION.md](README_INTEGRATION.md)** - Integration guide for new projects
 
 **For Curators:**
-- **[CURATOR_DOCS_INDEX.md](CURATOR_DOCS_INDEX.md)** - Documentation index
-- **[AGENT.md](AGENT.md)** - Curator role definition
-- **[SKILLS.md](SKILLS.md)** - All available skills
-- **[WORKFLOWS.md](WORKFLOWS.md)** - Standard procedures
-- **[QUALITY_STANDARDS.md](QUALITY_STANDARDS.md)** - Quality rubric (0-100)
-- **[PROMPTS.md](PROMPTS.md)** - Reusable AI prompts
+- **[curator/INDEX.md](curator/INDEX.md)** - Documentation index
+- **[curator/AGENT.md](curator/AGENT.md)** - Curator role definition
+- **[curator/SKILLS.md](curator/SKILLS.md)** - All available skills
+- **[curator/WORKFLOWS.md](curator/WORKFLOWS.md)** - Standard procedures
+- **[curator/QUALITY_STANDARDS.md](curator/QUALITY_STANDARDS.md)** - Quality rubric (0-100)
+- **[curator/PROMPTS.md](curator/PROMPTS.md)** - Reusable AI prompts
 
 **Technical:**
-- **[METADATA_ARCHITECTURE.md](METADATA_ARCHITECTURE.md)** - Metadata system design
-- **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** - Implementation details
-- **[PHASE3_SUMMARY.md](PHASE3_SUMMARY.md)** - Phase 3 features
+- **[curator/metadata/ARCHITECTURE.md](curator/metadata/ARCHITECTURE.md)** - Metadata system design
+- **[curator/metadata/IMPLEMENTATION.md](curator/metadata/IMPLEMENTATION.md)** - Implementation details
+- **[curator/metadata/PHASE3.md](curator/metadata/PHASE3.md)** - Phase 3 features
 - **Repository:** https://github.com/ozand/shared-knowledge-base
 
 ### License
