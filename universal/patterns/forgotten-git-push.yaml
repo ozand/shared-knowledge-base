@@ -1,0 +1,470 @@
+# Forgotten Git Push Pattern
+# Common issue: commits not pushed to remote repository
+
+version: "1.0"
+category: "git-workflow"
+last_updated: "2026-01-06"
+
+patterns:
+  - id: "GITHUB-007"
+    title: "Forgotten Git Push - Local Commits Not Synced to Remote"
+    severity: "medium"
+    scope: "universal"
+    tags: ["git", "push", "remote", "sync", "workflow", "github", "collaboration"]
+
+    problem: |
+      Developers commit changes locally but forget to push to remote repository.
+      This causes confusion when team members don't see the commits on GitHub.
+
+      **Real example:**
+      User: "проверь, я не вижу ни каких коммиты на GitHub"
+
+      Investigation:
+      ```bash
+      git status
+      # Output: "Your branch is ahead of 'origin/main' by 39 commits"
+      # Issue: 39 local commits not pushed!
+      ```
+
+      **Impact:**
+      - Team members don't see changes
+      - CI/CD not triggered
+      - Pull requests delayed
+      - Code review blocked
+      - Deployments delayed
+      - Collaboration confusion
+
+    symptoms:
+      - User says "I don't see commits on GitHub"
+      - git status shows "ahead of origin/main by N commits"
+      - Team members ask "where are your changes?"
+      - GitHub page shows older commits
+      - CI/CD pipeline not running
+      - Pull requests appear empty
+
+    root_cause: |
+      1. **Workflow disconnect:** Developers trained to `git commit` but not `git push`
+      2. **No explicit reminder:** Git status message not noticed
+      3. **Multiple local commits:** Batch work creates many commits before push
+      4. **Network issues:** Push fails, not retried
+      5. **Forgetfulness:** Simply forgot after commit
+      6. **Long work sessions:** Many commits made, push overlooked
+
+      **Why this happens:**
+      - Git commit feels like "saving" (mental model = save)
+      - Push feels like "sharing" (deferred action)
+      - Focus on coding, not workflow
+      - Git status warning not prominent enough
+      - No automated push configured
+
+    solution: |
+      **Prevention and Detection Strategies:**
+
+      ## Strategy 1: Pre-Commit Hook Reminder (RECOMMENDED)
+
+      Add automatic reminder after commit:
+
+      ```bash
+      # .git/hooks/post-commit
+      #!/bin/bash
+      echo "⚠️  COMMIT LOCAL ONLY"
+      echo "Remember to: git push"
+      echo ""
+      git status
+      ```
+
+      Make executable:
+      ```bash
+      chmod +x .git/hooks/post-commit
+      ```
+
+      ## Strategy 2: Automated Push
+
+      Option A: Push immediately after commit
+      ```bash
+      # .git/hooks/post-commit
+      git push
+      ```
+
+      Option B: Alias for commit+push
+      ```bash
+      # ~/.gitconfig or .git/config
+      [alias]
+        cp = "!git commit -av && git push"
+      ```
+
+      Usage:
+      ```bash
+      git cp -m "My commit message"
+      ```
+
+      ## Strategy 3: Verification Before Leaving
+
+      **Before closing editor/ending workday:**
+      ```bash
+      # Check if ahead of remote
+      git status
+
+      # If shows "ahead of origin/main by N commits":
+      git push
+      ```
+
+      ## Strategy 4: Git Prompt Enhancement
+
+      Add branch status to command prompt:
+
+      **Bash (~/.bashrc):**
+      ```bash
+      parse_git_branch() {
+        git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+      }
+
+      parse_git_ahead() {
+        local status=$(git status -sb 2>/dev/null)
+        if [[ $status == *"ahead"* ]]; then
+          local ahead=$(echo "$status" | grep "ahead" | sed 's/.*ahead \([0-9]*\).*/\1/')
+          echo " ⬆️ $ahead"
+        fi
+      }
+
+      PS1='\u@\h:\w$(parse_git_branch)$(parse_git_ahead)$ '
+      ```
+
+      Shows: `user@host:path(main ⬆️ 39)$`
+
+    detection:
+      automated_check: |
+        #!/bin/bash
+        # Check for unpushed commits
+        LOCAL=$(git rev-parse @)
+        REMOTE=$(git rev-parse @{u})
+        BASE=$(git merge-base @ @{u})
+
+        if [ $LOCAL != $REMOTE ]; then
+          if [ $LOCAL = $BASE ]; then
+            echo "❌ BEHIND: Need to pull"
+          elif [ $REMOTE = $BASE ]; then
+            AHEAD=$(git rev-list --count @{u}..@)
+            echo "⚠️  AHEAD: $AHEAD commits not pushed"
+            echo "Run: git push"
+          fi
+        fi
+
+      usage: |
+        # Add to .git/hooks/pre-push or run manually
+        bash check-unpushed.sh
+
+    verification_checklist:
+      - check: "Check git status before ending work"
+        command: "git status"
+        expected: "Your branch is up to date with 'origin/main'"
+
+      - check: "Verify commits appear on GitHub"
+        action: "Refresh GitHub page, check commits list"
+        expected: "Latest commits visible"
+
+      - check: "Team members confirm visibility"
+        verification: "Ask teammate: 'Can you see my commits?'"
+        expected: "Yes, I see them"
+
+    real_world_examples:
+      example_1_fortynine_commits_not_pushed:
+        scenario: "Agent works on KB patterns for 2 hours"
+
+        what_happened:
+          - "Agent created multiple patterns"
+          - "Made 39 commits locally"
+          - "Closed session without pushing"
+          - "User checked GitHub: no commits visible"
+
+        user_message: "проверь, я не вижу ни каких коммиты на GitHub"
+
+        investigation:
+          - step: "Checked git status"
+            result: "Your branch is ahead of 'origin/main' by 39 commits"
+
+          - step: "Identified root cause"
+            result: "All commits local only, never pushed"
+
+          - step: "Ran git push"
+            result: "Successfully pushed 39 commits"
+            output: "c023036..997553e  main -> main"
+
+          - step: "Verified on GitHub"
+            result: "✅ All commits now visible"
+
+        lesson: |
+          Always push commits immediately after finishing work.
+          Don't rely on manual checks.
+          Consider automated push via post-commit hook.
+
+      example_2_collaboration_confusion:
+        scenario: "Team member waiting for PR review"
+
+        what_happened:
+          - "Developer: Pushed commits, created PR"
+          - "Reviewer: Checked GitHub, no commits visible"
+          - "Reviewer: Asked 'where is your PR?'"
+          - "Developer: 'I just created it!'"
+          - "Investigation: Developer forgot git push after local commit"
+
+        time_lost: "2 hours of confusion"
+
+        solution_applied:
+          - "Developer ran: git push"
+          - "PR appeared on GitHub"
+          - "Review proceeded"
+
+        prevention: |
+          - Added post-commit hook reminder
+          - Created alias: git cp (commit + push)
+          - Enhanced git prompt with ahead count
+
+      example_3_ci_cd_not_triggered:
+        scenario: "Expecting CI/CD pipeline to run"
+
+        what_happened:
+          - "Developer: Committed feature, waited for CI"
+          - "30 minutes passed: No CI run"
+          - "Investigation: Commits not on GitHub"
+          - "Problem: CI triggers on GitHub push, not local commit"
+
+        impact: "30-minute delay in testing"
+
+        root_cause: |
+          Mental model: "commit = save & share"
+          Reality: "commit = save locally, push = share"
+
+        solution: |
+          - Educated team on git workflow
+          - Configured automatic push
+          - Added CI status indicator to git prompt
+
+    troubleshooting:
+      issue_push_fails:
+        symptom: "git push rejected"
+
+        possible_causes:
+          - cause: "Remote has new commits"
+            solution: "git pull --rebase first"
+            command: |
+              git pull --rebase
+              git push
+
+          - cause: "Authentication failure"
+            solution: "Check credentials, use SSH token"
+            command: |
+              git remote -v
+              # Update with token if needed
+
+          - cause: "Network timeout"
+            solution: "Retry push, check internet"
+            command: |
+              git push
+              # If fails, check connection
+              ping github.com
+
+      issue_many_commits_ahead:
+        symptom: "'ahead of origin/main by 50+ commits'"
+
+        explanation: |
+          Many local commits accumulated without pushing.
+          Normal if working offline or intentionally batching.
+
+        solution: |
+          # Push all at once
+          git push
+
+          # Or push in batches if worried about failures
+          git push origin HEAD~10:main  # Push first 10
+          git push origin HEAD~20:HEAD~10  # Push next 10
+          git push origin main  # Push remaining
+
+      issue_force_push_needed:
+        symptom: "Push rejected, diverged histories"
+
+        diagnosis:
+          - "Someone else force pushed?"
+          - "Local rebases gone wrong?"
+          - "Commits rewritten?"
+
+        caution: |
+          ⚠️ Force push can LOSE other people's commits!
+          Only use on personal branches or with team coordination.
+
+        solution:
+          - "Check remote: git fetch origin && git log HEAD..origin/main"
+          - "If remote has commits you need: git pull --rebase"
+          - "If you must override: git push --force-with-lease"
+          - "Better: git push --force-with-lease instead of --force"
+
+    best_practices:
+      - practice: "Push immediately after commit"
+        reason: "Prevents accumulation, makes commits visible"
+        tools: "Use post-commit hook for automation"
+
+      - practice: "Use git status to verify"
+        frequency: "Before ending work, before creating PR"
+        check: "Should show 'up to date with origin/main'"
+
+      - practice: "Enhance git prompt"
+        reason: "Visual reminder of unpushed commits"
+        tools: "Show ahead count in prompt"
+
+      - practice: "Configure automated push for personal projects"
+        reason: "One less thing to remember"
+        caution: "Not recommended for collaborative projects (can push broken code)"
+
+      - practice: "Team education on git workflow"
+        topics: |
+          - commit vs push difference
+          - How to check unpushed commits
+          - What to do when push fails
+          - Review workflow expectations
+
+    anti_patterns:
+      - pattern: "Work offline for days, push all at once"
+        consequence: "Massive push, conflicts likely, team confusion"
+        better: "Push frequently throughout the day"
+
+      - pattern: "Ignore 'ahead of origin' warning"
+        consequence: "Team doesn't see changes, collaboration blocked"
+        better: "Treat warning as action item: push now"
+
+      - pattern: "Commit but forget to mention in chat"
+        consequence: "Team doesn't know to check GitHub"
+        better: "After push, notify team: 'Pushed commits, ready for review'"
+
+      - pattern: "Rely on memory for pushing"
+        consequence: "Human error, forgetting inevitable"
+        better: "Automate with hooks or reminders"
+
+    code_example:
+      pre_commit_hook_reminder:
+        file: ".git/hooks/post-commit"
+        mode: "0755"
+        content: |
+          #!/bin/bash
+          # Post-commit reminder to push
+
+          # Get number of unpushed commits
+          AHEAD=$(git rev-list --count @{u}..@ 2>/dev/null)
+
+          if [ -n "$AHEAD" ] && [ "$AHEAD" -gt 0 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "  ⚠️  COMMIT LOCAL ONLY"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "  $AHEAD commit(s) not pushed to remote"
+            echo ""
+            echo "  Push now:"
+            echo "    git push"
+            echo ""
+            echo "  Or push later:"
+            echo "    git push"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+          fi
+
+      automated_push:
+        file: ".git/hooks/post-commit"
+        mode: "0755"
+        content: |
+          #!/bin/bash
+          # Automatically push after commit
+          # CAUTION: Only use for personal projects!
+
+          git push
+
+      commit_push_alias:
+        file: ".git/config"
+        section: "[alias]"
+        content: |
+          [alias]
+            cp = "!git commit -av && git push"
+            publish = "!git push -u"
+            sync = "!git pull --rebase && git push"
+
+      verification_script:
+        file: "check-git-push.sh"
+        content: |
+          #!/bin/bash
+          # Verify all commits are pushed
+
+          echo "Checking git push status..."
+          echo ""
+
+          # Get local and remote refs
+          LOCAL=$(git rev-parse @)
+          REMOTE=$(git rev-parse @{u} 2>/dev/null)
+          BASE=$(git merge-base @ @{u} 2>/dev/null)
+
+          if [ $LOCAL = $REMOTE ]; then
+            echo "✅ Up to date: All commits pushed"
+            exit 0
+          fi
+
+          if [ $LOCAL = $BASE ]; then
+            echo "❌ BEHIND: Need to pull first"
+            echo "   Run: git pull"
+            exit 1
+          fi
+
+          if [ $REMOTE = $BASE ]; then
+            AHEAD=$(git rev-list --count @{u}..@)
+            echo "⚠️  AHEAD: $AHEAD commits not pushed"
+            echo ""
+            echo "Push now:"
+            echo "   git push"
+            exit 1
+          fi
+
+    lessons_learned: |
+      From analyzed session (2026-01-06):
+
+      What happened:
+      - Agent created multiple patterns during session
+      - Made 39 local commits
+      - User didn't see commits on GitHub
+      - Message: "проверь, я не вижу ни каких коммиты"
+
+      Root cause:
+      - Agent focused on creating patterns
+      - Committed frequently (good practice)
+      - Forgot to push at end (workflow gap)
+      - User expected immediate visibility
+
+      Resolution:
+      - Ran: git status
+      - Saw: "ahead of origin/main by 39 commits"
+      - Ran: git push
+      - Result: All 39 commits visible on GitHub ✅
+
+      Prevention for future:
+      - Add post-commit reminder hook
+      - Consider automated push for solo work
+      - Add push verification to session end checklist
+      - Educate users on commit vs push difference
+
+    related_patterns:
+      - GITHUB-005 (Git Push Rejected - Diverged Histories)
+      - GITHUB-006 (GitHub API Timeout and Connectivity)
+      - AGENT-WORKFLOW-001 (Knowledge Base Issue Resolution)
+      - GIT-SUBMODULE-001 (Submodule update workflow)
+
+    references:
+      - "Git docs: https://git-scm.com/docs/git-push"
+      - "GitHub flow: https://guides.github.com/introduction/flow/"
+      - "Session analysis: Agent KB update session (2026-01-06)"
+
+    metadata:
+      created_at: "2026-01-06"
+      author: "Shared KB Curator"
+      source: "Real incident analysis"
+      reusable: true
+      severity_level: 3
+      difficulty: "elementary"
+      pattern_type: "workflow"
+      applicable_to: ["git-users", "teams", "collaborative-projects"]
