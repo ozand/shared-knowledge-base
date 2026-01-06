@@ -90,27 +90,146 @@ patterns:
       ```
 
     root_cause: |
-      1. **Unclear Role Boundaries:**
-         - AGENT-HANDOFF-001 didn't explicitly forbid direct commits
-         - Agents assume "if I can improve it, I should"
+      1. **Role Boundary Confusion:**
+         - Agents unclear on what constitutes "Curator work"
+         - Not clear distinction between "contributing" vs "bypassing"
+         - Missing understanding of AGENT-HANDOFF-001 workflow
 
-      2. **Missing Enforcement:**
-         - No technical barrier to direct commits
-         - No pre-commit hooks to block non-curators
-         - No permission system
+      2. **Well-Intentioned Overstepping:**
+         - Agents try to be helpful
+         - Don't realize process violations
+         - Think "contributing" = "doing Curator's job"
 
-      3. **Ambiguous "Contribution" Term:**
-         - Agents think "creating PR" = contribution
-         - Actually: "creating issue" = contribution
+      3. **Pattern Enforcement Gaps:**
+         - No clear "stop here" markers
+         - Ambiguous "helpful suggestions" boundaries
 
-      4. **Lack of Clear Warnings:**
-         - No "DO NOT COMMIT" warnings in KB
-         - No clear signage
+    clarification:
+      title: "CRITICAL: What IS Allowed vs What IS NOT"
 
-      5. **Agent Autonomy Mindset:**
-         - Agents trained to be proactive
-         - Agents trained to fix problems directly
-         - Doesn't apply to shared resources
+      allowed_actions:
+        - action: "Create GitHub Issue for universal patterns"
+          workflow: "AGENT-HANDOFF-001"
+          description: |
+            Project Agents CAN and SHOULD create GitHub Issues
+            when they discover UNIVERSAL patterns worth sharing.
+
+          steps: |
+            1. Discover universal pattern
+            2. Create YAML entry
+            3. Create GitHub issue in shared-knowledge-base
+            4. Follow AGENT-HANDOFF-001 format (attribution, labels)
+            5. WAIT for Curator review (don't merge yourself!)
+
+          why_allowed: |
+            This is NOT bypassing Curator. This is SUBMITTING for Curator review.
+            Curator still makes final decision (accept/fix/reject).
+            Curator still does the commit.
+            Curator maintains quality control.
+
+          examples:
+            - ✅ Issue #10: KBEntry.from_yaml() indexing bug → Accepted
+            - ✅ Issue #9: kb_config.py module → Accepted
+            - ⚠️ Issue #8: 5 patterns from PARSER → Requested fixes
+
+        - action: "Propose improvements via GitHub Issues"
+          workflow: "AGENT-HANDOFF-001"
+          description: |
+            Suggest enhancements, new patterns, bug fixes via issues.
+            Curator evaluates and decides.
+
+          why_allowed: "Review process maintained, Curator controls integration"
+
+      forbidden_actions:
+        - action: "Create Pull Request directly"
+          why_wrong: |
+            Pull Request = "I did the work, merge it now!"
+            This bypasses Curator review process.
+            Curator can't evaluate before merge.
+
+          correct_approach: |
+            Create GitHub Issue instead:
+            "I have this pattern, please review and merge if acceptable"
+
+        - action: "Commit directly to shared-knowledge-base"
+          why_wrong: "No review, no quality gate, bypasses Curator entirely"
+
+        - action: "Suggest or prepare Curator actions"
+          why_wrong: |
+            Even SUGGESTING Curator work crosses role boundaries.
+            Let Curator decide workflow.
+
+          wrong_example: |
+            "Next Steps (Optional - for Curator Agent):
+            gh issue create --title ..."
+
+          correct_approach: |
+            "✅ Pattern extraction complete
+            ✅ Documented in project KB
+            ⏸️ Role boundary: Project Agent work complete"
+
+      key_distinction:
+        submitting_vs_bypassing:
+          submitting:
+            action: "Create GitHub Issue with pattern"
+            attitude: "Here's my contribution, please review"
+            role: "Project Agent"
+            curator_control: "Full - Curator decides"
+
+          bypassing:
+            action: "Create PR or commit directly"
+            attitude: "I did Curator's job, merge it"
+            role: "Taking Curator role"
+            curator_control: "None - already done"
+
+      examples_table:
+        columns: ["Action", "Allowed?", "Workflow", "Curator Role"]
+        rows:
+          - row:
+              action: "Create GitHub Issue with pattern"
+              allowed: "✅ YES"
+              workflow: "AGENT-HANDOFF-001"
+              curator: "Reviews and decides (accept/fix/reject)"
+
+          - row:
+              action: "Create Pull Request"
+              allowed: "❌ NO"
+              workflow: "VIOLATION"
+              curator: "Bypassed, no review before merge"
+
+          - row:
+              action: "Commit directly to repo"
+              allowed: "❌ NO"
+              workflow: "VIOLATION"
+              curator: "Bypassed entirely"
+
+          - row:
+              action: "Suggest Curator commands"
+              allowed: "❌ NO"
+              workflow: "ROLE OVERSTEP"
+              curator: "Curator decides own workflow"
+
+          - row:
+              action: "Document in project KB"
+              allowed: "✅ YES"
+              workflow: "Project-local"
+              curator: "None (project KB, not shared)"
+
+      real_world_clarification:
+        case_1_parser_pr4:
+          what_happened: "Agent created PR directly"
+          violation: "❌ Created PR, not Issue"
+          correct: "Should have created Issue for Curator review"
+
+        case_2_app_sw_suggestion:
+          what_happened: "Agent suggested gh issue create command"
+          violation: "❌ Suggested Curator actions (gh command)"
+          correct: "Stop at documentation, don't suggest Curator workflow"
+
+        case_3_correct_workflow:
+          what_happened: "Agent discovers pattern, creates Issue"
+          compliance: "✅ Follows AGENT-HANDOFF-001"
+          result: "Curator reviews, decides, integrates"
 
     solution: |
       **Multi-Layer Role Enforcement System:**
