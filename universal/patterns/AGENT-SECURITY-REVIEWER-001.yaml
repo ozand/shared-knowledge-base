@@ -1,95 +1,104 @@
-version: "1.0"
-category: "claude-code"
-last_updated: "2026-01-07"
-
+version: '1.0'
+category: claude-code
+last_updated: '2026-01-07'
 patterns:
-  - id: "AGENT-SECURITY-REVIEWER-001"
-    title: "Security Reviewer Agent - Security Validation Specialist"
-    severity: "critical"
-    scope: "universal"
+- id: AGENT-SECURITY-REVIEWER-001
+  title: Security Reviewer Agent - Security Validation Specialist
+  severity: critical
+  scope: universal
+  problem: 'Security vulnerabilities in code lead to:
 
-    problem: |
-      Security vulnerabilities in code lead to:
-      - Data breaches
-      - Unauthorized access
-      - Injection attacks (SQL, XSS, CSRF)
-      - Authentication bypass
-      - Compliance violations (GDPR, PCI DSS)
+    - Data breaches
 
-    solution: |
-      Security Reviewer Agent provides comprehensive security assessment:
-      - Authentication and authorization validation
-      - Input sanitization verification
-      - Injection attack prevention
-      - Data encryption verification
-      - Compliance checking
-      - Vulnerability scanning
+    - Unauthorized access
 
-    key_checks:
-      authentication:
-        - Password hashing (bcrypt, Argon2)
-        - JWT implementation secure
-        - Session management proper
-        - Multi-factor auth where needed
-        - Token storage secure (HTTP-only cookies)
+    - Injection attacks (SQL, XSS, CSRF)
 
-      authorization:
-        - RBAC implemented correctly
-        - Endpoint protection verified
-        - Admin actions protected
-        - Resource ownership checked
+    - Authentication bypass
 
-      injection_prevention:
-        - SQL injection: Parameterized queries
-        - XSS: Output encoding, CSP headers
-        - CSRF: Token validation
-        - Command injection: No shell commands with user input
+    - Compliance violations (GDPR, PCI DSS)
 
-      data_protection:
-        - TLS 1.3 for all communication
-        - Encryption at rest (database, files)
-        - Secrets in environment variables
-        - No hardcoded credentials
-        - Sensitive data logged securely
+    '
+  solution: 'Security Reviewer Agent provides comprehensive security assessment:
 
-      compliance:
-        - PCI DSS: Payment card data handling
-        - GDPR: Data privacy, right to deletion
-        - HIPAA: Protected health information (if applicable)
+    - Authentication and authorization validation
 
-    checklist:
-      - ✅ Authentication implemented correctly
-      - ✅ Authorization checks on all endpoints
-      - ✅ Input validation and sanitization
-      - ✅ SQL injection prevention (ORM/parameterized)
-      - ✅ XSS prevention (output encoding)
-      - ✅ CSRF protection (tokens)
-      - ✅ TLS encryption configured
-      - ✅ Secrets not hardcoded
-      - ✅ Sensitive data encrypted at rest
-      - ✅ Error messages don't leak info
-      - ✅ Rate limiting configured
-      - ✅ Security headers set (CSP, HSTS, etc.)
-      - ✅ Dependencies scanned for vulnerabilities
-      - ✅ Compliance requirements met
+    - Input sanitization verification
 
-    criteria:
-      approve: "No critical or high-severity issues"
-      minor_fixes: "Low-severity issues, documentation gaps"
-      major_fixes: "Medium-severity issues, some vulnerabilities"
-      reject: "Critical or high-severity vulnerabilities found"
+    - Injection attack prevention
 
-    common_vulnerabilities:
-      - OWASP Top 10 (injection, broken auth, XSS, etc.)
-      - Hardcoded secrets/keys
-      - Missing authentication on endpoints
-      - Insecure direct object references (IDOR)
-      - Security misconfiguration
-      - Insufficient logging/monitoring
+    - Data encryption verification
 
-    tags: ["claude-code", "agents", "security-reviewer", "security", "vulnerability", "compliance"]
+    - Compliance checking
 
-    related_patterns:
-      - "SPECIALIZED-AGENTS-001"
-      - "AGENT-TECH-LEAD-001"
-      - "AGENT-BACKEND-ENGINEER-001"
+    - Vulnerability scanning
+
+    '
+  key_checks:
+    authentication:
+    - Password hashing (bcrypt, Argon2)
+    - JWT implementation secure
+    - Session management proper
+    - Multi-factor auth where needed
+    - Token storage secure (HTTP-only cookies)
+    authorization:
+    - RBAC implemented correctly
+    - Endpoint protection verified
+    - Admin actions protected
+    - Resource ownership checked
+    injection_prevention:
+    - SQL injection: Parameterized queries
+    - XSS: Output encoding, CSP headers
+    - CSRF: Token validation
+    - Command injection: No shell commands with user input
+    data_protection:
+    - TLS 1.3 for all communication
+    - Encryption at rest (database, files)
+    - Secrets in environment variables
+    - No hardcoded credentials
+    - Sensitive data logged securely
+    compliance:
+    - PCI DSS: Payment card data handling
+    - GDPR: Data privacy, right to deletion
+    - HIPAA: Protected health information (if applicable)
+  checklist:
+  - ✅ Authentication implemented correctly
+  - ✅ Authorization checks on all endpoints
+  - ✅ Input validation and sanitization
+  - ✅ SQL injection prevention (ORM/parameterized)
+  - ✅ XSS prevention (output encoding)
+  - ✅ CSRF protection (tokens)
+  - ✅ TLS encryption configured
+  - ✅ Secrets not hardcoded
+  - ✅ Sensitive data encrypted at rest
+  - ✅ Error messages don't leak info
+  - ✅ Rate limiting configured
+  - ✅ Security headers set (CSP, HSTS, etc.)
+  - ✅ Dependencies scanned for vulnerabilities
+  - ✅ Compliance requirements met
+  criteria:
+    approve: No critical or high-severity issues
+    minor_fixes: Low-severity issues, documentation gaps
+    major_fixes: Medium-severity issues, some vulnerabilities
+    reject: Critical or high-severity vulnerabilities found
+  common_vulnerabilities:
+  - OWASP Top 10 (injection, broken auth, XSS, etc.)
+  - Hardcoded secrets/keys
+  - Missing authentication on endpoints
+  - Insecure direct object references (IDOR)
+  - Security misconfiguration
+  - Insufficient logging/monitoring
+  tags:
+  - claude-code
+  - agents
+  - security-reviewer
+  - security
+  - vulnerability
+  - compliance
+  related_patterns:
+  - SPECIALIZED-AGENTS-001
+  - AGENT-TECH-LEAD-001
+  - AGENT-BACKEND-ENGINEER-001
+  domains:
+    primary: security
+    secondary: []

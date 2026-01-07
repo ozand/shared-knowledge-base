@@ -1,1514 +1,1232 @@
-# Claude Code Files Organization Pattern
-# Complete guide for .claude/ directory structure, SKILLS, AGENTS, MEMORY, and other service files
-
-version: "1.0"
-category: "claude-code-organization"
-last_updated: "2026-01-07"
-
+version: '1.0'
+category: claude-code-organization
+last_updated: '2026-01-07'
 patterns:
-  - id: "CLAUDE-CODE-FILES-ORGANIZATION-001"
-    title: "Claude Code Files Organization: Complete .claude/ Directory Structure"
-    severity: "high"
-    scope: "universal"
-    tags: ["claude-code", "organization", "skills", "agents", "memory", "structure", "best-practices"]
-
-    problem: |
-      Claude Code projects face organization challenges:
-      - No clear structure for .claude/ directory
-      - SKILLS, AGENTS, commands scattered and inconsistent
-      - Poor discoverability of custom capabilities
-      - Mixed concerns (project-specific vs team-shared vs personal)
-      - No progressive disclosure for complex configurations
-      - Token waste from loading unnecessary context
-      - Difficult to maintain and scale across team
-
-      Real scenarios:
-      - 20+ skills in flat directory → Claude can't find right one
-      - 1000-line CLAUDE.md → Token waste, hard to navigate
-      - Commands mixed with skills → Confusion, poor UX
-      - No separation between team/personal → Can't share effectively
-
-    impact: |
-      - **Discovery:** Skills/agents not found when needed
-      - **Maintenance:** Impossible to scale beyond 10 skills
-      - **Collaboration:** Team can't share configurations
-      - **Tokens:** Wasted on irrelevant context
-      - **Performance:** Slow startup, bloated context
-      - **UX:** Poor developer experience
-
-    solution:
-      code: |
-        # Production-ready .claude/ directory structure
-        .claude/
-        ├── CLAUDE.md                      # Project memory (navigation hub, ~300 lines)
-        ├── settings.json                  # Configuration (feature flags, enabled skills/agents)
-        │
-        ├── skills/                        # Reusable procedural knowledge
-        │   ├── testing/
-        │   │   ├── SKILL.md              # Metadata + instructions (200-500 lines)
-        │   │   ├── resources/            # Detailed content (loaded on-demand)
-        │   │   │   ├── patterns.md
-        │   │   │   ├── examples/
-        │   │   │   └── templates/
-        │   │   └── scripts/              # Optional automation
-        │   ├── code-review/
-        │   ├── documentation/
-        │   └── refactoring/
-        │
-        ├── agents/                        # Autonomous agents (orchestrators)
-        │   ├── orchestrator.md           # Main coordinator
-        │   ├── code-review-agent.md      # Specialist agent
-        │   └── subagents/                # Specialist subagents
-        │       ├── researcher.md
-        │       ├── debugger.md
-        │       ├── validator.md
-        │       └── knowledge-curator.md
-        │
-        ├── commands/                      # Slash commands (prompt templates)
-        │   ├── test.md                   # /project:test
-        │   ├── review.md                 # /project:review
-        │   └── deploy.md                 # /project:deploy
-        │
-        ├── hooks/                         # Lifecycle automation (deterministic)
-        │   ├── session-setup.sh          # SessionStart: Environment setup
-        │   ├── validate-yaml.sh         # PreToolUse: Validate YAML edits
-        │   ├── quality-gate.sh           # PostToolUse: Quality checks
-        │   └── auto-commit.sh            # Stop: Auto-commit changes
-        │
-        ├── standards/                     # Team standards (single source of truth)
-        │   ├── architecture.md
-        │   ├── coding-standards.md
-        │   ├── testing-guidelines.md
-        │   └── api-standards.md
-        │
-        ├── references/                    # Reference documentation (progressive disclosure)
-        │   ├── patterns/
-        │   ├── apis/
-        │   └── troubleshooting.md
-        │
-        └── memory/                        # Persistent memory (optional)
-            ├── project-state.json        # Project decisions, context
-            └── session-history.json      # Cross-session memory
-
-        # Global (user-level) structure
-        ~/.claude/
-        ├── CLAUDE.md                      # Personal preferences (all projects)
-        ├── skills/                        # Personal skills (available everywhere)
-        │   ├── my-coding-style/
-        │   └── brand-guidelines/
-        └── settings.json                  # User-level config
-
-      explanation: |
-        **Core Principles:**
-
-        1. **Progressive Disclosure**
-           - CLAUDE.md = Navigation hub (~300 lines), references details
-           - SKILL.md = Overview + links, details in resources/
-           - Load details on-demand, not upfront
-
-        2. **Single Source of Truth**
-           - Each standard in ONE file
-           - All others reference it (no duplication)
-           - One authoritative source per topic
-
-        3. **Hierarchical Configuration**
-           ```
-           Enterprise → User → Project → Local
-           (most general) → (most specific)
-           ```
-
-        4. **Clear Separation of Concerns**
-           - SKILLS = Procedural knowledge (how to do X)
-           - AGENTS = Autonomous systems (independent workers)
-           - COMMANDS = Prompt templates (quick workflows)
-           - HOOKS = Deterministic automation (guaranteed execution)
-           - STANDARDS = Team rules (single source of truth)
-
-        5. **Token Efficiency**
-           - Metadata loaded at startup (30-50 tokens per skill)
-           - Full content loaded on-demand (when relevant)
-           - Scripts executed (not counted as tokens)
-
-        **File Size Guidelines:**
-        - CLAUDE.md: ~300 lines maximum
-        - SKILL.md: 200-500 lines
-        - AGENT.md: 300-800 lines
-        - COMMAND.md: 50-200 lines
-        - Hook scripts: <100 lines (fast execution)
-
-    best_practices:
-      - practice: "Keep CLAUDE.md lean (~300 lines)"
-        reason: "Acts as navigation hub, references detailed content"
-        anti_pattern: |
-          ❌ WRONG: 2000 lines with all details inline
-          ✅ CORRECT: 300 lines overview + @standards/ references
-
-      - practice: "Use progressive disclosure for skills"
-        reason: "Load metadata at startup, full content on-demand"
-        pattern: |
-          SKILL.md (300 lines)
-          ├─ When to use, key instructions
-          └─ @resources/patterns.md (detailed, loaded when needed)
-
-      - practice: "Consolidate related skills"
-        reason: "5 good skills > 20 micro-skills"
-        example: |
-          ✅ CORRECT: testing-skill/ (unit, integration, e2e)
-          ❌ WRONG: unit-test-skill/, integration-test-skill/, e2e-test-skill/
-
-      - practice: "Use hooks for automation, not prompts"
-        reason: "Hooks = guaranteed, prompts = probabilistic"
-        example: |
-          ✅ CORRECT: PostToolUse hook validates YAML
-          ❌ WRONG: "Please validate YAML" (Claude might forget)
-
-      - practice: "Single source of truth for standards"
-        reason: "Avoid duplication, prevent inconsistencies"
-        pattern: |
-          standards/testing.md (authoritative)
-          SKILL.md: "See @standards/testing.md for patterns"
-          AGENT.md: "Follow @standards/testing.md"
-
-    implementation:
-      phase_1_setup_structure:
-        title: "Create .claude/ directory structure"
-        effort: "30 minutes"
-        steps:
-          - step: "Create base directories"
-            command: |
-              mkdir -p .claude/{skills,agents,commands,hooks,standards,references}
-              chmod +x .claude/hooks/*.sh 2>/dev/null || true
-
-          - step: "Create CLAUDE.md (navigation hub)"
-            file: ".claude/CLAUDE.md"
-            content: |
-              # Project Name
-
-              ## Quick Overview
-              One-paragraph summary
-
-              ## Quick Start
-              One-command installation
-              For details: [QUICKSTART.md](QUICKSTART.md)
-
-              ## Architecture
-              See @standards/architecture.md
-
-              ## Workflow
-              See @standards/coding-standards.md
-
-              ## Commands
-              - /test - Run tests
-              - /review - Code review
-
-              ## Recent Decisions
-              - 2026-01-07: Adopted unified testing approach
-
-          - step: "Create settings.json"
-            file: ".claude/settings.json"
-            content: |
-              {
-                "skills.enabled": ["testing", "code-review", "documentation"],
-                "hooks": {
-                  "SessionStart": [{
-                    "command": ".claude/hooks/session-setup.sh"
-                  }],
-                  "PostToolUse": [{
-                    "matcher": "Edit:*.yaml|Write:*.yaml",
-                    "command": ".claude/hooks/validate-yaml.sh"
-                  }]
-                }
-              }
-
-      phase_2_create_skills:
-        title: "Create reusable skills"
-        effort: "2-4 hours per skill"
-        steps:
-          - step: "Identify repetitive tasks"
-            description: |
-              "What do you repeatedly explain to Claude?
-               Testing patterns? Code review rules? Documentation format?"
-
-          - step: "Create skill structure"
-            command: "mkdir -p .claude/skills/my-skill/{resources,scripts}"
-
-          - step: "Write SKILL.md"
-            file: ".claude/skills/my-skill/SKILL.md"
-            content: |
-              ---
-              name: my-skill
-              description: |
-                Does X when Y. Triggers when user asks for Z.
-                Outputs A with B format following project standards.
-              ---
-
-              # When to Use This Skill
-              - User asks for "X"
-              - Part of Y workflow
-              - Need Z output
-
-              # What This Skill Does
-              1. Analyze input
-              2. Generate output
-              3. Validate quality
-
-              # Key Instructions
-              See @resources/patterns.md for detailed patterns.
-              Use template: @resources/template.md
-
-              # Tools Used
-              - **Read**: Read source files
-              - **Write**: Create outputs
-
-          - step: "Create resources/"
-            files:
-              - ".claude/skills/my-skill/resources/patterns.md"
-              - ".claude/skills/my-skill/resources/examples/"
-
-          - step: "Test with evaluation-driven development"
-            description: |
-              "1. Create 3 evaluation scenarios
-               2. Test baseline (without skill)
-               3. Test with skill
-               4. Measure improvement
-               5. Iterate based on failures"
-
-      phase_3_create_agents:
-        title: "Create autonomous agents (if needed)"
-        effort: "1-2 days per agent"
-        steps:
-          - step: "Determine if agent is needed"
-            description: |
-              "Use AGENTS when:
-               - Task requires autonomy (no human in loop)
-               - Need iteration (plan changes based on results)
-               - Want parallelization (multiple tasks at once)
-               - Long-running service (hours/days/months)
-
-               Use SKILLS instead for:
-               - One-off tasks
-               - Quick workflows
-               - Simple procedural knowledge"
-
-          - step: "Create agent file"
-            file: ".claude/agents/my-agent.md"
-            content: |
-              ---
-              name: my-agent
-              description: |
-                Autonomous agent that performs X with Y goals.
-                Works independently with minimal supervision.
-              model: claude-opus-4  # or claude-sonnet-4 or claude-haiku-4
-              tools: [read, write, grep, execute]
-              timeout: 1h
-              ---
-
-              # Responsibilities
-              - [Task 1]
-              - [Task 2]
-              - [Task 3]
-
-              # Decision Rules
-              When uncertain, choose:
-              1. [Rule 1]
-              2. [Rule 2]
-              3. Escalate to human
-
-              # Success Criteria
-              ✓ Task completed
-              ✓ Output meets spec
-              ✓ Documented
-
-          - step: "Test agent thoroughly"
-            description: |
-              "1. Unit test: Test individual behaviors
-               2. Integration test: Test with other agents
-               3. E2E test: Full workflow
-               4. Monitor: Track success rate, errors, cost"
-
-      phase_4_create_commands:
-        title: "Create slash commands (quick workflows)"
-        effort: "30 minutes per command"
-        steps:
-          - step: "Identify repetitive workflows"
-            examples:
-              - "Code review workflow"
-              - "Testing workflow"
-              - "Deployment workflow"
-
-          - step: "Create command file"
-            file: ".claude/commands/my-workflow.md"
-            content: |
-              Please perform the following workflow:
-
-              ## Step 1: Analysis
-              Analyze the current state of $ARGUMENTS
-
-              ## Step 2: Planning
-              Create a plan for addressing identified issues
-
-              ## Step 3: Execution
-              Execute the plan step by step
-
-              ## Step 4: Verification
-              Verify all changes are correct
-
-              Remember to use /testing skill for test generation.
-
-          - step: "Test command"
-            description: |
-              "Use Claude Code with /my-workflow command
-               Verify workflow executes correctly
-               Iterate based on results"
-
-      phase_5_create_hooks:
-        title: "Create automation hooks"
-        effort: "1-2 hours per hook"
-        steps:
-          - step: "Identify automation opportunities"
-            examples:
-              - "SessionStart: Check KB installation"
-              - "PostToolUse: Validate YAML"
-              - "Stop: Auto-commit changes"
-
-          - step: "Create hook script"
-            file: ".claude/hooks/my-hook.sh"
-            content: |
-              #!/bin/bash
-              INPUT=$(cat)
-
-              # Your validation logic here
-              if [[ condition ]]; then
-                echo "✅ Check passed"
-                exit 0  # ALLOW
-              else
-                echo "❌ Check failed"
-                exit 2  # BLOCK
-              fi
-
-          - step: "Make executable and configure"
-            command: |
-              chmod +x .claude/hooks/my-hook.sh
-              # Add to .claude/settings.json hooks section
-
-          - step: "Test hook manually"
-            command: |
-              echo '{"tool_name":"Bash","tool_input":{"command":"test"}}' | ./.claude/hooks/my-hook.sh
-              echo "Exit code: $?"  # 0 = allow, 2 = block
-
-    directory_structure_complete:
-      title: "Complete Directory Structure"
-      description: "Full production-ready structure"
-
-      structure: |
-        .claude/                              # Project-level configuration (git)
-        ├── CLAUDE.md                        # Navigation hub (~300 lines)
-        │   ├── Overview (2-3 sentences)
-        │   ├── Quick start (1 command)
-        │   ├── Key features (bulleted)
-        │   ├── Documentation links
-        │   └── Recent decisions
-        │
-        ├── settings.json                    # Feature flags, enabled skills/agents
-        │   ├── skills.enabled: ["testing", "code-review"]
-        │   └── hooks: {SessionStart, PostToolUse, Stop}
-        │
-        ├── skills/                          # Procedural knowledge (auto-discovered)
-        │   ├── testing/
-        │   │   ├── SKILL.md                # Metadata + instructions (200-500 lines)
-        │   │   │   ├── YAML frontmatter (name, description)
-        │   │   │   ├── When to use
-        │   │   │   ├── What it does
-        │   │   │   ├── Key instructions
-        │   │   │   └── @resources/ references
-        │   │   ├── resources/
-        │   │   │   ├── patterns.md        # Detailed patterns (100-500 lines)
-        │   │   │   ├── examples/          # Concrete examples
-        │   │   │   ├── templates/         # Code templates
-        │   │   │   └── assertions.md      # Assertion patterns
-        │   │   └── scripts/               # Optional automation
-        │   │       └── generate_tests.py
-        │   │
-        │   ├── code-review/
-        │   │   ├── SKILL.md
-        │   │   └── resources/
-        │   │       ├── checklist.md
-        │   │       └── rules/
-        │   │
-        │   └── documentation/
-        │       ├── SKILL.md
-        │       └── resources/
-        │           └── templates/
-        │
-        ├── agents/                          # Autonomous agents (explicit invocation)
-        │   ├── orchestrator.md            # Main coordinator (Opus 4)
-        │   ├── code-review-agent.md       # Specialist (Sonnet 4)
-        │   ├── security-agent.md
-        │   └── subagents/                 # Isolated workers
-        │       ├── researcher.md
-        │       ├── debugger.md
-        │       ├── validator.md
-        │       └── knowledge-curator.md
-        │
-        ├── commands/                        # Slash commands (prompt templates)
-        │   ├── test.md                    # /project:test
-        │   ├── review.md                  # /project:review
-        │   ├── deploy.md                  # /project:deploy
-        │   └── debug.md                   # /project:debug
-        │
-        ├── hooks/                           # Lifecycle automation (deterministic)
-        │   ├── session-setup.sh            # SessionStart: Environment setup
-        │   ├── validate-yaml.sh           # PreToolUse: Block invalid YAML
-        │   ├── quality-gate.sh             # PostToolUse: Check quality
-        │   ├── auto-format.sh              # PostToolUse: Format code
-        │   └── auto-commit.sh              # Stop: Auto-commit changes
-        │
-        ├── standards/                       # Team standards (single source of truth)
-        │   ├── architecture.md             # System design patterns
-        │   ├── coding-standards.md        # Style guidelines
-        │   ├── testing-guidelines.md      # Test patterns
-        │   └── api-standards.md            # API design rules
-        │
-        ├── references/                      # Reference documentation (progressive)
-        │   ├── patterns/                  # Design patterns
-        │   ├── apis/                      # API documentation
-        │   └── troubleshooting.md         # Common issues
-        │
-        └── memory/                          # Persistent memory (optional)
-            ├── project-state.json          # Decisions, context
-            └── session-history.json        # Cross-session memory
-
-        ~/.claude/                           # User-level configuration (personal)
-        ├── CLAUDE.md                        # Personal preferences
-        ├── skills/                          # Personal skills
-        │   ├── my-coding-style/
-        │   └── brand-guidelines/
-        └── settings.json                    # User-level config
-
-    file_types_guide:
-      section: "Complete File Type Guide"
-
-      claude_md:
-        title: "CLAUDE.md - Project Memory"
-        purpose: "Navigation hub for project context"
-        location: ".claude/ (repo root) or ~/.claude/ (user)"
-        size: "~300 lines maximum"
-        loading: "Always loaded at session start"
-        structure: |
-          ## CLAUDE.md Structure
-          1. Overview (2-3 sentences)
-          2. Quick start (1 command + link)
-          3. Key features (bulleted list)
-          4. Documentation links (not duplication)
-          5. Recent decisions (what, why, when)
-
-        best_practices:
-          - practice: "Keep it lean (~300 lines)"
-            reason: "Loaded every session, token efficiency"
-
-          - practice: "Link to details, don't duplicate"
-            reason: "Single source of truth, progressive disclosure"
-
-          - practice: "Use WHAT, WHY, HOW framework"
-            example: |
-              WHAT: Project is X (technical description)
-              WHY: We chose Y (reasoning)
-              HOW: To work here, do Z (instructions)
-
-        anti_patterns:
-          - pattern: "Massive CLAUDE.md (1000+ lines)"
-            problem: "Token waste, hard to navigate"
-            solution: "Split into standards/ references/"
-
-          - pattern: "Duplication across files"
-            problem: "Updates missed, inconsistency"
-            solution: "Single source of truth, others reference it"
-
-      skill_md:
-        title: "SKILL.md - Procedural Knowledge"
-        purpose: "Reusable instructions for specific tasks"
-        location: ".claude/skills/{skill-name}/"
-        size: "200-500 lines"
-        loading: "Metadata always, full content on-demand"
-        structure: |
-          ---
-          name: skill-name              # Lowercase, kebab-case
-          description: |
-            Does X when Y. Triggers when Z.
-            Outputs A following project standards.
-          version: 1.0.0
-          ---
-
-          # When to Use This Skill
-          - User asks for "X"
-          - Part of Y workflow
-
-          # What This Skill Does
-          1. Analyze
-          2. Process
-          3. Output
-
-          # Key Instructions
-          See @resources/patterns.md for details
-
-        best_practices:
-          - practice: "Clear description is critical"
-            reason: "Claude uses description for skill discovery"
-            example: |
-              ✅ GOOD: "Generates unit tests with 80%+ coverage using Vitest.
-                     Triggers when user asks for tests. Outputs complete
-                     test files with edge cases."
-
-              ❌ BAD: "Testing skill"
-
-          - practice: "Progressive disclosure"
-            reason: "Keep SKILL.md lean, details in resources/"
-            pattern: |
-              SKILL.md (300 lines)
-              └─ @resources/patterns.md (all patterns)
-              └─ @resources/examples/ (full examples)
-
-          - practice: "Consolidate related skills"
-            reason: "5 good skills > 20 micro-skills"
-            example: |
-              ✅ CORRECT: testing-skill/ (unit, integration, e2e)
-              ❌ WRONG: unit-test-skill/, integration-test-skill/, e2e-test-skill/
-
-        anti_patterns:
-          - pattern: "Too general description"
-            problem: "Skill never triggers or triggers inappropriately"
-            solution: "Be specific: what, when, triggers, outputs"
-
-          - pattern: "SKILL.md > 500 lines"
-            problem: "Loads too much content, token waste"
-            solution: "Split into resources/ files"
-
-          - pattern: "No resources/ organization"
-            problem: "All content inline, hard to maintain"
-            solution: "Use progressive disclosure pattern"
-
-      agent_md:
-        title: "AGENT.md - Autonomous Agent"
-        purpose: "Independent system for long-running tasks"
-        location: ".claude/agents/ or .claude/agents/subagents/"
-        size: "300-800 lines"
-        loading: "Explicit invocation (not auto-discovered)"
-        structure: |
-          ---
-          name: agent-name
-          description: |
-            Autonomous agent that performs X independently.
-          model: claude-opus-4  # Opus for reasoning, Sonnet for work
-          tools: [read, write, grep, execute]
-          timeout: 1h
-          ---
-
-          # Responsibilities
-          - [Task 1]
-          - [Task 2]
-
-          # Input Format
-          Expect: File: requirements.md
-
-          # Output Format
-          MUST: File: output.md
-
-          # Decision Rules
-          When uncertain:
-          1. [Rule 1]
-          2. Escalate
-
-          # Success Criteria
-          ✓ Task complete
-          ✓ Quality met
-
-        best_practices:
-          - practice: "Match model to task complexity"
-            guideline: |
-              Opus 4: Planning, routing, complex reasoning
-              Sonnet 4: Coding, analysis
-              Haiku 4: Simple tasks
-
-          - practice: "Narrow tool permissions"
-            reason: "Security, focused behavior"
-            example: |
-              Orchestrator: [read, route]  # Minimal
-              Worker: [read, write, execute]  # Full access
-
-          - practice: "Clear decision rules"
-            reason: "Agent knows when to escalate"
-            example: |
-              When uncertain:
-              1. Try approach A (if pattern matches)
-              2. Try approach B (if pattern matches)
-              3. Escalate to orchestrator
-
-        anti_patterns:
-          - pattern: "Too much autonomy"
-            problem: "Agent gets lost, makes bad decisions"
-            solution: "Clear constraints, validation gates"
-
-          - pattern: "Wrong model for task"
-            problem: "Haiku for complex reasoning → Fails"
-            solution: "Match model to complexity"
-
-          - pattern: "No error handling"
-            problem: "Agent crashes, no recovery"
-            solution: "Try/retry logic, escalation paths"
-
-      command_md:
-        title: "COMMAND.md - Slash Command"
-        purpose: "Prompt template for quick workflows"
-        location: ".claude/commands/"
-        size: "50-200 lines"
-        invocation: "Typing / in Claude Code"
-        structure: |
-          Please perform the following workflow:
+- id: CLAUDE-CODE-FILES-ORGANIZATION-001
+  title: 'Claude Code Files Organization: Complete .claude/ Directory Structure'
+  severity: high
+  scope: universal
+  tags:
+  - claude-code
+  - organization
+  - skills
+  - agents
+  - memory
+  - structure
+  - best-practices
+  problem: 'Claude Code projects face organization challenges:
+
+    - No clear structure for .claude/ directory
+
+    - SKILLS, AGENTS, commands scattered and inconsistent
+
+    - Poor discoverability of custom capabilities
+
+    - Mixed concerns (project-specific vs team-shared vs personal)
+
+    - No progressive disclosure for complex configurations
+
+    - Token waste from loading unnecessary context
+
+    - Difficult to maintain and scale across team
+
+
+    Real scenarios:
+
+    - 20+ skills in flat directory → Claude can''t find right one
+
+    - 1000-line CLAUDE.md → Token waste, hard to navigate
+
+    - Commands mixed with skills → Confusion, poor UX
+
+    - No separation between team/personal → Can''t share effectively
+
+    '
+  impact: '- **Discovery:** Skills/agents not found when needed
+
+    - **Maintenance:** Impossible to scale beyond 10 skills
+
+    - **Collaboration:** Team can''t share configurations
+
+    - **Tokens:** Wasted on irrelevant context
+
+    - **Performance:** Slow startup, bloated context
+
+    - **UX:** Poor developer experience
+
+    '
+  solution:
+    code: "# Production-ready .claude/ directory structure\n.claude/\n├── CLAUDE.md\
+      \                      # Project memory (navigation hub, ~300 lines)\n├── settings.json\
+      \                  # Configuration (feature flags, enabled skills/agents)\n\
+      │\n├── skills/                        # Reusable procedural knowledge\n│   ├──\
+      \ testing/\n│   │   ├── SKILL.md              # Metadata + instructions (200-500\
+      \ lines)\n│   │   ├── resources/            # Detailed content (loaded on-demand)\n\
+      │   │   │   ├── patterns.md\n│   │   │   ├── examples/\n│   │   │   └── templates/\n\
+      │   │   └── scripts/              # Optional automation\n│   ├── code-review/\n\
+      │   ├── documentation/\n│   └── refactoring/\n│\n├── agents/               \
+      \         # Autonomous agents (orchestrators)\n│   ├── orchestrator.md     \
+      \      # Main coordinator\n│   ├── code-review-agent.md      # Specialist agent\n\
+      │   └── subagents/                # Specialist subagents\n│       ├── researcher.md\n\
+      │       ├── debugger.md\n│       ├── validator.md\n│       └── knowledge-curator.md\n\
+      │\n├── commands/                      # Slash commands (prompt templates)\n\
+      │   ├── test.md                   # /project:test\n│   ├── review.md       \
+      \          # /project:review\n│   └── deploy.md                 # /project:deploy\n\
+      │\n├── hooks/                         # Lifecycle automation (deterministic)\n\
+      │   ├── session-setup.sh          # SessionStart: Environment setup\n│   ├──\
+      \ validate-yaml.sh         # PreToolUse: Validate YAML edits\n│   ├── quality-gate.sh\
+      \           # PostToolUse: Quality checks\n│   └── auto-commit.sh          \
+      \  # Stop: Auto-commit changes\n│\n├── standards/                     # Team\
+      \ standards (single source of truth)\n│   ├── architecture.md\n│   ├── coding-standards.md\n\
+      │   ├── testing-guidelines.md\n│   └── api-standards.md\n│\n├── references/\
+      \                    # Reference documentation (progressive disclosure)\n│ \
+      \  ├── patterns/\n│   ├── apis/\n│   └── troubleshooting.md\n│\n└── memory/\
+      \                        # Persistent memory (optional)\n    ├── project-state.json\
+      \        # Project decisions, context\n    └── session-history.json      # Cross-session\
+      \ memory\n\n# Global (user-level) structure\n~/.claude/\n├── CLAUDE.md     \
+      \                 # Personal preferences (all projects)\n├── skills/       \
+      \                 # Personal skills (available everywhere)\n│   ├── my-coding-style/\n\
+      │   └── brand-guidelines/\n└── settings.json                  # User-level config\n"
+    explanation: "**Core Principles:**\n\n1. **Progressive Disclosure**\n   - CLAUDE.md\
+      \ = Navigation hub (~300 lines), references details\n   - SKILL.md = Overview\
+      \ + links, details in resources/\n   - Load details on-demand, not upfront\n\
+      \n2. **Single Source of Truth**\n   - Each standard in ONE file\n   - All others\
+      \ reference it (no duplication)\n   - One authoritative source per topic\n\n\
+      3. **Hierarchical Configuration**\n   ```\n   Enterprise → User → Project →\
+      \ Local\n   (most general) → (most specific)\n   ```\n\n4. **Clear Separation\
+      \ of Concerns**\n   - SKILLS = Procedural knowledge (how to do X)\n   - AGENTS\
+      \ = Autonomous systems (independent workers)\n   - COMMANDS = Prompt templates\
+      \ (quick workflows)\n   - HOOKS = Deterministic automation (guaranteed execution)\n\
+      \   - STANDARDS = Team rules (single source of truth)\n\n5. **Token Efficiency**\n\
+      \   - Metadata loaded at startup (30-50 tokens per skill)\n   - Full content\
+      \ loaded on-demand (when relevant)\n   - Scripts executed (not counted as tokens)\n\
+      \n**File Size Guidelines:**\n- CLAUDE.md: ~300 lines maximum\n- SKILL.md: 200-500\
+      \ lines\n- AGENT.md: 300-800 lines\n- COMMAND.md: 50-200 lines\n- Hook scripts:\
+      \ <100 lines (fast execution)\n"
+  best_practices:
+  - practice: Keep CLAUDE.md lean (~300 lines)
+    reason: Acts as navigation hub, references detailed content
+    anti_pattern: '❌ WRONG: 2000 lines with all details inline
+
+      ✅ CORRECT: 300 lines overview + @standards/ references
+
+      '
+  - practice: Use progressive disclosure for skills
+    reason: Load metadata at startup, full content on-demand
+    pattern: 'SKILL.md (300 lines)
+
+      ├─ When to use, key instructions
+
+      └─ @resources/patterns.md (detailed, loaded when needed)
+
+      '
+  - practice: Consolidate related skills
+    reason: 5 good skills > 20 micro-skills
+    example: '✅ CORRECT: testing-skill/ (unit, integration, e2e)
+
+      ❌ WRONG: unit-test-skill/, integration-test-skill/, e2e-test-skill/
+
+      '
+  - practice: Use hooks for automation, not prompts
+    reason: Hooks = guaranteed, prompts = probabilistic
+    example: '✅ CORRECT: PostToolUse hook validates YAML
+
+      ❌ WRONG: "Please validate YAML" (Claude might forget)
+
+      '
+  - practice: Single source of truth for standards
+    reason: Avoid duplication, prevent inconsistencies
+    pattern: 'standards/testing.md (authoritative)
+
+      SKILL.md: "See @standards/testing.md for patterns"
+
+      AGENT.md: "Follow @standards/testing.md"
+
+      '
+  implementation:
+    phase_1_setup_structure:
+      title: Create .claude/ directory structure
+      effort: 30 minutes
+      steps:
+      - step: Create base directories
+        command: 'mkdir -p .claude/{skills,agents,commands,hooks,standards,references}
+
+          chmod +x .claude/hooks/*.sh 2>/dev/null || true
+
+          '
+      - step: Create CLAUDE.md (navigation hub)
+        file: .claude/CLAUDE.md
+        content: '# Project Name
+
+
+          ## Quick Overview
+
+          One-paragraph summary
+
+
+          ## Quick Start
+
+          One-command installation
+
+          For details: [QUICKSTART.md](QUICKSTART.md)
+
+
+          ## Architecture
+
+          See @standards/architecture.md
+
+
+          ## Workflow
+
+          See @standards/coding-standards.md
+
+
+          ## Commands
+
+          - /test - Run tests
+
+          - /review - Code review
+
+
+          ## Recent Decisions
+
+          - 2026-01-07: Adopted unified testing approach
+
+          '
+      - step: Create settings.json
+        file: .claude/settings.json
+        content: "{\n  \"skills.enabled\": [\"testing\", \"code-review\", \"documentation\"\
+          ],\n  \"hooks\": {\n    \"SessionStart\": [{\n      \"command\": \".claude/hooks/session-setup.sh\"\
+          \n    }],\n    \"PostToolUse\": [{\n      \"matcher\": \"Edit:*.yaml|Write:*.yaml\"\
+          ,\n      \"command\": \".claude/hooks/validate-yaml.sh\"\n    }]\n  }\n\
+          }\n"
+    phase_2_create_skills:
+      title: Create reusable skills
+      effort: 2-4 hours per skill
+      steps:
+      - step: Identify repetitive tasks
+        description: "\"What do you repeatedly explain to Claude?\n Testing patterns?\
+          \ Code review rules? Documentation format?\"\n"
+      - step: Create skill structure
+        command: mkdir -p .claude/skills/my-skill/{resources,scripts}
+      - step: Write SKILL.md
+        file: .claude/skills/my-skill/SKILL.md
+        content: "---\nname: my-skill\ndescription: |\n  Does X when Y. Triggers when\
+          \ user asks for Z.\n  Outputs A with B format following project standards.\n\
+          ---\n\n# When to Use This Skill\n- User asks for \"X\"\n- Part of Y workflow\n\
+          - Need Z output\n\n# What This Skill Does\n1. Analyze input\n2. Generate\
+          \ output\n3. Validate quality\n\n# Key Instructions\nSee @resources/patterns.md\
+          \ for detailed patterns.\nUse template: @resources/template.md\n\n# Tools\
+          \ Used\n- **Read**: Read source files\n- **Write**: Create outputs\n"
+      - step: Create resources/
+        files:
+        - .claude/skills/my-skill/resources/patterns.md
+        - .claude/skills/my-skill/resources/examples/
+      - step: Test with evaluation-driven development
+        description: "\"1. Create 3 evaluation scenarios\n 2. Test baseline (without\
+          \ skill)\n 3. Test with skill\n 4. Measure improvement\n 5. Iterate based\
+          \ on failures\"\n"
+    phase_3_create_agents:
+      title: Create autonomous agents (if needed)
+      effort: 1-2 days per agent
+      steps:
+      - step: Determine if agent is needed
+        description: "\"Use AGENTS when:\n - Task requires autonomy (no human in loop)\n\
+          \ - Need iteration (plan changes based on results)\n - Want parallelization\
+          \ (multiple tasks at once)\n - Long-running service (hours/days/months)\n\
+          \n Use SKILLS instead for:\n - One-off tasks\n - Quick workflows\n - Simple\
+          \ procedural knowledge\"\n"
+      - step: Create agent file
+        file: .claude/agents/my-agent.md
+        content: "---\nname: my-agent\ndescription: |\n  Autonomous agent that performs\
+          \ X with Y goals.\n  Works independently with minimal supervision.\nmodel:\
+          \ claude-opus-4  # or claude-sonnet-4 or claude-haiku-4\ntools: [read, write,\
+          \ grep, execute]\ntimeout: 1h\n---\n\n# Responsibilities\n- [Task 1]\n-\
+          \ [Task 2]\n- [Task 3]\n\n# Decision Rules\nWhen uncertain, choose:\n1.\
+          \ [Rule 1]\n2. [Rule 2]\n3. Escalate to human\n\n# Success Criteria\n✓ Task\
+          \ completed\n✓ Output meets spec\n✓ Documented\n"
+      - step: Test agent thoroughly
+        description: "\"1. Unit test: Test individual behaviors\n 2. Integration test:\
+          \ Test with other agents\n 3. E2E test: Full workflow\n 4. Monitor: Track\
+          \ success rate, errors, cost\"\n"
+    phase_4_create_commands:
+      title: Create slash commands (quick workflows)
+      effort: 30 minutes per command
+      steps:
+      - step: Identify repetitive workflows
+        examples:
+        - Code review workflow
+        - Testing workflow
+        - Deployment workflow
+      - step: Create command file
+        file: .claude/commands/my-workflow.md
+        content: 'Please perform the following workflow:
+
 
           ## Step 1: Analysis
-          Analyze $ARGUMENTS
+
+          Analyze the current state of $ARGUMENTS
+
 
           ## Step 2: Planning
-          Create plan for addressing issues
+
+          Create a plan for addressing identified issues
+
 
           ## Step 3: Execution
-          Execute plan step by step
+
+          Execute the plan step by step
+
 
           ## Step 4: Verification
-          Verify changes
-
-        best_practices:
-          - practice: "Use $ARGUMENTS for parameters"
-            reason: "Makes commands flexible"
-            example: |
-              /fix-issue 1234
-              Command receives: $ARGUMENTS = "1234"
-
-          - practice: "Clear sequential steps"
-            reason: "Easy to follow, predictable"
-            guideline: "Number each step 1-10"
-
-          - practice: "Reference skills/agents"
-            reason: "Reuse existing capabilities"
-            example: "Use /testing skill for test generation"
-
-        anti_patterns:
-          - pattern: "Vague instructions"
-            problem: "Unpredictable behavior"
-            solution: "Specific steps, clear outputs"
-
-          - pattern: "Too long (>200 lines)"
-            problem: "Hard to maintain, complex"
-            solution: "Split into smaller commands"
-
-      hooks:
-        title: "Hooks - Lifecycle Automation"
-        purpose: "Deterministic automation at key points"
-        location: ".claude/hooks/"
-        size: "<100 lines (fast execution)"
-        events:
-          event_1:
-            name: "SessionStart"
-            trigger: "When Claude session starts"
-            uses: "Environment setup, context loading"
-            example: ".claude/hooks/session-setup.sh"
-
-          event_2:
-            name: "PreToolUse"
-            trigger: "Before any tool call"
-            uses: "Validation, security filtering, blocking"
-            example: ".claude/hooks/validate-yaml.sh"
-
-          event_3:
-            name: "PostToolUse"
-            trigger: "After successful tool call"
-            uses: "Quality checks, auto-formatting, logging"
-            example: ".claude/hooks/quality-gate.sh"
-
-          event_4:
-            name: "Stop"
-            trigger: "When Claude finishes response"
-            uses: "Quality validation, auto-commit"
-            example: ".claude/hooks/auto-commit.sh"
-
-        best_practices:
-          - practice: "Keep hooks FAST (<2 seconds)"
-            reason: "Run synchronously, block workflow"
-            guideline: "Heavy operations → CI/CD, not hooks"
-
-          - practice: "Exit codes matter"
-            guideline: |
-              Exit 0: ALLOW (continue)
-              Exit 2: BLOCK (stop action, show reason)
-
-          - practice: "Quote all variables"
-            reason: "Prevent injection, handle spaces"
-            example: 'FILE="$1"; rm "$FILE"'
-
-          - practice: "Test hooks manually"
-            command: |
-              echo '{"tool_name":"Bash","tool_input":{"command":"test"}}' | ./hook.sh
-              echo "Exit: $?"  # 0 = allow, 2 = block
-
-        anti_patterns:
-          - pattern: "Slow hooks (>5 seconds)"
-            problem: "Every edit pauses workflow"
-            solution: "Quick checks in hooks, heavy in CI/CD"
-
-          - pattern: "Broad matchers"
-            problem: '"matcher": "*" runs on EVERY tool call'
-            solution: "Specific matchers: 'Bash', 'Edit|Write'"
-
-          - pattern: "Silent failures"
-            problem: "No error feedback, hard to debug"
-            solution: "set -e or explicit || exit 2"
-
-      standards:
-        title: "Standards - Team Knowledge"
-        purpose: "Single source of truth for team rules"
-        location: ".claude/standards/"
-        size: "100-500 lines each"
-        loading: "Referenced from CLAUDE.md, SKILL.md, AGENT.md"
-
-        best_practices:
-          - practice: "One authoritative file per topic"
-            reason: "Avoid duplication, prevent inconsistency"
-            example: |
-              standards/testing.md (authoritative)
-              All others: @standards/testing.md
-
-          - practice: "Clear structure"
-            guideline: "Principles → Patterns → Examples"
-
-          - practice: "Version control"
-            reason: "Track changes, maintain history"
-
-        anti_patterns:
-          - pattern: "Duplication across files"
-            problem: "Updates missed, inconsistency spreads"
-            solution: "Single source of truth"
-
-          - pattern: "Mixed concerns in one file"
-            problem: "Hard to find, hard to maintain"
-            solution: "One topic per file"
-
-    real_world_examples:
-      example_1_shared_knowledge_base:
-        title: "Shared Knowledge Base - Production Example"
-        description: "Real .claude/ structure from shared-knowledge-base repo"
-
-        structure: |
-          .claude/
-          ├── CLAUDE.md                    # Project memory (300 lines)
-          ├── settings.json                # Configuration
-          │
-          ├── skills/                      # 7 KB skills
-          │   ├── kb-index/               # Search KB
-          │   ├── kb-create/              # Create entries
-          │   ├── kb-validate/            # Validate YAML
-          │   ├── audit-quality/          # Quality assessment
-          │   ├── find-duplicates/        # Find similar entries
-          │   ├── research-enhance/       # Research patterns
-          │   └── kb-search/              # Quick search
-          │
-          ├── commands/                    # 7 slash commands
-          │   ├── kb-validate.md
-          │   ├── kb-create.md
-          │   ├── kb-index.md
-          │   ├── kb-search.md
-          │   ├── kb-sync.md
-          │   ├── kb-query.md
-          │   └── retrospective.md
-          │
-          ├── agents/                      # Agent system
-          │   ├── kb-curator.md           # Main curator agent
-          │   └── subagents/              # 4 specialist subagents
-          │       ├── researcher.md
-          │       ├── debugger.md
-          │       ├── validator.md
-          │       └── knowledge-curator.md
-          │
-          └── hooks/                       # 9 automation hooks
-              ├── session-setup.sh
-              ├── validate-yaml-before-edit.sh
-              ├── validate-yaml-before-write.sh
-              ├── auto-create-metadata.sh
-              ├── auto-format-yaml.sh
-              ├── quality-gate.sh
-              ├── check-index.sh
-              ├── validate-metadata.sh
-              └── check-artifact-updates.py
-
-        results:
-          - "7 skills auto-discovered by Claude"
-          - "7 commands available via / menu"
-          - "5 agent specialists coordinated"
-          - "9 hooks for automation"
-          - "Estimated token savings: 60% vs prompts"
-
-      example_2_monorepo_structure:
-        title: "Monorepo with Multiple Teams"
-        description: "How to organize .claude/ for large teams"
-
-        structure: |
-          company-monorepo/
-          ├── .claude/                      # Shared by all teams
-          │   ├── CLAUDE.md               # Company-wide standards
-          │   ├── standards/
-          │   │   ├── architecture.md     # System design
-          │   │   ├── security.md         # Security policies
-          │   │   └── compliance.md       # Legal requirements
-          │   └── skills/
-          │       ├── code-review/        # Shared code review skill
-          │       └── testing/            # Shared testing skill
-          │
-          ├── frontend/.claude/            # Frontend team only
-          │   ├── CLAUDE.md               # React + TypeScript specific
-          │   ├── skills/
-          │   │   ├── component-library/
-          │   │   └── state-management/
-          │   └── standards/
-          │       └── react-patterns.md
-          │
-          └── backend/.claude/             # Backend team only
-              ├── CLAUDE.md               # FastAPI + Python specific
-              ├── skills/
-              │   ├── api-design/
-              │   └── database-migration/
-              └── standards/
-                  └── python-patterns.md
-
-        hierarchy: |
-          Local (.local) → Package → Project → Global → (none)
-          Most specific → Least specific
-
-        benefits:
-          - "Company standards inherited by all teams"
-          - "Team-specific overrides where needed"
-          - "Clear separation of concerns"
-          - "Scalable to 100+ developers"
-
-      example_3_personal_setup:
-        title: "Personal Developer Setup"
-        description: "User-level Claude Code configuration"
-
-        structure: |
-          ~/.claude/
-          ├── CLAUDE.md                   # Personal preferences
-          │   ## My Coding Style
-          │   - Use TypeScript strict mode
-          │   - Prefer functional over OOP
-          │   - Test coverage ≥ 80%
-          │
-          ├── skills/                     # Personal skills
-          │   ├── my-coding-style/
-          │   │   └── SKILL.md
-          │   └── brand-guidelines/
-          │       └── SKILL.md
-          │
-          └── settings.json              # User config
-              {
-                "skills.enabled": ["my-coding-style", "brand-guidelines"]
-              }
-
-        benefits:
-          - "Available in ALL projects"
-          - "Personal preferences preserved"
-          - "Not shared with team (in .gitignore)"
-
-    testing_validation:
-      section: "Testing & Validation Framework"
-
-      evaluation_driven_development:
-        title: "Evaluation-Driven Development for Skills"
-        process: |
-          BEFORE writing skill:
-
-          1. Identify GAP
-             "Where does Claude fail without this skill?"
-
-          2. Create 3 evaluation scenarios
-             Eval 1: Basic case
-             Eval 2: Medium case
-             Eval 3: Complex case
-
-          3. Run baseline (without skill)
-             baseline_score = score(tests without skill)
-
-          4. Write MINIMAL skill
-             Only enough to close the gap
-
-          5. Test with Claude B (fresh instance)
-             new_score = score(tests with skill)
-
-          6. Compare: improvement = new_score - baseline
-
-          7. Iterate based on failures
-
-        example: |
-          Eval 1: "Generate tests for login function"
-          ├─ Metrics: Vitest syntax? Y/N, Error cases? Y/N, Coverage? Y/N
-          ├─ Baseline (without skill): 1/4 ✗
-          └─ Target: 4/4 ✓
-
-          Write minimal skill → Test → Improve → Retest
-
-      skill_testing_checklist:
-        title: "Skill Testing Checklist"
-        items:
-          - item: "Created 3 evaluation scenarios"
-            importance: "Critical"
-            reason: "Measure effectiveness"
-
-          - item: "Ran baseline (without skill)"
-            importance: "Critical"
-            reason: "Know starting point"
-
-          - item: "SKILL.md ≤ 500 lines"
-            importance: "High"
-            reason: "Token efficiency"
-
-          - item: "Description is specific"
-            importance: "Critical"
-            reason: "Skill discovery depends on it"
-
-          - item: "Tested with fresh Claude instance"
-            importance: "High"
-            reason: "Unbiased evaluation"
-
-          - item: "Team tested (2+ developers)"
-            importance: "Medium"
-            reason: "Diverse perspectives"
-
-      agent_testing_checklist:
-        title: "Agent Testing Checklist"
-        items:
-          - item: "Unit tests: Individual agent behaviors"
-            importance: "High"
-
-          - item: "Integration tests: Agent coordination"
-            importance: "High"
-
-          - item: "E2E tests: Full workflow"
-            importance: "Medium"
-
-          - item: "Load testing: Expected volume"
-            importance: "Medium"
-
-          - item: "Error rates: <1% target"
-            importance: "Critical"
-
-          - item: "Cost tracking: Per execution"
-            importance: "High"
-
-    anti_patterns:
-      anti_pattern_1_massive_claude_md:
-        title: "Massive CLAUDE.md (1000+ lines)"
-        problem: |
-          - Token waste (loaded every session)
-          - Hard to navigate
-          - Mixed concerns (overview + details + everything)
-          - Difficult to maintain
-
-        solution: |
-          Keep CLAUDE.md ≤ 300 lines:
-          - Overview (2-3 sentences)
-          - Quick start (1 command)
-          - Key features (bulleted)
-          - Links to details (not duplication)
-          - Recent decisions
-
-          Move details to:
-          - @standards/architecture.md
-          - @standards/coding-standards.md
-          - @references/
-
-        reference: "PROGRESSIVE-DISCLOSURE-001"
-
-      anti_pattern_2_many_micro_skills:
-        title: "Too Many Micro-Skills"
-        problem: |
-          .claude/skills/
-          ├── unit-test-skill/
-          ├── integration-test-skill/
-          ├── e2e-test-skill/
-          ├── snapshot-test-skill/
-          ├── performance-test-skill/
-          └── ... (10+ skills for one topic)
-
-          - Claude confused about which to use
-          - Might not find the right one
-          - 300+ tokens metadata overhead
-          - Hard to manage
-
-        solution: |
-          Consolidate into one skill:
-          .claude/skills/
-          └── testing-skill/
-              ├── SKILL.md (main)
-              └── resources/
-                  ├── patterns-unit.md
-                  ├── patterns-integration.md
-                  ├── patterns-e2e.md
-                  └── patterns-performance.md
-
-        reference: "claude-skills-guide.md:1119-1157"
-
-      anti_pattern_3_prompts_instead_of_hooks:
-        title: "Using Prompts Instead of Hooks"
-        problem: |
-          Relying on prompts for critical tasks:
-          - "Please validate YAML" → Claude might forget
-          - "Check coverage" → Claude might skip
-          - "Run tests" → Claude might not do it
-
-        solution: |
-          Use hooks for deterministic automation:
-          {
-            "hooks": {
-              "PostToolUse": [{
-                "matcher": "Edit:*.yaml|Write:*.yaml",
-                "command": ".claude/hooks/validate-yaml.sh"
-              }]
-            }
-          }
-
-          Hooks = Guaranteed execution
-          Prompts = Probabilistic (might happen)
-
-        reference: "claude-code-hooks.yaml:15-36"
-
-      anti_pattern_4_duplication_across_files:
-        title: "Duplication Across Files"
-        problem: |
-          Error handling rules in:
-          - CLAUDE.md
-          - standards/error-handling.md
-          - docs/best-practices.md
-          - patterns/error-handling-001.yaml
-
-          → Updates missed, inconsistency spreads
-
-        solution: |
-          Single source of truth:
-          standards/error-handling.md (authoritative)
-
-          All others reference it:
-          CLAUDE.md: "See @standards/error-handling.md"
-          SKILL.md: "Follow @standards/error-handling.md"
-          AGENT.md: "Refer to @standards/error-handling.md"
-
-        reference: "claude-code-shared-model.yaml:97-106"
-
-      anti_pattern_5_wrong_agent_model:
-        title: "Wrong Model for Agent Task"
-        problem: |
-          Using Haiku (fast, simple) for complex reasoning
-          → Fails to understand nuances
-          → Makes random decisions
-          → Low quality output
-
-        solution: |
-          Match model to task complexity:
-          - Opus 4: Planning, routing, complex reasoning
-          - Sonnet 4: Coding, analysis, debugging
-          - Haiku 4: Simple, routine tasks
-
-          Example breakdown:
-          - 10% Opus (orchestrator)
-          - 60% Sonnet (workers)
-          - 30% Haiku (simple tasks)
-
-          Result: 70% cost savings, quality maintained
-
-        reference: "claude-agents-guide.md:614-634"
-
-      anti_pattern_6_agents_for_simple_tasks:
-        title: "Using Agents for Simple Tasks"
-        problem: |
-          Creating agent for one-off task:
-          - Over-engineering
-          - Complex setup for simple need
-          - Wasted development time
-
-        solution: |
-          Use SKILL instead when:
-          - Task is one-off or rare
-          - No iteration needed
-          - No autonomy required
-          - Quick workflow
-
-          Use AGENT when:
-          - Task requires autonomy
-          - Need iteration (plan changes)
-          - Long-running service
-          - External integration
-
-        reference: "claude-agents-guide.md:36-52"
-
-      anti_pattern_7_deeply_nested_references:
-        title: "Deeply Nested References"
-        problem: |
-          SKILL.md
-            └─ @resources/main.md
-                └─ @../standards/testing.md
-                    └─ @../../team/guidelines.md
-                        └─ @../../../../best-practices.md
-
-          - Claude may partially read
-          - Files not found (wrong paths)
-          - Hard to track dependencies
-
-        solution: |
-          Keep references one level deep from SKILL.md:
-          SKILL.md
-            ├─ @resources/patterns.md (direct)
-            ├─ @resources/examples.md (direct)
-            └─ @../../standards/architecture.md (max 1 up)
-
-        reference: "claude-skills-guide.md:1197-1223"
-
-      anti_pattern_8_no_error_handling_in_scripts:
-        title: "Scripts Without Error Handling"
-        problem: |
-          def analyze_csv(path):
-              df = pd.read_csv(path)  # Crashes if file missing
-              return df.describe()
-
-          - Script crashes silently
-          - Claude doesn't know why
-          - Poor user experience
-
-        solution: |
-          def analyze_csv(path):
-              try:
-                  if not os.path.exists(path):
-                      print(f"ERROR: File not found: {path}")
-                      return None
-
-                  df = pd.read_csv(path)
-                  if df.empty:
-                      print(f"ERROR: CSV is empty")
-                      return None
-
-                  return df.describe()
-
-              except Exception as e:
-                  print(f"ERROR: {e}")
-                  return None
-
-          - Graceful degradation
-          - Helpful error messages
-          - Claude can react properly
-
-        reference: "claude-skills-guide.md:1159-1195"
-
-    quality_metrics:
-      token_efficiency:
-        metric: "Token Usage per Session"
-        targets:
-          poor: ">10000 tokens"
-          acceptable: "5000-10000 tokens"
-          excellent: "<5000 tokens"
-
-        calculation: |
-          Session Start:
-          ├─ CLAUDE.md: ~300 tokens
-          ├─ Skill metadata (10 skills × 50 tokens): 500 tokens
-          └─ Total startup: ~800 tokens
-
-          When Skill Triggers:
-          ├─ Full SKILL.md: 500-2000 tokens
-          ├─ Referenced resources: 400-1000 tokens
-          └─ Total per skill: 1000-3000 tokens
-
-          Goal: Minimal metadata, load details on-demand
-
-      discoverability:
-        metric: "Skill Discovery Rate"
-        targets:
-          poor: "<50% (skills not found when needed)"
-          acceptable: "50-80%"
-          excellent: ">80%"
-
-        measurement: |
-          Track how often Claude uses the right skill:
-          - Log skill activation
-          - Compare against expected usage
-          - Improve descriptions based on misses
-
-      maintainability:
-        metric: "File Organization Score"
-        targets:
-          poor: "Flat structure, mixed concerns"
-          acceptable: "Organized by type, some duplication"
-          excellent: "Clear separation, single source of truth"
-
-        checklist:
-          - check: "No duplication across files"
-          - check: "One source of truth per topic"
-          - check: "Progressive disclosure used"
-          - check: "Clear naming conventions"
-          - check: "Easy to navigate"
-
-    verification_checklist:
-      section: "Organization Verification Checklist"
-
-      setup:
-        - check: ".claude/ directory exists"
-          command: "ls -la .claude/"
-          expected: "Directory with subdirectories"
-
-        - check: "CLAUDE.md ≤ 300 lines"
-          command: "wc -l .claude/CLAUDE.md"
-          expected: "Less than 400 lines"
-
-        - check: "settings.json valid JSON"
-          command: "jq empty .claude/settings.json"
-          expected: "No syntax errors"
-
-        - check: "Skills have YAML frontmatter"
-          command: "grep -l '^name:' .claude/skills/*/SKILL.md"
-          expected: "All skills have name field"
-
-        - check: "Hooks are executable"
-          command: "ls -la .claude/hooks/*.sh"
-          expected: "Executable bit set"
-
-      skills:
-        - check: "Description is specific"
-          verification: "Read description, ask: Is it clear when to use?"
-          expected: "Yes, includes what/when/triggers"
-
-        - check: "SKILL.md ≤ 500 lines"
-          command: "wc -l .claude/skills/*/SKILL.md"
-          expected: "All under 500 lines"
-
-        - check: "Resources organized"
-          verification: "Check resources/ subdirectories exist"
-          expected: "patterns/, examples/, templates/"
-
-        - check: "No circular references"
-          verification: "Trace @references, check for loops"
-          expected: "No circular dependencies"
-
-        - check: "Tested with real usage"
-          verification: "Confirm skill tested in actual workflow"
-          expected: "At least 3 evaluation scenarios run"
-
-      agents:
-        - check: "Model matches task complexity"
-          verification: "Review agent model choice"
-          expected: "Opus for reasoning, Sonnet for work, Haiku for simple"
-
-        - check: "Tool permissions minimal"
-          verification: "Check tools list in agent file"
-          expected: "Only necessary tools, no blanket permissions"
-
-        - check: "Decision rules defined"
-          verification: "Read agent file for decision rules section"
-          expected: "Clear escalation path defined"
-
-        - check: "Success criteria specified"
-          verification: "Check for measurable success criteria"
-          expected: "Specific outputs, validation steps"
-
-      hooks:
-        - check: "Hooks execute in <2 seconds"
-          command: "time .claude/hooks/*.sh"
-          expected: "All hooks complete in <2 seconds"
-
-        - check: "Exit codes are correct"
-          verification: "Test hook with valid/invalid input"
-          expected: "0 = allow, 2 = block"
-
-        - check: "Variables are quoted"
-          verification: "Check shell scripts for quoted variables"
-          expected: 'All "$VAR" properly quoted'
-
-        - check: "Error handling present"
-          verification: "Review scripts for error handling"
-          expected: "try/except or set -e or || exit 2"
-
-      standards:
-        - check: "No duplication across files"
-          verification: "Search for same rule in multiple files"
-          expected: "Each rule has single source of truth"
-
-        - check: "CLAUDE.md references standards"
-          verification: "Check for @standards/ references"
-          expected: "Links to detailed standards, not duplication"
-
-        - check: "Team reviewed (if applicable)"
-          verification: "Confirm team approved standards"
-          expected: "Documented approval date"
-
-    migration_guide:
-      title: "Migrating to Proper Organization"
-
-      from_flat_structure:
-        title: "From Flat Structure to Organized"
-        before: |
-          .claude/
-          ├── skill1.md
-          ├── skill2.md
-          ├── skill3.md
-          └── agent1.md
-
-        after: |
-          .claude/
-          ├── CLAUDE.md              # Create navigation hub
-          ├── skills/
-          │   ├── skill1/
-          │   │   ├── SKILL.md
-          │   │   └── resources/
-          │   ├── skill2/
-          │   └── skill3/
-          └── agents/
-              └── agent1.md
-
-        steps:
-          - step: "Create directory structure"
-            command: "mkdir -p .claude/{skills,agents}"
-
-          - step: "Move skills to subdirectories"
-            command: |
-              for skill in skill1 skill2 skill3; do
-                mkdir -p ".claude/skills/$skill/resources"
-                mv "$skill.md" ".claude/skills/$skill/SKILL.md"
-              done
-
-          - step: "Split large SKILL.md files"
-            description: |
-              "If SKILL.md > 500 lines:
-               1. Keep main instructions in SKILL.md
-               2. Move detailed content to resources/
-               3. Add @references to new files"
-
-          - step: "Update CLAUDE.md"
-            description: |
-              "1. Add overview section
-               2. Add quick start (1 command)
-               3. Add key features (bulleted)
-               4. Link to skills/agents/commands/"
-
-      from_massive_claude_md:
-        title: "From Massive CLAUDE.md to Lean"
-        before: |
-          CLAUDE.md: 1000+ lines
-          - All details inline
-          - Mixed concerns
-          - Hard to navigate
-
-        after: |
-          CLAUDE.md: ~300 lines
-          - Overview (2-3 sentences)
-          - Quick start (1 command + link)
-          - Key features (bulleted)
-          - Documentation links (not duplication)
-
-          standards/
-          ├── architecture.md     # Detailed architecture
-          ├── coding-standards.md  # Detailed guidelines
-          └── testing-guidelines.md # Detailed testing
-
-        steps:
-          - step: "Extract standards to separate files"
-            command: |
-              # Extract sections from CLAUDE.md
-              # Create standards/ directory
-              mkdir -p .claude/standards
-
-          - step: "Create lean CLAUDE.md"
-            description: |
-              "1. Keep only overview + links
-               2. Move details to standards/
-               3. Add @standards/ references"
-
-          - step: "Update all references"
-            description: |
-              "Search for old content location
-               Replace with @standards/ references
-               Verify no broken links"
-
-      from_prompts_to_hooks:
-        title: "From Manual Prompts to Automated Hooks"
-        before: |
-          User: "Please validate YAML"
-          User: "Please run tests"
-          User: "Please format code"
-
-        after: |
-          .claude/settings.json:
-          {
-            "hooks": {
-              "PostToolUse": [{
-                "matcher": "Edit:*.yaml|Write:*.yaml",
-                "hooks": [
-                  {
-                    "command": ".claude/hooks/validate-yaml.sh"
-                  },
-                  {
-                    "command": ".claude/hooks/format-yaml.sh"
-                  }
-                ]
-              }]
-            }
-          }
-
-        steps:
-          - step: "Identify repetitive manual tasks"
-            description: |
-              "What do you repeatedly ask Claude to do?
-               Validate? Format? Test? Commit?"
-
-          - step: "Create hook scripts"
-            command: |
-              # Create .claude/hooks/validate-yaml.sh
-              # Create .claude/hooks/format-yaml.sh
-
-          - step: "Configure hooks in settings.json"
-            description: |
-              "Add hooks to .claude/settings.json
-               Specify matchers (which tools trigger)
-               Set timeouts (default 60s)"
-
-          - step: "Test hooks manually"
-            command: |
-              echo '{"tool_name":"Write","tool_input":{"file_path":"test.yaml"}}' | \
-                ./.claude/hooks/validate-yaml.sh
-              echo "Exit: $?"  # 0 = allow, 2 = block
-
-    related_patterns:
-      - "CLAUDE-CODE-SHARED-MODEL-001 - Hierarchical configuration"
-      - "CLAUDE-CODE-HOOKS-001 - Deterministic automation"
-      - "PROGRESSIVE-DISCLOSURE-001 - Progressive disclosure for information"
-      - "DOC-ORGANIZATION-001 - Documentation structure"
-      - "claude-skills-guide.md - Complete skills guide"
-      - "claude-agents-guide.md - Complete agents guide"
-
-    references:
-      - "claude-hooks-guide.md - Complete hooks reference (1254 lines)"
-      - "claude-skills-guide.md - Skills best practices (1505 lines)"
-      - "claude-agents-guide.md - Agents best practices (1278 lines)"
-      - "CLAUDE-CLAUDE-MD-GUIDE.md - Project memory guide (308 lines)"
-      - "Anthropic Engineering: Claude Code Best Practices - https://www.anthropic.com/engineering/claude-code-best-practices"
-      - "Claude Docs: Skill Authoring Best Practices - https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
-      - "for-claude-code/README.md - Claude Code integration guide (656 lines)"
-
-    metadata:
-      created_at: "2026-01-07"
-      author: "Shared KB Curator"
-      source: "Synthesized from KB + official docs + web research"
-      reusable: true
-      severity_level: 2
-      difficulty: "intermediate"
-      pattern_type: "organization"
-      applicable_to: ["claude-code", "project-organization", "team-collaboration"]
-
-    quality_assurance:
-      reviewed: true
-      tested: true
-      examples_verified: true
-      anti_patterns_validated: true
-      last_review_date: "2026-01-07"
+
+          Verify all changes are correct
+
+
+          Remember to use /testing skill for test generation.
+
+          '
+      - step: Test command
+        description: "\"Use Claude Code with /my-workflow command\n Verify workflow\
+          \ executes correctly\n Iterate based on results\"\n"
+    phase_5_create_hooks:
+      title: Create automation hooks
+      effort: 1-2 hours per hook
+      steps:
+      - step: Identify automation opportunities
+        examples:
+        - 'SessionStart: Check KB installation'
+        - 'PostToolUse: Validate YAML'
+        - 'Stop: Auto-commit changes'
+      - step: Create hook script
+        file: .claude/hooks/my-hook.sh
+        content: "#!/bin/bash\nINPUT=$(cat)\n\n# Your validation logic here\nif [[\
+          \ condition ]]; then\n  echo \"✅ Check passed\"\n  exit 0  # ALLOW\nelse\n\
+          \  echo \"❌ Check failed\"\n  exit 2  # BLOCK\nfi\n"
+      - step: Make executable and configure
+        command: 'chmod +x .claude/hooks/my-hook.sh
+
+          # Add to .claude/settings.json hooks section
+
+          '
+      - step: Test hook manually
+        command: 'echo ''{"tool_name":"Bash","tool_input":{"command":"test"}}'' |
+          ./.claude/hooks/my-hook.sh
+
+          echo "Exit code: $?"  # 0 = allow, 2 = block
+
+          '
+  directory_structure_complete:
+    title: Complete Directory Structure
+    description: Full production-ready structure
+    structure: ".claude/                              # Project-level configuration\
+      \ (git)\n├── CLAUDE.md                        # Navigation hub (~300 lines)\n\
+      │   ├── Overview (2-3 sentences)\n│   ├── Quick start (1 command)\n│   ├── Key\
+      \ features (bulleted)\n│   ├── Documentation links\n│   └── Recent decisions\n\
+      │\n├── settings.json                    # Feature flags, enabled skills/agents\n\
+      │   ├── skills.enabled: [\"testing\", \"code-review\"]\n│   └── hooks: {SessionStart,\
+      \ PostToolUse, Stop}\n│\n├── skills/                          # Procedural knowledge\
+      \ (auto-discovered)\n│   ├── testing/\n│   │   ├── SKILL.md                #\
+      \ Metadata + instructions (200-500 lines)\n│   │   │   ├── YAML frontmatter\
+      \ (name, description)\n│   │   │   ├── When to use\n│   │   │   ├── What it\
+      \ does\n│   │   │   ├── Key instructions\n│   │   │   └── @resources/ references\n\
+      │   │   ├── resources/\n│   │   │   ├── patterns.md        # Detailed patterns\
+      \ (100-500 lines)\n│   │   │   ├── examples/          # Concrete examples\n\
+      │   │   │   ├── templates/         # Code templates\n│   │   │   └── assertions.md\
+      \      # Assertion patterns\n│   │   └── scripts/               # Optional automation\n\
+      │   │       └── generate_tests.py\n│   │\n│   ├── code-review/\n│   │   ├──\
+      \ SKILL.md\n│   │   └── resources/\n│   │       ├── checklist.md\n│   │    \
+      \   └── rules/\n│   │\n│   └── documentation/\n│       ├── SKILL.md\n│     \
+      \  └── resources/\n│           └── templates/\n│\n├── agents/              \
+      \            # Autonomous agents (explicit invocation)\n│   ├── orchestrator.md\
+      \            # Main coordinator (Opus 4)\n│   ├── code-review-agent.md     \
+      \  # Specialist (Sonnet 4)\n│   ├── security-agent.md\n│   └── subagents/  \
+      \               # Isolated workers\n│       ├── researcher.md\n│       ├── debugger.md\n\
+      │       ├── validator.md\n│       └── knowledge-curator.md\n│\n├── commands/\
+      \                        # Slash commands (prompt templates)\n│   ├── test.md\
+      \                    # /project:test\n│   ├── review.md                  # /project:review\n\
+      │   ├── deploy.md                  # /project:deploy\n│   └── debug.md     \
+      \              # /project:debug\n│\n├── hooks/                           # Lifecycle\
+      \ automation (deterministic)\n│   ├── session-setup.sh            # SessionStart:\
+      \ Environment setup\n│   ├── validate-yaml.sh           # PreToolUse: Block\
+      \ invalid YAML\n│   ├── quality-gate.sh             # PostToolUse: Check quality\n\
+      │   ├── auto-format.sh              # PostToolUse: Format code\n│   └── auto-commit.sh\
+      \              # Stop: Auto-commit changes\n│\n├── standards/              \
+      \         # Team standards (single source of truth)\n│   ├── architecture.md\
+      \             # System design patterns\n│   ├── coding-standards.md        #\
+      \ Style guidelines\n│   ├── testing-guidelines.md      # Test patterns\n│  \
+      \ └── api-standards.md            # API design rules\n│\n├── references/   \
+      \                   # Reference documentation (progressive)\n│   ├── patterns/\
+      \                  # Design patterns\n│   ├── apis/                      # API\
+      \ documentation\n│   └── troubleshooting.md         # Common issues\n│\n└──\
+      \ memory/                          # Persistent memory (optional)\n    ├── project-state.json\
+      \          # Decisions, context\n    └── session-history.json        # Cross-session\
+      \ memory\n\n~/.claude/                           # User-level configuration\
+      \ (personal)\n├── CLAUDE.md                        # Personal preferences\n\
+      ├── skills/                          # Personal skills\n│   ├── my-coding-style/\n\
+      │   └── brand-guidelines/\n└── settings.json                    # User-level\
+      \ config\n"
+  file_types_guide:
+    section: Complete File Type Guide
+    claude_md:
+      title: CLAUDE.md - Project Memory
+      purpose: Navigation hub for project context
+      location: .claude/ (repo root) or ~/.claude/ (user)
+      size: ~300 lines maximum
+      loading: Always loaded at session start
+      structure: '## CLAUDE.md Structure
+
+        1. Overview (2-3 sentences)
+
+        2. Quick start (1 command + link)
+
+        3. Key features (bulleted list)
+
+        4. Documentation links (not duplication)
+
+        5. Recent decisions (what, why, when)
+
+        '
+      best_practices:
+      - practice: Keep it lean (~300 lines)
+        reason: Loaded every session, token efficiency
+      - practice: Link to details, don't duplicate
+        reason: Single source of truth, progressive disclosure
+      - practice: Use WHAT, WHY, HOW framework
+        example: 'WHAT: Project is X (technical description)
+
+          WHY: We chose Y (reasoning)
+
+          HOW: To work here, do Z (instructions)
+
+          '
+      anti_patterns:
+      - pattern: Massive CLAUDE.md (1000+ lines)
+        problem: Token waste, hard to navigate
+        solution: Split into standards/ references/
+      - pattern: Duplication across files
+        problem: Updates missed, inconsistency
+        solution: Single source of truth, others reference it
+    skill_md:
+      title: SKILL.md - Procedural Knowledge
+      purpose: Reusable instructions for specific tasks
+      location: .claude/skills/{skill-name}/
+      size: 200-500 lines
+      loading: Metadata always, full content on-demand
+      structure: "---\nname: skill-name              # Lowercase, kebab-case\ndescription:\
+        \ |\n  Does X when Y. Triggers when Z.\n  Outputs A following project standards.\n\
+        version: 1.0.0\n---\n\n# When to Use This Skill\n- User asks for \"X\"\n-\
+        \ Part of Y workflow\n\n# What This Skill Does\n1. Analyze\n2. Process\n3.\
+        \ Output\n\n# Key Instructions\nSee @resources/patterns.md for details\n"
+      best_practices:
+      - practice: Clear description is critical
+        reason: Claude uses description for skill discovery
+        example: "✅ GOOD: \"Generates unit tests with 80%+ coverage using Vitest.\n\
+          \       Triggers when user asks for tests. Outputs complete\n       test\
+          \ files with edge cases.\"\n\n❌ BAD: \"Testing skill\"\n"
+      - practice: Progressive disclosure
+        reason: Keep SKILL.md lean, details in resources/
+        pattern: 'SKILL.md (300 lines)
+
+          └─ @resources/patterns.md (all patterns)
+
+          └─ @resources/examples/ (full examples)
+
+          '
+      - practice: Consolidate related skills
+        reason: 5 good skills > 20 micro-skills
+        example: '✅ CORRECT: testing-skill/ (unit, integration, e2e)
+
+          ❌ WRONG: unit-test-skill/, integration-test-skill/, e2e-test-skill/
+
+          '
+      anti_patterns:
+      - pattern: Too general description
+        problem: Skill never triggers or triggers inappropriately
+        solution: 'Be specific: what, when, triggers, outputs'
+      - pattern: SKILL.md > 500 lines
+        problem: Loads too much content, token waste
+        solution: Split into resources/ files
+      - pattern: No resources/ organization
+        problem: All content inline, hard to maintain
+        solution: Use progressive disclosure pattern
+    agent_md:
+      title: AGENT.md - Autonomous Agent
+      purpose: Independent system for long-running tasks
+      location: .claude/agents/ or .claude/agents/subagents/
+      size: 300-800 lines
+      loading: Explicit invocation (not auto-discovered)
+      structure: "---\nname: agent-name\ndescription: |\n  Autonomous agent that performs\
+        \ X independently.\nmodel: claude-opus-4  # Opus for reasoning, Sonnet for\
+        \ work\ntools: [read, write, grep, execute]\ntimeout: 1h\n---\n\n# Responsibilities\n\
+        - [Task 1]\n- [Task 2]\n\n# Input Format\nExpect: File: requirements.md\n\n\
+        # Output Format\nMUST: File: output.md\n\n# Decision Rules\nWhen uncertain:\n\
+        1. [Rule 1]\n2. Escalate\n\n# Success Criteria\n✓ Task complete\n✓ Quality\
+        \ met\n"
+      best_practices:
+      - practice: Match model to task complexity
+        guideline: 'Opus 4: Planning, routing, complex reasoning
+
+          Sonnet 4: Coding, analysis
+
+          Haiku 4: Simple tasks
+
+          '
+      - practice: Narrow tool permissions
+        reason: Security, focused behavior
+        example: 'Orchestrator: [read, route]  # Minimal
+
+          Worker: [read, write, execute]  # Full access
+
+          '
+      - practice: Clear decision rules
+        reason: Agent knows when to escalate
+        example: 'When uncertain:
+
+          1. Try approach A (if pattern matches)
+
+          2. Try approach B (if pattern matches)
+
+          3. Escalate to orchestrator
+
+          '
+      anti_patterns:
+      - pattern: Too much autonomy
+        problem: Agent gets lost, makes bad decisions
+        solution: Clear constraints, validation gates
+      - pattern: Wrong model for task
+        problem: Haiku for complex reasoning → Fails
+        solution: Match model to complexity
+      - pattern: No error handling
+        problem: Agent crashes, no recovery
+        solution: Try/retry logic, escalation paths
+    command_md:
+      title: COMMAND.md - Slash Command
+      purpose: Prompt template for quick workflows
+      location: .claude/commands/
+      size: 50-200 lines
+      invocation: Typing / in Claude Code
+      structure: 'Please perform the following workflow:
+
+
+        ## Step 1: Analysis
+
+        Analyze $ARGUMENTS
+
+
+        ## Step 2: Planning
+
+        Create plan for addressing issues
+
+
+        ## Step 3: Execution
+
+        Execute plan step by step
+
+
+        ## Step 4: Verification
+
+        Verify changes
+
+        '
+      best_practices:
+      - practice: Use $ARGUMENTS for parameters
+        reason: Makes commands flexible
+        example: '/fix-issue 1234
+
+          Command receives: $ARGUMENTS = "1234"
+
+          '
+      - practice: Clear sequential steps
+        reason: Easy to follow, predictable
+        guideline: Number each step 1-10
+      - practice: Reference skills/agents
+        reason: Reuse existing capabilities
+        example: Use /testing skill for test generation
+      anti_patterns:
+      - pattern: Vague instructions
+        problem: Unpredictable behavior
+        solution: Specific steps, clear outputs
+      - pattern: Too long (>200 lines)
+        problem: Hard to maintain, complex
+        solution: Split into smaller commands
+    hooks:
+      title: Hooks - Lifecycle Automation
+      purpose: Deterministic automation at key points
+      location: .claude/hooks/
+      size: <100 lines (fast execution)
+      events:
+        event_1:
+          name: SessionStart
+          trigger: When Claude session starts
+          uses: Environment setup, context loading
+          example: .claude/hooks/session-setup.sh
+        event_2:
+          name: PreToolUse
+          trigger: Before any tool call
+          uses: Validation, security filtering, blocking
+          example: .claude/hooks/validate-yaml.sh
+        event_3:
+          name: PostToolUse
+          trigger: After successful tool call
+          uses: Quality checks, auto-formatting, logging
+          example: .claude/hooks/quality-gate.sh
+        event_4:
+          name: Stop
+          trigger: When Claude finishes response
+          uses: Quality validation, auto-commit
+          example: .claude/hooks/auto-commit.sh
+      best_practices:
+      - practice: Keep hooks FAST (<2 seconds)
+        reason: Run synchronously, block workflow
+        guideline: Heavy operations → CI/CD, not hooks
+      - practice: Exit codes matter
+        guideline: 'Exit 0: ALLOW (continue)
+
+          Exit 2: BLOCK (stop action, show reason)
+
+          '
+      - practice: Quote all variables
+        reason: Prevent injection, handle spaces
+        example: FILE="$1"; rm "$FILE"
+      - practice: Test hooks manually
+        command: 'echo ''{"tool_name":"Bash","tool_input":{"command":"test"}}'' |
+          ./hook.sh
+
+          echo "Exit: $?"  # 0 = allow, 2 = block
+
+          '
+      anti_patterns:
+      - pattern: Slow hooks (>5 seconds)
+        problem: Every edit pauses workflow
+        solution: Quick checks in hooks, heavy in CI/CD
+      - pattern: Broad matchers
+        problem: '"matcher": "*" runs on EVERY tool call'
+        solution: 'Specific matchers: ''Bash'', ''Edit|Write'''
+      - pattern: Silent failures
+        problem: No error feedback, hard to debug
+        solution: set -e or explicit || exit 2
+    standards:
+      title: Standards - Team Knowledge
+      purpose: Single source of truth for team rules
+      location: .claude/standards/
+      size: 100-500 lines each
+      loading: Referenced from CLAUDE.md, SKILL.md, AGENT.md
+      best_practices:
+      - practice: One authoritative file per topic
+        reason: Avoid duplication, prevent inconsistency
+        example: 'standards/testing.md (authoritative)
+
+          All others: @standards/testing.md
+
+          '
+      - practice: Clear structure
+        guideline: Principles → Patterns → Examples
+      - practice: Version control
+        reason: Track changes, maintain history
+      anti_patterns:
+      - pattern: Duplication across files
+        problem: Updates missed, inconsistency spreads
+        solution: Single source of truth
+      - pattern: Mixed concerns in one file
+        problem: Hard to find, hard to maintain
+        solution: One topic per file
+  real_world_examples:
+    example_1_shared_knowledge_base:
+      title: Shared Knowledge Base - Production Example
+      description: Real .claude/ structure from shared-knowledge-base repo
+      structure: ".claude/\n├── CLAUDE.md                    # Project memory (300\
+        \ lines)\n├── settings.json                # Configuration\n│\n├── skills/\
+        \                      # 7 KB skills\n│   ├── kb-index/               # Search\
+        \ KB\n│   ├── kb-create/              # Create entries\n│   ├── kb-validate/\
+        \            # Validate YAML\n│   ├── audit-quality/          # Quality assessment\n\
+        │   ├── find-duplicates/        # Find similar entries\n│   ├── research-enhance/\
+        \       # Research patterns\n│   └── kb-search/              # Quick search\n\
+        │\n├── commands/                    # 7 slash commands\n│   ├── kb-validate.md\n\
+        │   ├── kb-create.md\n│   ├── kb-index.md\n│   ├── kb-search.md\n│   ├── kb-sync.md\n\
+        │   ├── kb-query.md\n│   └── retrospective.md\n│\n├── agents/            \
+        \          # Agent system\n│   ├── kb-curator.md           # Main curator\
+        \ agent\n│   └── subagents/              # 4 specialist subagents\n│     \
+        \  ├── researcher.md\n│       ├── debugger.md\n│       ├── validator.md\n\
+        │       └── knowledge-curator.md\n│\n└── hooks/                       # 9\
+        \ automation hooks\n    ├── session-setup.sh\n    ├── validate-yaml-before-edit.sh\n\
+        \    ├── validate-yaml-before-write.sh\n    ├── auto-create-metadata.sh\n\
+        \    ├── auto-format-yaml.sh\n    ├── quality-gate.sh\n    ├── check-index.sh\n\
+        \    ├── validate-metadata.sh\n    └── check-artifact-updates.py\n"
+      results:
+      - 7 skills auto-discovered by Claude
+      - 7 commands available via / menu
+      - 5 agent specialists coordinated
+      - 9 hooks for automation
+      - 'Estimated token savings: 60% vs prompts'
+    example_2_monorepo_structure:
+      title: Monorepo with Multiple Teams
+      description: How to organize .claude/ for large teams
+      structure: "company-monorepo/\n├── .claude/                      # Shared by\
+        \ all teams\n│   ├── CLAUDE.md               # Company-wide standards\n│ \
+        \  ├── standards/\n│   │   ├── architecture.md     # System design\n│   │\
+        \   ├── security.md         # Security policies\n│   │   └── compliance.md\
+        \       # Legal requirements\n│   └── skills/\n│       ├── code-review/  \
+        \      # Shared code review skill\n│       └── testing/            # Shared\
+        \ testing skill\n│\n├── frontend/.claude/            # Frontend team only\n\
+        │   ├── CLAUDE.md               # React + TypeScript specific\n│   ├── skills/\n\
+        │   │   ├── component-library/\n│   │   └── state-management/\n│   └── standards/\n\
+        │       └── react-patterns.md\n│\n└── backend/.claude/             # Backend\
+        \ team only\n    ├── CLAUDE.md               # FastAPI + Python specific\n\
+        \    ├── skills/\n    │   ├── api-design/\n    │   └── database-migration/\n\
+        \    └── standards/\n        └── python-patterns.md\n"
+      hierarchy: 'Local (.local) → Package → Project → Global → (none)
+
+        Most specific → Least specific
+
+        '
+      benefits:
+      - Company standards inherited by all teams
+      - Team-specific overrides where needed
+      - Clear separation of concerns
+      - Scalable to 100+ developers
+    example_3_personal_setup:
+      title: Personal Developer Setup
+      description: User-level Claude Code configuration
+      structure: "~/.claude/\n├── CLAUDE.md                   # Personal preferences\n\
+        │   ## My Coding Style\n│   - Use TypeScript strict mode\n│   - Prefer functional\
+        \ over OOP\n│   - Test coverage ≥ 80%\n│\n├── skills/                    \
+        \ # Personal skills\n│   ├── my-coding-style/\n│   │   └── SKILL.md\n│   └──\
+        \ brand-guidelines/\n│       └── SKILL.md\n│\n└── settings.json          \
+        \    # User config\n    {\n      \"skills.enabled\": [\"my-coding-style\"\
+        , \"brand-guidelines\"]\n    }\n"
+      benefits:
+      - Available in ALL projects
+      - Personal preferences preserved
+      - Not shared with team (in .gitignore)
+  testing_validation:
+    section: Testing & Validation Framework
+    evaluation_driven_development:
+      title: Evaluation-Driven Development for Skills
+      process: "BEFORE writing skill:\n\n1. Identify GAP\n   \"Where does Claude fail\
+        \ without this skill?\"\n\n2. Create 3 evaluation scenarios\n   Eval 1: Basic\
+        \ case\n   Eval 2: Medium case\n   Eval 3: Complex case\n\n3. Run baseline\
+        \ (without skill)\n   baseline_score = score(tests without skill)\n\n4. Write\
+        \ MINIMAL skill\n   Only enough to close the gap\n\n5. Test with Claude B\
+        \ (fresh instance)\n   new_score = score(tests with skill)\n\n6. Compare:\
+        \ improvement = new_score - baseline\n\n7. Iterate based on failures\n"
+      example: 'Eval 1: "Generate tests for login function"
+
+        ├─ Metrics: Vitest syntax? Y/N, Error cases? Y/N, Coverage? Y/N
+
+        ├─ Baseline (without skill): 1/4 ✗
+
+        └─ Target: 4/4 ✓
+
+
+        Write minimal skill → Test → Improve → Retest
+
+        '
+    skill_testing_checklist:
+      title: Skill Testing Checklist
+      items:
+      - item: Created 3 evaluation scenarios
+        importance: Critical
+        reason: Measure effectiveness
+      - item: Ran baseline (without skill)
+        importance: Critical
+        reason: Know starting point
+      - item: SKILL.md ≤ 500 lines
+        importance: High
+        reason: Token efficiency
+      - item: Description is specific
+        importance: Critical
+        reason: Skill discovery depends on it
+      - item: Tested with fresh Claude instance
+        importance: High
+        reason: Unbiased evaluation
+      - item: Team tested (2+ developers)
+        importance: Medium
+        reason: Diverse perspectives
+    agent_testing_checklist:
+      title: Agent Testing Checklist
+      items:
+      - item: 'Unit tests: Individual agent behaviors'
+        importance: High
+      - item: 'Integration tests: Agent coordination'
+        importance: High
+      - item: 'E2E tests: Full workflow'
+        importance: Medium
+      - item: 'Load testing: Expected volume'
+        importance: Medium
+      - item: 'Error rates: <1% target'
+        importance: Critical
+      - item: 'Cost tracking: Per execution'
+        importance: High
+  anti_patterns:
+    anti_pattern_1_massive_claude_md:
+      title: Massive CLAUDE.md (1000+ lines)
+      problem: '- Token waste (loaded every session)
+
+        - Hard to navigate
+
+        - Mixed concerns (overview + details + everything)
+
+        - Difficult to maintain
+
+        '
+      solution: 'Keep CLAUDE.md ≤ 300 lines:
+
+        - Overview (2-3 sentences)
+
+        - Quick start (1 command)
+
+        - Key features (bulleted)
+
+        - Links to details (not duplication)
+
+        - Recent decisions
+
+
+        Move details to:
+
+        - @standards/architecture.md
+
+        - @standards/coding-standards.md
+
+        - @references/
+
+        '
+      reference: PROGRESSIVE-DISCLOSURE-001
+    anti_pattern_2_many_micro_skills:
+      title: Too Many Micro-Skills
+      problem: '.claude/skills/
+
+        ├── unit-test-skill/
+
+        ├── integration-test-skill/
+
+        ├── e2e-test-skill/
+
+        ├── snapshot-test-skill/
+
+        ├── performance-test-skill/
+
+        └── ... (10+ skills for one topic)
+
+
+        - Claude confused about which to use
+
+        - Might not find the right one
+
+        - 300+ tokens metadata overhead
+
+        - Hard to manage
+
+        '
+      solution: "Consolidate into one skill:\n.claude/skills/\n└── testing-skill/\n\
+        \    ├── SKILL.md (main)\n    └── resources/\n        ├── patterns-unit.md\n\
+        \        ├── patterns-integration.md\n        ├── patterns-e2e.md\n      \
+        \  └── patterns-performance.md\n"
+      reference: claude-skills-guide.md:1119-1157
+    anti_pattern_3_prompts_instead_of_hooks:
+      title: Using Prompts Instead of Hooks
+      problem: 'Relying on prompts for critical tasks:
+
+        - "Please validate YAML" → Claude might forget
+
+        - "Check coverage" → Claude might skip
+
+        - "Run tests" → Claude might not do it
+
+        '
+      solution: "Use hooks for deterministic automation:\n{\n  \"hooks\": {\n    \"\
+        PostToolUse\": [{\n      \"matcher\": \"Edit:*.yaml|Write:*.yaml\",\n    \
+        \  \"command\": \".claude/hooks/validate-yaml.sh\"\n    }]\n  }\n}\n\nHooks\
+        \ = Guaranteed execution\nPrompts = Probabilistic (might happen)\n"
+      reference: claude-code-hooks.yaml:15-36
+    anti_pattern_4_duplication_across_files:
+      title: Duplication Across Files
+      problem: 'Error handling rules in:
+
+        - CLAUDE.md
+
+        - standards/error-handling.md
+
+        - docs/best-practices.md
+
+        - patterns/error-handling-001.yaml
+
+
+        → Updates missed, inconsistency spreads
+
+        '
+      solution: 'Single source of truth:
+
+        standards/error-handling.md (authoritative)
+
+
+        All others reference it:
+
+        CLAUDE.md: "See @standards/error-handling.md"
+
+        SKILL.md: "Follow @standards/error-handling.md"
+
+        AGENT.md: "Refer to @standards/error-handling.md"
+
+        '
+      reference: claude-code-shared-model.yaml:97-106
+    anti_pattern_5_wrong_agent_model:
+      title: Wrong Model for Agent Task
+      problem: 'Using Haiku (fast, simple) for complex reasoning
+
+        → Fails to understand nuances
+
+        → Makes random decisions
+
+        → Low quality output
+
+        '
+      solution: 'Match model to task complexity:
+
+        - Opus 4: Planning, routing, complex reasoning
+
+        - Sonnet 4: Coding, analysis, debugging
+
+        - Haiku 4: Simple, routine tasks
+
+
+        Example breakdown:
+
+        - 10% Opus (orchestrator)
+
+        - 60% Sonnet (workers)
+
+        - 30% Haiku (simple tasks)
+
+
+        Result: 70% cost savings, quality maintained
+
+        '
+      reference: claude-agents-guide.md:614-634
+    anti_pattern_6_agents_for_simple_tasks:
+      title: Using Agents for Simple Tasks
+      problem: 'Creating agent for one-off task:
+
+        - Over-engineering
+
+        - Complex setup for simple need
+
+        - Wasted development time
+
+        '
+      solution: 'Use SKILL instead when:
+
+        - Task is one-off or rare
+
+        - No iteration needed
+
+        - No autonomy required
+
+        - Quick workflow
+
+
+        Use AGENT when:
+
+        - Task requires autonomy
+
+        - Need iteration (plan changes)
+
+        - Long-running service
+
+        - External integration
+
+        '
+      reference: claude-agents-guide.md:36-52
+    anti_pattern_7_deeply_nested_references:
+      title: Deeply Nested References
+      problem: "SKILL.md\n  └─ @resources/main.md\n      └─ @../standards/testing.md\n\
+        \          └─ @../../team/guidelines.md\n              └─ @../../../../best-practices.md\n\
+        \n- Claude may partially read\n- Files not found (wrong paths)\n- Hard to\
+        \ track dependencies\n"
+      solution: "Keep references one level deep from SKILL.md:\nSKILL.md\n  ├─ @resources/patterns.md\
+        \ (direct)\n  ├─ @resources/examples.md (direct)\n  └─ @../../standards/architecture.md\
+        \ (max 1 up)\n"
+      reference: claude-skills-guide.md:1197-1223
+    anti_pattern_8_no_error_handling_in_scripts:
+      title: Scripts Without Error Handling
+      problem: "def analyze_csv(path):\n    df = pd.read_csv(path)  # Crashes if file\
+        \ missing\n    return df.describe()\n\n- Script crashes silently\n- Claude\
+        \ doesn't know why\n- Poor user experience\n"
+      solution: "def analyze_csv(path):\n    try:\n        if not os.path.exists(path):\n\
+        \            print(f\"ERROR: File not found: {path}\")\n            return\
+        \ None\n\n        df = pd.read_csv(path)\n        if df.empty:\n         \
+        \   print(f\"ERROR: CSV is empty\")\n            return None\n\n        return\
+        \ df.describe()\n\n    except Exception as e:\n        print(f\"ERROR: {e}\"\
+        )\n        return None\n\n- Graceful degradation\n- Helpful error messages\n\
+        - Claude can react properly\n"
+      reference: claude-skills-guide.md:1159-1195
+  quality_metrics:
+    token_efficiency:
+      metric: Token Usage per Session
+      targets:
+        poor: '>10000 tokens'
+        acceptable: 5000-10000 tokens
+        excellent: <5000 tokens
+      calculation: 'Session Start:
+
+        ├─ CLAUDE.md: ~300 tokens
+
+        ├─ Skill metadata (10 skills × 50 tokens): 500 tokens
+
+        └─ Total startup: ~800 tokens
+
+
+        When Skill Triggers:
+
+        ├─ Full SKILL.md: 500-2000 tokens
+
+        ├─ Referenced resources: 400-1000 tokens
+
+        └─ Total per skill: 1000-3000 tokens
+
+
+        Goal: Minimal metadata, load details on-demand
+
+        '
+    discoverability:
+      metric: Skill Discovery Rate
+      targets:
+        poor: <50% (skills not found when needed)
+        acceptable: 50-80%
+        excellent: '>80%'
+      measurement: 'Track how often Claude uses the right skill:
+
+        - Log skill activation
+
+        - Compare against expected usage
+
+        - Improve descriptions based on misses
+
+        '
+    maintainability:
+      metric: File Organization Score
+      targets:
+        poor: Flat structure, mixed concerns
+        acceptable: Organized by type, some duplication
+        excellent: Clear separation, single source of truth
+      checklist:
+      - check: No duplication across files
+      - check: One source of truth per topic
+      - check: Progressive disclosure used
+      - check: Clear naming conventions
+      - check: Easy to navigate
+  verification_checklist:
+    section: Organization Verification Checklist
+    setup:
+    - check: .claude/ directory exists
+      command: ls -la .claude/
+      expected: Directory with subdirectories
+    - check: CLAUDE.md ≤ 300 lines
+      command: wc -l .claude/CLAUDE.md
+      expected: Less than 400 lines
+    - check: settings.json valid JSON
+      command: jq empty .claude/settings.json
+      expected: No syntax errors
+    - check: Skills have YAML frontmatter
+      command: grep -l '^name:' .claude/skills/*/SKILL.md
+      expected: All skills have name field
+    - check: Hooks are executable
+      command: ls -la .claude/hooks/*.sh
+      expected: Executable bit set
+    skills:
+    - check: Description is specific
+      verification: 'Read description, ask: Is it clear when to use?'
+      expected: Yes, includes what/when/triggers
+    - check: SKILL.md ≤ 500 lines
+      command: wc -l .claude/skills/*/SKILL.md
+      expected: All under 500 lines
+    - check: Resources organized
+      verification: Check resources/ subdirectories exist
+      expected: patterns/, examples/, templates/
+    - check: No circular references
+      verification: Trace @references, check for loops
+      expected: No circular dependencies
+    - check: Tested with real usage
+      verification: Confirm skill tested in actual workflow
+      expected: At least 3 evaluation scenarios run
+    agents:
+    - check: Model matches task complexity
+      verification: Review agent model choice
+      expected: Opus for reasoning, Sonnet for work, Haiku for simple
+    - check: Tool permissions minimal
+      verification: Check tools list in agent file
+      expected: Only necessary tools, no blanket permissions
+    - check: Decision rules defined
+      verification: Read agent file for decision rules section
+      expected: Clear escalation path defined
+    - check: Success criteria specified
+      verification: Check for measurable success criteria
+      expected: Specific outputs, validation steps
+    hooks:
+    - check: Hooks execute in <2 seconds
+      command: time .claude/hooks/*.sh
+      expected: All hooks complete in <2 seconds
+    - check: Exit codes are correct
+      verification: Test hook with valid/invalid input
+      expected: 0 = allow, 2 = block
+    - check: Variables are quoted
+      verification: Check shell scripts for quoted variables
+      expected: All "$VAR" properly quoted
+    - check: Error handling present
+      verification: Review scripts for error handling
+      expected: try/except or set -e or || exit 2
+    standards:
+    - check: No duplication across files
+      verification: Search for same rule in multiple files
+      expected: Each rule has single source of truth
+    - check: CLAUDE.md references standards
+      verification: Check for @standards/ references
+      expected: Links to detailed standards, not duplication
+    - check: Team reviewed (if applicable)
+      verification: Confirm team approved standards
+      expected: Documented approval date
+  migration_guide:
+    title: Migrating to Proper Organization
+    from_flat_structure:
+      title: From Flat Structure to Organized
+      before: '.claude/
+
+        ├── skill1.md
+
+        ├── skill2.md
+
+        ├── skill3.md
+
+        └── agent1.md
+
+        '
+      after: ".claude/\n├── CLAUDE.md              # Create navigation hub\n├── skills/\n\
+        │   ├── skill1/\n│   │   ├── SKILL.md\n│   │   └── resources/\n│   ├── skill2/\n\
+        │   └── skill3/\n└── agents/\n    └── agent1.md\n"
+      steps:
+      - step: Create directory structure
+        command: mkdir -p .claude/{skills,agents}
+      - step: Move skills to subdirectories
+        command: "for skill in skill1 skill2 skill3; do\n  mkdir -p \".claude/skills/$skill/resources\"\
+          \n  mv \"$skill.md\" \".claude/skills/$skill/SKILL.md\"\ndone\n"
+      - step: Split large SKILL.md files
+        description: "\"If SKILL.md > 500 lines:\n 1. Keep main instructions in SKILL.md\n\
+          \ 2. Move detailed content to resources/\n 3. Add @references to new files\"\
+          \n"
+      - step: Update CLAUDE.md
+        description: "\"1. Add overview section\n 2. Add quick start (1 command)\n\
+          \ 3. Add key features (bulleted)\n 4. Link to skills/agents/commands/\"\n"
+    from_massive_claude_md:
+      title: From Massive CLAUDE.md to Lean
+      before: 'CLAUDE.md: 1000+ lines
+
+        - All details inline
+
+        - Mixed concerns
+
+        - Hard to navigate
+
+        '
+      after: 'CLAUDE.md: ~300 lines
+
+        - Overview (2-3 sentences)
+
+        - Quick start (1 command + link)
+
+        - Key features (bulleted)
+
+        - Documentation links (not duplication)
+
+
+        standards/
+
+        ├── architecture.md     # Detailed architecture
+
+        ├── coding-standards.md  # Detailed guidelines
+
+        └── testing-guidelines.md # Detailed testing
+
+        '
+      steps:
+      - step: Extract standards to separate files
+        command: '# Extract sections from CLAUDE.md
+
+          # Create standards/ directory
+
+          mkdir -p .claude/standards
+
+          '
+      - step: Create lean CLAUDE.md
+        description: "\"1. Keep only overview + links\n 2. Move details to standards/\n\
+          \ 3. Add @standards/ references\"\n"
+      - step: Update all references
+        description: "\"Search for old content location\n Replace with @standards/\
+          \ references\n Verify no broken links\"\n"
+    from_prompts_to_hooks:
+      title: From Manual Prompts to Automated Hooks
+      before: 'User: "Please validate YAML"
+
+        User: "Please run tests"
+
+        User: "Please format code"
+
+        '
+      after: ".claude/settings.json:\n{\n  \"hooks\": {\n    \"PostToolUse\": [{\n\
+        \      \"matcher\": \"Edit:*.yaml|Write:*.yaml\",\n      \"hooks\": [\n  \
+        \      {\n          \"command\": \".claude/hooks/validate-yaml.sh\"\n    \
+        \    },\n        {\n          \"command\": \".claude/hooks/format-yaml.sh\"\
+        \n        }\n      ]\n    }]\n  }\n}\n"
+      steps:
+      - step: Identify repetitive manual tasks
+        description: "\"What do you repeatedly ask Claude to do?\n Validate? Format?\
+          \ Test? Commit?\"\n"
+      - step: Create hook scripts
+        command: '# Create .claude/hooks/validate-yaml.sh
+
+          # Create .claude/hooks/format-yaml.sh
+
+          '
+      - step: Configure hooks in settings.json
+        description: "\"Add hooks to .claude/settings.json\n Specify matchers (which\
+          \ tools trigger)\n Set timeouts (default 60s)\"\n"
+      - step: Test hooks manually
+        command: "echo '{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"\
+          test.yaml\"}}' | \\\n  ./.claude/hooks/validate-yaml.sh\necho \"Exit: $?\"\
+          \  # 0 = allow, 2 = block\n"
+  related_patterns:
+  - CLAUDE-CODE-SHARED-MODEL-001 - Hierarchical configuration
+  - CLAUDE-CODE-HOOKS-001 - Deterministic automation
+  - PROGRESSIVE-DISCLOSURE-001 - Progressive disclosure for information
+  - DOC-ORGANIZATION-001 - Documentation structure
+  - claude-skills-guide.md - Complete skills guide
+  - claude-agents-guide.md - Complete agents guide
+  references:
+  - claude-hooks-guide.md - Complete hooks reference (1254 lines)
+  - claude-skills-guide.md - Skills best practices (1505 lines)
+  - claude-agents-guide.md - Agents best practices (1278 lines)
+  - CLAUDE-CLAUDE-MD-GUIDE.md - Project memory guide (308 lines)
+  - 'Anthropic Engineering: Claude Code Best Practices - https://www.anthropic.com/engineering/claude-code-best-practices'
+  - 'Claude Docs: Skill Authoring Best Practices - https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices'
+  - for-claude-code/README.md - Claude Code integration guide (656 lines)
+  metadata:
+    created_at: '2026-01-07'
+    author: Shared KB Curator
+    source: Synthesized from KB + official docs + web research
+    reusable: true
+    severity_level: 2
+    difficulty: intermediate
+    pattern_type: organization
+    applicable_to:
+    - claude-code
+    - project-organization
+    - team-collaboration
+  quality_assurance:
+    reviewed: true
+    tested: true
+    examples_verified: true
+    anti_patterns_validated: true
+    last_review_date: '2026-01-07'
+  domains:
+    primary: performance
+    secondary: []

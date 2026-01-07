@@ -1,312 +1,257 @@
-version: "1.0"
-category: "claude-code"
-last_updated: "2026-01-07"
-
+version: '1.0'
+category: claude-code
+last_updated: '2026-01-07'
 patterns:
-  - id: "HOOK-PATTERNS-001"
-    title: "Claude Code Hook Implementation Patterns"
-    severity: "high"
-    scope: "universal"
+- id: HOOK-PATTERNS-001
+  title: Claude Code Hook Implementation Patterns
+  severity: high
+  scope: universal
+  problem: 'Claude Code provides a powerful hook system for automation at workflow
 
-    problem: |
-      Claude Code provides a powerful hook system for automation at workflow
-      points, but there's no standardized approach for implementing common
-      hook patterns. Developers need to figure out:
-      - Which hook event to use for specific use cases
-      - Whether to use shell or LLM hooks
-      - How to optimize hook performance
-      - Best practices for error handling
-      - Production-tested patterns to follow
+    points, but there''s no standardized approach for implementing common
 
-      This leads to inconsistent hook implementations, performance issues,
-      and missed automation opportunities.
+    hook patterns. Developers need to figure out:
 
-    symptoms:
-      - Hooks causing performance degradation
-      - Wrong hook events selected for use cases
-      - Inconsistent error handling
-      - Hooks not firing or executing incorrectly
-      - Poor user experience due to slow hooks
+    - Which hook event to use for specific use cases
 
-    root_cause: |
-      Lack of documented production-tested patterns for common hook use cases.
-      Developers must experiment to find optimal implementations.
+    - Whether to use shell or LLM hooks
 
-    solution:
-      code: |
-        # Pattern 1: Validation Hook (PreToolUse)
-        # Purpose: Validate operations before execution
-        # Type: Shell (fast, deterministic)
-        # Target: <500ms
+    - How to optimize hook performance
 
-        # .claude/hooks/PreToolUse/yaml-validation.sh
-        #!/bin/bash
+    - Best practices for error handling
 
-        TOOL_NAME="$1"
-        FILE_PATH="$2"
+    - Production-tested patterns to follow
 
-        if [ "$TOOL_NAME" = "Write" ]; then
-            if [[ "$FILE_PATH" == *.yaml ]] || [[ "$FILE_PATH" == *.yml ]]; then
-                if [ -f "tools/kb.py" ]; then
-                    if ! python tools/kb.py validate "$FILE_PATH" 2>&1; then
-                        echo "❌ YAML validation failed"
-                        exit 1  # Block operation
-                    fi
-                    echo "✅ YAML validation passed"
-                fi
-            fi
-        fi
 
-        exit 0  # Allow operation
+    This leads to inconsistent hook implementations, performance issues,
 
-        # ---------------------------------------------------------------
+    and missed automation opportunities.
 
-        # Pattern 2: Skill Activation Hook (UserPromptSubmit)
-        # Purpose: Suggest relevant skills based on user intent
-        # Type: LLM (complex analysis required)
-        # Target: <1 second (don't block user)
+    '
+  symptoms:
+  - Hooks causing performance degradation
+  - Wrong hook events selected for use cases
+  - Inconsistent error handling
+  - Hooks not firing or executing incorrectly
+  - Poor user experience due to slow hooks
+  root_cause: 'Lack of documented production-tested patterns for common hook use cases.
 
-        # .claude/hooks/UserPromptSubmit/skill-activation.ts
-        export async function skillActivationPrompt(prompt: string): Promise<string> {
-          const skills = await loadSkillRules();  // Cache this!
-          const matches = findMatchingSkills(prompt, skills);
+    Developers must experiment to find optimal implementations.
 
-          if (matches.length > 0) {
-            const suggestions = matches
-              .slice(0, 3)
-              .map(m => `• ${m.name}: ${m.description}`)
-              .join("\n");
+    '
+  solution:
+    code: "# Pattern 1: Validation Hook (PreToolUse)\n# Purpose: Validate operations\
+      \ before execution\n# Type: Shell (fast, deterministic)\n# Target: <500ms\n\n\
+      # .claude/hooks/PreToolUse/yaml-validation.sh\n#!/bin/bash\n\nTOOL_NAME=\"$1\"\
+      \nFILE_PATH=\"$2\"\n\nif [ \"$TOOL_NAME\" = \"Write\" ]; then\n    if [[ \"\
+      $FILE_PATH\" == *.yaml ]] || [[ \"$FILE_PATH\" == *.yml ]]; then\n        if\
+      \ [ -f \"tools/kb.py\" ]; then\n            if ! python tools/kb.py validate\
+      \ \"$FILE_PATH\" 2>&1; then\n                echo \"❌ YAML validation failed\"\
+      \n                exit 1  # Block operation\n            fi\n            echo\
+      \ \"✅ YAML validation passed\"\n        fi\n    fi\nfi\n\nexit 0  # Allow operation\n\
+      \n# ---------------------------------------------------------------\n\n# Pattern\
+      \ 2: Skill Activation Hook (UserPromptSubmit)\n# Purpose: Suggest relevant skills\
+      \ based on user intent\n# Type: LLM (complex analysis required)\n# Target: <1\
+      \ second (don't block user)\n\n# .claude/hooks/UserPromptSubmit/skill-activation.ts\n\
+      export async function skillActivationPrompt(prompt: string): Promise<string>\
+      \ {\n  const skills = await loadSkillRules();  // Cache this!\n  const matches\
+      \ = findMatchingSkills(prompt, skills);\n\n  if (matches.length > 0) {\n   \
+      \ const suggestions = matches\n      .slice(0, 3)\n      .map(m => `• ${m.name}:\
+      \ ${m.description}`)\n      .join(\"\\n\");\n\n    return `Based on your request,\
+      \ consider using:\\n${suggestions}`;\n  }\n\n  return \"\";\n}\n\nasync function\
+      \ loadSkillRules() {\n  // Cache in production!\n  const cache = skillRulesCache.get();\n\
+      \  if (cache) return cache;\n\n  const fs = require('fs').promises;\n  const\
+      \ content = await fs.readFile('.claude/skill-rules.json', 'utf-8');\n  const\
+      \ rules = JSON.parse(content);\n  skillRulesCache.set(rules, 60000);  // Cache\
+      \ for 1 minute\n  return rules;\n}\n\n# ---------------------------------------------------------------\n\
+      \n# Pattern 3: Tool Tracking Hook (PostToolUse)\n# Purpose: Track tool usage\
+      \ for analytics\n# Type: Shell (fast, simple)\n# Target: <1 second (can be async)\n\
+      \n# .claude/hooks/PostToolUse/tool-tracker.sh\n#!/bin/bash\n\nTOOL_NAME=\"$1\"\
+      \nEXIT_CODE=\"$2\"\n\nLOG_FILE=\".claude/logs/tool-usage.log\"\nmkdir -p \"\
+      $(dirname \"$LOG_FILE\")\"\n\necho \"$(date -Iseconds) | $TOOL_NAME | exit:\
+      \ $EXIT_CODE\" >> \"$LOG_FILE\"\n\n# Update statistics (requires jq)\nSTATS_FILE=\"\
+      .claude/logs/tool-stats.json\"\nif [ ! -f \"$STATS_FILE\" ]; then\n  echo \"\
+      {}\" > \"$STATS_FILE\"\nfi\n\nif command -v jq &> /dev/null; then\n  jq --arg\
+      \ tool \"$TOOL_NAME\" '\n    if has($tool) then\n      .[$tool] += 1\n    else\n\
+      \      .[$tool] = 1\n    end\n  ' \"$STATS_FILE\" > \"$STATS_FILE.tmp\"\n  mv\
+      \ \"$STATS_FILE.tmp\" \"$STATS_FILE\"\nfi\n\nexit 0\n\n# ---------------------------------------------------------------\n\
+      \n# Pattern 4: Error Handling Reminder Hook (Stop)\n# Purpose: Remind user to\
+      \ document errors\n# Type: LLM (context-aware decision)\n# Target: Non-blocking\
+      \ (session ending anyway)\n\n# .claude/hooks/Stop/error-handling-reminder.ts\n\
+      export async function errorHandlingReminder(\n  context: {\n    errorsThrown:\
+      \ boolean;\n    hasUncommittedChanges: boolean;\n    hasUnpushedCommits: boolean;\n\
+      \  }\n): Promise<string> {\n  const reminders: string[] = [];\n\n  if (context.errorsThrown)\
+      \ {\n    reminders.push(\"⚠️  Errors were thrown - document in KB\");\n  }\n\
+      \n  if (context.hasUncommittedChanges) {\n    reminders.push(\"\U0001F4DD Uncommitted\
+      \ changes - don't forget to commit\");\n  }\n\n  if (context.hasUnpushedCommits)\
+      \ {\n    reminders.push(\"⬆️  Unpushed commits - consider pushing\");\n  }\n\
+      \n  if (reminders.length > 0) {\n    return \"\\n\" + reminders.join(\"\\n\"\
+      );\n  }\n\n  return \"\";\n}\n\n# ---------------------------------------------------------------\n\
+      \n# Pattern 5: Environment Setup Hook (SessionStart)\n# Purpose: Validate environment\
+      \ on session start\n# Type: Shell (fast validation)\n# Target: <2 seconds\n\n\
+      # .claude/hooks/SessionStart/setup-env.sh\n#!/bin/bash\n\necho \"\U0001F50D\
+      \ Validating environment...\"\n\n# Check Python\nif ! command -v python &> /dev/null;\
+      \ then\n    echo \"❌ Python not found\"\n    echo \"Install: https://www.python.org/downloads/\"\
+      \nelse\n    echo \"✅ Python: $(python --version)\"\nfi\n\n# Check KB index\n\
+      if [ ! -f \".kb/index.db\" ]; then\n    echo \"⚠️  KB index missing\"\n    echo\
+      \ \"Run: python tools/kb.py index -v\"\nfi\n\necho \"✅ Environment ready\"\n"
+    explanation: 'Production-tested hook patterns for common use cases:
 
-            return `Based on your request, consider using:\n${suggestions}`;
-          }
 
-          return "";
-        }
+      **1. Validation Hook (PreToolUse)**
 
-        async function loadSkillRules() {
-          // Cache in production!
-          const cache = skillRulesCache.get();
-          if (cache) return cache;
+      - Use for: Validating operations before execution
 
-          const fs = require('fs').promises;
-          const content = await fs.readFile('.claude/skill-rules.json', 'utf-8');
-          const rules = JSON.parse(content);
-          skillRulesCache.set(rules, 60000);  // Cache for 1 minute
-          return rules;
-        }
+      - Type: Shell (fast, deterministic)
 
-        # ---------------------------------------------------------------
+      - Can block: Yes (exit code 1 = block)
 
-        # Pattern 3: Tool Tracking Hook (PostToolUse)
-        # Purpose: Track tool usage for analytics
-        # Type: Shell (fast, simple)
-        # Target: <1 second (can be async)
+      - Target: <500ms (tool call latency)
 
-        # .claude/hooks/PostToolUse/tool-tracker.sh
-        #!/bin/bash
+      - Examples: YAML validation, security checks, file permissions
 
-        TOOL_NAME="$1"
-        EXIT_CODE="$2"
 
-        LOG_FILE=".claude/logs/tool-usage.log"
-        mkdir -p "$(dirname "$LOG_FILE")"
+      **2. Skill Activation Hook (UserPromptSubmit)**
 
-        echo "$(date -Iseconds) | $TOOL_NAME | exit: $EXIT_CODE" >> "$LOG_FILE"
+      - Use for: Suggesting relevant skills
 
-        # Update statistics (requires jq)
-        STATS_FILE=".claude/logs/tool-stats.json"
-        if [ ! -f "$STATS_FILE" ]; then
-          echo "{}" > "$STATS_FILE"
-        fi
+      - Type: LLM (requires analysis)
 
-        if command -v jq &> /dev/null; then
-          jq --arg tool "$TOOL_NAME" '
-            if has($tool) then
-              .[$tool] += 1
-            else
-              .[$tool] = 1
-            end
-          ' "$STATS_FILE" > "$STATS_FILE.tmp"
-          mv "$STATS_FILE.tmp" "$STATS_FILE"
-        fi
+      - Can block: No (user can ignore)
 
-        exit 0
+      - Target: <1 second (don''t block user)
 
-        # ---------------------------------------------------------------
+      - Must: Cache skill rules for performance
 
-        # Pattern 4: Error Handling Reminder Hook (Stop)
-        # Purpose: Remind user to document errors
-        # Type: LLM (context-aware decision)
-        # Target: Non-blocking (session ending anyway)
 
-        # .claude/hooks/Stop/error-handling-reminder.ts
-        export async function errorHandlingReminder(
-          context: {
-            errorsThrown: boolean;
-            hasUncommittedChanges: boolean;
-            hasUnpushedCommits: boolean;
-          }
-        ): Promise<string> {
-          const reminders: string[] = [];
+      **3. Tool Tracking Hook (PostToolUse)**
 
-          if (context.errorsThrown) {
-            reminders.push("⚠️  Errors were thrown - document in KB");
-          }
+      - Use for: Logging, analytics, tracking
 
-          if (context.hasUncommittedChanges) {
-            reminders.push("📝 Uncommitted changes - don't forget to commit");
-          }
+      - Type: Shell (fast, simple)
 
-          if (context.hasUnpushedCommits) {
-            reminders.push("⬆️  Unpushed commits - consider pushing");
-          }
+      - Can block: No (operation already completed)
 
-          if (reminders.length > 0) {
-            return "\n" + reminders.join("\n");
-          }
+      - Target: <1 second (can be async)
 
-          return "";
-        }
+      - Examples: Usage logging, statistics, notifications
 
-        # ---------------------------------------------------------------
 
-        # Pattern 5: Environment Setup Hook (SessionStart)
-        # Purpose: Validate environment on session start
-        # Type: Shell (fast validation)
-        # Target: <2 seconds
+      **4. Reminder Hook (Stop)**
 
-        # .claude/hooks/SessionStart/setup-env.sh
-        #!/bin/bash
+      - Use for: Quality validation, reminders
 
-        echo "🔍 Validating environment..."
+      - Type: LLM (context-aware)
 
-        # Check Python
-        if ! command -v python &> /dev/null; then
-            echo "❌ Python not found"
-            echo "Install: https://www.python.org/downloads/"
-        else
-            echo "✅ Python: $(python --version)"
-        fi
+      - Can block: No (session ending)
 
-        # Check KB index
-        if [ ! -f ".kb/index.db" ]; then
-            echo "⚠️  KB index missing"
-            echo "Run: python tools/kb.py index -v"
-        fi
+      - Target: Non-blocking
 
-        echo "✅ Environment ready"
+      - Examples: Error reminders, commit reminders, cleanup
 
-      explanation: |
-        Production-tested hook patterns for common use cases:
 
-        **1. Validation Hook (PreToolUse)**
-        - Use for: Validating operations before execution
-        - Type: Shell (fast, deterministic)
-        - Can block: Yes (exit code 1 = block)
-        - Target: <500ms (tool call latency)
-        - Examples: YAML validation, security checks, file permissions
+      **5. Setup Hook (SessionStart)**
 
-        **2. Skill Activation Hook (UserPromptSubmit)**
-        - Use for: Suggesting relevant skills
-        - Type: LLM (requires analysis)
-        - Can block: No (user can ignore)
-        - Target: <1 second (don't block user)
-        - Must: Cache skill rules for performance
+      - Use for: Environment validation, context loading
 
-        **3. Tool Tracking Hook (PostToolUse)**
-        - Use for: Logging, analytics, tracking
-        - Type: Shell (fast, simple)
-        - Can block: No (operation already completed)
-        - Target: <1 second (can be async)
-        - Examples: Usage logging, statistics, notifications
+      - Type: Shell (fast checks)
 
-        **4. Reminder Hook (Stop)**
-        - Use for: Quality validation, reminders
-        - Type: LLM (context-aware)
-        - Can block: No (session ending)
-        - Target: Non-blocking
-        - Examples: Error reminders, commit reminders, cleanup
+      - Can block: No (session starts regardless)
 
-        **5. Setup Hook (SessionStart)**
-        - Use for: Environment validation, context loading
-        - Type: Shell (fast checks)
-        - Can block: No (session starts regardless)
-        - Target: <2 seconds
-        - Examples: Tool validation, index checks, context load
+      - Target: <2 seconds
 
-        **Key principles:**
-        - Use shell hooks for fast, deterministic operations
-        - Use LLM hooks for complex analysis requiring context
-        - Respect performance targets
-        - Handle errors gracefully
-        - Cache expensive operations
-        - Test thoroughly before deploying
+      - Examples: Tool validation, index checks, context load
 
-    examples:
-      - name: "Complete YAML validation hook"
-        description: "Validates YAML files before writing, blocks invalid files"
-        before: |
-          User: Write invalid YAML
-          Claude: [Writes file]
-          System: [Invalid YAML in repository]
-        after: |
-          User: Write invalid YAML
-          Hook: [Validates YAML]
-          Hook: ❌ YAML validation failed
-          Claude: [Blocked from writing]
-          User: [Fixes YAML]
-          Claude: [Successfully writes]
-        result: "Invalid YAML prevented from entering repository"
 
-      - name: "Skill activation in action"
-        description: "Python async skill activates when user asks about async"
-        before: |
-          User: "Create async function in python"
-          # No skill suggested, must manually activate
-        after: |
-          User: "Create async function in python"
-          Hook: [Analyzes prompt]
-          Claude: Based on your request, consider using:
-                  • python-async: Async/await patterns
-          User: [Accepts]
-          Claude: [Loads skill and provides async patterns]
-        result: "Skill automatically suggested and activated"
+      **Key principles:**
 
-      - name: "Error reminder prevents documentation loss"
-        description: "Reminds user to document errors at session end"
-        before: |
-          User: [Session with errors]
-          # Session ends without reminder
-          System: [Errors not documented]
-        after: |
-          User: [Session with errors]
-          Hook: ⚠️ Errors were thrown
-                 Consider documenting them in the KB
-          User: [Documents error in KB]
-        result: "Errors documented, knowledge preserved"
+      - Use shell hooks for fast, deterministic operations
 
-    benefits:
-      - Standardized hook implementations
-      - Production-tested patterns
-      - Optimal performance characteristics
-      - Consistent behavior across projects
-      - Reduced trial and error
+      - Use LLM hooks for complex analysis requiring context
 
-    prevention:
-      - "Choose correct hook event for use case"
-      - "Use shell hooks for fast, deterministic operations"
-      - "Use LLM hooks only when complex analysis needed"
-      - "Respect performance targets (SessionStart <2s, etc.)"
-      - "Cache expensive operations (file reads, parsing)"
-      - "Handle errors gracefully (don't break workflow)"
-      - "Test hooks manually before deploying"
-      - "Make shell hooks executable (chmod +x)"
-      - "Register hooks in settings.json"
-      - "Restart Claude Code after hook changes"
+      - Respect performance targets
 
-    tags: ["claude-code", "hooks", "automation", "patterns", "production"]
+      - Handle errors gracefully
 
-    related_patterns:
-      - "CLAUDE-CODE-AUTO-ACTIVATION-001"
-      - "SKILL-RULES-JSON-001"
-      - "MODULAR-SKILLS-001"
+      - Cache expensive operations
+
+      - Test thoroughly before deploying
+
+      '
+  examples:
+  - name: Complete YAML validation hook
+    description: Validates YAML files before writing, blocks invalid files
+    before: 'User: Write invalid YAML
+
+      Claude: [Writes file]
+
+      System: [Invalid YAML in repository]
+
+      '
+    after: 'User: Write invalid YAML
+
+      Hook: [Validates YAML]
+
+      Hook: ❌ YAML validation failed
+
+      Claude: [Blocked from writing]
+
+      User: [Fixes YAML]
+
+      Claude: [Successfully writes]
+
+      '
+    result: Invalid YAML prevented from entering repository
+  - name: Skill activation in action
+    description: Python async skill activates when user asks about async
+    before: 'User: "Create async function in python"
+
+      # No skill suggested, must manually activate
+
+      '
+    after: "User: \"Create async function in python\"\nHook: [Analyzes prompt]\nClaude:\
+      \ Based on your request, consider using:\n        • python-async: Async/await\
+      \ patterns\nUser: [Accepts]\nClaude: [Loads skill and provides async patterns]\n"
+    result: Skill automatically suggested and activated
+  - name: Error reminder prevents documentation loss
+    description: Reminds user to document errors at session end
+    before: 'User: [Session with errors]
+
+      # Session ends without reminder
+
+      System: [Errors not documented]
+
+      '
+    after: "User: [Session with errors]\nHook: ⚠️ Errors were thrown\n       Consider\
+      \ documenting them in the KB\nUser: [Documents error in KB]\n"
+    result: Errors documented, knowledge preserved
+  benefits:
+  - Standardized hook implementations
+  - Production-tested patterns
+  - Optimal performance characteristics
+  - Consistent behavior across projects
+  - Reduced trial and error
+  prevention:
+  - Choose correct hook event for use case
+  - Use shell hooks for fast, deterministic operations
+  - Use LLM hooks only when complex analysis needed
+  - Respect performance targets (SessionStart <2s, etc.)
+  - Cache expensive operations (file reads, parsing)
+  - Handle errors gracefully (don't break workflow)
+  - Test hooks manually before deploying
+  - Make shell hooks executable (chmod +x)
+  - Register hooks in settings.json
+  - Restart Claude Code after hook changes
+  tags:
+  - claude-code
+  - hooks
+  - automation
+  - patterns
+  - production
+  related_patterns:
+  - CLAUDE-CODE-AUTO-ACTIVATION-001
+  - SKILL-RULES-JSON-001
+  - MODULAR-SKILLS-001
+  domains:
+    primary: deployment
+    secondary: []

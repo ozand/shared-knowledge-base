@@ -1,0 +1,117 @@
+name: Update Knowledge Base Submodule
+
+# This workflow automatically updates the Shared KB submodule
+# Triggers: Daily schedule OR manual dispatch OR after entry approval
+
+on:
+  repository_dispatch:
+    types: [shared-kb-entry-approved, trigger-kb-update]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-kb:
+    name: Update Shared KB Submodule
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: Update submodule
+        run: |
+          echo "🔄 Updating Shared KB submodule..."
+
+          # Update submodule to latest commit
+          git submodule update --remote .kb/shared || {
+            echo "⚠ Submodule update failed, trying alternative method..."
+            cd .kb/shared
+            git pull origin main
+          }
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet .kb/shared; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ No changes detected in Shared KB"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✓ Changes detected in Shared KB"
+
+            # Show what changed
+            git log -1 --oneline .kb/shared
+          fi
+
+      - name: Commit changes
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Determine commit message
+          if [ "${{ github.event.event_type }}" = "shared-kb-entry-approved" ]; then
+            ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+            ENTRY_URL="${{ github.event.client_payload.entry_url }}"
+
+            COMMIT_MSG="Update Shared KB (entry $ENTRY_ID approved)
+
+Approved at: $ENTRY_URL
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+          else
+            COMMIT_MSG="Update Shared KB (scheduled sync)
+
+Auto-synced at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+          fi
+
+          git add .kb/shared
+          git commit -m "$COMMIT_MSG"
+          git push
+
+          echo "✅ Submodule update committed"
+
+      - name: Rebuild index if needed
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          # If index exists, rebuild it
+          if [ -f ".kb/shared/tools/kb.py" ]; then
+            echo "🔄 Rebuilding KB index..."
+            cd .kb/shared
+            python tools/kb.py index -v || echo "⚠ Index rebuild failed (non-critical)"
+          fi
+
+      - name: Notify agent
+        if: steps.check.outputs.changed == 'true'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: kb-updated
+          client-payload: |
+            {
+              "entry_id": "${{ github.event.client_payload.entry_id || 'scheduled-update' }}",
+              "updated_at": "${{ github.event.head_commit.timestamp }}",
+              "changes": true
+            }
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check.outputs.changed }}" = "true" ]; then
+            echo "✅ Shared KB updated successfully"
+          else
+            echo "ℹ Shared KB already up to date"
+          fi

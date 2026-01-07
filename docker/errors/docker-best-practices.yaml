@@ -1,133 +1,144 @@
-version: "1.0"
-category: "docker-errors"
-scope: "docker"
-last_updated: "2026-01-05"
-
+version: '1.0'
+category: docker-errors
+scope: docker
+last_updated: '2026-01-05'
 errors:
-  - id: "DOCKER-013"
-    title: "Missing Persistent Volume Mounts"
-    severity: "high"
-    scope: "docker"
-    problem: "Container running without volume mounts causes data loss on recreation. When containers are removed and recreated, all data inside the container is lost."
-    symptoms:
-      - "Mounts: [] in docker inspect"
-      - "Data lost after docker compose down and up"
-      - "Configuration reset after container restart"
-    wrong_code: |
-      services:
-        metabase:
-          image: metabase/metabase:latest
-          ports:
-            - "3100:3000"
-          # No volume mounts - data lost on recreation
-    correct_code: |
-      services:
-        metabase:
-          image: metabase/metabase:latest
-          ports:
-            - "3100:3000"
-          volumes:
-            - ./metabase/data:/metabase-data
-          environment:
-            - "MB_DB_FILE=/metabase-data/metabase.db"
-    solution_steps: |
-      1. Stop container: docker stop CONTAINER
-      2. Create data directory: mkdir -p ./appdata/SERVICE/data
-      3. Add volume mount to docker-compose.yml
-      4. Restart with docker-compose up -d
-      5. Verify mount: docker inspect CONTAINER | jq -r '.[0].Mounts'
-    tags: ["docker", "volumes", "persistence", "data-loss", "best-practices"]
+- id: DOCKER-013
+  title: Missing Persistent Volume Mounts
+  severity: high
+  scope: docker
+  problem: Container running without volume mounts causes data loss on recreation.
+    When containers are removed and recreated, all data inside the container is lost.
+  symptoms:
+  - 'Mounts: [] in docker inspect'
+  - Data lost after docker compose down and up
+  - Configuration reset after container restart
+  wrong_code: "services:\n  metabase:\n    image: metabase/metabase:latest\n    ports:\n\
+    \      - \"3100:3000\"\n    # No volume mounts - data lost on recreation\n"
+  correct_code: "services:\n  metabase:\n    image: metabase/metabase:latest\n   \
+    \ ports:\n      - \"3100:3000\"\n    volumes:\n      - ./metabase/data:/metabase-data\n\
+    \    environment:\n      - \"MB_DB_FILE=/metabase-data/metabase.db\"\n"
+  solution_steps: '1. Stop container: docker stop CONTAINER
 
-  - id: "DOCKER-014"
-    title: "Missing Restart Policy"
-    severity: "medium"
-    scope: "docker"
-    problem: "Container without restart policy does not auto-restart on failure or host reboot. Manual intervention required to restore services."
-    symptoms:
-      - "Container not starting after host reboot"
-      - "Service stays down after crash"
-      - "RestartPolicy.Name: no in docker inspect"
-    wrong_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          # No restart policy - won't auto-restart
-    correct_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          restart: unless-stopped
-    solution_steps: |
-      1. Add restart policy to docker-compose.yml
-      2. Production services: restart: always
-      3. Development tools: restart: unless-stopped
-      4. One-off tasks: restart: no or on-failure: 5
-      5. Recreate container: docker-compose up -d
-      6. Verify: docker inspect CONTAINER | jq -r '.[0].HostConfig.RestartPolicy'
-    tags: ["docker", "restart", "availability", "best-practices"]
+    2. Create data directory: mkdir -p ./appdata/SERVICE/data
 
-  - id: "DOCKER-015"
-    title: "Missing Health Check Configuration"
-    severity: "medium"
-    scope: "docker"
-    problem: "Container without health check cannot detect unhealthy status automatically. Monitoring systems cannot detect service degradation."
-    symptoms:
-      - "Health: empty in docker ps output"
-      - "No automatic detection of failed services"
-      - "Long detection time for service failures"
-    wrong_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          # No health check - cannot detect unhealthy state
-    correct_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-            interval: 30s
-            timeout: 10s
-            retries: 3
-            start_period: 40s
-    solution_steps: |
-      1. Identify health check endpoint for service
-      2. Add healthcheck section to docker-compose.yml
-      3. Test: curl -f http://localhost:PORT/health
-      4. Recreate: docker-compose up -d
-      5. Verify: docker ps --format "table {{.Names}}\t{{.Status}}"
-    tags: ["docker", "healthcheck", "monitoring", "best-practices"]
+    3. Add volume mount to docker-compose.yml
 
-  - id: "DOCKER-016"
-    title: "Missing Resource Limits"
-    severity: "low"
-    scope: "docker"
-    problem: "Container without CPU/memory limits can consume all system resources. Single malfunctioning container can crash the entire host."
-    symptoms:
-      - "High CPU usage from one container"
-      - "Host becomes unresponsive"
-      - "OOM (Out of Memory) errors on host"
-    wrong_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          # No resource limits - can consume all resources
-    correct_code: |
-      services:
-        myservice:
-          image: myimage:latest
-          deploy:
-            resources:
-              limits:
-                cpus: '0.5'
-                memory: 512M
-              reservations:
-                cpus: '0.25'
-                memory: 256M
-    solution_steps: |
-      1. Estimate normal resource usage: docker stats CONTAINER
-      2. Add limits to docker-compose.yml (50% of available)
-      3. Set reservations at 25% of limits
-      4. Recreate: docker-compose up -d
-      5. Verify: docker inspect CONTAINER | jq -r '.[0].HostConfig.Memory'
-    tags: ["docker", "resources", "limits", "best-practices"]
+    4. Restart with docker-compose up -d
+
+    5. Verify mount: docker inspect CONTAINER | jq -r ''.[0].Mounts''
+
+    '
+  tags:
+  - docker
+  - volumes
+  - persistence
+  - data-loss
+  - best-practices
+  domains:
+    primary: docker
+    secondary: []
+- id: DOCKER-014
+  title: Missing Restart Policy
+  severity: medium
+  scope: docker
+  problem: Container without restart policy does not auto-restart on failure or host
+    reboot. Manual intervention required to restore services.
+  symptoms:
+  - Container not starting after host reboot
+  - Service stays down after crash
+  - 'RestartPolicy.Name: no in docker inspect'
+  wrong_code: "services:\n  myservice:\n    image: myimage:latest\n    # No restart\
+    \ policy - won't auto-restart\n"
+  correct_code: "services:\n  myservice:\n    image: myimage:latest\n    restart:\
+    \ unless-stopped\n"
+  solution_steps: '1. Add restart policy to docker-compose.yml
+
+    2. Production services: restart: always
+
+    3. Development tools: restart: unless-stopped
+
+    4. One-off tasks: restart: no or on-failure: 5
+
+    5. Recreate container: docker-compose up -d
+
+    6. Verify: docker inspect CONTAINER | jq -r ''.[0].HostConfig.RestartPolicy''
+
+    '
+  tags:
+  - docker
+  - restart
+  - availability
+  - best-practices
+  domains:
+    primary: docker
+    secondary: []
+- id: DOCKER-015
+  title: Missing Health Check Configuration
+  severity: medium
+  scope: docker
+  problem: Container without health check cannot detect unhealthy status automatically.
+    Monitoring systems cannot detect service degradation.
+  symptoms:
+  - 'Health: empty in docker ps output'
+  - No automatic detection of failed services
+  - Long detection time for service failures
+  wrong_code: "services:\n  myservice:\n    image: myimage:latest\n    # No health\
+    \ check - cannot detect unhealthy state\n"
+  correct_code: "services:\n  myservice:\n    image: myimage:latest\n    healthcheck:\n\
+    \      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]\n \
+    \     interval: 30s\n      timeout: 10s\n      retries: 3\n      start_period:\
+    \ 40s\n"
+  solution_steps: '1. Identify health check endpoint for service
+
+    2. Add healthcheck section to docker-compose.yml
+
+    3. Test: curl -f http://localhost:PORT/health
+
+    4. Recreate: docker-compose up -d
+
+    5. Verify: docker ps --format "table {{.Names}}\t{{.Status}}"
+
+    '
+  tags:
+  - docker
+  - healthcheck
+  - monitoring
+  - best-practices
+  domains:
+    primary: docker
+    secondary: []
+- id: DOCKER-016
+  title: Missing Resource Limits
+  severity: low
+  scope: docker
+  problem: Container without CPU/memory limits can consume all system resources. Single
+    malfunctioning container can crash the entire host.
+  symptoms:
+  - High CPU usage from one container
+  - Host becomes unresponsive
+  - OOM (Out of Memory) errors on host
+  wrong_code: "services:\n  myservice:\n    image: myimage:latest\n    # No resource\
+    \ limits - can consume all resources\n"
+  correct_code: "services:\n  myservice:\n    image: myimage:latest\n    deploy:\n\
+    \      resources:\n        limits:\n          cpus: '0.5'\n          memory: 512M\n\
+    \        reservations:\n          cpus: '0.25'\n          memory: 256M\n"
+  solution_steps: '1. Estimate normal resource usage: docker stats CONTAINER
+
+    2. Add limits to docker-compose.yml (50% of available)
+
+    3. Set reservations at 25% of limits
+
+    4. Recreate: docker-compose up -d
+
+    5. Verify: docker inspect CONTAINER | jq -r ''.[0].HostConfig.Memory''
+
+    '
+  tags:
+  - docker
+  - resources
+  - limits
+  - best-practices
+  domains:
+    primary: docker
+    secondary: []

@@ -1,433 +1,312 @@
-# Testing Error Patterns and Solutions
-# Common testing issues in async Python with pytest
-
-version: "1.0"
-category: "testing"
-last_updated: "2026-01-04"
-
+version: '1.0'
+category: testing
+last_updated: '2026-01-04'
 errors:
-  - id: "TEST-001"
-    title: "Async Test Without @pytest.mark.asyncio"
-    severity: "high"
+- id: TEST-001
+  title: Async Test Without @pytest.mark.asyncio
+  severity: high
+  problem: 'Async test functions fail with "coroutine was never awaited" if missing
 
-    problem: |
-      Async test functions fail with "coroutine was never awaited" if missing
-      the @pytest.mark.asyncio decorator.
+    the @pytest.mark.asyncio decorator.
 
-    symptoms:
-      - "RuntimeWarning: coroutine 'test_function' was never awaited"
-      - Test appears to pass but doesn't actually run
-      - Assertions inside async test are not checked
+    '
+  symptoms:
+  - 'RuntimeWarning: coroutine ''test_function'' was never awaited'
+  - Test appears to pass but doesn't actually run
+  - Assertions inside async test are not checked
+  wrong_code: "async def test_websocket_connect(connection_manager):\n    connection_id\
+    \ = await connection_manager.connect(websocket)\n    assert connection_id is not\
+    \ None\n"
+  correct_code: "import pytest\n\n@pytest.mark.asyncio\nasync def test_websocket_connect(connection_manager):\n\
+    \    connection_id = await connection_manager.connect(websocket)\n    assert connection_id\
+    \ is not None\n"
+  required_config:
+    file: pyproject.toml
+    content: "[project.optional-dependencies]\ndev = [\n    \"pytest>=7.0\",\n   \
+      \ \"pytest-asyncio>=0.21.0\",  # Required!\n]\n\n[tool.pytest.ini_options]\n\
+      asyncio_mode = \"auto\"  # Optional: auto-detect async tests\n"
+  prevention:
+  - Install pytest-asyncio
+  - Add @pytest.mark.asyncio to all async tests
+  - Configure asyncio_mode = 'auto' for automatic detection
+  - Use IDE plugin to highlight missing decorator
+  tags:
+  - async
+  - pytest
+  - decorator
+  domains:
+    primary: testing
+    secondary:
+    - asyncio
+- id: TEST-002
+  title: Mock vs AsyncMock for Async Methods
+  severity: high
+  problem: 'Using Mock instead of AsyncMock for async methods causes
 
-    wrong_code: |
-      async def test_websocket_connect(connection_manager):
-          connection_id = await connection_manager.connect(websocket)
-          assert connection_id is not None
+    "coroutine was never awaited" warnings.
 
-    correct_code: |
-      import pytest
+    '
+  symptoms:
+  - 'RuntimeWarning: coroutine ''Mock'' was never awaited'
+  - Tests hang indefinitely
+  - Mock assertions don't work as expected
+  wrong_code: "from unittest.mock import Mock\n\n@pytest.fixture\ndef mock_websocket():\n\
+    \    ws = Mock()\n    ws.accept = Mock()  # Wrong!\n    ws.send_json = Mock()\
+    \  # Wrong!\n    return ws\n"
+  correct_code: "from unittest.mock import AsyncMock\n\n@pytest.fixture\ndef mock_websocket():\n\
+    \    ws = AsyncMock()\n    ws.accept = AsyncMock()  # Correct\n    ws.send_json\
+    \ = AsyncMock()  # Correct\n    return ws\n"
+  prevention:
+  - Use AsyncMock for all async methods
+  - Use AsyncMock() for objects with async methods
+  - Read FastAPI/Starlette source to know which methods are async
+  - Add type hints to fixtures to catch errors early
+  tags:
+  - async
+  - mocking
+  - asyncmock
+  domains:
+    primary: testing
+    secondary:
+    - asyncio
+- id: TEST-003
+  title: Hardcoded File Paths in Tests
+  severity: medium
+  problem: 'Tests using hardcoded file paths fail in CI/CD or on different machines.
 
-      @pytest.mark.asyncio
-      async def test_websocket_connect(connection_manager):
-          connection_id = await connection_manager.connect(websocket)
-          assert connection_id is not None
+    '
+  symptoms:
+  - 'FileNotFoundError: No such file or directory'
+  - Tests pass locally but fail in CI
+  - Tests fail when run from different directories
+  wrong_code: "def test_process_file():\n    result = processor.process_file(\"/tmp/test.csv\"\
+    )\n    assert result.success\n"
+  correct_code: "@pytest.fixture\ndef test_file(tmp_path):\n    \"\"\"Create temporary\
+    \ test file.\"\"\"\n    file_path = tmp_path / \"test.csv\"\n    with file_path.open(\"\
+    w\", encoding=\"utf-8\") as f:\n        f.write(\"header1,header2\\nvalue1,value2\\\
+    n\")\n    return file_path\n\ndef test_process_file(test_file):\n    result =\
+    \ processor.process_file(test_file)\n    assert result.success\n"
+  prevention:
+  - Always use tmp_path fixture from pytest
+  - Create test data in fixtures
+  - Use pathlib.Path, not string paths
+  - Never hardcode absolute paths
+  - Clean up automatically with pytest fixtures
+  tags:
+  - fixtures
+  - tmp-path
+  - file-handling
+  domains:
+    primary: testing
+    secondary: []
+- id: TEST-004
+  title: Secrets Hardcoded in Tests
+  severity: critical
+  problem: 'API keys, passwords, and tokens hardcoded in tests get committed to git.
 
-    required_config:
-      file: "pyproject.toml"
-      content: |
-        [project.optional-dependencies]
-        dev = [
-            "pytest>=7.0",
-            "pytest-asyncio>=0.21.0",  # Required!
-        ]
+    '
+  symptoms:
+  - Security scanning tools flag secrets
+  - API keys exposed in git history
+  - Production credentials in test code
+  wrong_code: "def test_slack_notification():\n    handler = SlackAlertHandler(\n\
+    \        webhook_url=\"https://hooks.slack.com/services/T00/B00/XXX\"\n    )\n"
+  correct_code: "import os\nfrom unittest.mock import patch\n\ndef test_slack_notification():\n\
+    \    test_webhook = os.environ.get(\n        \"TEST_SLACK_WEBHOOK\",\n       \
+    \ \"https://hooks.slack.com/services/MOCK/MOCK/MOCK\"\n    )\n    handler = SlackAlertHandler(webhook_url=test_webhook)\n\
+    \n# Or mock the entire external call\n@patch('slack_sdk.WebClient.chat_postMessage')\n\
+    def test_slack_notification_mocked(mock_post):\n    handler = SlackAlertHandler(webhook_url=\"\
+    https://example.com\")\n    # Test logic without real API call\n"
+  prevention:
+  - Never hardcode secrets in any code
+  - Use environment variables with safe defaults
+  - Mock external API calls in tests
+  - Add .env.test to .gitignore
+  - Use secrets scanning in pre-commit hooks
+  - Review code for secrets before committing
+  related_commits:
+  - 743c4d5 - Replace hardcoded Slack webhook URLs
+  tags:
+  - security
+  - secrets
+  - environment-variables
+  domains:
+    primary: security
+    secondary: []
+- id: TEST-005
+  title: 'Test Isolation: Shared State Between Tests'
+  severity: medium
+  problem: 'Tests that share state can pass/fail depending on execution order.
 
-        [tool.pytest.ini_options]
-        asyncio_mode = "auto"  # Optional: auto-detect async tests
+    '
+  symptoms:
+  - Tests pass individually but fail when run together
+  - Random test failures
+  - Order-dependent test failures
+  wrong_code: "# Global shared state\nconnection_manager = ConnectionManager()\n\n\
+    def test_connect():\n    conn_id = connection_manager.connect(ws1)\n    assert\
+    \ len(connection_manager.active_connections) == 1\n\ndef test_disconnect():\n\
+    \    # Depends on previous test!\n    connection_manager.disconnect(conn_id)\n\
+    \    assert len(connection_manager.active_connections) == 0\n"
+  correct_code: "@pytest.fixture\ndef connection_manager():\n    \"\"\"Create fresh\
+    \ ConnectionManager for each test.\"\"\"\n    return ConnectionManager()\n\ndef\
+    \ test_connect(connection_manager):\n    conn_id = connection_manager.connect(ws1)\n\
+    \    assert len(connection_manager.active_connections) == 1\n\ndef test_disconnect(connection_manager):\n\
+    \    conn_id = connection_manager.connect(ws1)\n    connection_manager.disconnect(conn_id)\n\
+    \    assert len(connection_manager.active_connections) == 0\n"
+  prevention:
+  - Use fixtures for test dependencies
+  - Each test should be completely independent
+  - 'Run tests in random order: pytest --random-order'
+  - Never use global state in tests
+  - Use function-scoped fixtures (default)
+  tags:
+  - test-isolation
+  - fixtures
+  - state-management
+  domains:
+    primary: testing
+    secondary: []
+- id: TEST-006
+  title: Missing Test Markers Configuration
+  severity: low
+  problem: 'Custom pytest markers (like @pytest.mark.performance) show warnings
 
-    prevention:
-      - "Install pytest-asyncio"
-      - "Add @pytest.mark.asyncio to all async tests"
-      - "Configure asyncio_mode = 'auto' for automatic detection"
-      - "Use IDE plugin to highlight missing decorator"
+    if not registered in pyproject.toml.
 
-    tags: ["async", "pytest", "decorator"]
+    '
+  symptoms:
+  - 'PytestUnknownMarkWarning: Unknown pytest.mark.performance'
+  - Cannot filter tests by marker
+  - Warning clutter in test output
+  solution:
+    file: pyproject.toml
+    config: "[tool.pytest.ini_options]\nmarkers = [\n    \"asyncio: mark test as async\"\
+      ,\n    \"unit: unit tests\",\n    \"integration: integration tests\",\n    \"\
+      performance: performance benchmarks\",\n    \"slow: slow-running tests\",\n\
+      ]\n"
+  usage: '# Run only performance tests
 
-  - id: "TEST-002"
-    title: "Mock vs AsyncMock for Async Methods"
-    severity: "high"
+    pytest -m performance
 
-    problem: |
-      Using Mock instead of AsyncMock for async methods causes
-      "coroutine was never awaited" warnings.
 
-    symptoms:
-      - "RuntimeWarning: coroutine 'Mock' was never awaited"
-      - Tests hang indefinitely
-      - Mock assertions don't work as expected
+    # Run everything except slow tests
 
-    wrong_code: |
-      from unittest.mock import Mock
+    pytest -m "not slow"
 
-      @pytest.fixture
-      def mock_websocket():
-          ws = Mock()
-          ws.accept = Mock()  # Wrong!
-          ws.send_json = Mock()  # Wrong!
-          return ws
 
-    correct_code: |
-      from unittest.mock import AsyncMock
+    # Run unit and integration
 
-      @pytest.fixture
-      def mock_websocket():
-          ws = AsyncMock()
-          ws.accept = AsyncMock()  # Correct
-          ws.send_json = AsyncMock()  # Correct
-          return ws
+    pytest -m "unit or integration"
 
-    prevention:
-      - "Use AsyncMock for all async methods"
-      - "Use AsyncMock() for objects with async methods"
-      - "Read FastAPI/Starlette source to know which methods are async"
-      - "Add type hints to fixtures to catch errors early"
-
-    tags: ["async", "mocking", "asyncmock"]
-
-  - id: "TEST-003"
-    title: "Hardcoded File Paths in Tests"
-    severity: "medium"
-
-    problem: |
-      Tests using hardcoded file paths fail in CI/CD or on different machines.
-
-    symptoms:
-      - "FileNotFoundError: No such file or directory"
-      - Tests pass locally but fail in CI
-      - Tests fail when run from different directories
-
-    wrong_code: |
-      def test_process_file():
-          result = processor.process_file("/tmp/test.csv")
-          assert result.success
-
-    correct_code: |
-      @pytest.fixture
-      def test_file(tmp_path):
-          """Create temporary test file."""
-          file_path = tmp_path / "test.csv"
-          with file_path.open("w", encoding="utf-8") as f:
-              f.write("header1,header2\nvalue1,value2\n")
-          return file_path
-
-      def test_process_file(test_file):
-          result = processor.process_file(test_file)
-          assert result.success
-
-    prevention:
-      - "Always use tmp_path fixture from pytest"
-      - "Create test data in fixtures"
-      - "Use pathlib.Path, not string paths"
-      - "Never hardcode absolute paths"
-      - "Clean up automatically with pytest fixtures"
-
-    tags: ["fixtures", "tmp-path", "file-handling"]
-
-  - id: "TEST-004"
-    title: "Secrets Hardcoded in Tests"
-    severity: "critical"
-
-    problem: |
-      API keys, passwords, and tokens hardcoded in tests get committed to git.
-
-    symptoms:
-      - Security scanning tools flag secrets
-      - API keys exposed in git history
-      - Production credentials in test code
-
-    wrong_code: |
-      def test_slack_notification():
-          handler = SlackAlertHandler(
-              webhook_url="https://hooks.slack.com/services/T00/B00/XXX"
-          )
-
-    correct_code: |
-      import os
-      from unittest.mock import patch
-
-      def test_slack_notification():
-          test_webhook = os.environ.get(
-              "TEST_SLACK_WEBHOOK",
-              "https://hooks.slack.com/services/MOCK/MOCK/MOCK"
-          )
-          handler = SlackAlertHandler(webhook_url=test_webhook)
-
-      # Or mock the entire external call
-      @patch('slack_sdk.WebClient.chat_postMessage')
-      def test_slack_notification_mocked(mock_post):
-          handler = SlackAlertHandler(webhook_url="https://example.com")
-          # Test logic without real API call
-
-    prevention:
-      - "Never hardcode secrets in any code"
-      - "Use environment variables with safe defaults"
-      - "Mock external API calls in tests"
-      - "Add .env.test to .gitignore"
-      - "Use secrets scanning in pre-commit hooks"
-      - "Review code for secrets before committing"
-
-    related_commits:
-      - "743c4d5 - Replace hardcoded Slack webhook URLs"
-
-    tags: ["security", "secrets", "environment-variables"]
-
-  - id: "TEST-005"
-    title: "Test Isolation: Shared State Between Tests"
-    severity: "medium"
-
-    problem: |
-      Tests that share state can pass/fail depending on execution order.
-
-    symptoms:
-      - Tests pass individually but fail when run together
-      - Random test failures
-      - "Order-dependent test failures"
-
-    wrong_code: |
-      # Global shared state
-      connection_manager = ConnectionManager()
-
-      def test_connect():
-          conn_id = connection_manager.connect(ws1)
-          assert len(connection_manager.active_connections) == 1
-
-      def test_disconnect():
-          # Depends on previous test!
-          connection_manager.disconnect(conn_id)
-          assert len(connection_manager.active_connections) == 0
-
-    correct_code: |
-      @pytest.fixture
-      def connection_manager():
-          """Create fresh ConnectionManager for each test."""
-          return ConnectionManager()
-
-      def test_connect(connection_manager):
-          conn_id = connection_manager.connect(ws1)
-          assert len(connection_manager.active_connections) == 1
-
-      def test_disconnect(connection_manager):
-          conn_id = connection_manager.connect(ws1)
-          connection_manager.disconnect(conn_id)
-          assert len(connection_manager.active_connections) == 0
-
-    prevention:
-      - "Use fixtures for test dependencies"
-      - "Each test should be completely independent"
-      - "Run tests in random order: pytest --random-order"
-      - "Never use global state in tests"
-      - "Use function-scoped fixtures (default)"
-
-    tags: ["test-isolation", "fixtures", "state-management"]
-
-  - id: "TEST-006"
-    title: "Missing Test Markers Configuration"
-    severity: "low"
-
-    problem: |
-      Custom pytest markers (like @pytest.mark.performance) show warnings
-      if not registered in pyproject.toml.
-
-    symptoms:
-      - "PytestUnknownMarkWarning: Unknown pytest.mark.performance"
-      - Cannot filter tests by marker
-      - Warning clutter in test output
-
-    solution:
-      file: "pyproject.toml"
-      config: |
-        [tool.pytest.ini_options]
-        markers = [
-            "asyncio: mark test as async",
-            "unit: unit tests",
-            "integration: integration tests",
-            "performance: performance benchmarks",
-            "slow: slow-running tests",
-        ]
-
-    usage: |
-      # Run only performance tests
-      pytest -m performance
-
-      # Run everything except slow tests
-      pytest -m "not slow"
-
-      # Run unit and integration
-      pytest -m "unit or integration"
-
-    tags: ["pytest", "markers", "configuration"]
-
+    '
+  tags:
+  - pytest
+  - markers
+  - configuration
+  domains:
+    primary: testing
+    secondary: []
 best_practices:
   fixtures:
-    - rule: "Use function scope by default"
-      code: |
-        @pytest.fixture  # scope="function" is default
-        def clean_state():
-            return {}
-
-    - rule: "Use module/session scope for expensive setup"
-      code: |
-        @pytest.fixture(scope="module")
-        def database_connection():
-            conn = create_connection()
-            yield conn
-            conn.close()
-
-    - rule: "Yield for cleanup"
-      code: |
-        @pytest.fixture
-        def temp_file(tmp_path):
-            path = tmp_path / "test.txt"
-            path.write_text("test")
-            yield path
-            # Cleanup happens after yield
-            if path.exists():
-                path.unlink()
-
+  - rule: Use function scope by default
+    code: "@pytest.fixture  # scope=\"function\" is default\ndef clean_state():\n\
+      \    return {}\n"
+  - rule: Use module/session scope for expensive setup
+    code: "@pytest.fixture(scope=\"module\")\ndef database_connection():\n    conn\
+      \ = create_connection()\n    yield conn\n    conn.close()\n"
+  - rule: Yield for cleanup
+    code: "@pytest.fixture\ndef temp_file(tmp_path):\n    path = tmp_path / \"test.txt\"\
+      \n    path.write_text(\"test\")\n    yield path\n    # Cleanup happens after\
+      \ yield\n    if path.exists():\n        path.unlink()\n"
   mocking:
-    - rule: "Mock at the boundary"
-      good: "Mock external API calls, not internal logic"
-      bad: "Mock business logic"
+  - rule: Mock at the boundary
+    good: Mock external API calls, not internal logic
+    bad: Mock business logic
+  - rule: Use spec for type safety
+    code: 'from unittest.mock import Mock, create_autospec
 
-    - rule: "Use spec for type safety"
-      code: |
-        from unittest.mock import Mock, create_autospec
 
-        # Better - uses spec for attribute validation
-        mock_service = create_autospec(FileProcessor)
+      # Better - uses spec for attribute validation
 
-    - rule: "Prefer patch decorators"
-      code: |
-        from unittest.mock import patch
+      mock_service = create_autospec(FileProcessor)
 
-        @patch('module.external_call')
-        def test_function(mock_call):
-            mock_call.return_value = "mocked"
-
+      '
+  - rule: Prefer patch decorators
+    code: "from unittest.mock import patch\n\n@patch('module.external_call')\ndef\
+      \ test_function(mock_call):\n    mock_call.return_value = \"mocked\"\n"
   async_testing:
-    - rule: "Always use AsyncMock for async code"
-    - rule: "Use @pytest.mark.asyncio decorator"
-    - rule: "Configure pytest-asyncio in pyproject.toml"
-    - rule: "Test both success and failure paths"
-
+  - rule: Always use AsyncMock for async code
+  - rule: Use @pytest.mark.asyncio decorator
+  - rule: Configure pytest-asyncio in pyproject.toml
+  - rule: Test both success and failure paths
   test_data:
-    - rule: "Use tmp_path for files"
-    - rule: "Use factories for complex objects"
-    - rule: "Use parametrize for multiple inputs"
-      code: |
-        @pytest.mark.parametrize("input,expected", [
-            ("test.csv", "csv"),
-            ("test.json", "json"),
-            ("test.jsonl", "jsonl"),
-        ])
-        def test_format_detection(input, expected):
-            assert detect_format(input) == expected
-
+  - rule: Use tmp_path for files
+  - rule: Use factories for complex objects
+  - rule: Use parametrize for multiple inputs
+    code: "@pytest.mark.parametrize(\"input,expected\", [\n    (\"test.csv\", \"csv\"\
+      ),\n    (\"test.json\", \"json\"),\n    (\"test.jsonl\", \"jsonl\"),\n])\ndef\
+      \ test_format_detection(input, expected):\n    assert detect_format(input) ==\
+      \ expected\n"
 common_patterns:
   async_fixtures:
-    code: |
-      import pytest_asyncio
-
-      @pytest_asyncio.fixture
-      async def async_client():
-          """Async fixture for HTTP client."""
-          async with httpx.AsyncClient() as client:
-              yield client
-
+    code: "import pytest_asyncio\n\n@pytest_asyncio.fixture\nasync def async_client():\n\
+      \    \"\"\"Async fixture for HTTP client.\"\"\"\n    async with httpx.AsyncClient()\
+      \ as client:\n        yield client\n"
   mock_async_context_manager:
-    code: |
-      from unittest.mock import AsyncMock
+    code: 'from unittest.mock import AsyncMock
+
 
       mock_cm = AsyncMock()
+
       mock_cm.__aenter__.return_value = mock_value
+
       mock_cm.__aexit__.return_value = None
 
+      '
   parametrized_async_tests:
-    code: |
-      @pytest.mark.asyncio
-      @pytest.mark.parametrize("input,expected", [
-          ("a", "A"),
-          ("b", "B"),
-      ])
-      async def test_upper(input, expected):
-          result = await async_upper(input)
-          assert result == expected
-
+    code: "@pytest.mark.asyncio\n@pytest.mark.parametrize(\"input,expected\", [\n\
+      \    (\"a\", \"A\"),\n    (\"b\", \"B\"),\n])\nasync def test_upper(input, expected):\n\
+      \    result = await async_upper(input)\n    assert result == expected\n"
   testing_exceptions:
-    code: |
-      import pytest
-
-      def test_raises_error():
-          with pytest.raises(ValueError, match="Invalid input"):
-              process_invalid_data()
-
-      @pytest.mark.asyncio
-      async def test_async_raises():
-          with pytest.raises(ConnectionError):
-              await connect_to_invalid_host()
-
+    code: "import pytest\n\ndef test_raises_error():\n    with pytest.raises(ValueError,\
+      \ match=\"Invalid input\"):\n        process_invalid_data()\n\n@pytest.mark.asyncio\n\
+      async def test_async_raises():\n    with pytest.raises(ConnectionError):\n \
+      \       await connect_to_invalid_host()\n"
 configuration:
-  pyproject_toml: |
-    [tool.pytest.ini_options]
-    minversion = "7.0"
-    pythonpath = ["src"]
-    testpaths = ["tests"]
-    asyncio_mode = "auto"
-
-    # Markers
-    markers = [
-        "asyncio: asynchronous tests",
-        "unit: unit tests",
-        "integration: integration tests",
-        "performance: performance tests",
-        "slow: slow tests",
-    ]
-
-    # Coverage
-    addopts = [
-        "--strict-markers",
-        "--strict-config",
-        "-ra",  # Show summary of all test outcomes
-    ]
-
+  pyproject_toml: "[tool.pytest.ini_options]\nminversion = \"7.0\"\npythonpath = [\"\
+    src\"]\ntestpaths = [\"tests\"]\nasyncio_mode = \"auto\"\n\n# Markers\nmarkers\
+    \ = [\n    \"asyncio: asynchronous tests\",\n    \"unit: unit tests\",\n    \"\
+    integration: integration tests\",\n    \"performance: performance tests\",\n \
+    \   \"slow: slow tests\",\n]\n\n# Coverage\naddopts = [\n    \"--strict-markers\"\
+    ,\n    \"--strict-config\",\n    \"-ra\",  # Show summary of all test outcomes\n\
+    ]\n"
 troubleshooting:
-  - symptom: "RuntimeWarning: coroutine was never awaited"
-    causes:
-      - "Missing @pytest.mark.asyncio decorator"
-      - "Using Mock instead of AsyncMock"
-      - "Not awaiting async function call"
-
-  - symptom: "Test hangs indefinitely"
-    causes:
-      - "Async function not properly mocked"
-      - "Deadlock in async code"
-      - "Missing timeout in test"
-    solution:
-      - "Use AsyncMock for all async methods"
-      - "Add pytest timeout: pytest --timeout=60"
-
-  - symptom: "FileNotFoundError in tests"
-    causes:
-      - "Hardcoded file paths"
-      - "Wrong working directory"
-      - "Missing test fixtures"
-    solution:
-      - "Use tmp_path fixture"
-      - "Use absolute imports with pythonpath"
-      - "Create test data in fixtures"
-
-  - symptom: "Tests pass individually, fail together"
-    cause: "Shared state between tests"
-    solution:
-      - "Use fixtures for dependencies"
-      - "Ensure test isolation"
-      - "Run with --random-order to detect"
+- symptom: 'RuntimeWarning: coroutine was never awaited'
+  causes:
+  - Missing @pytest.mark.asyncio decorator
+  - Using Mock instead of AsyncMock
+  - Not awaiting async function call
+- symptom: Test hangs indefinitely
+  causes:
+  - Async function not properly mocked
+  - Deadlock in async code
+  - Missing timeout in test
+  solution:
+  - Use AsyncMock for all async methods
+  - 'Add pytest timeout: pytest --timeout=60'
+- symptom: FileNotFoundError in tests
+  causes:
+  - Hardcoded file paths
+  - Wrong working directory
+  - Missing test fixtures
+  solution:
+  - Use tmp_path fixture
+  - Use absolute imports with pythonpath
+  - Create test data in fixtures
+- symptom: Tests pass individually, fail together
+  cause: Shared state between tests
+  solution:
+  - Use fixtures for dependencies
+  - Ensure test isolation
+  - Run with --random-order to detect

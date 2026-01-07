@@ -1,250 +1,240 @@
-# Import and Dependency Error Patterns
-# This file contains common import issues and solutions for Claude Code agents
-
-version: "1.0"
-category: "imports-and-dependencies"
-last_updated: "2026-01-04"
-
+version: '1.0'
+category: imports-and-dependencies
+last_updated: '2026-01-04'
 errors:
-  - id: "IMPORT-001"
-    title: "Circular Import Between ETL Modules"
-    severity: "high"
-    scope: "python"  # Applicable to all Python projects
+- id: IMPORT-001
+  title: Circular Import Between ETL Modules
+  severity: high
+  scope: python
+  problem: 'ETL modules (extract.py, transform.py, orchestrate.py) create circular
 
-    problem: |
-      ETL modules (extract.py, transform.py, orchestrate.py) create circular
-      dependencies when sharing PipelineContext and PipelineStep classes.
+    dependencies when sharing PipelineContext and PipelineStep classes.
 
-    symptoms:
-      - ImportError: cannot import name 'PipelineContext'
-      - Circular import detected during module initialization
-      - Module partially initialized
+    '
+  symptoms:
+  - ImportError: cannot import name 'PipelineContext'
+  - Circular import detected during module initialization
+  - Module partially initialized
+  root_cause: 'Modules depend on each other''s classes, creating a dependency cycle.
 
-    root_cause: |
-      Modules depend on each other's classes, creating a dependency cycle.
-      Python cannot resolve circular imports at runtime.
+    Python cannot resolve circular imports at runtime.
 
-    solution:
-      code: |
-        # Use TYPE_CHECKING guard for type-only imports
-        from typing import TYPE_CHECKING, Any
+    '
+  solution:
+    code: "# Use TYPE_CHECKING guard for type-only imports\nfrom typing import TYPE_CHECKING,\
+      \ Any\n\nif TYPE_CHECKING:\n    from src.etl.orchestrate import PipelineContext,\
+      \ PipelineStep\nelse:\n    # Provide runtime stubs to avoid circular import\n\
+      \    class PipelineContext:\n        def __init__(self):\n            self.data\
+      \ = {}\n            self.metrics = {}\n"
+    explanation: 'TYPE_CHECKING is False at runtime but True during type checking.
 
-        if TYPE_CHECKING:
-            from src.etl.orchestrate import PipelineContext, PipelineStep
-        else:
-            # Provide runtime stubs to avoid circular import
-            class PipelineContext:
-                def __init__(self):
-                    self.data = {}
-                    self.metrics = {}
+      This allows mypy to see the real types while avoiding circular imports.
 
-      explanation: |
-        TYPE_CHECKING is False at runtime but True during type checking.
-        This allows mypy to see the real types while avoiding circular imports.
+      '
+  prevention:
+  - Move shared base classes to separate base.py or types.py module
+  - Use Protocol classes from typing for interfaces
+  - Apply dependency inversion principle (depend on abstractions)
+  - Keep module dependencies acyclic
+  related_commits:
+  - e6b5273 - Fix CLI entry point and API router imports
+  tags:
+  - circular-import
+  - type-checking
+  - etl
+  - architecture
+  domains:
+    primary: deployment
+    secondary: []
+- id: IMPORT-002
+  title: FastAPI Middleware Import Location Changed
+  severity: medium
+  scope: fastapi
+  problem: 'BaseHTTPMiddleware moved from fastapi.middleware.base to
 
-    prevention:
-      - Move shared base classes to separate base.py or types.py module
-      - Use Protocol classes from typing for interfaces
-      - Apply dependency inversion principle (depend on abstractions)
-      - Keep module dependencies acyclic
+    starlette.middleware.base in FastAPI 0.120.0
 
-    related_commits:
-      - "e6b5273 - Fix CLI entry point and API router imports"
+    '
+  symptoms:
+  - ImportError: cannot import name 'BaseHTTPMiddleware' from 'fastapi.middleware.base'
+  - Application fails to start
+  - Tests fail with import errors
+  affected_files:
+  - src/interfaces/api/middleware.py
+  wrong_code: 'from fastapi.middleware.base import BaseHTTPMiddleware
 
-    tags: ["circular-import", "type-checking", "etl", "architecture"]
+    from starlette.middleware.base import RequestResponseEndpoint
 
-  - id: "IMPORT-002"
-    title: "FastAPI Middleware Import Location Changed"
-    severity: "medium"
-    scope: "fastapi"  # Specific to FastAPI projects
+    '
+  correct_code: '# Import from Starlette directly (more stable)
 
-    problem: |
-      BaseHTTPMiddleware moved from fastapi.middleware.base to
-      starlette.middleware.base in FastAPI 0.120.0
+    from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-    symptoms:
-      - ImportError: cannot import name 'BaseHTTPMiddleware' from 'fastapi.middleware.base'
-      - Application fails to start
-      - Tests fail with import errors
+    '
+  prevention:
+  - Import from Starlette when possible (base library, more stable)
+  - Pin FastAPI version ranges in pyproject.toml
+  - Add integration tests for framework dependencies
+  - Monitor framework changelogs during upgrades
+  - Run tests after dependency updates
+  related_versions:
+    fastapi: '>=0.120.0'
+    starlette: '>=0.37.0'
+  tags:
+  - fastapi
+  - starlette
+  - middleware
+  - upgrade
+  domains:
+    primary: fastapi
+    secondary: []
+- id: IMPORT-003
+  title: Relative vs Absolute Imports in Tests
+  severity: medium
+  scope: python
+  problem: 'Tests using relative imports fail when run from different directories
 
-    affected_files:
-      - "src/interfaces/api/middleware.py"
+    or when using pytest discovery.
 
-    wrong_code: |
-      from fastapi.middleware.base import BaseHTTPMiddleware
-      from starlette.middleware.base import RequestResponseEndpoint
+    '
+  symptoms:
+  - ImportError: attempted relative import with no known parent package
+  - ModuleNotFoundError when running pytest
+  - Tests pass in IDE but fail in CI/CD
+  wrong_code: '# Relative imports in tests
 
-    correct_code: |
-      # Import from Starlette directly (more stable)
-      from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+    from sw_analyzer.logic import processing
 
-    prevention:
-      - Import from Starlette when possible (base library, more stable)
-      - Pin FastAPI version ranges in pyproject.toml
-      - Add integration tests for framework dependencies
-      - Monitor framework changelogs during upgrades
-      - Run tests after dependency updates
+    from ...infrastructure.file_processing import core
 
-    related_versions:
-      fastapi: ">=0.120.0"
-      starlette: ">=0.37.0"
+    '
+  correct_code: '# Absolute imports from src/
 
-    tags: ["fastapi", "starlette", "middleware", "upgrade"]
+    from src.sw_analyzer.logic import processing
 
-  - id: "IMPORT-003"
-    title: "Relative vs Absolute Imports in Tests"
-    severity: "medium"
-    scope: "python"  # Applicable to all Python projects
+    from src.infrastructure.file_processing import core
 
-    problem: |
-      Tests using relative imports fail when run from different directories
-      or when using pytest discovery.
+    '
+  required_config:
+    file: pyproject.toml
+    content: '[tool.pytest.ini_options]
 
-    symptoms:
-      - ImportError: attempted relative import with no known parent package
-      - ModuleNotFoundError when running pytest
-      - Tests pass in IDE but fail in CI/CD
+      pythonpath = ["src"]  # Critical for absolute imports
 
-    wrong_code: |
-      # Relative imports in tests
-      from sw_analyzer.logic import processing
-      from ...infrastructure.file_processing import core
+      '
+  prevention:
+  - Always use absolute imports starting from src/
+  - Configure pythonpath in pyproject.toml
+  - Never use relative imports in tests
+  - Use IDE settings to enforce absolute imports
+  - Add pre-commit hook to check import style
+  related_commits:
+  - 40946d9 - Update test imports to use absolute imports
+  tags:
+  - imports
+  - testing
+  - pytest
+  - configuration
+  domains:
+    primary: testing
+    secondary: []
+- id: IMPORT-004
+  title: Forward References for Optional Dependencies
+  severity: low
+  scope: python
+  problem: 'Service needs to reference optional dependency (e.g., WebSocket EventBroadcaster)
 
-    correct_code: |
-      # Absolute imports from src/
-      from src.sw_analyzer.logic import processing
-      from src.infrastructure.file_processing import core
+    without creating hard dependency or circular import.
 
-    required_config:
-      file: "pyproject.toml"
-      content: |
-        [tool.pytest.ini_options]
-        pythonpath = ["src"]  # Critical for absolute imports
+    '
+  use_case: 'ProgressService in application layer optionally integrates with
 
-    prevention:
-      - Always use absolute imports starting from src/
-      - Configure pythonpath in pyproject.toml
-      - Never use relative imports in tests
-      - Use IDE settings to enforce absolute imports
-      - Add pre-commit hook to check import style
+    EventBroadcaster from interfaces layer without violating Clean Architecture.
 
-    related_commits:
-      - "40946d9 - Update test imports to use absolute imports"
-
-    tags: ["imports", "testing", "pytest", "configuration"]
-
-  - id: "IMPORT-004"
-    title: "Forward References for Optional Dependencies"
-    severity: "low"
-    scope: "python"  # Applicable to all Python projects
-
-    problem: |
-      Service needs to reference optional dependency (e.g., WebSocket EventBroadcaster)
-      without creating hard dependency or circular import.
-
-    use_case: |
-      ProgressService in application layer optionally integrates with
-      EventBroadcaster from interfaces layer without violating Clean Architecture.
-
-    solution:
-      code: |
-        from typing import TYPE_CHECKING, Optional
-
-        if TYPE_CHECKING:
-            from ...interfaces.api.websocket.events import EventBroadcaster
-
-        class ProgressService:
-            def __init__(
-                self,
-                event_broadcaster: Optional["EventBroadcaster"] = None
-            ):
-                """Initialize with optional WebSocket broadcaster."""
-                self._event_broadcaster = event_broadcaster
-
-            async def update_progress(self, task_id: str, ...):
-                # Safe to use with optional check
-                if self._event_broadcaster:
-                    await self._event_broadcaster.broadcast_progress_update(...)
-
-      key_points:
-        - Use TYPE_CHECKING guard for import
-        - Use string literal for forward reference: "EventBroadcaster"
-        - Make dependency Optional for backward compatibility
-        - Check for None before using
-
-    prevention:
-      - Follow dependency inversion principle
-      - Use Protocol types for loose coupling
-      - Make integration points optional by default
-      - Test both with and without optional dependencies
-
-    tags: ["forward-reference", "optional-dependency", "clean-architecture", "type-checking"]
-
+    '
+  solution:
+    code: "from typing import TYPE_CHECKING, Optional\n\nif TYPE_CHECKING:\n    from\
+      \ ...interfaces.api.websocket.events import EventBroadcaster\n\nclass ProgressService:\n\
+      \    def __init__(\n        self,\n        event_broadcaster: Optional[\"EventBroadcaster\"\
+      ] = None\n    ):\n        \"\"\"Initialize with optional WebSocket broadcaster.\"\
+      \"\"\n        self._event_broadcaster = event_broadcaster\n\n    async def update_progress(self,\
+      \ task_id: str, ...):\n        # Safe to use with optional check\n        if\
+      \ self._event_broadcaster:\n            await self._event_broadcaster.broadcast_progress_update(...)\n"
+    key_points:
+    - Use TYPE_CHECKING guard for import
+    - Use string literal for forward reference: EventBroadcaster
+    - Make dependency Optional for backward compatibility
+    - Check for None before using
+  prevention:
+  - Follow dependency inversion principle
+  - Use Protocol types for loose coupling
+  - Make integration points optional by default
+  - Test both with and without optional dependencies
+  tags:
+  - forward-reference
+  - optional-dependency
+  - clean-architecture
+  - type-checking
+  domains:
+    primary: fastapi
+    secondary: []
 best_practices:
   import_style:
-    - rule: "Use absolute imports from src/ root"
-      example: "from src.domain.entities import TrafficRecord"
+  - rule: Use absolute imports from src/ root
+    example: from src.domain.entities import TrafficRecord
+  - rule: 'Group imports: stdlib, third-party, local'
+    example: 'import os
 
-    - rule: "Group imports: stdlib, third-party, local"
-      example: |
-        import os
-        from pathlib import Path
+      from pathlib import Path
 
-        from fastapi import FastAPI
-        import yaml
 
-        from src.domain.entities import Entity
+      from fastapi import FastAPI
 
-    - rule: "Use TYPE_CHECKING for type-only imports"
-      example: |
-        from typing import TYPE_CHECKING
+      import yaml
 
-        if TYPE_CHECKING:
-            from expensive_module import ExpensiveClass
 
-    - rule: "Avoid wildcard imports"
-      bad: "from module import *"
-      good: "from module import specific_function"
+      from src.domain.entities import Entity
 
+      '
+  - rule: Use TYPE_CHECKING for type-only imports
+    example: "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from expensive_module\
+      \ import ExpensiveClass\n"
+  - rule: Avoid wildcard imports
+    bad: from module import *
+    good: from module import specific_function
   dependency_management:
-    - "Keep shared types in base.py or types.py modules"
-    - "Use Protocol for interface definitions"
-    - "Depend on abstractions, not concrete implementations"
-    - "Make cross-layer dependencies optional when possible"
-    - "Maintain acyclic dependency graph"
-
+  - Keep shared types in base.py or types.py modules
+  - Use Protocol for interface definitions
+  - Depend on abstractions, not concrete implementations
+  - Make cross-layer dependencies optional when possible
+  - Maintain acyclic dependency graph
   tools:
-    - name: "isort"
-      purpose: "Automatic import sorting"
-      config: "pyproject.toml"
-
-    - name: "ruff"
-      purpose: "Import linting and unused import detection"
-      command: "ruff check --select I,F401"
-
-    - name: "mypy"
-      purpose: "Type checking with import validation"
-      command: "mypy src/"
-
+  - name: isort
+    purpose: Automatic import sorting
+    config: pyproject.toml
+  - name: ruff
+    purpose: Import linting and unused import detection
+    command: ruff check --select I,F401
+  - name: mypy
+    purpose: Type checking with import validation
+    command: mypy src/
 troubleshooting:
-  - symptom: "ImportError: cannot import name 'X'"
-    checks:
-      - "Verify X exists in module"
-      - "Check for circular imports (use import graph tools)"
-      - "Ensure __init__.py exists in package"
-      - "Check pythonpath configuration"
-
-  - symptom: "ModuleNotFoundError: No module named 'src'"
-    checks:
-      - "Verify pythonpath in pyproject.toml"
-      - "Check PYTHONPATH environment variable"
-      - "Ensure running from project root"
-      - "Verify src/ directory exists"
-
-  - symptom: "Circular import detected"
-    solution:
-      - "Identify dependency cycle with tools"
-      - "Move shared code to separate module"
-      - "Use TYPE_CHECKING guards"
-      - "Apply dependency inversion"
-      - "Consider restructuring modules"
+- symptom: 'ImportError: cannot import name ''X'''
+  checks:
+  - Verify X exists in module
+  - Check for circular imports (use import graph tools)
+  - Ensure __init__.py exists in package
+  - Check pythonpath configuration
+- symptom: 'ModuleNotFoundError: No module named ''src'''
+  checks:
+  - Verify pythonpath in pyproject.toml
+  - Check PYTHONPATH environment variable
+  - Ensure running from project root
+  - Verify src/ directory exists
+- symptom: Circular import detected
+  solution:
+  - Identify dependency cycle with tools
+  - Move shared code to separate module
+  - Use TYPE_CHECKING guards
+  - Apply dependency inversion
+  - Consider restructuring modules

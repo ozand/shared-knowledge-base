@@ -1,903 +1,972 @@
-version: "1.0"
-category: "postgresql-database"
-last_updated: "2026-01-05"
-
+version: '1.0'
+category: postgresql-database
+last_updated: '2026-01-05'
 errors:
-  - id: "POSTGRES-001"
-    title: "Statement Timeout on Large JSONB Batch Inserts"
-    severity: "high"
-
-    problem: |
-      When loading large JSONB records into PostgreSQL, batch inserts fail with
-      "canceling statement due to statement timeout" error. The default 600s (10 minutes)
-      timeout is insufficient for processing large batches of complex JSONB data.
-
-    symptoms:
-      - "psycopg2.errors.QueryCanceled: canceling statement due to statement timeout"
-      - "Processing fails after importing 600K-1M records"
-      - "Error occurs consistently on large batches (5000 records)"
-      - "Works fine on small batches but fails on larger ones"
-
-    root_cause: |
-      Large JSONB records require significant processing time for:
-      1. JSON parsing and validation
-      2. TOAST storage operations
-      3. Index updates (if indexes present on JSONB columns)
-      4. B-tree index maintenance
-
-      With 5000 records per batch and complex nested JSON, insert time can exceed 10 minutes.
-
-    solution:
-      code: |
-        # In your Python/psycopg2 code
-        import psycopg2
-
-        conn = psycopg2.connect("...")
-        cur = conn.cursor()
-
-        # Increase statement timeout to 1 hour (3600 seconds)
-        cur.execute("SET statement_timeout = '3600s';")
-
-        # Now perform batch inserts
-        for batch in data_batches:
-            # Your batch insert logic here
-            pass
-
-      explanation: |
-        Increasing statement_timeout from 600s to 3600s allows large JSONB batches
-        to complete without cancellation. For extremely large datasets (>1GB batches),
-        consider increasing to 7200s (2 hours).
-
-        Alternative approaches:
-        - Reduce batch size (see POSTGRES-005)
-        - Use COPY command for bulk loading
-        - Disable indexes during load, rebuild after
-
-    prevention:
-      - "Set statement_timeout based on actual batch processing time measurements"
-      - "Monitor batch insert times during development phase"
-      - "Use smaller batches for complex JSONB data (2000 records vs 5000)"
-      - "Consider autovacuum and index maintenance during bulk loads"
-      - "Test with production-like data volumes before full load"
-
-    related_commits:
-      - "scripts/parallel_sw_processor.py:513 - Changed from 600s to 3600s"
-
-    tags: ["postgresql", "timeout", "jsonb", "batch-insert", "performance"]
-
-  - id: "POSTGRES-002"
-    title: "Unused Indexes Wasting Massive Disk Space"
-    severity: "high"
-
-    problem: |
-      PostgreSQL indexes consume significant disk space but provide no benefit if
-      never used by queries. Unused indexes are particularly problematic with large
-      tables (100GB+) and JSONB columns (GIN indexes).
-
-    symptoms:
-      - "Total database size much larger than expected"
-      - "Index size > 30% of total table size"
-      - "pg_stat_user_indexes shows idx_scan = 0 for some indexes"
-      - "Slow INSERT/UPDATE operations (due to index maintenance overhead)"
-
-    root_cause: |
-      1. GIN indexes on JSONB columns can be massive (100GB+)
-      2. Indexes created for queries that never run or were refactored
-      3. Development/test indexes not removed before production
-      4. Redundant indexes (similar columns, same queries)
-
-    solution:
-      code: |
-        -- Step 1: Identify unused indexes
-        SELECT
-            schemaname,
-            tablename,
-            indexname,
-            idx_scan,
-            pg_size_pretty(pg_relation_size(indexrelid)) as index_size
-        FROM pg_stat_user_indexes
-        WHERE idx_scan = 0
-          AND indexrelid::regclass::text NOT LIKE '%_pkey'
-        ORDER BY pg_relation_size(indexrelid) DESC;
-
-        -- Step 2: Verify index is truly safe to drop
-        -- Check if any queries use this index in pg_stat_statements
-        -- Check application code for references
-
-        -- Step 3: Drop unused index (CONCURRENTLY for minimal locking)
-        DROP INDEX CONCURRENTLY idx_beauty_sw_json_record;
-
-        -- Step 4: Reclaim space with VACUUM FULL
-        VACUUM FULL your_table;
-
-      explanation: |
-        In this case study:
-        - Dropped idx_beauty_sw_json_record (189 GB GIN index): 0 scans
-        - Dropped idx_beauty_sw_json_domain (2.8 GB): 0 scans
-        - Total space saved: 191 GB (35% reduction)
-        - Query performance: Improved due to less index maintenance overhead
-
-        DROP INDEX CONCURRENTLY allows drops without blocking table access,
-        but still requires a brief lock-free window.
-
-    prevention:
-      - "Regularly monitor pg_stat_user_indexes for low/zero usage"
-      - "Set up automated monitoring to alert on unused indexes"
-      - "Review index usage after major application changes"
-      - "Use EXPLAIN ANALYZE to verify indexes are actually used"
-      - "Consider index size vs query frequency trade-offs"
-      - "Drop unused indexes immediately after confirming safety"
-
-    related_commits:
-      - "2026-01-05: Dropped 2 unused indexes (191 GB freed)"
-
-    tags: ["postgresql", "indexes", "optimization", "disk-space", "gin", "monitoring"]
-
-  - id: "POSTGRES-003"
-    title: "DROP INDEX Blocked by Active DML Operations"
-    severity: "medium"
-
-    problem: |
-      DROP INDEX CONCURRENTLY waits indefinitely for locks when active INSERT/UPDATE/DELETE
-      operations are running on the table. Despite "CONCURRENTLY" keyword, DDL still requires
-      lock-free window.
-
-    symptoms:
-      - "DROP INDEX CONCURRENTLY hangs indefinitely"
-      - "pg_stat_activity shows: wait_event = 'Lock (virtualxid)'"
-      - "Query starts but doesn't complete for hours"
-      - "Other queries may be blocked by the waiting DROP INDEX"
-
-    root_cause: |
-      DROP INDEX CONCURRENTLY process:
-      1. Acquires AccessExclusiveLock on index (very brief)
-      2. Waits for all transactions to finish
-      3. Marks index as invalid
-      4. Waits again for transactions to finish
-      5. Drops the index
-
-      Active long-running transactions (INSERT operations, bulk loads) prevent
-      the DROP from proceeding past step 2.
-
-    solution:
-      code: |
-        -- Step 1: Check what's blocking the DROP
-        SELECT
-            blocked_locks.pid AS blocked_pid,
-            blocked_activity.usename AS blocked_user,
-            blocking_locks.pid AS blocking_pid,
-            blocking_activity.usename AS blocking_user,
-            blocked_activity.query AS blocked_statement,
-            blocking_activity.query AS blocking_statement,
-            blocking_activity.state,
-            blocking_activity.query_start
-        FROM pg_catalog.pg_locks blocked_locks
-        JOIN pg_catalog.pg_stat_activity blocked_activity
-            ON blocked_activity.pid = blocked_locks.pid
-        JOIN pg_catalog.pg_locks blocking_locks
-            ON blocking_locks.locktype = blocked_locks.locktype
-            AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
-            AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
-        JOIN pg_catalog.pg_stat_activity blocking_activity
-            ON blocking_activity.pid = blocking_locks.pid
-        WHERE NOT blocked_locks.granted;
-
-        -- Step 2: Two options:
-        -- Option A: Wait for active operations to complete (recommended for data loads)
-        -- Option B: Terminate blocking processes (use caution)
-        SELECT pg_terminate_backend(blocking_pid);
-
-      explanation: |
-        Recommended approach:
-        1. If active data loading: Let it complete, then DROP INDEX
-        2. If stuck queries: Terminate them after confirming they're safe to kill
-        3. If production traffic: Schedule DROP during maintenance window
-
-        In this case, 5 folders of SimilarWeb data were being loaded (~7 hours).
-        Solution was to wait for processing to complete, then optimize.
-
-    prevention:
-      - "Schedule index operations during maintenance windows"
-      - "Avoid DDL during active bulk data loads"
-      - "Use CONCURRENTLY for all index operations in production"
-      - "Monitor pg_stat_activity for long-running transactions before DDL"
-      - "For large tables, consider pg_repack for online operations"
-      - "Test DROP INDEX on staging environment first"
-
-    tags: ["postgresql", "locking", "ddl", "indexes", "concurrency", "blocking"]
-
-  - id: "POSTGRES-004"
-    title: "Stuck Queries Holding Locks Indefinitely"
-    severity: "high"
-
-    problem: |
-      Certain PostgreSQL queries (particularly pg_size_pretty, pg_stat_* functions) can
-      become stuck on very large tables, holding AccessShareLock and blocking DDL
-      operations for 10+ hours.
-
-    symptoms:
-      - "DROP INDEX waiting for lock despite no apparent active queries"
-      - "pg_stat_activity shows queries running 10-12+ hours"
-      - "Queries involve pg_size_pretty or information_schema functions"
-      - "Multiple concurrent queries stuck on same table"
-
-    root_cause: |
-      pg_size_pretty() and other metadata functions perform full table scans on
-      very large tables to calculate size. On 500GB+ tables, this can take hours.
-
-      Stuck queries hold AccessShareLock, preventing:
-      - DROP INDEX (needs AccessExclusiveLock)
-      - ALTER TABLE
-      - Other DDL operations
-
-    solution:
-      code: |
-        -- Step 1: Identify stuck queries (running > 4 hours)
-        SELECT
-            pid,
-            now() - query_start as duration,
-            usename,
-            application_name,
-            state,
-            query
-        FROM pg_stat_activity
-        WHERE state = 'active'
-          AND now() - query_start > interval '4 hours'
-        ORDER BY duration DESC;
-
-        -- Step 2: Check if queries are truly stuck (no progress)
-        -- Run multiple times, if duration keeps increasing, they're working
-        -- If duration stable but query active, likely stuck
-
-        -- Step 3: Terminate stuck queries (after verification)
-        SELECT pg_terminate_backend(pid)
-        FROM pg_stat_activity
-        WHERE pid = <stuck_pid>;
-
-      explanation: |
-        Real example:
-        - 6 pg_size_pretty queries running 10-12 hours on beauty_sw_json (544 GB)
-        - All holding AccessShareLock, blocking DROP INDEX
-        - Queries were checking table/index sizes repeatedly
-        - Solution: Terminated all 6 stuck processes
-        - Result: DROP INDEX completed within seconds
-
-        Better alternatives for size checks:
-        - Use pg_relation_size() directly (faster)
-        - Cache size information
-        - Use pg_total_relation_size() without pg_size_pretty()
-        - Check less frequently
-
-    prevention:
-      - "Avoid pg_size_pretty in frequently run queries"
-      - "Use pg_relation_size directly, format in application code"
-      - "Cache size information, refresh hourly/daily not per-query"
-      - "Monitor query durations, alert on > 1 hour queries"
-      - "Use connection pooling to prevent connection buildup"
-      - "Consider materialized views for expensive metadata queries"
-
-    real_world_example: |
-      Session 2026-01-05:
-      - PIDs 412472, 510388, 549268, 552196, 559392, 560044 stuck
-      - Queries: "SELECT pg_size_pretty(pg_total_relation_size('beauty_sw_json'))"
-      - Duration: 10-12 hours each
-      - Blocking: DROP INDEX CONCURRENTLY
-      - Action: pg_terminate_backend() on all 6 PIDs
-      - Result: DDL unblocked, optimization completed successfully
-
-    tags: ["postgresql", "locking", "performance", "metadata", "pg_size_pretty", "monitoring"]
-
-  - id: "POSTGRES-005"
-    title: "Batch Size Too Large for Reliable JSONB Processing"
-    severity: "medium"
-
-    problem: |
-      Large batch sizes (5000 records) cause intermittent failures when processing
-      complex JSONB data, particularly with nested structures and large individual
-      records (>1KB per record).
-
-    symptoms:
-      - "Timeout errors on large batches"
-      - "Memory issues during batch processing"
-      - "Failures occur randomly, not consistently"
-      - "Smaller batches of same data succeed"
-
-    root_cause: |
-      With 5000 records per batch:
-      1. Memory footprint: 5000 × 5KB = 25MB+ per batch
-      2. JSON parsing overhead for complex structures
-      3. Index maintenance on all 5000 records
-      4. TOAST storage operations for large JSONB
-      5. Network roundtrip time increases
-
-      PostgreSQL must process entire batch atomically, increasing risk of timeout.
-
-    solution:
-      code: |
-        # Configuration in data processing script
-        # Before (causing timeouts):
-        BATCH_SIZE = 5000
-
-        # After (reliable):
-        BATCH_SIZE = 2000
-
-        # Batch processor implementation
-        for batch in batch_generator(data, batch_size=BATCH_SIZE):
-            try:
-                # Process batch
-                process_batch(batch)
-            except QueryCanceled:
-                # Retry with smaller batch if timeout
-                logger.warning(f"Batch failed, retrying with smaller size")
-                process_batch(batch, batch_size=len(batch) // 2)
-
-      explanation: |
-        Reducing batch size from 5000 to 2000:
-        - Reduces memory footprint by 60%
-        - Faster processing per batch (less timeout risk)
-        - More granular error handling
-        - Better progress tracking
-        - Trade-off: More database roundtrips (but still faster overall)
-
-        Results in SimilarWeb processing:
-        - Before: Failed after 600K records
-        - After: Successfully processed 19.3M records (5 folders)
-        - Success rate: 100% for all remaining folders
-
-    prevention:
-      - "Test batch sizes with production-like data during development"
-      - "Monitor memory usage during batch processing"
-      - "Implement adaptive batch sizing (reduce on timeout)"
-      - "For JSONB: Use smaller batches (1000-2000 vs 5000)"
-      - "Consider COPY command for very large datasets"
-      - "Set appropriate statement_timeout for batch size"
-
-    related_commits:
-      - "scripts/parallel_sw_processor.py:62 - Reduced from 5000 to 2000"
-
-    tags: ["postgresql", "jsonb", "batch-processing", "performance", "tuning"]
-
-  - id: "POSTGRES-006"
-    title: "CREATE INDEX CONCURRENTLY in Transaction Block"
-    severity: "medium"
-
-    problem: |
-      PostgreSQL does not allow CREATE INDEX CONCURRENTLY to run inside a transaction
-      block. This restriction exists because CONCURRENTLY requires multiple transaction
-      commits during index creation.
-
-    symptoms:
-      - "Error: CREATE INDEX CONCURRENTLY cannot run inside a transaction block"
-      - "psql script fails immediately on CREATE INDEX CONCURRENTLY"
-      - "Works fine without CONCURRENTLY keyword but locks table"
-      - "Occurs in psql, Python scripts, and DO blocks"
-
-    root_cause: |
-      CREATE INDEX CONCURRENTLY process:
-      1. Start first transaction, create index invalid
-      2. Commit transaction 1
-      3. Wait for existing transactions to finish
-      4. Start second transaction, validate index
-      5. Commit transaction 2
-      6. Mark index as valid
-
-      Running inside a transaction block prevents these commits, causing failure.
-
-    solution:
-      code: |
-        -- ❌ WRONG - Inside transaction block
-        BEGIN;
-        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
-        COMMIT;
-
-        -- ✅ CORRECT - Autocommit mode
-        -- Method 1: Set autocommit in psql
-        \set AUTOCOMMIT on
-        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
-
-        -- Method 2: Use separate SQL file
-        -- create_indexes.sql:
-        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
-
-        -- Execute from command line
-        psql -h localhost -U postgres -d database -f create_indexes.sql
-
-        -- Method 3: Python with autocommit
-        import psycopg2
-        conn = psycopg2.connect(...)
-        conn.set_session(autocommit=True)  # Critical!
-        cur = conn.cursor()
-        cur.execute("CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name)")
-
-      explanation: |
-        CREATE INDEX CONCURRENTLY is designed for production environments where you
-        cannot afford to lock the table. It requires multiple transactions, so it
-        cannot run inside a transaction block.
-
-        Key points:
-        - Set autocommit=True before executing
-        - Use separate SQL files for complex index operations
-        - Cannot be executed from functions or DO blocks
-        - Takes 2-3x longer than regular CREATE INDEX but doesn't block writes
-
-        Real-world example:
-        Attempted to create covering indexes in DO $$ block - failed immediately.
-        Solution: Created separate SQL file, executed directly with psql.
-
-    prevention:
-      - "Always test index creation syntax in development first"
-      - "Use separate .sql files for CONCURRENTLY operations"
-      - "Set autocommit=True in Python before CREATE INDEX CONCURRENTLY"
-      - "Never wrap in DO blocks or functions"
-      - "Schedule index creation during low-traffic periods"
-      - "Monitor pg_stat_progress_create_index for progress"
-
-    real_world_example: |
-      Session 2026-01-06:
-      - Attempt: Create covering indexes for 2025 partitions
-      - Error: "CREATE INDEX CONCURRENTLY cannot be executed from a function"
-      - Cause: Wrapped in DO $$ block with EXECUTE FORMAT
-      - Solution: Created /tmp/create_covering_indexes.sql
-      - Result: Discovered indexes not needed (existing PK sufficient)
-
-    tags: ["postgresql", "indexes", "concurrent", "transaction", "ddl"]
-
-  - id: "POSTGRES-007"
-    title: "Type Mismatch: UUID vs Integer Comparison"
-    severity: "low"
-
-    problem: |
-      PostgreSQL UUID columns cannot be compared with integer values. Attempting to
-      filter UUID columns with integer literals causes type mismatch errors.
-
-    symptoms:
-      - "Error: operator does not exist: uuid = integer"
-      - "Query fails on WHERE domain_id IN (123, 456, 789)"
-      - "Works fine with UUID strings"
-      - "Confusion because UUID looks like numbers visually"
-
-    root_cause: |
-      UUID is a 128-bit value stored as 16 bytes, not an integer. Even though UUIDs
-      may look like "550e8400-e29b-41d4-a716-446655440000", they are not numbers.
-
-      Common mistake:
-      ```sql
-      -- domain_id is UUID type
-      WHERE domain_id IN (123, 456, 789)  -- ❌ Wrong: integers
-      WHERE domain_id = 123                -- ❌ Wrong: integer
-      ```
-
-    solution:
-      code: |
-        -- ✅ CORRECT - Use UUID strings
-        WHERE domain_id IN (
-          '550e8400-e29b-41d4-a716-446655440000',
-          '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-          '6ba7b811-9dad-11d1-80b4-00c04fd430c8'
-        )
-
-        -- ✅ CORRECT - Cast to UUID if needed
-        WHERE domain_id = '550e8400-e29b-41d4-a716-446655440000'::uuid
-
-        -- ✅ CORRECT - Use subquery to get actual UUIDs
-        WHERE domain_id IN (
-          SELECT DISTINCT domain_id
-          FROM sw_raw_json_partitioned
-          WHERE data_date >= '2025-01-01' AND data_date < '2025-02-01'
-          LIMIT 5
-        )
-
-        -- ❌ WRONG - Integer literals
-        WHERE domain_id IN (123, 456, 789)
-        WHERE domain_id = 123
-
-      explanation: |
-        UUID columns require UUID values. Always use:
-        1. UUID string literals with single quotes: 'uuid-here'
-        2. Cast from string: 'uuid-here'::uuid
-        3. Subqueries that return UUID types
-        4. uuid_generate_v4() for new UUIDs
-
-        Performance note:
-        - UUID comparisons are efficient (indexed)
-        - Use IN clause with multiple UUIDs (5-10 is optimal)
-        - Partition pruning + UUID filtering = sub-millisecond queries
-
-    prevention:
-      - "Always check column data types before writing queries"
-      - "Use psql \\d table_name to see column types"
-      - "Test queries with actual data, not synthetic values"
-      - "Use UUID generator functions for test data"
-      - "Document UUID column usage in team wiki"
-
-    real_world_example: |
-      Session 2026-01-06:
-      - Test query: WHERE domain_id IN (123, 456, 789)
-      - Error: operator does not exist: uuid = integer
-      - Discovery: domain_id column is UUID type
-      - Solution: Used subquery to get actual UUID values
-      - Result: Query executed successfully in 1.139 ms
-
-    tags: ["postgresql", "uuid", "data-types", "query-syntax"]
+- id: POSTGRES-001
+  title: Statement Timeout on Large JSONB Batch Inserts
+  severity: high
+  problem: 'When loading large JSONB records into PostgreSQL, batch inserts fail with
+
+    "canceling statement due to statement timeout" error. The default 600s (10 minutes)
+
+    timeout is insufficient for processing large batches of complex JSONB data.
+
+    '
+  symptoms:
+  - 'psycopg2.errors.QueryCanceled: canceling statement due to statement timeout'
+  - Processing fails after importing 600K-1M records
+  - Error occurs consistently on large batches (5000 records)
+  - Works fine on small batches but fails on larger ones
+  root_cause: 'Large JSONB records require significant processing time for:
 
+    1. JSON parsing and validation
+
+    2. TOAST storage operations
+
+    3. Index updates (if indexes present on JSONB columns)
+
+    4. B-tree index maintenance
+
+
+    With 5000 records per batch and complex nested JSON, insert time can exceed 10
+    minutes.
+
+    '
+  solution:
+    code: "# In your Python/psycopg2 code\nimport psycopg2\n\nconn = psycopg2.connect(\"\
+      ...\")\ncur = conn.cursor()\n\n# Increase statement timeout to 1 hour (3600\
+      \ seconds)\ncur.execute(\"SET statement_timeout = '3600s';\")\n\n# Now perform\
+      \ batch inserts\nfor batch in data_batches:\n    # Your batch insert logic here\n\
+      \    pass\n"
+    explanation: 'Increasing statement_timeout from 600s to 3600s allows large JSONB
+      batches
+
+      to complete without cancellation. For extremely large datasets (>1GB batches),
+
+      consider increasing to 7200s (2 hours).
+
+
+      Alternative approaches:
+
+      - Reduce batch size (see POSTGRES-005)
+
+      - Use COPY command for bulk loading
+
+      - Disable indexes during load, rebuild after
+
+      '
+  prevention:
+  - Set statement_timeout based on actual batch processing time measurements
+  - Monitor batch insert times during development phase
+  - Use smaller batches for complex JSONB data (2000 records vs 5000)
+  - Consider autovacuum and index maintenance during bulk loads
+  - Test with production-like data volumes before full load
+  related_commits:
+  - scripts/parallel_sw_processor.py:513 - Changed from 600s to 3600s
+  tags:
+  - postgresql
+  - timeout
+  - jsonb
+  - batch-insert
+  - performance
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-002
+  title: Unused Indexes Wasting Massive Disk Space
+  severity: high
+  problem: 'PostgreSQL indexes consume significant disk space but provide no benefit
+    if
+
+    never used by queries. Unused indexes are particularly problematic with large
+
+    tables (100GB+) and JSONB columns (GIN indexes).
+
+    '
+  symptoms:
+  - Total database size much larger than expected
+  - Index size > 30% of total table size
+  - pg_stat_user_indexes shows idx_scan = 0 for some indexes
+  - Slow INSERT/UPDATE operations (due to index maintenance overhead)
+  root_cause: '1. GIN indexes on JSONB columns can be massive (100GB+)
+
+    2. Indexes created for queries that never run or were refactored
+
+    3. Development/test indexes not removed before production
+
+    4. Redundant indexes (similar columns, same queries)
+
+    '
+  solution:
+    code: "-- Step 1: Identify unused indexes\nSELECT\n    schemaname,\n    tablename,\n\
+      \    indexname,\n    idx_scan,\n    pg_size_pretty(pg_relation_size(indexrelid))\
+      \ as index_size\nFROM pg_stat_user_indexes\nWHERE idx_scan = 0\n  AND indexrelid::regclass::text\
+      \ NOT LIKE '%_pkey'\nORDER BY pg_relation_size(indexrelid) DESC;\n\n-- Step\
+      \ 2: Verify index is truly safe to drop\n-- Check if any queries use this index\
+      \ in pg_stat_statements\n-- Check application code for references\n\n-- Step\
+      \ 3: Drop unused index (CONCURRENTLY for minimal locking)\nDROP INDEX CONCURRENTLY\
+      \ idx_beauty_sw_json_record;\n\n-- Step 4: Reclaim space with VACUUM FULL\n\
+      VACUUM FULL your_table;\n"
+    explanation: 'In this case study:
+
+      - Dropped idx_beauty_sw_json_record (189 GB GIN index): 0 scans
+
+      - Dropped idx_beauty_sw_json_domain (2.8 GB): 0 scans
+
+      - Total space saved: 191 GB (35% reduction)
+
+      - Query performance: Improved due to less index maintenance overhead
+
+
+      DROP INDEX CONCURRENTLY allows drops without blocking table access,
+
+      but still requires a brief lock-free window.
+
+      '
+  prevention:
+  - Regularly monitor pg_stat_user_indexes for low/zero usage
+  - Set up automated monitoring to alert on unused indexes
+  - Review index usage after major application changes
+  - Use EXPLAIN ANALYZE to verify indexes are actually used
+  - Consider index size vs query frequency trade-offs
+  - Drop unused indexes immediately after confirming safety
+  related_commits:
+  - '2026-01-05: Dropped 2 unused indexes (191 GB freed)'
+  tags:
+  - postgresql
+  - indexes
+  - optimization
+  - disk-space
+  - gin
+  - monitoring
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-003
+  title: DROP INDEX Blocked by Active DML Operations
+  severity: medium
+  problem: 'DROP INDEX CONCURRENTLY waits indefinitely for locks when active INSERT/UPDATE/DELETE
+
+    operations are running on the table. Despite "CONCURRENTLY" keyword, DDL still
+    requires
+
+    lock-free window.
+
+    '
+  symptoms:
+  - DROP INDEX CONCURRENTLY hangs indefinitely
+  - 'pg_stat_activity shows: wait_event = ''Lock (virtualxid)'''
+  - Query starts but doesn't complete for hours
+  - Other queries may be blocked by the waiting DROP INDEX
+  root_cause: 'DROP INDEX CONCURRENTLY process:
+
+    1. Acquires AccessExclusiveLock on index (very brief)
+
+    2. Waits for all transactions to finish
+
+    3. Marks index as invalid
+
+    4. Waits again for transactions to finish
+
+    5. Drops the index
+
+
+    Active long-running transactions (INSERT operations, bulk loads) prevent
+
+    the DROP from proceeding past step 2.
+
+    '
+  solution:
+    code: "-- Step 1: Check what's blocking the DROP\nSELECT\n    blocked_locks.pid\
+      \ AS blocked_pid,\n    blocked_activity.usename AS blocked_user,\n    blocking_locks.pid\
+      \ AS blocking_pid,\n    blocking_activity.usename AS blocking_user,\n    blocked_activity.query\
+      \ AS blocked_statement,\n    blocking_activity.query AS blocking_statement,\n\
+      \    blocking_activity.state,\n    blocking_activity.query_start\nFROM pg_catalog.pg_locks\
+      \ blocked_locks\nJOIN pg_catalog.pg_stat_activity blocked_activity\n    ON blocked_activity.pid\
+      \ = blocked_locks.pid\nJOIN pg_catalog.pg_locks blocking_locks\n    ON blocking_locks.locktype\
+      \ = blocked_locks.locktype\n    AND blocking_locks.database IS NOT DISTINCT\
+      \ FROM blocked_locks.database\n    AND blocking_locks.relation IS NOT DISTINCT\
+      \ FROM blocked_locks.relation\nJOIN pg_catalog.pg_stat_activity blocking_activity\n\
+      \    ON blocking_activity.pid = blocking_locks.pid\nWHERE NOT blocked_locks.granted;\n\
+      \n-- Step 2: Two options:\n-- Option A: Wait for active operations to complete\
+      \ (recommended for data loads)\n-- Option B: Terminate blocking processes (use\
+      \ caution)\nSELECT pg_terminate_backend(blocking_pid);\n"
+    explanation: 'Recommended approach:
+
+      1. If active data loading: Let it complete, then DROP INDEX
+
+      2. If stuck queries: Terminate them after confirming they''re safe to kill
+
+      3. If production traffic: Schedule DROP during maintenance window
+
+
+      In this case, 5 folders of SimilarWeb data were being loaded (~7 hours).
+
+      Solution was to wait for processing to complete, then optimize.
+
+      '
+  prevention:
+  - Schedule index operations during maintenance windows
+  - Avoid DDL during active bulk data loads
+  - Use CONCURRENTLY for all index operations in production
+  - Monitor pg_stat_activity for long-running transactions before DDL
+  - For large tables, consider pg_repack for online operations
+  - Test DROP INDEX on staging environment first
+  tags:
+  - postgresql
+  - locking
+  - ddl
+  - indexes
+  - concurrency
+  - blocking
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-004
+  title: Stuck Queries Holding Locks Indefinitely
+  severity: high
+  problem: 'Certain PostgreSQL queries (particularly pg_size_pretty, pg_stat_* functions)
+    can
+
+    become stuck on very large tables, holding AccessShareLock and blocking DDL
+
+    operations for 10+ hours.
+
+    '
+  symptoms:
+  - DROP INDEX waiting for lock despite no apparent active queries
+  - pg_stat_activity shows queries running 10-12+ hours
+  - Queries involve pg_size_pretty or information_schema functions
+  - Multiple concurrent queries stuck on same table
+  root_cause: 'pg_size_pretty() and other metadata functions perform full table scans
+    on
+
+    very large tables to calculate size. On 500GB+ tables, this can take hours.
+
+
+    Stuck queries hold AccessShareLock, preventing:
+
+    - DROP INDEX (needs AccessExclusiveLock)
+
+    - ALTER TABLE
+
+    - Other DDL operations
+
+    '
+  solution:
+    code: "-- Step 1: Identify stuck queries (running > 4 hours)\nSELECT\n    pid,\n\
+      \    now() - query_start as duration,\n    usename,\n    application_name,\n\
+      \    state,\n    query\nFROM pg_stat_activity\nWHERE state = 'active'\n  AND\
+      \ now() - query_start > interval '4 hours'\nORDER BY duration DESC;\n\n-- Step\
+      \ 2: Check if queries are truly stuck (no progress)\n-- Run multiple times,\
+      \ if duration keeps increasing, they're working\n-- If duration stable but query\
+      \ active, likely stuck\n\n-- Step 3: Terminate stuck queries (after verification)\n\
+      SELECT pg_terminate_backend(pid)\nFROM pg_stat_activity\nWHERE pid = <stuck_pid>;\n"
+    explanation: 'Real example:
+
+      - 6 pg_size_pretty queries running 10-12 hours on beauty_sw_json (544 GB)
+
+      - All holding AccessShareLock, blocking DROP INDEX
+
+      - Queries were checking table/index sizes repeatedly
+
+      - Solution: Terminated all 6 stuck processes
+
+      - Result: DROP INDEX completed within seconds
+
+
+      Better alternatives for size checks:
+
+      - Use pg_relation_size() directly (faster)
+
+      - Cache size information
+
+      - Use pg_total_relation_size() without pg_size_pretty()
+
+      - Check less frequently
+
+      '
+  prevention:
+  - Avoid pg_size_pretty in frequently run queries
+  - Use pg_relation_size directly, format in application code
+  - Cache size information, refresh hourly/daily not per-query
+  - Monitor query durations, alert on > 1 hour queries
+  - Use connection pooling to prevent connection buildup
+  - Consider materialized views for expensive metadata queries
+  real_world_example: 'Session 2026-01-05:
+
+    - PIDs 412472, 510388, 549268, 552196, 559392, 560044 stuck
+
+    - Queries: "SELECT pg_size_pretty(pg_total_relation_size(''beauty_sw_json''))"
+
+    - Duration: 10-12 hours each
+
+    - Blocking: DROP INDEX CONCURRENTLY
+
+    - Action: pg_terminate_backend() on all 6 PIDs
+
+    - Result: DDL unblocked, optimization completed successfully
+
+    '
+  tags:
+  - postgresql
+  - locking
+  - performance
+  - metadata
+  - pg_size_pretty
+  - monitoring
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-005
+  title: Batch Size Too Large for Reliable JSONB Processing
+  severity: medium
+  problem: 'Large batch sizes (5000 records) cause intermittent failures when processing
+
+    complex JSONB data, particularly with nested structures and large individual
+
+    records (>1KB per record).
+
+    '
+  symptoms:
+  - Timeout errors on large batches
+  - Memory issues during batch processing
+  - Failures occur randomly, not consistently
+  - Smaller batches of same data succeed
+  root_cause: 'With 5000 records per batch:
+
+    1. Memory footprint: 5000 × 5KB = 25MB+ per batch
+
+    2. JSON parsing overhead for complex structures
+
+    3. Index maintenance on all 5000 records
+
+    4. TOAST storage operations for large JSONB
+
+    5. Network roundtrip time increases
+
+
+    PostgreSQL must process entire batch atomically, increasing risk of timeout.
+
+    '
+  solution:
+    code: "# Configuration in data processing script\n# Before (causing timeouts):\n\
+      BATCH_SIZE = 5000\n\n# After (reliable):\nBATCH_SIZE = 2000\n\n# Batch processor\
+      \ implementation\nfor batch in batch_generator(data, batch_size=BATCH_SIZE):\n\
+      \    try:\n        # Process batch\n        process_batch(batch)\n    except\
+      \ QueryCanceled:\n        # Retry with smaller batch if timeout\n        logger.warning(f\"\
+      Batch failed, retrying with smaller size\")\n        process_batch(batch, batch_size=len(batch)\
+      \ // 2)\n"
+    explanation: 'Reducing batch size from 5000 to 2000:
+
+      - Reduces memory footprint by 60%
+
+      - Faster processing per batch (less timeout risk)
+
+      - More granular error handling
+
+      - Better progress tracking
+
+      - Trade-off: More database roundtrips (but still faster overall)
+
+
+      Results in SimilarWeb processing:
+
+      - Before: Failed after 600K records
+
+      - After: Successfully processed 19.3M records (5 folders)
+
+      - Success rate: 100% for all remaining folders
+
+      '
+  prevention:
+  - Test batch sizes with production-like data during development
+  - Monitor memory usage during batch processing
+  - Implement adaptive batch sizing (reduce on timeout)
+  - 'For JSONB: Use smaller batches (1000-2000 vs 5000)'
+  - Consider COPY command for very large datasets
+  - Set appropriate statement_timeout for batch size
+  related_commits:
+  - scripts/parallel_sw_processor.py:62 - Reduced from 5000 to 2000
+  tags:
+  - postgresql
+  - jsonb
+  - batch-processing
+  - performance
+  - tuning
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-006
+  title: CREATE INDEX CONCURRENTLY in Transaction Block
+  severity: medium
+  problem: 'PostgreSQL does not allow CREATE INDEX CONCURRENTLY to run inside a transaction
+
+    block. This restriction exists because CONCURRENTLY requires multiple transaction
+
+    commits during index creation.
+
+    '
+  symptoms:
+  - 'Error: CREATE INDEX CONCURRENTLY cannot run inside a transaction block'
+  - psql script fails immediately on CREATE INDEX CONCURRENTLY
+  - Works fine without CONCURRENTLY keyword but locks table
+  - Occurs in psql, Python scripts, and DO blocks
+  root_cause: 'CREATE INDEX CONCURRENTLY process:
+
+    1. Start first transaction, create index invalid
+
+    2. Commit transaction 1
+
+    3. Wait for existing transactions to finish
+
+    4. Start second transaction, validate index
+
+    5. Commit transaction 2
+
+    6. Mark index as valid
+
+
+    Running inside a transaction block prevents these commits, causing failure.
+
+    '
+  solution:
+    code: '-- ❌ WRONG - Inside transaction block
+
+      BEGIN;
+
+      CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+
+      COMMIT;
+
+
+      -- ✅ CORRECT - Autocommit mode
+
+      -- Method 1: Set autocommit in psql
+
+      \set AUTOCOMMIT on
+
+      CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+
+
+      -- Method 2: Use separate SQL file
+
+      -- create_indexes.sql:
+
+      CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+
+
+      -- Execute from command line
+
+      psql -h localhost -U postgres -d database -f create_indexes.sql
+
+
+      -- Method 3: Python with autocommit
+
+      import psycopg2
+
+      conn = psycopg2.connect(...)
+
+      conn.set_session(autocommit=True)  # Critical!
+
+      cur = conn.cursor()
+
+      cur.execute("CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name)")
+
+      '
+    explanation: 'CREATE INDEX CONCURRENTLY is designed for production environments
+      where you
+
+      cannot afford to lock the table. It requires multiple transactions, so it
+
+      cannot run inside a transaction block.
+
+
+      Key points:
+
+      - Set autocommit=True before executing
+
+      - Use separate SQL files for complex index operations
+
+      - Cannot be executed from functions or DO blocks
+
+      - Takes 2-3x longer than regular CREATE INDEX but doesn''t block writes
+
+
+      Real-world example:
+
+      Attempted to create covering indexes in DO $$ block - failed immediately.
+
+      Solution: Created separate SQL file, executed directly with psql.
+
+      '
+  prevention:
+  - Always test index creation syntax in development first
+  - Use separate .sql files for CONCURRENTLY operations
+  - Set autocommit=True in Python before CREATE INDEX CONCURRENTLY
+  - Never wrap in DO blocks or functions
+  - Schedule index creation during low-traffic periods
+  - Monitor pg_stat_progress_create_index for progress
+  real_world_example: 'Session 2026-01-06:
+
+    - Attempt: Create covering indexes for 2025 partitions
+
+    - Error: "CREATE INDEX CONCURRENTLY cannot be executed from a function"
+
+    - Cause: Wrapped in DO $$ block with EXECUTE FORMAT
+
+    - Solution: Created /tmp/create_covering_indexes.sql
+
+    - Result: Discovered indexes not needed (existing PK sufficient)
+
+    '
+  tags:
+  - postgresql
+  - indexes
+  - concurrent
+  - transaction
+  - ddl
+  domains:
+    primary: postgresql
+    secondary: []
+- id: POSTGRES-007
+  title: 'Type Mismatch: UUID vs Integer Comparison'
+  severity: low
+  problem: 'PostgreSQL UUID columns cannot be compared with integer values. Attempting
+    to
+
+    filter UUID columns with integer literals causes type mismatch errors.
+
+    '
+  symptoms:
+  - 'Error: operator does not exist: uuid = integer'
+  - Query fails on WHERE domain_id IN (123, 456, 789)
+  - Works fine with UUID strings
+  - Confusion because UUID looks like numbers visually
+  root_cause: 'UUID is a 128-bit value stored as 16 bytes, not an integer. Even though
+    UUIDs
+
+    may look like "550e8400-e29b-41d4-a716-446655440000", they are not numbers.
+
+
+    Common mistake:
+
+    ```sql
+
+    -- domain_id is UUID type
+
+    WHERE domain_id IN (123, 456, 789)  -- ❌ Wrong: integers
+
+    WHERE domain_id = 123                -- ❌ Wrong: integer
+
+    ```
+
+    '
+  solution:
+    code: "-- ✅ CORRECT - Use UUID strings\nWHERE domain_id IN (\n  '550e8400-e29b-41d4-a716-446655440000',\n\
+      \  '6ba7b810-9dad-11d1-80b4-00c04fd430c8',\n  '6ba7b811-9dad-11d1-80b4-00c04fd430c8'\n\
+      )\n\n-- ✅ CORRECT - Cast to UUID if needed\nWHERE domain_id = '550e8400-e29b-41d4-a716-446655440000'::uuid\n\
+      \n-- ✅ CORRECT - Use subquery to get actual UUIDs\nWHERE domain_id IN (\n  SELECT\
+      \ DISTINCT domain_id\n  FROM sw_raw_json_partitioned\n  WHERE data_date >= '2025-01-01'\
+      \ AND data_date < '2025-02-01'\n  LIMIT 5\n)\n\n-- ❌ WRONG - Integer literals\n\
+      WHERE domain_id IN (123, 456, 789)\nWHERE domain_id = 123\n"
+    explanation: 'UUID columns require UUID values. Always use:
+
+      1. UUID string literals with single quotes: ''uuid-here''
+
+      2. Cast from string: ''uuid-here''::uuid
+
+      3. Subqueries that return UUID types
+
+      4. uuid_generate_v4() for new UUIDs
+
+
+      Performance note:
+
+      - UUID comparisons are efficient (indexed)
+
+      - Use IN clause with multiple UUIDs (5-10 is optimal)
+
+      - Partition pruning + UUID filtering = sub-millisecond queries
+
+      '
+  prevention:
+  - Always check column data types before writing queries
+  - Use psql \d table_name to see column types
+  - Test queries with actual data, not synthetic values
+  - Use UUID generator functions for test data
+  - Document UUID column usage in team wiki
+  real_world_example: 'Session 2026-01-06:
+
+    - Test query: WHERE domain_id IN (123, 456, 789)
+
+    - Error: operator does not exist: uuid = integer
+
+    - Discovery: domain_id column is UUID type
+
+    - Solution: Used subquery to get actual UUID values
+
+    - Result: Query executed successfully in 1.139 ms
+
+    '
+  tags:
+  - postgresql
+  - uuid
+  - data-types
+  - query-syntax
+  domains:
+    primary: postgresql
+    secondary: []
 patterns:
-  - id: "POSTGRES-P001"
-    title: "Large-Scale Table Optimization Workflow"
-    category: "database-optimization"
-
-    description: |
-      Systematic approach for optimizing PostgreSQL tables 100GB+. This pattern
-      balances space reclamation, performance improvement, and minimal downtime.
-
-    when_to_use:
-      - "Table size > 100 GB"
-      - "Index overhead > 30% of total size"
-      - "Unused indexes present"
-      - "Query performance degraded"
-      - "After major data loads complete"
-
-    steps:
-      1. |
-         **Assessment Phase (5-10 minutes)**
-
-         ```sql
-         -- Check table health
-         SELECT
-             pg_size_pretty(pg_total_relation_size('beauty_sw_json')) as total_size,
-             pg_size_pretty(pg_relation_size('beauty_sw_json')) as table_size,
-             pg_size_pretty(pg_total_relation_size('beauty_sw_json') -
-                 pg_relation_size('beauty_sw_json')) as index_size;
-
-         -- Check index usage
-         SELECT
-             indexname,
-             idx_scan,
-             pg_size_pretty(pg_relation_size(indexrelid)) as size
-         FROM pg_stat_user_indexes
-         WHERE schemaname = 'public'
-         ORDER BY pg_relation_size(indexrelid) DESC;
-
-         -- Identify unused indexes
-         SELECT * FROM check_table_health();
-         ```
-
-      2. |
-         **Planning Phase (5 minutes)**
-
-         - Document current size and performance
-         - Identify optimization opportunities
-         - Calculate expected savings
-         - Plan for maintenance window if needed
-         - Prepare rollback plan
-         - Expected space reduction by 20-40% (depends on unused indexes)
-         - Expected query speedup 2-100x
-         - Expected faster VACUUM and ANALYZE operations
-
-      3. |
-         **Index Optimization (15-30 minutes)**
-
-         ```sql
-         -- Drop unused indexes
-         DROP INDEX CONCURRENTLY IF EXISTS idx_unused_1;
-         DROP INDEX CONCURRENTLY IF EXISTS idx_unused_2;
-
-         -- Add performance indexes
-         CREATE INDEX CONCURRENTLY idx_table_processed_dttm
-         ON table_name (processed_dttm DESC)
-         TABLESPACE your_tablespace;
-
-         -- Verify index creation
-         \di+ idx_table_processed_dttm
-         ```
-
-      4. |
-         **Space Reclamation (30-60 minutes)**
-
-         ```sql
-         -- Option A - VACUUM FULL requires exclusive lock (30-60 min)
-         VACUUM FULL beauty_sw_json;
-
-         -- Option B - pg_repack is online with no locks (1-2 hours) - RECOMMENDED
-         -- Install pg_repack extension first
-         pg_repack -t beauty_sw_json -k -o o_drive -d sw -h localhost -U postgres
-
-         -- Monitor progress
-         SELECT phase, heap_blks_scanned, heap_blks_total,
-             ROUND(100.0 * heap_blks_scanned / heap_blks_total, 2) as progress
-         FROM pg_stat_progress_vacuum;
-         ```
-
-      5. |
-         **Verification Phase (10 minutes)**
-
-         ```sql
-         -- Check final size
-         SELECT pg_size_pretty(pg_total_relation_size('beauty_sw_json'));
-
-         -- Verify data integrity
-         SELECT COUNT(*) FROM beauty_sw_json;
-
-         -- Benchmark query performance
-         EXPLAIN ANALYZE
-         SELECT domain_sk, domain, record
-         FROM beauty_sw_json
-         WHERE domain IS NOT NULL
-         ORDER BY processed_dttm DESC
-         LIMIT 1000;
-
-         -- Check index usage
-         SELECT * FROM check_table_health();
-         ```
-
-    results:
-      |
-        **Real-world results from beauty_sw_json optimization:**
-
-        Before optimization:
-        - Total size: 544 GB
-        - Indexes: 220 GB (40% overhead)
-        - Unused indexes: 191 GB (2 indexes)
-        - ORDER BY query: Sequential scan (~30-60 seconds)
-
-        After optimization:
-        - Total size: 354 GB → 320 GB (final)
-        - Indexes: 30 GB (8.5% overhead)
-        - Unused indexes: 0
-        - ORDER BY query: Index scan (~0.3-0.6 seconds)
-
-        Achievements:
-        - Space saved: 190 GB (-35%)
-        - Query speedup: 100x
-        - Index overhead reduced: 79%
-        - All data intact: 190,828,315 records
-
-    best_practices:
-      - "Always use CONCURRENTLY for index changes in production"
-      - "Monitor pg_stat_progress_vacuum during VACUUM FULL"
-      - "Have recent backups before major optimization"
-      - "Test on staging environment first"
-      - "Schedule during maintenance window if using VACUUM FULL"
-      - "Use pg_repack for online table reorganization"
-      - "Document before/after metrics"
-
-    risks_and_mitigations:
-      - risk: "VACUUM FULL locks table (no reads/writes)"
-        mitigation: "Use pg_repack or schedule during maintenance window"
-
-      - risk: "DROP INDEX blocked by active queries"
-        mitigation: "Check pg_stat_activity, wait for completion or terminate"
-
-      - risk: "Unexpected query plan changes"
-        mitigation: "Benchmark critical queries before/after, keep statistics"
-
-      - risk: "Insufficient disk space for VACUUM FULL"
-        mitigation: "Ensure 2x table size available, use pg_repack instead"
-
-    tags: ["postgresql", "optimization", "vacuum", "indexes", "performance", "workflow"]
-
-  - id: "POSTGRES-P002"
-    title: "Large-Scale JSONB Data Loading Strategy"
-    category: "data-loading"
-
-    description: |
-      Reliable strategy for loading massive JSONB datasets (100GB+) into PostgreSQL
-      with proper timeout handling, batch sizing, and error recovery.
-
-    when_to_use:
-      - "Loading > 10GB JSONB data"
-      - "Complex nested JSON structures"
-      - "Long-running data imports (>1 hour)"
-      - "Unreliable network or database connections"
-
-    prerequisites:
-      - "Sufficient disk space (2x expected data size)"
-      - "Appropriate statement_timeout configured"
-      - "Batch size tuned for data characteristics"
-      - "Error handling and retry logic"
-      - "Progress tracking and logging"
-
-    implementation:
-      |
-        **Configuration:**
-
-        ```python
-        # Processing configuration
-        BATCH_SIZE = 2000  # Reduced from 5000 for JSONB
-        STATEMENT_TIMEOUT = '3600s'  # 1 hour for large batches
-        MAX_RETRIES = 3
-        CONNECTION_POOL_SIZE = 4
-
-        # Database connection
-        conn = psycopg2.connect(
-            host="localhost",
-            database="sw",
-            user="postgres",
-            options=f"-c statement_timeout={STATEMENT_TIMEOUT}"
-        )
-        ```
-
-        **Batch Processing:**
-
-        ```python
-        def process_jsonb_data(folder_path):
-            """Process JSONB data with error handling"""
-            files = list_files(folder_path)
-
-            for file in files:
-                try:
-                    # Read JSONB data
-                    data = read_jsonb(file)
-
-                    # Process in batches
-                    for i in range(0, len(data), BATCH_SIZE):
-                        batch = data[i:i + BATCH_SIZE]
-
-                        # Retry logic
-                        for attempt in range(MAX_RETRIES):
-                            try:
-                                insert_batch(conn, batch)
-                                break
-                            except QueryCanceled:
-                                if attempt < MAX_RETRIES - 1:
-                                    logger.warning(f"Timeout, retrying ({attempt+1}/{MAX_RETRIES})")
-                                    time.sleep(60)  # Wait before retry
-                                else:
-                                    raise
-
-                        # Progress tracking
-                        logger.info(f"Processed {min(i + BATCH_SIZE, len(data))}/{len(data)}")
-
-                except Exception as e:
-                    logger.error(f"Failed to process {file}: {e}")
-                    # Continue with next file
-
-            # Final statistics
-            logger.info(f"Total processed: {total_records} records")
-        ```
-
-        **Progress Monitoring:**
-
-        ```python
-        def monitor_progress():
-            """Check processing status"""
-            query = """
-                SELECT
-                    COUNT(*) as total_records,
-                    MIN(processed_dttm) as first_record,
-                    MAX(processed_dttm) as last_record
-                FROM beauty_sw_json
-            """
-            # Query and display results
-        ```
-
-    tuning_parameters:
-      |
-        | Parameter | Value | When to Use |
-        |-----------|-------|-------------|
-        | BATCH_SIZE | 1000-2000 | Complex JSONB, nested structures |
-        | BATCH_SIZE | 5000 | Simple JSON, flat structures |
-        | STATEMENT_TIMEOUT | 3600s (1h) | Large batches, complex data |
-        | STATEMENT_TIMEOUT | 1800s (30m) | Medium batches, simple data |
-        | MAX_RETRIES | 3 | Unstable connections |
-        | MAX_RETRIES | 1 | Stable connections |
-        | WORKERS | 4-8 | Multi-core systems |
-        | WORKERS | 1-2 | Limited resources |
-
-    real_world_results:
-      |
-        **SimilarWeb Data Processing (2026-01-05):**
-
-        Configuration:
-        - BATCH_SIZE: 2000 (reduced from 5000)
-        - STATEMENT_TIMEOUT: 3600s (increased from 600s)
-        - Workers: 4 parallel processors
-
-        Results:
-        - Folders processed: 5/5 (100%)
-        - Records loaded: 19,328,221
-        - Success rate: 100%
-        - Processing time: ~7 hours
-        - Total database: 190,828,315 records
-        - Failures: 0 (after tuning)
-
-        Before tuning (with BATCH_SIZE=5000, timeout=600s):
-        - Failures: Multiple timeout errors
-        - Records loaded: ~600K before failure
-        - Success rate: < 20%
-
-    best_practices:
-      - "Start with small test load to identify issues"
-      - "Monitor batch processing times during development"
-      - "Implement comprehensive error logging"
-      - "Use connection pooling for better performance"
-      - "Track progress for restart capability"
-      - "Consider disabling indexes during massive loads"
-      - "Run VACUUM ANALYZE after load completes"
-
-    troubleshooting:
-      - issue: "Frequent timeout errors"
-        solution: "Increase statement_timeout or reduce batch_size"
-
-      - issue: "Out of memory errors"
-        solution: "Reduce batch_size, limit workers"
-
-      - issue: "Slow overall performance"
-        solution: "Increase workers, use COPY instead of INSERT"
-
-      - issue: "Inconsistent failures"
-        solution: "Check network stability, add retry logic"
-
-    tags: ["postgresql", "jsonb", "data-loading", "batch-processing", "performance"]
-
-  - id: "POSTGRES-P003"
-    title: "PostgreSQL Performance Testing Workflow"
-    category: "performance-testing"
-
-    description: |
-      Comprehensive approach to testing PostgreSQL performance for partitioned tables.
-      Includes realistic workload testing, partition pruning validation, and index
-      effectiveness verification.
-
-    when_to_use:
-      - "After major table migrations or optimizations"
-      - "Before deploying partitioned tables to production"
-      - "When diagnosing query performance issues"
-      - "After index changes or statistics updates"
-      - "For performance regression testing"
-
-    real_world_results: |
-      **sw_raw_json_partitioned Performance Test (2026-01-06):**
-
-      Initial Test (Plain COUNT(*)):
-      - Single month: 31,600 ms (poor)
-      - Execution plan: Parallel Seq Scan
-      - Buffers: 230,000+ reads
-
-      Realistic Workload Test (COUNT with domain_id):
-      - Single domain, single month: 0.258 ms (122,000x faster!)
-      - Execution plan: Index Only Scan
-      - Buffers: 13-62 hits (all cache)
-
-      Key Discovery: Plain COUNT(*) is misleading. Realistic queries achieve
-      sub-millisecond performance.
-
-    best_practices:
-      - "Always test with REALISTIC queries, not synthetic benchmarks"
-      - "Include application-specific filters (domain_id, user_id, etc.)"
-      - "Verify partition pruning effectiveness with EXPLAIN"
-      - "Check for Index Only Scan capability"
-      - "Monitor buffer usage (cache hits vs disk reads)"
-      - "Document before/after metrics for comparison"
-      - "Run tests after ANALYZE for accurate plans"
-
-    tags: ["postgresql", "performance", "testing", "benchmarking", "partitioning"]
-
-  - id: "POSTGRES-P004"
-    title: "Misleading Performance Baselines"
-    category: "performance-analysis"
-
-    description: |
-      Critical pattern for avoiding false performance conclusions. Testing with
-      synthetic queries (plain COUNT(*)) can lead to incorrect optimization
-      decisions, as these don't represent real application workload.
-
-    the_problem: |
-      Plain COUNT(*) queries on partitioned tables often show poor performance
-      (30+ seconds) because PostgreSQL cannot use indexes effectively for full
-      table scans. This leads to false conclusions about table optimization needs.
-
-    real_world_example: |
-      **sw_raw_json_partitioned Performance Test (2026-01-06):**
-
-      Initial Baseline (Plain COUNT(*)): 31,600 ms
-      Realistic Baseline (COUNT with domain_id): 0.258 ms
-      Difference: 122,000x performance difference based on query pattern!
-
-    lessons_learned:
-      - "Plain COUNT(*) is rarely representative of real workload"
-      - "100,000x performance difference between realistic and synthetic queries"
-      - "Existing indexes may already be optimal (no covering indexes needed)"
-      - "Partition pruning effectiveness depends on query filters"
-      - "Always test with domain-specific filters if application uses them"
-
-    tags: ["postgresql", "performance", "testing", "benchmarking", "anti-pattern"]
+- id: POSTGRES-P001
+  title: Large-Scale Table Optimization Workflow
+  category: database-optimization
+  description: 'Systematic approach for optimizing PostgreSQL tables 100GB+. This
+    pattern
+
+    balances space reclamation, performance improvement, and minimal downtime.
+
+    '
+  when_to_use:
+  - Table size > 100 GB
+  - Index overhead > 30% of total size
+  - Unused indexes present
+  - Query performance degraded
+  - After major data loads complete
+  steps: '1. | **Assessment Phase (5-10 minutes)**
+
+    ```sql -- Check table health SELECT pg_size_pretty(pg_total_relation_size(''beauty_sw_json''))
+    as total_size, pg_size_pretty(pg_relation_size(''beauty_sw_json'')) as table_size,
+    pg_size_pretty(pg_total_relation_size(''beauty_sw_json'') - pg_relation_size(''beauty_sw_json''))
+    as index_size;
+
+    -- Check index usage SELECT indexname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))
+    as size FROM pg_stat_user_indexes WHERE schemaname = ''public'' ORDER BY pg_relation_size(indexrelid)
+    DESC;
+
+    -- Identify unused indexes SELECT * FROM check_table_health(); ```
+
+    2. | **Planning Phase (5 minutes)**
+
+    - Document current size and performance - Identify optimization opportunities
+    - Calculate expected savings - Plan for maintenance window if needed - Prepare
+    rollback plan - Expected space reduction by 20-40% (depends on unused indexes)
+    - Expected query speedup 2-100x - Expected faster VACUUM and ANALYZE operations
+
+    3. | **Index Optimization (15-30 minutes)**
+
+    ```sql -- Drop unused indexes DROP INDEX CONCURRENTLY IF EXISTS idx_unused_1;
+    DROP INDEX CONCURRENTLY IF EXISTS idx_unused_2;
+
+    -- Add performance indexes CREATE INDEX CONCURRENTLY idx_table_processed_dttm
+    ON table_name (processed_dttm DESC) TABLESPACE your_tablespace;
+
+    -- Verify index creation \di+ idx_table_processed_dttm ```
+
+    4. | **Space Reclamation (30-60 minutes)**
+
+    ```sql -- Option A - VACUUM FULL requires exclusive lock (30-60 min) VACUUM FULL
+    beauty_sw_json;
+
+    -- Option B - pg_repack is online with no locks (1-2 hours) - RECOMMENDED -- Install
+    pg_repack extension first pg_repack -t beauty_sw_json -k -o o_drive -d sw -h localhost
+    -U postgres
+
+    -- Monitor progress SELECT phase, heap_blks_scanned, heap_blks_total, ROUND(100.0
+    * heap_blks_scanned / heap_blks_total, 2) as progress FROM pg_stat_progress_vacuum;
+    ```
+
+    5. | **Verification Phase (10 minutes)**
+
+    ```sql -- Check final size SELECT pg_size_pretty(pg_total_relation_size(''beauty_sw_json''));
+
+    -- Verify data integrity SELECT COUNT(*) FROM beauty_sw_json;
+
+    -- Benchmark query performance EXPLAIN ANALYZE SELECT domain_sk, domain, record
+    FROM beauty_sw_json WHERE domain IS NOT NULL ORDER BY processed_dttm DESC LIMIT
+    1000;
+
+    -- Check index usage SELECT * FROM check_table_health(); ```'
+  results: '**Real-world results from beauty_sw_json optimization:**
+
+
+    Before optimization:
+
+    - Total size: 544 GB
+
+    - Indexes: 220 GB (40% overhead)
+
+    - Unused indexes: 191 GB (2 indexes)
+
+    - ORDER BY query: Sequential scan (~30-60 seconds)
+
+
+    After optimization:
+
+    - Total size: 354 GB → 320 GB (final)
+
+    - Indexes: 30 GB (8.5% overhead)
+
+    - Unused indexes: 0
+
+    - ORDER BY query: Index scan (~0.3-0.6 seconds)
+
+
+    Achievements:
+
+    - Space saved: 190 GB (-35%)
+
+    - Query speedup: 100x
+
+    - Index overhead reduced: 79%
+
+    - All data intact: 190,828,315 records
+
+    '
+  best_practices:
+  - Always use CONCURRENTLY for index changes in production
+  - Monitor pg_stat_progress_vacuum during VACUUM FULL
+  - Have recent backups before major optimization
+  - Test on staging environment first
+  - Schedule during maintenance window if using VACUUM FULL
+  - Use pg_repack for online table reorganization
+  - Document before/after metrics
+  risks_and_mitigations:
+  - risk: VACUUM FULL locks table (no reads/writes)
+    mitigation: Use pg_repack or schedule during maintenance window
+  - risk: DROP INDEX blocked by active queries
+    mitigation: Check pg_stat_activity, wait for completion or terminate
+  - risk: Unexpected query plan changes
+    mitigation: Benchmark critical queries before/after, keep statistics
+  - risk: Insufficient disk space for VACUUM FULL
+    mitigation: Ensure 2x table size available, use pg_repack instead
+  tags:
+  - postgresql
+  - optimization
+  - vacuum
+  - indexes
+  - performance
+  - workflow
+- id: POSTGRES-P002
+  title: Large-Scale JSONB Data Loading Strategy
+  category: data-loading
+  description: 'Reliable strategy for loading massive JSONB datasets (100GB+) into
+    PostgreSQL
+
+    with proper timeout handling, batch sizing, and error recovery.
+
+    '
+  when_to_use:
+  - Loading > 10GB JSONB data
+  - Complex nested JSON structures
+  - Long-running data imports (>1 hour)
+  - Unreliable network or database connections
+  prerequisites:
+  - Sufficient disk space (2x expected data size)
+  - Appropriate statement_timeout configured
+  - Batch size tuned for data characteristics
+  - Error handling and retry logic
+  - Progress tracking and logging
+  implementation: "**Configuration:**\n\n```python\n# Processing configuration\nBATCH_SIZE\
+    \ = 2000  # Reduced from 5000 for JSONB\nSTATEMENT_TIMEOUT = '3600s'  # 1 hour\
+    \ for large batches\nMAX_RETRIES = 3\nCONNECTION_POOL_SIZE = 4\n\n# Database connection\n\
+    conn = psycopg2.connect(\n    host=\"localhost\",\n    database=\"sw\",\n    user=\"\
+    postgres\",\n    options=f\"-c statement_timeout={STATEMENT_TIMEOUT}\"\n)\n```\n\
+    \n**Batch Processing:**\n\n```python\ndef process_jsonb_data(folder_path):\n \
+    \   \"\"\"Process JSONB data with error handling\"\"\"\n    files = list_files(folder_path)\n\
+    \n    for file in files:\n        try:\n            # Read JSONB data\n      \
+    \      data = read_jsonb(file)\n\n            # Process in batches\n         \
+    \   for i in range(0, len(data), BATCH_SIZE):\n                batch = data[i:i\
+    \ + BATCH_SIZE]\n\n                # Retry logic\n                for attempt\
+    \ in range(MAX_RETRIES):\n                    try:\n                        insert_batch(conn,\
+    \ batch)\n                        break\n                    except QueryCanceled:\n\
+    \                        if attempt < MAX_RETRIES - 1:\n                     \
+    \       logger.warning(f\"Timeout, retrying ({attempt+1}/{MAX_RETRIES})\")\n \
+    \                           time.sleep(60)  # Wait before retry\n            \
+    \            else:\n                            raise\n\n                # Progress\
+    \ tracking\n                logger.info(f\"Processed {min(i + BATCH_SIZE, len(data))}/{len(data)}\"\
+    )\n\n        except Exception as e:\n            logger.error(f\"Failed to process\
+    \ {file}: {e}\")\n            # Continue with next file\n\n    # Final statistics\n\
+    \    logger.info(f\"Total processed: {total_records} records\")\n```\n\n**Progress\
+    \ Monitoring:**\n\n```python\ndef monitor_progress():\n    \"\"\"Check processing\
+    \ status\"\"\"\n    query = \"\"\"\n        SELECT\n            COUNT(*) as total_records,\n\
+    \            MIN(processed_dttm) as first_record,\n            MAX(processed_dttm)\
+    \ as last_record\n        FROM beauty_sw_json\n    \"\"\"\n    # Query and display\
+    \ results\n```\n"
+  tuning_parameters: '| Parameter | Value | When to Use |
+
+    |-----------|-------|-------------|
+
+    | BATCH_SIZE | 1000-2000 | Complex JSONB, nested structures |
+
+    | BATCH_SIZE | 5000 | Simple JSON, flat structures |
+
+    | STATEMENT_TIMEOUT | 3600s (1h) | Large batches, complex data |
+
+    | STATEMENT_TIMEOUT | 1800s (30m) | Medium batches, simple data |
+
+    | MAX_RETRIES | 3 | Unstable connections |
+
+    | MAX_RETRIES | 1 | Stable connections |
+
+    | WORKERS | 4-8 | Multi-core systems |
+
+    | WORKERS | 1-2 | Limited resources |
+
+    '
+  real_world_results: '**SimilarWeb Data Processing (2026-01-05):**
+
+
+    Configuration:
+
+    - BATCH_SIZE: 2000 (reduced from 5000)
+
+    - STATEMENT_TIMEOUT: 3600s (increased from 600s)
+
+    - Workers: 4 parallel processors
+
+
+    Results:
+
+    - Folders processed: 5/5 (100%)
+
+    - Records loaded: 19,328,221
+
+    - Success rate: 100%
+
+    - Processing time: ~7 hours
+
+    - Total database: 190,828,315 records
+
+    - Failures: 0 (after tuning)
+
+
+    Before tuning (with BATCH_SIZE=5000, timeout=600s):
+
+    - Failures: Multiple timeout errors
+
+    - Records loaded: ~600K before failure
+
+    - Success rate: < 20%
+
+    '
+  best_practices:
+  - Start with small test load to identify issues
+  - Monitor batch processing times during development
+  - Implement comprehensive error logging
+  - Use connection pooling for better performance
+  - Track progress for restart capability
+  - Consider disabling indexes during massive loads
+  - Run VACUUM ANALYZE after load completes
+  troubleshooting:
+  - issue: Frequent timeout errors
+    solution: Increase statement_timeout or reduce batch_size
+  - issue: Out of memory errors
+    solution: Reduce batch_size, limit workers
+  - issue: Slow overall performance
+    solution: Increase workers, use COPY instead of INSERT
+  - issue: Inconsistent failures
+    solution: Check network stability, add retry logic
+  tags:
+  - postgresql
+  - jsonb
+  - data-loading
+  - batch-processing
+  - performance
+- id: POSTGRES-P003
+  title: PostgreSQL Performance Testing Workflow
+  category: performance-testing
+  description: 'Comprehensive approach to testing PostgreSQL performance for partitioned
+    tables.
+
+    Includes realistic workload testing, partition pruning validation, and index
+
+    effectiveness verification.
+
+    '
+  when_to_use:
+  - After major table migrations or optimizations
+  - Before deploying partitioned tables to production
+  - When diagnosing query performance issues
+  - After index changes or statistics updates
+  - For performance regression testing
+  real_world_results: '**sw_raw_json_partitioned Performance Test (2026-01-06):**
+
+
+    Initial Test (Plain COUNT(*)):
+
+    - Single month: 31,600 ms (poor)
+
+    - Execution plan: Parallel Seq Scan
+
+    - Buffers: 230,000+ reads
+
+
+    Realistic Workload Test (COUNT with domain_id):
+
+    - Single domain, single month: 0.258 ms (122,000x faster!)
+
+    - Execution plan: Index Only Scan
+
+    - Buffers: 13-62 hits (all cache)
+
+
+    Key Discovery: Plain COUNT(*) is misleading. Realistic queries achieve
+
+    sub-millisecond performance.
+
+    '
+  best_practices:
+  - Always test with REALISTIC queries, not synthetic benchmarks
+  - Include application-specific filters (domain_id, user_id, etc.)
+  - Verify partition pruning effectiveness with EXPLAIN
+  - Check for Index Only Scan capability
+  - Monitor buffer usage (cache hits vs disk reads)
+  - Document before/after metrics for comparison
+  - Run tests after ANALYZE for accurate plans
+  tags:
+  - postgresql
+  - performance
+  - testing
+  - benchmarking
+  - partitioning
+- id: POSTGRES-P004
+  title: Misleading Performance Baselines
+  category: performance-analysis
+  description: 'Critical pattern for avoiding false performance conclusions. Testing
+    with
+
+    synthetic queries (plain COUNT(*)) can lead to incorrect optimization
+
+    decisions, as these don''t represent real application workload.
+
+    '
+  the_problem: 'Plain COUNT(*) queries on partitioned tables often show poor performance
+
+    (30+ seconds) because PostgreSQL cannot use indexes effectively for full
+
+    table scans. This leads to false conclusions about table optimization needs.
+
+    '
+  real_world_example: '**sw_raw_json_partitioned Performance Test (2026-01-06):**
+
+
+    Initial Baseline (Plain COUNT(*)): 31,600 ms
+
+    Realistic Baseline (COUNT with domain_id): 0.258 ms
+
+    Difference: 122,000x performance difference based on query pattern!
+
+    '
+  lessons_learned:
+  - Plain COUNT(*) is rarely representative of real workload
+  - 100,000x performance difference between realistic and synthetic queries
+  - Existing indexes may already be optimal (no covering indexes needed)
+  - Partition pruning effectiveness depends on query filters
+  - Always test with domain-specific filters if application uses them
+  tags:
+  - postgresql
+  - performance
+  - testing
+  - benchmarking
+  - anti-pattern

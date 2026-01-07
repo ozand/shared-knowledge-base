@@ -1,482 +1,413 @@
-# Curator Decision Framework: Project Agent Contributions
-
-version: "1.0"
-category: "agent-workflow"
-last_updated: "2026-01-06"
-
+version: '1.0'
+category: agent-workflow
+last_updated: '2026-01-06'
 patterns:
-  - id: "CURATOR-DECISION-001"
-    title: "Curator Decision Framework for Project Agent Contributions"
-    severity: "high"
-    scope: "universal"
-    tags: ["curator", "decisions", "agent-handoff", "workflow", "quality-gate"]
-
-    problem: |
-      When Project Agents submit GitHub issues proposing universal patterns,
-      Curator needs consistent decision framework for:
-      - Accept (integrate into Shared KB)
-      - Request changes (feedback to agent)
-      - Reject (not universal, suggest project KB instead)
-
-      **Challenge:** How to decide consistently and communicate clearly?
-
-    decision_framework:
-      workflow: "3-Path Decision Tree"
-
-      step_1_triage:
-        role: "Curator"
-        action: "Review GitHub issue from Project Agent"
-
-        checks:
-          - check: "Follows AGENT-HANDOFF-001 format?"
-            pass: "Continue to step 2"
-            fail: "Request format fix"
-
-          - check: "Has GITHUB-ATTRIB-001 attribution?"
-            pass: "Continue to step 2"
-            fail: "Request attribution"
-
-          - check: "YAML validation passed?"
-            pass: "Continue to step 2"
-            fail: "Request YAML fixes (see YAML-001)"
-
-      step_2_evaluate_universality:
-        role: "Curator"
-        question: "Is this pattern truly universal?"
-
-        universal_criteria:
-          - criterion: "Applies to multiple projects/environments"
-            weight: "High"
-
-          - criterion: "Framework-agnostic or standard use case"
-            weight: "High"
-
-          - criterion: "Would developers from OTHER projects benefit?"
-            weight: "High"
-
-          - criterion: "Not tied to specific business logic"
-            weight: "Medium"
-
-          - criterion: "Technology-agnostic (or broadly applicable within tech)"
-            weight: "Medium"
-
-        decision_points:
-          if_mostly_universal:
-            action: "Proceed to step 3 (quality check)"
-
-          if_project_specific:
-            action: "REJECT with project KB suggestion"
-            reason: "Pattern is useful but not universal"
-            feedback: |
-              This pattern is valuable for YOUR project but not suitable
-              for Shared KB because it's too specific to your use case.
-
-              **Suggested Action:**
-              Add to your project's local KB:
-              - docs/knowledge-base/errors/ (for errors)
-              - docs/knowledge-base/patterns/ (for patterns)
-
-              Tag with: local_only: true
-
-              Example rejection reasons:
-              - "Specific to your business domain"
-              - "Tied to your specific infrastructure"
-              - "Only applicable in narrow context"
-              - "Better suited as project documentation"
-
-      step_3_quality_assessment:
-        role: "Curator"
-        question: "Is content quality sufficient?"
-
-        quality_criteria:
-          criterion_1:
-            name: "Completeness"
-            checks:
-              - "Clear problem statement?"
-              - "Root cause explained?"
-              - "Solution steps documented?"
-              - "Code examples included?"
-
-          criterion_2:
-            name: "Correctness"
-            checks:
-              - "Technical accuracy?"
-              - "No factual errors?"
-              - "Follows best practices?"
-
-          criterion_3:
-            name: "Structure"
-            checks:
-              - "Valid YAML?"
-              - "All required fields?"
-              - "Proper categorization?"
-
-        decisions:
-
-          decision_1_accept:
-            condition: "All quality criteria MET"
-            action: "ACCEPT and INTEGRATE"
-
-            steps: |
-              1. Copy YAML to appropriate Shared KB directory:
-                 - universal/patterns/ (for universal patterns)
-                 - python/, postgresql/, etc. (for tech-specific)
-
-              2. Enhance if needed (add examples, references)
-
-              3. Validate: python tools/kb.py validate <file>
-
-              4. Commit to shared-knowledge-base repo
-
-              5. Close GitHub issue with attribution:
-                 ```markdown
-                 ✅ **ACCEPTED and INTEGRATED**
-
-                 Pattern added to Shared KB: universal/patterns/pattern-x.yaml
-
-                 **Enhancements made:**
-                 - Added more examples
-                 - Fixed minor YAML issues
-                 - Added cross-references
-
-                 **Commit:** <commit-hash>
-
-                 Thank you for following AGENT-HANDOFF-001 workflow!
-                 Attribution: Project Agent (PROJECT_NAME) + Claude Code
-                 ```
-
-            example: |
-              Issue #10 - Indexing bug fix
-              Quality: ⭐⭐⭐⭐⭐
-              Universality: ✅ High (affects all KB files)
-              Decision: Accept
-              Result: Merged (commit ea341d3)
-
-          decision_2_request_changes:
-            condition: "Quality criteria NOT MET but fixable"
-            action: "REQUEST CHANGES with feedback"
-
-            steps: |
-              1. Add comment to GitHub issue:
-                 ```markdown
-                 ⚠️ **REVIEW: Changes Requested**
-
-                 **Quality Assessment:** ⭐⭐⭐ (3/5)
-
-                 **What's Good:**
-                 - ✅ Proper AGENT-HANDOFF-001 format
-                 - ✅ Good problem statement
-                 - ✅ Universal applicability
-
-                 **What Needs Improvement:**
-                 - ⚠️ Missing code examples
-                 - ⚠️ Root cause incomplete
-                 - ⚠️ YAML syntax errors (see lines X, Y, Z)
-
-                 **Please Fix:**
-                 1. Add code example for solution section
-                 2. Expand root cause analysis
-                 3. Fix YAML colons (see YAML-001 pattern)
-                 4. Re-validate: python tools/kb.py validate
-
-                 **References:**
-                 - SHARED-KB-FORMAT-001: Correct YAML structure
-                 - YAML-001: Common syntax errors
-
-                 Ready for re-review once fixes applied ✅
-                 ```
-
-              2. Keep issue OPEN
-
-              3. Agent updates and comments "Fixed!"
-
-              4. Curator re-reviews (go back to step 1)
-
-            example: |
-              Issue #8 - 5 patterns from PARSER
-              Quality: ⭐⭐⭐⭐⭐ (content) + ❌ (YAML syntax)
-              Universality: ✅ High
-              Decision: Request YAML fixes
-              Result: Closed with feedback (unfixed colons)
-
-          decision_3_reject_to_project_kb:
-            condition: "NOT UNIVERSAL (too project-specific)"
-            action: "REJECT with project KB suggestion"
-
-            steps: |
-              1. Close GitHub issue with explanation:
-                 ```markdown
-                 ❌ **NOT UNIVERSAL - Rejected for Shared KB**
-
-                 **Reason:** Pattern is project-specific, not universal
-
-                 **Why Not Universal:**
-                 - Tied to specific business logic/infrastructure
-                 - Only applicable in narrow context
-                 - Other projects wouldn't benefit
-
-                 **Suggested Action:**
-                 Add to YOUR PROJECT's local KB instead:
-                 ```
-                 docs/knowledge-base/patterns/pattern-name.yaml
-                 ```
-
-                 Add metadata:
-                 ```yaml
-                 local_only: true
-                 project_specific: true
-                 ```
-
-                 This way:
-                 - ✅ Pattern preserved for your project
-                 - ✅ Future sessions can reference it
-                 - ✅ Shared KB stays truly universal
-
-                 **Example Rejections:**
-                 - "PARSER-specific file format" → Project KB
-                 - "APP-SW infrastructure setup" → Project KB
-                 - "Business logic pattern" → Project KB
-
-                 Thank you for following AGENT-HANDOFF-001!
-                 The pattern is valuable, just better suited locally.
-                 ```
-
-              2. Issue CLOSED (won't appear in Shared KB)
-
-            example: |
-              (Hypothetical)
-              Issue: "Add ECOMMERCE checkout flow pattern"
-              Universality: ❌ Low (business-specific)
-              Decision: Reject to project KB
-              Result: "Add to docs/knowledge-base/ in ECOMMERCE repo"
-
-    communication_templates:
-      accept_template:
-        subject: "✅ ACCEPTED: [Pattern Name]"
-        sections:
-          - "Decision: Accepted and integrated"
-          - "File location: [path in Shared KB]"
-          - "Enhancements made: [list]"
-          - "Commit: [hash]"
-          - "Attribution: [agent + project]"
-
-      request_changes_template:
-        subject: "⚠️ REVIEW: Changes Requested"
-        sections:
-          - "Quality assessment: [score/5]"
-          - "What's good: [list]"
-          - "What needs improvement: [list]"
-          - "Please fix: [numbered steps]"
-          - "References: [relevant patterns]"
-          - "Ready for re-review: ✅"
-
-      reject_template:
-        subject: "❌ NOT UNIVERSAL - Rejected for Shared KB"
-        sections:
-          - "Reason: [why not universal]"
-          - "Why not universal: [explanation]"
-          - "Suggested action: Add to project KB"
-          - "How to add: [instructions]"
-          - "Benefits: [why this is better]"
-
-    real_world_examples:
-      example_1_accepted:
-        issue: "Issue #10 - KBEntry.from_yaml() doesn't support 'patterns' key"
-        quality: "⭐⭐⭐⭐⭐"
-        universality: "✅ High (affects all KB indexing)"
-        decision: "ACCEPT"
-        action: "Fixed KBEntry.from_yaml() to support both keys"
-        result: "47 → 84 entries indexed (+79%)"
-        commit: "ea341d3"
-
-      example_2_requested_changes:
-        issue: "Issue #8 - 5 universal patterns from PARSER"
-        quality: "⭐⭐⭐⭐⭐ (content) + ❌ (YAML syntax)"
-        universality: "✅ High (all universal patterns)"
-        decision: "REQUEST CHANGES"
-        feedback: "Fix unescaped colons in YAML (YAML-001)"
-        result: "Agent resubmitted with same errors → Closed"
-
-      example_3_rejected_to_project_kb:
-        issue: "(Hypothetical) ECOMMERCE checkout flow pattern"
-        quality: "⭐⭐⭐⭐"
-        universality: "❌ Low (business-specific)"
-        decision: "REJECT to project KB"
-        feedback: "Add to docs/knowledge-base/ in ECOMMERCE repo"
-        result: "Pattern preserved locally, not in Shared KB"
-
-    decision_matrix:
-      visualize: |
-        ┌──────────────────────────────────────────────────────┐
-        │                 UNIVERSALITY?                        │
-        │           Yes (Multiple projects benefit)            │
-        │  ┌────────────────┬────────────────┬────────────────┐│
-        │  │                │                │                ││
-        │  H│   ACCEPT      │  REQUEST      │  REJECT        ││
-        │  i│   ✅          │  CHANGES      │  (shouldn't   ││
-        │  g│   Integrate   │  ⚠️           │  happen if    ││
-        │  h│   into Shared │  Fix and      │  universal)   ││
-        │  Q│   KB          │  re-review    │                ││
-        │  u│                │                │                ││
-        │  a├────────────────┼────────────────┤                ││
-        │  l│   ⭐⭐⭐⭐⭐    │   ⭐⭐⭐       │                ││
-        │  i│   Excellent   │   Needs work  │                ││
-        │  t│                │   Fixable     │                ││
-        │  y│                │                │                ││
-        │  └────────────────┴────────────────┴────────────────┘│
-        │                                                          │
-        │  NOT Universal (Project-specific)                      │
-        │  → REJECT to project KB with suggestion                │
-        │                                                          │
-        └──────────────────────────────────────────────────────┘
-
-    anti_patterns:
-      anti_pattern_1:
-        description: "Rejecting good content due to minor issues"
-        wrong_approach: |
-          Curator: "YAML has one colon error, REJECTED"
-        consequence: "Loses valuable contributions, discourages agents"
-
-        correct_approach: |
-          Curator: "⚠️ Request changes: Fix YAML colon error on line 27.
-                    Ready to accept once fixed."
-        consequence: "Content preserved, agent learns, contribution accepted"
-
-      anti_pattern_2:
-        description: "Accepting project-specific content"
-        wrong_approach: |
-          Curator: "Good quality, accepting into Shared KB"
-          (Pattern is business-specific)
-        consequence: "Shared KB polluted with non-universal content"
-
-        correct_approach: |
-          Curator: "Not universal for Shared KB.
-                    Add to your project's docs/knowledge-base/ instead."
-        consequence: "Shared KB stays universal, pattern preserved locally"
-
-      anti_pattern_3:
-        description: "No feedback on rejections"
-        wrong_approach: |
-          Curator: "Closed" (no explanation)
-        consequence: "Agent confused, doesn't understand why"
-
-        correct_approach: |
-          Curator: "❌ NOT UNIVERSAL - Rejected
-
-                     Reason: Business-specific pattern
-                     Suggestion: Add to project KB
-                     Benefits: Preserved locally, Shared KB stays universal"
-        consequence: "Agent understands, redirects to project KB"
-
-    quality_gates:
-      gate_1_format:
-        check: "Follows AGENT-HANDOFF-001 format?"
-        fail_action: "Request format fix"
-        blocking: true
-
-      gate_2_attribution:
-        check: "Has GITHUB-ATTRIB-001 attribution?"
-        fail_action: "Request attribution"
-        blocking: true
-
-      gate_3_validation:
-        check: "YAML validation passed?"
-        fail_action: "Request YAML fixes (reference YAML-001)"
-        blocking: true
-
-      gate_4_universality:
-        check: "Is pattern truly universal?"
-        fail_action: "Reject to project KB with explanation"
-        blocking: true
-
-      gate_5_quality:
-        check: "Content quality sufficient?"
-        fail_action: "Request changes (specific feedback)"
-        blocking: false
-
-        # If quality is low but fixable, give chance to improve
-        # If quality is good, accept
-        # If quality is poor (⭐⭐), may reject
-
-    metrics:
-      track:
-        - metric: "Acceptance rate"
-          calculation: "accepted / (accepted + rejected + requested)"
-
-        - metric: "Time to decision"
-          calculation: "decision_date - issue_created_date"
-          target: "< 24h (SLA)"
-
-        - metric: "Re-request rate"
-          calculation: "resubmitted_after_feedback / requested"
-          target: "> 80% (agents should fix and resubmit)"
-
-        - metric: "Project KB redirections"
-          calculation: "rejected_to_project_kb / total_reviews"
-          target: "< 30% (should be mostly universal)"
-
-    related_patterns:
-      - id: "AGENT-HANDOFF-001"
-        title: "Cross-Repository Agent Collaboration"
-        relationship: "upstream"
-        explanation: |
-          AGENT-HANDOFF-001 defines how Project Agents submit contributions.
-          CURATOR-DECISION-001 defines how Curators evaluate and decide on them.
-
-      - id: "AGENT-ROLE-SEPARATION-001"
-        title: "Strict Role Separation"
-        relationship: "complementary"
-        explanation: |
-          AGENT-ROLE-SEPARATION-001 prevents agents from bypassing Curator.
-          CURATOR-DECISION-001 ensures Curator decisions are consistent.
-
-      - id: "QUALITY-PROCESS-001"
-        title: "Quality vs Process Separation"
-        relationship: "related"
-        explanation: |
-          QUALITY-PROCESS-001 provides 4-quadrant matrix (quality × process).
-          CURATOR-DECISION-001 uses similar framework for Curator decisions.
-
-      - id: "GITHUB-ATTRIB-001"
-        title: "GitHub Agent and Project Attribution"
-        relationship: "standard"
-        explanation: "Required format for all contributions"
-
-    implementation:
-      curator_checklist:
-        - step: "Review new GitHub issues in shared-knowledge-base"
-          frequency: "Daily (24h SLA)"
-
-        - step: "Evaluate universality"
-          criteria: "Applies to multiple projects?"
-          decision: "Yes → Continue, No → Reject to project KB"
-
-        - step: "Assess quality"
-          criteria: "All gates passed?"
-          decision: "Yes → Accept, No → Request changes"
-
-        - step: "Communicate decision"
-          format: "Use templates (accept/request/reject)"
-          attribution: "Always credit Project Agent"
-
-      tools:
-        - tool: "gh CLI"
-          commands:
-            - "gh issue list --repo shared-knowledge-base"
-            - "gh issue view <number>"
-            - "gh issue close <number> --comment '...'"
-
-        - tool: "kb.py validator"
-          commands:
-            - "python tools/kb.py validate <file>"
-            - "python tools/kb.py search '<query>'"
-
-    references:
-      - title: "AGENT-HANDOFF-001 Pattern"
-        url: "universal/patterns/agent-handoff.yaml"
-
-      - title: "Quality vs Process Analysis"
-        url: "CHAT_SESSION_ANALYSIS_2025-01-06.md"
-
-      - title: "Project Agent Role Confusion"
-        url: "PROJECT_AGENT_ROLE_CONFUSION_ANALYSIS.md"
+- id: CURATOR-DECISION-001
+  title: Curator Decision Framework for Project Agent Contributions
+  severity: high
+  scope: universal
+  tags:
+  - curator
+  - decisions
+  - agent-handoff
+  - workflow
+  - quality-gate
+  problem: 'When Project Agents submit GitHub issues proposing universal patterns,
+
+    Curator needs consistent decision framework for:
+
+    - Accept (integrate into Shared KB)
+
+    - Request changes (feedback to agent)
+
+    - Reject (not universal, suggest project KB instead)
+
+
+    **Challenge:** How to decide consistently and communicate clearly?
+
+    '
+  decision_framework:
+    workflow: 3-Path Decision Tree
+    step_1_triage:
+      role: Curator
+      action: Review GitHub issue from Project Agent
+      checks:
+      - check: Follows AGENT-HANDOFF-001 format?
+        pass: Continue to step 2
+        fail: Request format fix
+      - check: Has GITHUB-ATTRIB-001 attribution?
+        pass: Continue to step 2
+        fail: Request attribution
+      - check: YAML validation passed?
+        pass: Continue to step 2
+        fail: Request YAML fixes (see YAML-001)
+    step_2_evaluate_universality:
+      role: Curator
+      question: Is this pattern truly universal?
+      universal_criteria:
+      - criterion: Applies to multiple projects/environments
+        weight: High
+      - criterion: Framework-agnostic or standard use case
+        weight: High
+      - criterion: Would developers from OTHER projects benefit?
+        weight: High
+      - criterion: Not tied to specific business logic
+        weight: Medium
+      - criterion: Technology-agnostic (or broadly applicable within tech)
+        weight: Medium
+      decision_points:
+        if_mostly_universal:
+          action: Proceed to step 3 (quality check)
+        if_project_specific:
+          action: REJECT with project KB suggestion
+          reason: Pattern is useful but not universal
+          feedback: 'This pattern is valuable for YOUR project but not suitable
+
+            for Shared KB because it''s too specific to your use case.
+
+
+            **Suggested Action:**
+
+            Add to your project''s local KB:
+
+            - docs/knowledge-base/errors/ (for errors)
+
+            - docs/knowledge-base/patterns/ (for patterns)
+
+
+            Tag with: local_only: true
+
+
+            Example rejection reasons:
+
+            - "Specific to your business domain"
+
+            - "Tied to your specific infrastructure"
+
+            - "Only applicable in narrow context"
+
+            - "Better suited as project documentation"
+
+            '
+    step_3_quality_assessment:
+      role: Curator
+      question: Is content quality sufficient?
+      quality_criteria:
+        criterion_1:
+          name: Completeness
+          checks:
+          - Clear problem statement?
+          - Root cause explained?
+          - Solution steps documented?
+          - Code examples included?
+        criterion_2:
+          name: Correctness
+          checks:
+          - Technical accuracy?
+          - No factual errors?
+          - Follows best practices?
+        criterion_3:
+          name: Structure
+          checks:
+          - Valid YAML?
+          - All required fields?
+          - Proper categorization?
+      decisions:
+        decision_1_accept:
+          condition: All quality criteria MET
+          action: ACCEPT and INTEGRATE
+          steps: "1. Copy YAML to appropriate Shared KB directory:\n   - universal/patterns/\
+            \ (for universal patterns)\n   - python/, postgresql/, etc. (for tech-specific)\n\
+            \n2. Enhance if needed (add examples, references)\n\n3. Validate: python\
+            \ tools/kb.py validate <file>\n\n4. Commit to shared-knowledge-base repo\n\
+            \n5. Close GitHub issue with attribution:\n   ```markdown\n   ✅ **ACCEPTED\
+            \ and INTEGRATED**\n\n   Pattern added to Shared KB: universal/patterns/pattern-x.yaml\n\
+            \n   **Enhancements made:**\n   - Added more examples\n   - Fixed minor\
+            \ YAML issues\n   - Added cross-references\n\n   **Commit:** <commit-hash>\n\
+            \n   Thank you for following AGENT-HANDOFF-001 workflow!\n   Attribution:\
+            \ Project Agent (PROJECT_NAME) + Claude Code\n   ```\n"
+          example: 'Issue #10 - Indexing bug fix
+
+            Quality: ⭐⭐⭐⭐⭐
+
+            Universality: ✅ High (affects all KB files)
+
+            Decision: Accept
+
+            Result: Merged (commit ea341d3)
+
+            '
+        decision_2_request_changes:
+          condition: Quality criteria NOT MET but fixable
+          action: REQUEST CHANGES with feedback
+          steps: "1. Add comment to GitHub issue:\n   ```markdown\n   ⚠️ **REVIEW:\
+            \ Changes Requested**\n\n   **Quality Assessment:** ⭐⭐⭐ (3/5)\n\n   **What's\
+            \ Good:**\n   - ✅ Proper AGENT-HANDOFF-001 format\n   - ✅ Good problem\
+            \ statement\n   - ✅ Universal applicability\n\n   **What Needs Improvement:**\n\
+            \   - ⚠️ Missing code examples\n   - ⚠️ Root cause incomplete\n   - ⚠️\
+            \ YAML syntax errors (see lines X, Y, Z)\n\n   **Please Fix:**\n   1.\
+            \ Add code example for solution section\n   2. Expand root cause analysis\n\
+            \   3. Fix YAML colons (see YAML-001 pattern)\n   4. Re-validate: python\
+            \ tools/kb.py validate\n\n   **References:**\n   - SHARED-KB-FORMAT-001:\
+            \ Correct YAML structure\n   - YAML-001: Common syntax errors\n\n   Ready\
+            \ for re-review once fixes applied ✅\n   ```\n\n2. Keep issue OPEN\n\n\
+            3. Agent updates and comments \"Fixed!\"\n\n4. Curator re-reviews (go\
+            \ back to step 1)\n"
+          example: 'Issue #8 - 5 patterns from PARSER
+
+            Quality: ⭐⭐⭐⭐⭐ (content) + ❌ (YAML syntax)
+
+            Universality: ✅ High
+
+            Decision: Request YAML fixes
+
+            Result: Closed with feedback (unfixed colons)
+
+            '
+        decision_3_reject_to_project_kb:
+          condition: NOT UNIVERSAL (too project-specific)
+          action: REJECT with project KB suggestion
+          steps: "1. Close GitHub issue with explanation:\n   ```markdown\n   ❌ **NOT\
+            \ UNIVERSAL - Rejected for Shared KB**\n\n   **Reason:** Pattern is project-specific,\
+            \ not universal\n\n   **Why Not Universal:**\n   - Tied to specific business\
+            \ logic/infrastructure\n   - Only applicable in narrow context\n   - Other\
+            \ projects wouldn't benefit\n\n   **Suggested Action:**\n   Add to YOUR\
+            \ PROJECT's local KB instead:\n   ```\n   docs/knowledge-base/patterns/pattern-name.yaml\n\
+            \   ```\n\n   Add metadata:\n   ```yaml\n   local_only: true\n   project_specific:\
+            \ true\n   ```\n\n   This way:\n   - ✅ Pattern preserved for your project\n\
+            \   - ✅ Future sessions can reference it\n   - ✅ Shared KB stays truly\
+            \ universal\n\n   **Example Rejections:**\n   - \"PARSER-specific file\
+            \ format\" → Project KB\n   - \"APP-SW infrastructure setup\" → Project\
+            \ KB\n   - \"Business logic pattern\" → Project KB\n\n   Thank you for\
+            \ following AGENT-HANDOFF-001!\n   The pattern is valuable, just better\
+            \ suited locally.\n   ```\n\n2. Issue CLOSED (won't appear in Shared KB)\n"
+          example: '(Hypothetical)
+
+            Issue: "Add ECOMMERCE checkout flow pattern"
+
+            Universality: ❌ Low (business-specific)
+
+            Decision: Reject to project KB
+
+            Result: "Add to docs/knowledge-base/ in ECOMMERCE repo"
+
+            '
+  communication_templates:
+    accept_template:
+      subject: '✅ ACCEPTED: [Pattern Name]'
+      sections:
+      - 'Decision: Accepted and integrated'
+      - 'File location: [path in Shared KB]'
+      - 'Enhancements made: [list]'
+      - 'Commit: [hash]'
+      - 'Attribution: [agent + project]'
+    request_changes_template:
+      subject: '⚠️ REVIEW: Changes Requested'
+      sections:
+      - 'Quality assessment: [score/5]'
+      - 'What''s good: [list]'
+      - 'What needs improvement: [list]'
+      - 'Please fix: [numbered steps]'
+      - 'References: [relevant patterns]'
+      - 'Ready for re-review: ✅'
+    reject_template:
+      subject: ❌ NOT UNIVERSAL - Rejected for Shared KB
+      sections:
+      - 'Reason: [why not universal]'
+      - 'Why not universal: [explanation]'
+      - 'Suggested action: Add to project KB'
+      - 'How to add: [instructions]'
+      - 'Benefits: [why this is better]'
+  real_world_examples:
+    example_1_accepted:
+      issue: 'Issue #10 - KBEntry.from_yaml() doesn''t support ''patterns'' key'
+      quality: ⭐⭐⭐⭐⭐
+      universality: ✅ High (affects all KB indexing)
+      decision: ACCEPT
+      action: Fixed KBEntry.from_yaml() to support both keys
+      result: 47 → 84 entries indexed (+79%)
+      commit: ea341d3
+    example_2_requested_changes:
+      issue: 'Issue #8 - 5 universal patterns from PARSER'
+      quality: ⭐⭐⭐⭐⭐ (content) + ❌ (YAML syntax)
+      universality: ✅ High (all universal patterns)
+      decision: REQUEST CHANGES
+      feedback: Fix unescaped colons in YAML (YAML-001)
+      result: Agent resubmitted with same errors → Closed
+    example_3_rejected_to_project_kb:
+      issue: (Hypothetical) ECOMMERCE checkout flow pattern
+      quality: ⭐⭐⭐⭐
+      universality: ❌ Low (business-specific)
+      decision: REJECT to project KB
+      feedback: Add to docs/knowledge-base/ in ECOMMERCE repo
+      result: Pattern preserved locally, not in Shared KB
+  decision_matrix:
+    visualize: '┌──────────────────────────────────────────────────────┐
+
+      │                 UNIVERSALITY?                        │
+
+      │           Yes (Multiple projects benefit)            │
+
+      │  ┌────────────────┬────────────────┬────────────────┐│
+
+      │  │                │                │                ││
+
+      │  H│   ACCEPT      │  REQUEST      │  REJECT        ││
+
+      │  i│   ✅          │  CHANGES      │  (shouldn''t   ││
+
+      │  g│   Integrate   │  ⚠️           │  happen if    ││
+
+      │  h│   into Shared │  Fix and      │  universal)   ││
+
+      │  Q│   KB          │  re-review    │                ││
+
+      │  u│                │                │                ││
+
+      │  a├────────────────┼────────────────┤                ││
+
+      │  l│   ⭐⭐⭐⭐⭐    │   ⭐⭐⭐       │                ││
+
+      │  i│   Excellent   │   Needs work  │                ││
+
+      │  t│                │   Fixable     │                ││
+
+      │  y│                │                │                ││
+
+      │  └────────────────┴────────────────┴────────────────┘│
+
+      │                                                          │
+
+      │  NOT Universal (Project-specific)                      │
+
+      │  → REJECT to project KB with suggestion                │
+
+      │                                                          │
+
+      └──────────────────────────────────────────────────────┘
+
+      '
+  anti_patterns:
+    anti_pattern_1:
+      description: Rejecting good content due to minor issues
+      wrong_approach: 'Curator: "YAML has one colon error, REJECTED"
+
+        '
+      consequence: Content preserved, agent learns, contribution accepted
+      correct_approach: "Curator: \"⚠️ Request changes: Fix YAML colon error on line\
+        \ 27.\n          Ready to accept once fixed.\"\n"
+    anti_pattern_2:
+      description: Accepting project-specific content
+      wrong_approach: 'Curator: "Good quality, accepting into Shared KB"
+
+        (Pattern is business-specific)
+
+        '
+      consequence: Shared KB stays universal, pattern preserved locally
+      correct_approach: "Curator: \"Not universal for Shared KB.\n          Add to\
+        \ your project's docs/knowledge-base/ instead.\"\n"
+    anti_pattern_3:
+      description: No feedback on rejections
+      wrong_approach: 'Curator: "Closed" (no explanation)
+
+        '
+      consequence: Agent understands, redirects to project KB
+      correct_approach: "Curator: \"❌ NOT UNIVERSAL - Rejected\n\n           Reason:\
+        \ Business-specific pattern\n           Suggestion: Add to project KB\n  \
+        \         Benefits: Preserved locally, Shared KB stays universal\"\n"
+  quality_gates:
+    gate_1_format:
+      check: Follows AGENT-HANDOFF-001 format?
+      fail_action: Request format fix
+      blocking: true
+    gate_2_attribution:
+      check: Has GITHUB-ATTRIB-001 attribution?
+      fail_action: Request attribution
+      blocking: true
+    gate_3_validation:
+      check: YAML validation passed?
+      fail_action: Request YAML fixes (reference YAML-001)
+      blocking: true
+    gate_4_universality:
+      check: Is pattern truly universal?
+      fail_action: Reject to project KB with explanation
+      blocking: true
+    gate_5_quality:
+      check: Content quality sufficient?
+      fail_action: Request changes (specific feedback)
+      blocking: false
+  metrics:
+    track:
+    - metric: Acceptance rate
+      calculation: accepted / (accepted + rejected + requested)
+    - metric: Time to decision
+      calculation: decision_date - issue_created_date
+      target: < 24h (SLA)
+    - metric: Re-request rate
+      calculation: resubmitted_after_feedback / requested
+      target: '> 80% (agents should fix and resubmit)'
+    - metric: Project KB redirections
+      calculation: rejected_to_project_kb / total_reviews
+      target: < 30% (should be mostly universal)
+  related_patterns:
+  - id: AGENT-HANDOFF-001
+    title: Cross-Repository Agent Collaboration
+    relationship: upstream
+    explanation: 'AGENT-HANDOFF-001 defines how Project Agents submit contributions.
+
+      CURATOR-DECISION-001 defines how Curators evaluate and decide on them.
+
+      '
+  - id: AGENT-ROLE-SEPARATION-001
+    title: Strict Role Separation
+    relationship: complementary
+    explanation: 'AGENT-ROLE-SEPARATION-001 prevents agents from bypassing Curator.
+
+      CURATOR-DECISION-001 ensures Curator decisions are consistent.
+
+      '
+  - id: QUALITY-PROCESS-001
+    title: Quality vs Process Separation
+    relationship: related
+    explanation: 'QUALITY-PROCESS-001 provides 4-quadrant matrix (quality × process).
+
+      CURATOR-DECISION-001 uses similar framework for Curator decisions.
+
+      '
+  - id: GITHUB-ATTRIB-001
+    title: GitHub Agent and Project Attribution
+    relationship: standard
+    explanation: Required format for all contributions
+  implementation:
+    curator_checklist:
+    - step: Review new GitHub issues in shared-knowledge-base
+      frequency: Daily (24h SLA)
+    - step: Evaluate universality
+      criteria: Applies to multiple projects?
+      decision: Yes → Continue, No → Reject to project KB
+    - step: Assess quality
+      criteria: All gates passed?
+      decision: Yes → Accept, No → Request changes
+    - step: Communicate decision
+      format: Use templates (accept/request/reject)
+      attribution: Always credit Project Agent
+    tools:
+    - tool: gh CLI
+      commands:
+      - gh issue list --repo shared-knowledge-base
+      - gh issue view <number>
+      - gh issue close <number> --comment '...'
+    - tool: kb.py validator
+      commands:
+      - python tools/kb.py validate <file>
+      - python tools/kb.py search '<query>'
+  references:
+  - title: AGENT-HANDOFF-001 Pattern
+    url: universal/patterns/agent-handoff.yaml
+  - title: Quality vs Process Analysis
+    url: CHAT_SESSION_ANALYSIS_2025-01-06.md
+  - title: Project Agent Role Confusion
+    url: PROJECT_AGENT_ROLE_CONFUSION_ANALYSIS.md
+  domains:
+    primary: deployment
+    secondary: []

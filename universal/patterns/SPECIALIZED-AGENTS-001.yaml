@@ -1,400 +1,306 @@
-version: "1.0"
-category: "claude-code"
-last_updated: "2026-01-07"
-
+version: '1.0'
+category: claude-code
+last_updated: '2026-01-07'
 patterns:
-  - id: "SPECIALIZED-AGENTS-001"
-    title: "Specialized Agents System for Development Workflows"
-    severity: "critical"
-    scope: "universal"
+- id: SPECIALIZED-AGENTS-001
+  title: Specialized Agents System for Development Workflows
+  severity: critical
+  scope: universal
+  problem: 'Using a single general-purpose Claude agent for complex development tasks
+    leads to:
 
-    problem: |
-      Using a single general-purpose Claude agent for complex development tasks leads to:
-      - Mixed context between different types of work
-      - Generic feedback lacking domain expertise
-      - Difficulty maintaining specialized knowledge
-      - No clear separation of concerns
-      - Agents trying to be "everything to everyone"
+    - Mixed context between different types of work
 
-      Complex software development requires specialized expertise across multiple domains:
-      - Business analysis and requirements
-      - Project management and coordination
-      - User experience design
-      - Technical architecture
-      - Database design
-      - Backend development
-      - Frontend development
-      - Code quality and review
-      - Security assessment
+    - Generic feedback lacking domain expertise
 
-    symptoms:
-      - Claude provides generic feedback across all domains
-      - Context gets mixed between different types of reviews
-      - No focused expertise in specific areas
-      - Difficulty tracking which agent handled what
-      - Agents don't "remember" previous conversations in their domain
-      - Inconsistent quality across different types of tasks
+    - Difficulty maintaining specialized knowledge
 
-    root_cause: |
-      Single general-purpose agent attempts to handle all specialized tasks
-      without domain-specific focus, expertise, or context isolation.
+    - No clear separation of concerns
 
-    solution:
-      code: |
-        # Specialized Agents System Pattern
-        # Create domain-specific agents with clear roles and handoff workflows
+    - Agents trying to be "everything to everyone"
 
-        # .claude/agents/ directory structure:
-        # .claude/agents/
-        # ├── business-analyst.md       # Requirements gathering
-        # ├── project-manager.md        # Planning & coordination
-        # ├── ux-engineer.md            # User experience design
-        # ├── tech-lead.md              # Technical architecture
-        # ├── database-engineer.md      # Database design
-        # ├── backend-engineer.md       # Server-side implementation
-        # ├── frontend-engineer.md      # Client-side implementation
-        # ├── code-reviewer.md          # Quality assurance
-        # └── security-reviewer.md      # Security validation
 
-        # Agent file template (.claude/agents/role-name.md):
-        # ---
-        # description: |
-        #   Brief 2-3 sentence description of agent's role
-        #   and primary responsibilities.
-        #
-        # instructions: |
-        #   You are a specialized [ROLE] with expertise in [DOMAIN].
-        #
-        #   ## Your Role in Development Pipeline
-        #   [Position in sequential process: 1st, 2nd, etc.]
-        #
-        #   ## Core Responsibilities
-        #   - [Specific responsibility 1]
-        #   - [Specific responsibility 2]
-        #   - [Specific responsibility 3]
-        #
-        #   ## Input from [Other Roles]
-        #   - [What you receive from predecessors]
-        #
-        #   ## Output to [Other Roles]
-        #   - [What you deliver to successors]
-        #
-        #   ## Boundaries
-        #   - [What you DO NOT do - other agents' responsibilities]
-        # ---
+    Complex software development requires specialized expertise across multiple domains:
 
-        # Example: .claude/agents/backend-engineer.md
-        ---
-        description: |
-          Senior Backend Engineer specializing in server-side development,
-          API design, and distributed systems. Transforms technical
-          specifications into robust, scalable backend applications.
+    - Business analysis and requirements
 
-        instructions: |
-          You are a senior Backend Engineer with 8+ years of experience in
-          server-side development, API design, and distributed systems.
+    - Project management and coordination
 
-          ## Your Role in Development Pipeline
+    - User experience design
 
-          You are the SIXTH phase in the sequential development process
-          (alongside Frontend Engineer). You receive technical architecture
-          from the Tech Lead and database specifications from the Database
-          Engineer to build the server-side foundation.
+    - Technical architecture
 
-          ## Core Responsibilities
+    - Database design
 
-          ### API Development & Integration
-          - Implement RESTful APIs and GraphQL endpoints
-          - Design efficient API endpoints for frontend consumption
-          - Implement authentication and authorization systems
-          - Create API documentation and integration guidelines
-          - Handle API versioning and backward compatibility
+    - Backend development
 
-          ### Business Logic Implementation
-          - Implement core business rules and processing logic
-          - Create data validation and transformation layers
-          - Implement workflow automation and background jobs
-          - Design integration services for third-party systems
+    - Frontend development
 
-          ### Performance & Scalability
-          - Optimize server performance and response times
-          - Implement caching strategies
-          - Design load balancing and scaling approaches
-          - Monitor system performance
+    - Code quality and review
 
-          ### Security & Data Protection
-          - Implement security best practices
-          - Design secure authentication and session management
-          - Implement data encryption and secure protocols
-          - Create audit logging and security monitoring
+    - Security assessment
 
-          ## Input from Tech Lead & Database Engineer
+    '
+  symptoms:
+  - Claude provides generic feedback across all domains
+  - Context gets mixed between different types of reviews
+  - No focused expertise in specific areas
+  - Difficulty tracking which agent handled what
+  - Agents don't "remember" previous conversations in their domain
+  - Inconsistent quality across different types of tasks
+  root_cause: 'Single general-purpose agent attempts to handle all specialized tasks
 
-          ### From Tech Lead:
-          - Complete API design specifications
-          - Business logic implementation requirements
-          - Integration requirements for external systems
-          - Performance requirements and scalability targets
+    without domain-specific focus, expertise, or context isolation.
 
-          ### From Database Engineer:
-          - Complete database interaction patterns
-          - Transaction management requirements
-          - Stored procedure specifications
-          - Database connection pooling guidelines
+    '
+  solution:
+    code: "# Specialized Agents System Pattern\n# Create domain-specific agents with\
+      \ clear roles and handoff workflows\n\n# .claude/agents/ directory structure:\n\
+      # .claude/agents/\n# ├── business-analyst.md       # Requirements gathering\n\
+      # ├── project-manager.md        # Planning & coordination\n# ├── ux-engineer.md\
+      \            # User experience design\n# ├── tech-lead.md              # Technical\
+      \ architecture\n# ├── database-engineer.md      # Database design\n# ├── backend-engineer.md\
+      \       # Server-side implementation\n# ├── frontend-engineer.md      # Client-side\
+      \ implementation\n# ├── code-reviewer.md          # Quality assurance\n# └──\
+      \ security-reviewer.md      # Security validation\n\n# Agent file template (.claude/agents/role-name.md):\n\
+      # ---\n# description: |\n#   Brief 2-3 sentence description of agent's role\n\
+      #   and primary responsibilities.\n#\n# instructions: |\n#   You are a specialized\
+      \ [ROLE] with expertise in [DOMAIN].\n#\n#   ## Your Role in Development Pipeline\n\
+      #   [Position in sequential process: 1st, 2nd, etc.]\n#\n#   ## Core Responsibilities\n\
+      #   - [Specific responsibility 1]\n#   - [Specific responsibility 2]\n#   -\
+      \ [Specific responsibility 3]\n#\n#   ## Input from [Other Roles]\n#   - [What\
+      \ you receive from predecessors]\n#\n#   ## Output to [Other Roles]\n#   - [What\
+      \ you deliver to successors]\n#\n#   ## Boundaries\n#   - [What you DO NOT do\
+      \ - other agents' responsibilities]\n# ---\n\n# Example: .claude/agents/backend-engineer.md\n\
+      ---\ndescription: |\n  Senior Backend Engineer specializing in server-side development,\n\
+      \  API design, and distributed systems. Transforms technical\n  specifications\
+      \ into robust, scalable backend applications.\n\ninstructions: |\n  You are\
+      \ a senior Backend Engineer with 8+ years of experience in\n  server-side development,\
+      \ API design, and distributed systems.\n\n  ## Your Role in Development Pipeline\n\
+      \n  You are the SIXTH phase in the sequential development process\n  (alongside\
+      \ Frontend Engineer). You receive technical architecture\n  from the Tech Lead\
+      \ and database specifications from the Database\n  Engineer to build the server-side\
+      \ foundation.\n\n  ## Core Responsibilities\n\n  ### API Development & Integration\n\
+      \  - Implement RESTful APIs and GraphQL endpoints\n  - Design efficient API\
+      \ endpoints for frontend consumption\n  - Implement authentication and authorization\
+      \ systems\n  - Create API documentation and integration guidelines\n  - Handle\
+      \ API versioning and backward compatibility\n\n  ### Business Logic Implementation\n\
+      \  - Implement core business rules and processing logic\n  - Create data validation\
+      \ and transformation layers\n  - Implement workflow automation and background\
+      \ jobs\n  - Design integration services for third-party systems\n\n  ### Performance\
+      \ & Scalability\n  - Optimize server performance and response times\n  - Implement\
+      \ caching strategies\n  - Design load balancing and scaling approaches\n  -\
+      \ Monitor system performance\n\n  ### Security & Data Protection\n  - Implement\
+      \ security best practices\n  - Design secure authentication and session management\n\
+      \  - Implement data encryption and secure protocols\n  - Create audit logging\
+      \ and security monitoring\n\n  ## Input from Tech Lead & Database Engineer\n\
+      \n  ### From Tech Lead:\n  - Complete API design specifications\n  - Business\
+      \ logic implementation requirements\n  - Integration requirements for external\
+      \ systems\n  - Performance requirements and scalability targets\n\n  ### From\
+      \ Database Engineer:\n  - Complete database interaction patterns\n  - Transaction\
+      \ management requirements\n  - Stored procedure specifications\n  - Database\
+      \ connection pooling guidelines\n\n  ## Output to Frontend Engineer & Code Reviewer\n\
+      \n  ### To Frontend Engineer:\n  - Complete API documentation\n  - Integration\
+      \ guides and usage patterns\n  - Authentication and authorization endpoints\n\
+      \  - Error handling and response formats\n\n  ### To Code Reviewer:\n  - Complete\
+      \ backend codebase\n  - Comprehensive test suites\n  - API documentation\n \
+      \ - Security implementation documentation\n\n  ## Boundaries & Limitations\n\
+      \n  ### What You DO NOT Do:\n  - Define business requirements (Business Analyst\
+      \ role)\n  - Design database schemas (Database Engineer role)\n  - Implement\
+      \ user interface (Frontend Engineer role)\n  - Perform security assessments\
+      \ (Security Reviewer role)\n\n  ### Collaboration Points:\n  - Work with Tech\
+      \ Lead on architecture implementation\n  - Coordinate with Database Engineer\
+      \ on data access\n  - Partner with Frontend Engineer on API integration\n  -\
+      \ Support Code Reviewer with documentation\n---\n\n# Sequential Handoff Workflow:\n\
+      \n# 1. Business Analyst (Requirements)\n#    ↓ Hands off requirements document\n\
+      #\n# 2. Project Manager (Planning)\n#    ↓ Hands off project plan and timeline\n\
+      #\n# 3. UX Engineer (Design)\n#    ↓ Hands off user experience specifications\n\
+      #\n# 4. Tech Lead (Architecture)\n#    ↓ Hands off technical architecture\n\
+      #    ↓ Parallel branch:\n# 5. Database Engineer (Database Design)\n#    ↓ Hands\
+      \ off database specifications\n#\n# 6. Backend Engineer (Server-side) ←──┐\n\
+      #    ↓ Hands off backend implementation  │\n#                              \
+      \          │\n# 6. Frontend Engineer (Client-side) ←───┘\n#    ↓ Hands off frontend\
+      \ implementation\n#\n# 7. Code Reviewer (Quality Assurance)\n#    ↓ Hands off\
+      \ review findings\n#\n# 8. Security Reviewer (Security Validation)\n#    ↓ Final\
+      \ security assessment\n\n# Usage example:\n#\n# User: \"Analyze the implementation\
+      \ of the payment feature\"\n# Claude: I'll get the **business-analyst** to review\
+      \ requirements,\n#         then **tech-lead** to assess architecture,\n#   \
+      \      then **code-reviewer** to check quality.\n#\n# User: \"Implement the\
+      \ payment system\"\n# Claude: Sequential handoff:\n#         1. business-analyst:\
+      \ Gather requirements\n#         2. project-manager: Create implementation plan\n\
+      #         3. tech-lead: Design architecture\n#         4. database-engineer:\
+      \ Design database schema\n#         5. backend-engineer: Implement server-side\n\
+      #         6. frontend-engineer: Implement client-side\n#         7. code-reviewer:\
+      \ Review implementation\n#         8. security-reviewer: Validate security\n"
+    explanation: 'The Specialized Agents System provides domain-specific AI agents
 
-          ## Output to Frontend Engineer & Code Reviewer
+      for complex development workflows, ensuring focused expertise
 
-          ### To Frontend Engineer:
-          - Complete API documentation
-          - Integration guides and usage patterns
-          - Authentication and authorization endpoints
-          - Error handling and response formats
+      and clear separation of concerns.
 
-          ### To Code Reviewer:
-          - Complete backend codebase
-          - Comprehensive test suites
-          - API documentation
-          - Security implementation documentation
 
-          ## Boundaries & Limitations
+      **Key Benefits:**
 
-          ### What You DO NOT Do:
-          - Define business requirements (Business Analyst role)
-          - Design database schemas (Database Engineer role)
-          - Implement user interface (Frontend Engineer role)
-          - Perform security assessments (Security Reviewer role)
 
-          ### Collaboration Points:
-          - Work with Tech Lead on architecture implementation
-          - Coordinate with Database Engineer on data access
-          - Partner with Frontend Engineer on API integration
-          - Support Code Reviewer with documentation
-        ---
+      1. **Focused Expertise** - Each agent specializes in one domain
 
-        # Sequential Handoff Workflow:
+      2. **Clear Boundaries** - Agents know what they do and don''t do
 
-        # 1. Business Analyst (Requirements)
-        #    ↓ Hands off requirements document
-        #
-        # 2. Project Manager (Planning)
-        #    ↓ Hands off project plan and timeline
-        #
-        # 3. UX Engineer (Design)
-        #    ↓ Hands off user experience specifications
-        #
-        # 4. Tech Lead (Architecture)
-        #    ↓ Hands off technical architecture
-        #    ↓ Parallel branch:
-        # 5. Database Engineer (Database Design)
-        #    ↓ Hands off database specifications
-        #
-        # 6. Backend Engineer (Server-side) ←──┐
-        #    ↓ Hands off backend implementation  │
-        #                                        │
-        # 6. Frontend Engineer (Client-side) ←───┘
-        #    ↓ Hands off frontend implementation
-        #
-        # 7. Code Reviewer (Quality Assurance)
-        #    ↓ Hands off review findings
-        #
-        # 8. Security Reviewer (Security Validation)
-        #    ↓ Final security assessment
+      3. **Sequential Handoffs** - Structured workflow between agents
 
-        # Usage example:
-        #
-        # User: "Analyze the implementation of the payment feature"
-        # Claude: I'll get the **business-analyst** to review requirements,
-        #         then **tech-lead** to assess architecture,
-        #         then **code-reviewer** to check quality.
-        #
-        # User: "Implement the payment system"
-        # Claude: Sequential handoff:
-        #         1. business-analyst: Gather requirements
-        #         2. project-manager: Create implementation plan
-        #         3. tech-lead: Design architecture
-        #         4. database-engineer: Design database schema
-        #         5. backend-engineer: Implement server-side
-        #         6. frontend-engineer: Implement client-side
-        #         7. code-reviewer: Review implementation
-        #         8. security-reviewer: Validate security
+      4. **Context Isolation** - Each agent maintains domain context
 
-      explanation: |
-        The Specialized Agents System provides domain-specific AI agents
-        for complex development workflows, ensuring focused expertise
-        and clear separation of concerns.
+      5. **Quality Assurance** - Multiple perspectives on deliverables
 
-        **Key Benefits:**
+      6. **Scalability** - Easy to add new specialized roles
 
-        1. **Focused Expertise** - Each agent specializes in one domain
-        2. **Clear Boundaries** - Agents know what they do and don't do
-        3. **Sequential Handoffs** - Structured workflow between agents
-        4. **Context Isolation** - Each agent maintains domain context
-        5. **Quality Assurance** - Multiple perspectives on deliverables
-        6. **Scalability** - Easy to add new specialized roles
 
-        **Nine Specialized Roles:**
+      **Nine Specialized Roles:**
 
-        1. **Business Analyst** - Requirements gathering, business analysis
-        2. **Project Manager** - Planning, coordination, timeline management
-        3. **UX Engineer** - User experience design, interface specifications
-        4. **Tech Lead** - Technical architecture, system design
-        5. **Database Engineer** - Database schema, data modeling
-        6. **Backend Engineer** - Server-side implementation, API development
-        7. **Frontend Engineer** - Client-side implementation, UI development
-        8. **Code Reviewer** - Quality assurance, best practices validation
-        9. **Security Reviewer** - Security assessment, vulnerability analysis
 
-        **Handoff Pattern:**
-        - Each agent receives input from predecessors
-        - Each agent produces output for successors
-        - Clear deliverables at each stage
-        - Documented handoff criteria
+      1. **Business Analyst** - Requirements gathering, business analysis
 
-        **Integration with Claude Code:**
-        - Agent files in `.claude/agents/`
-        - Each agent has description and instructions
-        - Use `/agents` command to manage agents
-        - Agents auto-invoke based on task type
+      2. **Project Manager** - Planning, coordination, timeline management
 
-    examples:
-      - name: "Sequential agent handoff for feature implementation"
-        description: "Complete feature development using all specialized agents"
-        before: |
-          User: "Build a payment system"
-          Claude: [Generic agent tries to do everything]
-                  [Mixed context, no clear workflow]
-                  [Misses domain-specific considerations]
-        after: |
-          User: "Build a payment system"
-          Claude: Sequential handoff workflow:
+      3. **UX Engineer** - User experience design, interface specifications
 
-          1. **business-analyst**: Gathering requirements...
-             - Payment methods (credit card, PayPal, crypto)
-             - Security requirements (PCI DSS compliance)
-             - User flow (checkout, refund, disputes)
-             ✓ Requirements document complete
+      4. **Tech Lead** - Technical architecture, system design
 
-          2. **project-manager**: Creating implementation plan...
-             - Timeline: 4 weeks
-             - Team allocation
-             - Milestone definitions
-             ✓ Project plan complete
+      5. **Database Engineer** - Database schema, data modeling
 
-          3. **tech-lead**: Designing architecture...
-             - Microservices architecture
-             - API gateway pattern
-             - Event-driven processing
-             ✓ Architecture document complete
+      6. **Backend Engineer** - Server-side implementation, API development
 
-          4. **database-engineer**: Designing database...
-             - Payment transactions table
-             - User payment methods table
-             - Indexes for performance
-             ✓ Database schema complete
+      7. **Frontend Engineer** - Client-side implementation, UI development
 
-          5. **backend-engineer**: Implementing server-side...
-             - Payment API endpoints
-             - Integration with Stripe/PayPal
-             - Webhook handling
-             ✓ Backend implementation complete
+      8. **Code Reviewer** - Quality assurance, best practices validation
 
-          6. **frontend-engineer**: Implementing client-side...
-             - Checkout UI components
-             - Payment form validation
-             - Loading states
-             ✓ Frontend implementation complete
+      9. **Security Reviewer** - Security assessment, vulnerability analysis
 
-          7. **code-reviewer**: Reviewing implementation...
-             - Code quality: 8/10
-             - Test coverage: 85%
-             - Documentation: Complete
-             ✓ Review complete
 
-          8. **security-reviewer**: Validating security...
-             - PCI DSS compliance: ✓
-             - Data encryption: ✓
-             - Secure key storage: ✓
-             ✓ Security validated
-        result: "Comprehensive implementation with domain expertise at each stage"
+      **Handoff Pattern:**
 
-      - name: "Parallel frontend and backend development"
-        description: "Tech Lead coordinates parallel work streams"
-        before: |
-          User: "Add user authentication"
-          Claude: [Implements everything sequentially]
-                  [Frontend waits for backend]
-                  [Inefficient use of time]
-        after: |
-          User: "Add user authentication"
-          Claude: **tech-lead** coordinating parallel development:
+      - Each agent receives input from predecessors
 
-          Architecture:
-          - JWT-based authentication
-          - Refresh token mechanism
-          - API-first design
+      - Each agent produces output for successors
 
-          **Parallel execution:**
-          1. **database-engineer**: User sessions table (2 hours)
-          2. **backend-engineer**: Auth API endpoints (4 hours)
-          3. **frontend-engineer**: Login UI components (4 hours)
+      - Clear deliverables at each stage
 
-          ✓ All work completed in parallel (4 hours vs 10 hours)
-        result: "Parallel development reduces time by 60%"
+      - Documented handoff criteria
 
-      - name: "Security-first approach"
-        description: "Security Reviewer involved from the start"
-        before: |
-          User: "Build payment system"
-          Claude: [Implements without security consideration]
-                  [Security review at end finds major issues]
-                  [Extensive rework required]
-        after: |
-          User: "Build payment system"
-          Claude: **security-reviewer** involved from design phase:
 
-          1. **tech-lead**: Architecture design
-             **security-reviewer** review: ✓ Architecture approved
+      **Integration with Claude Code:**
 
-          2. **database-engineer**: Database schema
-             **security-reviewer** review:
-             - Add encryption for sensitive fields
-             - Implement audit logging
-             ✓ Schema approved with changes
+      - Agent files in `.claude/agents/`
 
-          3. **backend-engineer**: Implementation
-             **security-reviewer** review:
-             - Use parameterized queries
-             - Implement rate limiting
-             ✓ Implementation approved
+      - Each agent has description and instructions
 
-          Result: Security built in from start, no rework
-        result: "Security-first approach prevents rework"
+      - Use `/agents` command to manage agents
 
-    benefits:
-      - Domain-specific expertise for each area
-      - Clear separation of concerns
-      - Structured development workflow
-      - Improved quality through multiple perspectives
-      - Scalable to complex projects
-      - Easier to maintain and extend
-      - Better tracking of responsibilities
-      - Reduced context mixing
+      - Agents auto-invoke based on task type
 
-    prevention:
-      - "Create separate agent file for each role"
-      - "Define clear boundaries for each agent"
-      - "Document handoff criteria between agents"
-      - "Use sequential workflows for complex features"
-      - "Invoke agents based on task type"
-      - "Test agent handoffs before production use"
-      - "Keep agent descriptions concise (2-3 sentences)"
-      - "Maintain agent instructions focused on domain"
-      - "Review agent outputs for boundary violations"
-      - "Update agents based on project needs"
+      '
+  examples:
+  - name: Sequential agent handoff for feature implementation
+    description: Complete feature development using all specialized agents
+    before: "User: \"Build a payment system\"\nClaude: [Generic agent tries to do\
+      \ everything]\n        [Mixed context, no clear workflow]\n        [Misses domain-specific\
+      \ considerations]\n"
+    after: "User: \"Build a payment system\"\nClaude: Sequential handoff workflow:\n\
+      \n1. **business-analyst**: Gathering requirements...\n   - Payment methods (credit\
+      \ card, PayPal, crypto)\n   - Security requirements (PCI DSS compliance)\n \
+      \  - User flow (checkout, refund, disputes)\n   ✓ Requirements document complete\n\
+      \n2. **project-manager**: Creating implementation plan...\n   - Timeline: 4\
+      \ weeks\n   - Team allocation\n   - Milestone definitions\n   ✓ Project plan\
+      \ complete\n\n3. **tech-lead**: Designing architecture...\n   - Microservices\
+      \ architecture\n   - API gateway pattern\n   - Event-driven processing\n   ✓\
+      \ Architecture document complete\n\n4. **database-engineer**: Designing database...\n\
+      \   - Payment transactions table\n   - User payment methods table\n   - Indexes\
+      \ for performance\n   ✓ Database schema complete\n\n5. **backend-engineer**:\
+      \ Implementing server-side...\n   - Payment API endpoints\n   - Integration\
+      \ with Stripe/PayPal\n   - Webhook handling\n   ✓ Backend implementation complete\n\
+      \n6. **frontend-engineer**: Implementing client-side...\n   - Checkout UI components\n\
+      \   - Payment form validation\n   - Loading states\n   ✓ Frontend implementation\
+      \ complete\n\n7. **code-reviewer**: Reviewing implementation...\n   - Code quality:\
+      \ 8/10\n   - Test coverage: 85%\n   - Documentation: Complete\n   ✓ Review complete\n\
+      \n8. **security-reviewer**: Validating security...\n   - PCI DSS compliance:\
+      \ ✓\n   - Data encryption: ✓\n   - Secure key storage: ✓\n   ✓ Security validated\n"
+    result: Comprehensive implementation with domain expertise at each stage
+  - name: Parallel frontend and backend development
+    description: Tech Lead coordinates parallel work streams
+    before: "User: \"Add user authentication\"\nClaude: [Implements everything sequentially]\n\
+      \        [Frontend waits for backend]\n        [Inefficient use of time]\n"
+    after: 'User: "Add user authentication"
 
-    tags: ["claude-code", "agents", "specialization", "workflow", "development", "orchestration"]
+      Claude: **tech-lead** coordinating parallel development:
 
-    related_patterns:
-      - "AGENT-ORCHESTRATION-001"
-      - "AGENT-ROLE-SEPARATION-001"
-      - "MODULAR-SKILLS-001"
+
+      Architecture:
+
+      - JWT-based authentication
+
+      - Refresh token mechanism
+
+      - API-first design
+
+
+      **Parallel execution:**
+
+      1. **database-engineer**: User sessions table (2 hours)
+
+      2. **backend-engineer**: Auth API endpoints (4 hours)
+
+      3. **frontend-engineer**: Login UI components (4 hours)
+
+
+      ✓ All work completed in parallel (4 hours vs 10 hours)
+
+      '
+    result: Parallel development reduces time by 60%
+  - name: Security-first approach
+    description: Security Reviewer involved from the start
+    before: "User: \"Build payment system\"\nClaude: [Implements without security\
+      \ consideration]\n        [Security review at end finds major issues]\n    \
+      \    [Extensive rework required]\n"
+    after: "User: \"Build payment system\"\nClaude: **security-reviewer** involved\
+      \ from design phase:\n\n1. **tech-lead**: Architecture design\n   **security-reviewer**\
+      \ review: ✓ Architecture approved\n\n2. **database-engineer**: Database schema\n\
+      \   **security-reviewer** review:\n   - Add encryption for sensitive fields\n\
+      \   - Implement audit logging\n   ✓ Schema approved with changes\n\n3. **backend-engineer**:\
+      \ Implementation\n   **security-reviewer** review:\n   - Use parameterized queries\n\
+      \   - Implement rate limiting\n   ✓ Implementation approved\n\nResult: Security\
+      \ built in from start, no rework\n"
+    result: Security-first approach prevents rework
+  benefits:
+  - Domain-specific expertise for each area
+  - Clear separation of concerns
+  - Structured development workflow
+  - Improved quality through multiple perspectives
+  - Scalable to complex projects
+  - Easier to maintain and extend
+  - Better tracking of responsibilities
+  - Reduced context mixing
+  prevention:
+  - Create separate agent file for each role
+  - Define clear boundaries for each agent
+  - Document handoff criteria between agents
+  - Use sequential workflows for complex features
+  - Invoke agents based on task type
+  - Test agent handoffs before production use
+  - Keep agent descriptions concise (2-3 sentences)
+  - Maintain agent instructions focused on domain
+  - Review agent outputs for boundary violations
+  - Update agents based on project needs
+  tags:
+  - claude-code
+  - agents
+  - specialization
+  - workflow
+  - development
+  - orchestration
+  related_patterns:
+  - AGENT-ORCHESTRATION-001
+  - AGENT-ROLE-SEPARATION-001
+  - MODULAR-SKILLS-001
+  domains:
+    primary: deployment
+    secondary: []

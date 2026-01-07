@@ -1,302 +1,279 @@
-# Large Language Model Context Management Pattern
-# Strategies for handling context window limits in long AI conversations
-
-version: "1.0"
-category: "workflow"
-last_updated: "2025-01-06"
-
+version: '1.0'
+category: workflow
+last_updated: '2025-01-06'
 patterns:
-  - id: "LLM-CONTEXT-001"
-    title: "Large Language Model Context Exhaustion Management"
-    severity: "high"
-    scope: "universal"
-    tags: ["context", "llm", "memory", "limits", "continuity", "session", "claude", "gpt-4"]
+- id: LLM-CONTEXT-001
+  title: Large Language Model Context Exhaustion Management
+  severity: high
+  scope: universal
+  tags:
+  - context
+  - llm
+  - memory
+  - limits
+  - continuity
+  - session
+  - claude
+  - gpt-4
+  problem: 'Long conversations with AI assistants (Claude, GPT-4, etc.) eventually
+    hit
 
-    problem: |
-      Long conversations with AI assistants (Claude, GPT-4, etc.) eventually hit
-      context window limits, causing the model to lose early conversation history.
+    context window limits, causing the model to lose early conversation history.
 
-      This happens when:
-      - Working on complex multi-step tasks
-      - Long debugging sessions
-      - Extensive code refactoring
-      - Large file analysis
 
-      Symptoms:
-      - AI assistant forgets earlier parts of conversation
-      - Contradicts previous statements
-      - Loses track of project structure
-      - Asks for context already provided
-      - "Let me check what we discussed earlier" (but can't)
+    This happens when:
 
-    root_cause: |
-      1. **Context window limits**: Most LLMs have limited token context (128k-200k tokens)
-      2. **Token accumulation**: Every user message and AI response consumes tokens
-      3. **No context persistence**: Early messages are dropped when limit reached
-      4. **Hidden context cost**: System prompts and tools consume invisible tokens
+    - Working on complex multi-step tasks
 
-    solution: |
-      **Immediate Workaround:**
+    - Long debugging sessions
 
-      When context exhaustion occurs:
+    - Extensive code refactoring
 
-      1. **Create summary document**:
-         ```markdown
-         # Context Summary
+    - Large file analysis
 
-         ## Project Status
-         - What we're working on
-         - Current state
-         - Completed steps
 
-         ## Key Decisions Made
-         - Decision 1: ...
-         - Decision 2: ...
+    Symptoms:
 
-         ## Important Context
-         - Project structure
-         - File locations
-         - Technical constraints
+    - AI assistant forgets earlier parts of conversation
 
-         ## Next Steps
-         - Step 1: ...
-         - Step 2: ...
-         ```
+    - Contradicts previous statements
 
-      2. **Start new conversation** with summary:
-         "I'm continuing work on [project]. Here's the context summary: [paste summary]"
+    - Loses track of project structure
 
-      **Long-term Solutions:**
+    - Asks for context already provided
 
-      **Option A: Create Context Files**
-      ```markdown
-      # CONTEXT.md
+    - "Let me check what we discussed earlier" (but can''t)
 
-      ## Project Overview
-      Brief description
+    '
+  root_cause: '1. **Context window limits**: Most LLMs have limited token context
+    (128k-200k tokens)
 
-      ## Current Task
-      What we're working on now
+    2. **Token accumulation**: Every user message and AI response consumes tokens
 
-      ## Key Files
-      - file1.ts - Purpose
-      - file2.ts - Purpose
+    3. **No context persistence**: Early messages are dropped when limit reached
 
-      ## Important Decisions
-      List of decisions made
+    4. **Hidden context cost**: System prompts and tools consume invisible tokens
 
-      ## Next Steps
-      What to do next
-      ```
+    '
+  solution: "**Immediate Workaround:**\n\nWhen context exhaustion occurs:\n\n1. **Create\
+    \ summary document**:\n   ```markdown\n   # Context Summary\n\n   ## Project Status\n\
+    \   - What we're working on\n   - Current state\n   - Completed steps\n\n   ##\
+    \ Key Decisions Made\n   - Decision 1: ...\n   - Decision 2: ...\n\n   ## Important\
+    \ Context\n   - Project structure\n   - File locations\n   - Technical constraints\n\
+    \n   ## Next Steps\n   - Step 1: ...\n   - Step 2: ...\n   ```\n\n2. **Start new\
+    \ conversation** with summary:\n   \"I'm continuing work on [project]. Here's\
+    \ the context summary: [paste summary]\"\n\n**Long-term Solutions:**\n\n**Option\
+    \ A: Create Context Files**\n```markdown\n# CONTEXT.md\n\n## Project Overview\n\
+    Brief description\n\n## Current Task\nWhat we're working on now\n\n## Key Files\n\
+    - file1.ts - Purpose\n- file2.ts - Purpose\n\n## Important Decisions\nList of\
+    \ decisions made\n\n## Next Steps\nWhat to do next\n```\n\n**Option B: Use Smaller\
+    \ Tasks**\n- Break large tasks into smaller chunks\n- Complete one chunk per conversation\n\
+    - Save progress between conversations\n\n**Option C: Reference Documentation**\n\
+    - Keep detailed docs in project\n- Reference docs: \"See CONTEXT.md for background\"\
+    \n- Point to specific sections: \"As documented in docs/guides/PATTERN_LIBRARY.md\"\
+    \n\n**Option D: Regular Summarization**\nEvery 50-100 messages, create summary:\n\
+    ```markdown\n<!-- SESSION SUMMARY -->\n\nWhat we accomplished:\n- ✅ Step 1\n-\
+    \ ✅ Step 2\n\nCurrent state:\n- Files created/modified\n- Decisions made\n- Next\
+    \ steps\n\nContext for next session:\n- Important variables\n- File locations\n\
+    - Technical details\n```\n"
+  prevention: "1. **Create comprehensive documentation**\n   - PROJECT.md with overview\n\
+    \   - CONTEXT.md with current session\n   - README.md in each directory\n\n2.\
+    \ **Use summaries**\n   - Every major milestone\n   - When switching contexts\n\
+    \   - Before context gets full\n\n3. **Break into smaller tasks**\n   - Each task\
+    \ < 100 messages ideally\n   - Document between tasks\n   - Clear deliverables\n\
+    \n4. **Reference existing docs**\n   - \"See docs/guides/PATTERN_LIBRARY.md section\
+    \ 5.2\"\n   - \"As documented in CONTEXT.md\"\n   - Keep docs up to date\n\n5.\
+    \ **Create session checkpoints**\n   - Mark progress in docs\n   - Use TODO lists\n\
+    \   - Track completed steps\n"
+  code_example: '```markdown
 
-      **Option B: Use Smaller Tasks**
-      - Break large tasks into smaller chunks
-      - Complete one chunk per conversation
-      - Save progress between conversations
+    # Session Context - Phase 5 Integration
 
-      **Option C: Reference Documentation**
-      - Keep detailed docs in project
-      - Reference docs: "See CONTEXT.md for background"
-      - Point to specific sections: "As documented in docs/guides/PATTERN_LIBRARY.md"
 
-      **Option D: Regular Summarization**
-      Every 50-100 messages, create summary:
-      ```markdown
-      <!-- SESSION SUMMARY -->
+    **Date**: 2025-01-06
 
-      What we accomplished:
-      - ✅ Step 1
-      - ✅ Step 2
+    **Session**: 3 of 3 (Final Phase)
 
-      Current state:
-      - Files created/modified
-      - Decisions made
-      - Next steps
 
-      Context for next session:
-      - Important variables
-      - File locations
-      - Technical details
-      ```
+    ## What We''re Doing
 
-    prevention: |
-      1. **Create comprehensive documentation**
-         - PROJECT.md with overview
-         - CONTEXT.md with current session
-         - README.md in each directory
+    Integrating Shared Knowledge Base into PARSER project
 
-      2. **Use summaries**
-         - Every major milestone
-         - When switching contexts
-         - Before context gets full
 
-      3. **Break into smaller tasks**
-         - Each task < 100 messages ideally
-         - Document between tasks
-         - Clear deliverables
+    ## Completed This Session
 
-      4. **Reference existing docs**
-         - "See docs/guides/PATTERN_LIBRARY.md section 5.2"
-         - "As documented in CONTEXT.md"
-         - Keep docs up to date
+    ✅ Phase 1: Cloned Shared KB
 
-      5. **Create session checkpoints**
-         - Mark progress in docs
-         - Use TODO lists
-         - Track completed steps
+    ✅ Phase 2: Setup tools and structure
 
-    code_example: |
-      ```markdown
-      # Session Context - Phase 5 Integration
+    ✅ Phase 3: Created 6 PARSER entries
 
-      **Date**: 2025-01-06
-      **Session**: 3 of 3 (Final Phase)
+    ✅ Phase 4: Updated AGENTS.md and SKILLS.md
 
-      ## What We're Doing
-      Integrating Shared Knowledge Base into PARSER project
+    ✅ Phase 5: Created documentation
 
-      ## Completed This Session
-      ✅ Phase 1: Cloned Shared KB
-      ✅ Phase 2: Setup tools and structure
-      ✅ Phase 3: Created 6 PARSER entries
-      ✅ Phase 4: Updated AGENTS.md and SKILLS.md
-      ✅ Phase 5: Created documentation
 
-      ## Key Files Created
-      - docs/knowledge-base/shared/ (1.7 MB)
-      - docs/knowledge-base/project/aparser/errors.yaml
-      - docs/knowledge-base/README.md
-      - SHARED_KB_INTEGRATION_COMPLETE.md
+    ## Key Files Created
 
-      ## Important Decisions
-      - Used plain clone (not submodule) - project not under git
-      - Created 6 entries: APARSER-001, APARSER-002, TS-001, etc.
-      - Added KB Curator as 6th agent
-      - Added Knowledge Base Usage as 15th skill
+    - docs/knowledge-base/shared/ (1.7 MB)
 
-      ## Next Session (If Needed)
-      1. Fix YAML format for proper indexing
-      2. Create more entries as errors discovered
-      3. Contribute reusable patterns to Shared KB
+    - docs/knowledge-base/project/aparser/errors.yaml
 
-      ## Quick Reference
-      ```bash
-      # Search KB
-      python docs/knowledge-base/tools/kb.py search "error"
+    - docs/knowledge-base/README.md
 
-      # Stats
-      python docs/knowledge-base/tools/kb.py stats
+    - SHARED_KB_INTEGRATION_COMPLETE.md
 
-      # Validate
-      python docs/knowledge-base/tools/kb.py validate entry.yaml
-      ```
-      ```
 
-    best_practices: |
-      1. **Document early, document often**
-         - Create docs at project start
-         - Update as you go
-         - Reference existing docs
+    ## Important Decisions
 
-      2. **Use summaries strategically**
-         - Before context gets 80% full
-         - After completing major phases
-         - When switching tasks
+    - Used plain clone (not submodule) - project not under git
 
-      3. **Keep documentation current**
-         - Update docs as decisions made
-         - Mark progress clearly
-         - Use TODO lists
+    - Created 6 entries: APARSER-001, APARSER-002, TS-001, etc.
 
-      4. **Make documentation findable**
-         - Clear file names (CONTEXT.md, STATUS.md)
-         - Table of contents
-         - Cross-references
+    - Added KB Curator as 6th agent
 
-      5. **Use visual indicators**
-         - ✅ for completed
-         - 🔄 for in-progress
-         - ⏳ for pending
-         - ❌ for blocked
+    - Added Knowledge Base Usage as 15th skill
 
-    lessons_learned: |
-      **From this session:**
-      - 50+ message exchanges consumed significant context
-      - Created multiple summary documents throughout
-      - TodoWrite tool helped track progress
-      - Final summary ensures continuity
 
-      **What worked well:**
-      - TodoWrite for task tracking
-      - Creating summary docs (SHARED_KB_INTEGRATION_COMPLETE.md)
-      - Breaking into 6 clear phases
-      - Regular status updates
+    ## Next Session (If Needed)
 
-      **What could be better:**
-      - Create CONTEXT.md at start
-      - More frequent summaries
-      - Smaller task chunks
+    1. Fix YAML format for proper indexing
 
-    tools_and_techniques: |
-      1. **TodoWrite tool** (Claude Code)
-         - Track multi-phase tasks
-         - Mark progress clearly
-         - Resume after breaks
+    2. Create more entries as errors discovered
 
-      2. **Summary documents**
-         - PROJECT_REORGANIZATION_PLAN.md
-         - REORGANIZATION_SUMMARY.md
-         - SHARED_KB_INTEGRATION_COMPLETE.md
+    3. Contribute reusable patterns to Shared KB
 
-      3. **Progress tracking in docs**
-         - Checklists: ✅ Complete, ⏳ Pending
-         - Phase markers: Phase 1, Phase 2, etc.
-         - Status indicators: Completed, In Progress
 
-      4. **Context preservation**
-         - Document decisions made
-         - Record file locations
-         - Note technical constraints
-         - Save code snippets
+    ## Quick Reference
 
-    anti_patterns: |
-      ❌ **Don't rely on AI memory**
-      - AI will forget earlier context
-      - Cannot retrieve dropped messages
-      - Each session is fresh start
+    ```bash
 
-      ❌ **Don't assume continuity**
-      - New session = blank slate
-      - Must provide context
-      - Reference previous work
+    # Search KB
 
-      ❌ **Don't skip documentation**
-      - Docs are your backup memory
-      - Essential for continuity
-      - Critical for complex projects
+    python docs/knowledge-base/tools/kb.py search "error"
 
-    when_to_use: |
-      Use this pattern when:
-      - Working on complex multi-step tasks
-      - Long debugging sessions (>50 messages)
-      - Extensive code refactoring
-      - Large file analysis
-      - Multi-phase project organization
 
-    related_patterns:
-      - DOC-REORG-001 (Documentation Reorganization)
-      - AI-SERVICE-001 (AI Service Files Updates)
+    # Stats
 
-    references:
-      - SHARED_KB_INTEGRATION_COMPLETE.md (Session summary)
-      - PROJECT_REORGANIZATION_PLAN.md (Task breakdown)
-      - REORGANIZATION_SUMMARY.md (Progress report)
+    python docs/knowledge-base/tools/kb.py stats
 
-    metadata:
-      created_at: "2025-01-06"
-      author: "PARSER project"
-      reusable: true
-      severity_level: 1
-      difficulty: "elementary"
-      pattern_type: "workflow"
-      applicable_to: ["claude", "gpt-4", "gemini", "llama"]
+
+    # Validate
+
+    python docs/knowledge-base/tools/kb.py validate entry.yaml
+
+    ```
+
+    ```
+
+    '
+  best_practices: "1. **Document early, document often**\n   - Create docs at project\
+    \ start\n   - Update as you go\n   - Reference existing docs\n\n2. **Use summaries\
+    \ strategically**\n   - Before context gets 80% full\n   - After completing major\
+    \ phases\n   - When switching tasks\n\n3. **Keep documentation current**\n   -\
+    \ Update docs as decisions made\n   - Mark progress clearly\n   - Use TODO lists\n\
+    \n4. **Make documentation findable**\n   - Clear file names (CONTEXT.md, STATUS.md)\n\
+    \   - Table of contents\n   - Cross-references\n\n5. **Use visual indicators**\n\
+    \   - ✅ for completed\n   - \U0001F504 for in-progress\n   - ⏳ for pending\n \
+    \  - ❌ for blocked\n"
+  lessons_learned: '**From this session:**
+
+    - 50+ message exchanges consumed significant context
+
+    - Created multiple summary documents throughout
+
+    - TodoWrite tool helped track progress
+
+    - Final summary ensures continuity
+
+
+    **What worked well:**
+
+    - TodoWrite for task tracking
+
+    - Creating summary docs (SHARED_KB_INTEGRATION_COMPLETE.md)
+
+    - Breaking into 6 clear phases
+
+    - Regular status updates
+
+
+    **What could be better:**
+
+    - Create CONTEXT.md at start
+
+    - More frequent summaries
+
+    - Smaller task chunks
+
+    '
+  tools_and_techniques: "1. **TodoWrite tool** (Claude Code)\n   - Track multi-phase\
+    \ tasks\n   - Mark progress clearly\n   - Resume after breaks\n\n2. **Summary\
+    \ documents**\n   - PROJECT_REORGANIZATION_PLAN.md\n   - REORGANIZATION_SUMMARY.md\n\
+    \   - SHARED_KB_INTEGRATION_COMPLETE.md\n\n3. **Progress tracking in docs**\n\
+    \   - Checklists: ✅ Complete, ⏳ Pending\n   - Phase markers: Phase 1, Phase 2,\
+    \ etc.\n   - Status indicators: Completed, In Progress\n\n4. **Context preservation**\n\
+    \   - Document decisions made\n   - Record file locations\n   - Note technical\
+    \ constraints\n   - Save code snippets\n"
+  anti_patterns: '❌ **Don''t rely on AI memory**
+
+    - AI will forget earlier context
+
+    - Cannot retrieve dropped messages
+
+    - Each session is fresh start
+
+
+    ❌ **Don''t assume continuity**
+
+    - New session = blank slate
+
+    - Must provide context
+
+    - Reference previous work
+
+
+    ❌ **Don''t skip documentation**
+
+    - Docs are your backup memory
+
+    - Essential for continuity
+
+    - Critical for complex projects
+
+    '
+  when_to_use: 'Use this pattern when:
+
+    - Working on complex multi-step tasks
+
+    - Long debugging sessions (>50 messages)
+
+    - Extensive code refactoring
+
+    - Large file analysis
+
+    - Multi-phase project organization
+
+    '
+  related_patterns:
+  - DOC-REORG-001 (Documentation Reorganization)
+  - AI-SERVICE-001 (AI Service Files Updates)
+  references:
+  - SHARED_KB_INTEGRATION_COMPLETE.md (Session summary)
+  - PROJECT_REORGANIZATION_PLAN.md (Task breakdown)
+  - REORGANIZATION_SUMMARY.md (Progress report)
+  metadata:
+    created_at: '2025-01-06'
+    author: PARSER project
+    reusable: true
+    severity_level: 1
+    difficulty: elementary
+    pattern_type: workflow
+    applicable_to:
+    - claude
+    - gpt-4
+    - gemini
+    - llama
+  domains:
+    primary: authentication
+    secondary: []

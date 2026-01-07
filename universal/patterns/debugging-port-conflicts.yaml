@@ -1,382 +1,367 @@
-# Server Port Conflicts and Debugging Patterns
-# Common issues with port binding, zombie processes, and server reload
-
-version: "1.0"
-category: "server-debugging"
-last_updated: "2026-01-05"
-
+version: '1.0'
+category: server-debugging
+last_updated: '2026-01-05'
 patterns:
-  - id: "DEBUG-001"
-    title: "Multiple Background Servers Holding Port"
-    severity: "high"
-    scope: "universal"
+- id: DEBUG-001
+  title: Multiple Background Servers Holding Port
+  severity: high
+  scope: universal
+  problem: 'Multiple background processes holding the same port prevent clean server
+    restarts.
 
-    problem: |
-      Multiple background processes holding the same port prevent clean server restarts.
-      Processes show in netstat but not in tasklist, making them difficult to kill.
-      Auto-reload can spawn multiple uvicorn workers on the same port.
+    Processes show in netstat but not in tasklist, making them difficult to kill.
 
-    symptoms:
-      - "[Errno 10048] only one usage of each socket address"
-      - Port shows as LISTENING in netstat but process doesn't exist in tasklist
-      - Server starts but immediately exits with bind error
-      - curl connects to old server instance instead of new one
+    Auto-reload can spawn multiple uvicorn workers on the same port.
 
-    affected_scenarios:
-      - Starting FastAPI server with uvicorn auto-reload
-      - Running server in background with Bash tool
-      - Testing server with multiple restarts
-      - Using `uv run notebooklm-api` in background
+    '
+  symptoms:
+  - '[Errno 10048] only one usage of each socket address'
+  - Port shows as LISTENING in netstat but process doesn't exist in tasklist
+  - Server starts but immediately exits with bind error
+  - curl connects to old server instance instead of new one
+  affected_scenarios:
+  - Starting FastAPI server with uvicorn auto-reload
+  - Running server in background with Bash tool
+  - Testing server with multiple restarts
+  - Using `uv run notebooklm-api` in background
+  diagnosis_steps:
+  - step: Check what's listening on the port
+    command: netstat -ano | findstr :8000
+    output_example: 'TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    260976
 
-    diagnosis_steps:
-      - step: "Check what's listening on the port"
-        command: "netstat -ano | findstr :8000"
-        output_example: |
-          TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    260976
-          TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    483920
-          TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    556456
+      TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    483920
 
-      - step: "Verify process exists"
-        command: "tasklist | findstr 260976"
-        possible_results:
-          - "Process found → Can kill with taskkill"
-          - "Process not found → Zombie process or PID reused"
+      TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    556456
 
-      - step: "Try killing the process"
-        command: "taskkill /F /PID 260976"
-        caveat: "May fail with 'Access denied' or 'process not found'"
+      '
+  - step: Verify process exists
+    command: tasklist | findstr 260976
+    possible_results:
+    - Process found → Can kill with taskkill
+    - Process not found → Zombie process or PID reused
+  - step: Try killing the process
+    command: taskkill /F /PID 260976
+    caveat: May fail with 'Access denied' or 'process not found'
+  solutions:
+  - solution: Use alternate port
+    code: '# Instead of port 8000
 
-    solutions:
-      - solution: "Use alternate port"
-        code: |
-          # Instead of port 8000
-          uv run notebooklm-api  # ❌ Port 8000 in use
+      uv run notebooklm-api  # ❌ Port 8000 in use
 
-          # Use port 8001
-          uv run python -c "
-          import uvicorn
-          uvicorn.run('app:app', host='0.0.0.0', port=8001, reload=False)
-          "
-        pros:
-          - "Immediate workaround, no process killing needed"
-          - "Allows testing new server version"
-        cons:
-          - "Not a permanent solution"
-          - "Must update client URLs"
-          - "Multiple ports in use can be confusing"
 
-      - solution: "Disable auto-reload to prevent multiple workers"
-        code: |
-          # In api_server.py main() function
-          def main():
-              import uvicorn
+      # Use port 8001
 
-              uvicorn.run(
-                  "notebooklm_mcp.api_server:app",
-                  host="0.0.0.0",
-                  port=8000,
-                  reload=False,  # ✅ Prevents multiple uvicorn workers
-              )
+      uv run python -c "
 
-      - solution: "Kill all Python processes on port (last resort)"
-        command: |
-          # Windows: Find and kill all Python processes
-          for /f "tokens=5" %a in ('netstat -ano ^| findstr :8000') do taskkill /F /PID %a
+      import uvicorn
 
-        warning: "May kill unrelated Python processes!"
+      uvicorn.run(''app:app'', host=''0.0.0.0'', port=8001, reload=False)
 
-    prevention:
-      - "Disable auto-reload in production (reload=False)"
-      - "Use process manager (systemd, supervisor) instead of background"
-      - "Implement graceful shutdown in server"
-      - "Add health check to detect stale processes"
-      - "Use --no-reload flag when debugging"
+      "
 
-    related_issues:
-      - "Uvicorn auto-reload spawns reloader process + worker process"
-      - "Bash run_in_background creates separate process group"
-      - "Task manager may not show all child processes"
+      '
+    pros:
+    - Immediate workaround, no process killing needed
+    - Allows testing new server version
+    cons:
+    - Not a permanent solution
+    - Must update client URLs
+    - Multiple ports in use can be confusing
+  - solution: Disable auto-reload to prevent multiple workers
+    code: "# In api_server.py main() function\ndef main():\n    import uvicorn\n\n\
+      \    uvicorn.run(\n        \"notebooklm_mcp.api_server:app\",\n        host=\"\
+      0.0.0.0\",\n        port=8000,\n        reload=False,  # ✅ Prevents multiple\
+      \ uvicorn workers\n    )\n"
+  - solution: Kill all Python processes on port (last resort)
+    command: '# Windows: Find and kill all Python processes
 
-    tags: ["port-conflict", "netstat", "uvicorn", "background-process"]
+      for /f "tokens=5" %a in (''netstat -ano ^| findstr :8000'') do taskkill /F /PID
+      %a
 
-  - id: "DEBUG-002"
-    title: "Debug Output Not Appearing in Server Logs"
-    severity: "medium"
-    scope: "universal"
+      '
+    warning: May kill unrelated Python processes!
+  prevention:
+  - Disable auto-reload in production (reload=False)
+  - Use process manager (systemd, supervisor) instead of background
+  - Implement graceful shutdown in server
+  - Add health check to detect stale processes
+  - Use --no-reload flag when debugging
+  related_issues:
+  - Uvicorn auto-reload spawns reloader process + worker process
+  - Bash run_in_background creates separate process group
+  - Task manager may not show all child processes
+  tags:
+  - port-conflict
+  - netstat
+  - uvicorn
+  - background-process
+- id: DEBUG-002
+  title: Debug Output Not Appearing in Server Logs
+  severity: medium
+  scope: universal
+  problem: 'print() statements in async FastAPI endpoints don''t appear in server
+    logs.
 
-    problem: |
-      print() statements in async FastAPI endpoints don't appear in server logs.
-      Auto-reload can cause output buffering issues. Debug messages missing
-      makes troubleshooting difficult.
+    Auto-reload can cause output buffering issues. Debug messages missing
 
-    symptoms:
-      - "Added print() but don't see output in logs"
-      - "Health endpoint error returns no traceback"
-      - "Can't tell if code is executing"
-      - "Server reload incomplete, no output after changes"
+    makes troubleshooting difficult.
 
-    root_causes:
-      - "print() uses stdout, uvicorn logs to stderr by default"
-      - "Output buffering in async workers"
-      - "Auto-reload process captures output differently"
-      - "Exception handler masking tracebacks"
+    '
+  symptoms:
+  - Added print() but don't see output in logs
+  - Health endpoint error returns no traceback
+  - Can't tell if code is executing
+  - Server reload incomplete, no output after changes
+  root_causes:
+  - print() uses stdout, uvicorn logs to stderr by default
+  - Output buffering in async workers
+  - Auto-reload process captures output differently
+  - Exception handler masking tracebacks
+  solutions:
+  - solution: Use sys.stderr.write() with flush()
+    code: "import sys\n\n@app.get(\"/health\")\nasync def health():\n    sys.stderr.write(\"\
+      \U0001F50D Health endpoint called!\\n\")\n    sys.stderr.flush()\n    try:\n\
+      \        sys.stderr.write(\"\U0001F50D About to call get_client()...\\n\")\n\
+      \        sys.stderr.flush()\n        client = get_client()\n        return {\"\
+      status\": \"healthy\"}\n    except Exception as e:\n        sys.stderr.write(f\"\
+      ❌ Error: {e}\\n\")\n        sys.stderr.flush()\n        raise\n"
+    rationale: 'stderr is unbuffered and always captured by uvicorn.
 
-    solutions:
-      - solution: "Use sys.stderr.write() with flush()"
-        code: |
-          import sys
+      flush() ensures immediate output even in async workers.
 
-          @app.get("/health")
-          async def health():
-              sys.stderr.write("🔍 Health endpoint called!\n")
-              sys.stderr.flush()
-              try:
-                  sys.stderr.write("🔍 About to call get_client()...\n")
-                  sys.stderr.flush()
-                  client = get_client()
-                  return {"status": "healthy"}
-              except Exception as e:
-                  sys.stderr.write(f"❌ Error: {e}\n")
-                  sys.stderr.flush()
-                  raise
+      '
+  - solution: Add traceback to error responses
+    code: "@app.get(\"/health\")\nasync def health():\n    import traceback\n    try:\n\
+      \        client = get_client()\n        return {\"status\": \"healthy\"}\n \
+      \   except Exception as e:\n        return {\n            \"status\": \"unhealthy\"\
+      ,\n            \"error\": str(e),\n            \"traceback\": traceback.format_exc()\
+      \  # ✅ Include full traceback\n        }\n"
+  - solution: Disable auto-reload during debugging
+    code: '# uvicorn.run(..., reload=False)
 
-        rationale: |
-          stderr is unbuffered and always captured by uvicorn.
-          flush() ensures immediate output even in async workers.
+      # Or command line:
 
-      - solution: "Add traceback to error responses"
-        code: |
-          @app.get("/health")
-          async def health():
-              import traceback
-              try:
-                  client = get_client()
-                  return {"status": "healthy"}
-              except Exception as e:
-                  return {
-                      "status": "unhealthy",
-                      "error": str(e),
-                      "traceback": traceback.format_exc()  # ✅ Include full traceback
-                  }
+      uvicorn notebooklm_mcp.api_server:app --no-reload
 
-      - solution: "Disable auto-reload during debugging"
-        code: |
-          # uvicorn.run(..., reload=False)
-          # Or command line:
-          uvicorn notebooklm_mcp.api_server:app --no-reload
+      '
+    rationale: Auto-reload can cause output buffering and stale worker issues
+  prevention:
+  - Use sys.stderr.write() + flush() for async debug output
+  - Include traceback in exception handlers
+  - Disable auto-reload when debugging output issues
+  - Add explicit logging with logging module instead of print()
+  - Test debug output in simple script before server
+  best_practice:
+    code: "import sys\nimport logging\n\n# Configure logging\nlogging.basicConfig(\n\
+      \    level=logging.DEBUG,\n    format='%(asctime)s [%(levelname)s] %(message)s',\n\
+      \    handlers=[logging.StreamHandler(sys.stderr)]\n)\n\nlogger = logging.getLogger(__name__)\n\
+      \n@app.get(\"/endpoint\")\nasync def endpoint():\n    logger.debug(\"\U0001F50D\
+      \ Debug message\")  # ✅ Better than print()\n    logger.error(\"❌ Error message\"\
+      )\n    return {\"status\": \"ok\"}\n"
+  tags:
+  - debugging
+  - logging
+  - uvicorn
+  - output-buffering
+  domains:
+    primary: monitoring
+    secondary: []
+- id: DEBUG-003
+  title: Incomplete Server Reload Stuck in Loop
+  severity: medium
+  scope: fastapi
+  problem: 'Uvicorn auto-reload detects file changes but fails to complete reload.
 
-        rationale: "Auto-reload can cause output buffering and stale worker issues"
+    Server shows "Reloading..." message but never shows "Application startup complete."
 
-    prevention:
-      - "Use sys.stderr.write() + flush() for async debug output"
-      - "Include traceback in exception handlers"
-      - "Disable auto-reload when debugging output issues"
-      - "Add explicit logging with logging module instead of print()"
-      - "Test debug output in simple script before server"
+    New code changes don''t take effect, old worker continues running.
 
-    best_practice:
-      code: |
-        import sys
-        import logging
+    '
+  symptoms:
+  - 'WARNING: WatchFiles detected changes in ''api_server.py''. Reloading...'
+  - No 'Started server process' message after reload warning
+  - Code changes don't affect server behavior
+  - Multiple reloader processes in process list
+  diagnosis:
+  - step: Check server logs for reload completion
+    expected_pattern: 'WARNING: WatchFiles detected changes...
 
-        # Configure logging
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(asctime)s [%(levelname)s] %(message)s',
-            handlers=[logging.StreamHandler(sys.stderr)]
-        )
+      INFO:     Started server process [NEW_PID]
 
-        logger = logging.getLogger(__name__)
+      INFO:     Waiting for application startup.
 
-        @app.get("/endpoint")
-        async def endpoint():
-            logger.debug("🔍 Debug message")  # ✅ Better than print()
-            logger.error("❌ Error message")
-            return {"status": "ok"}
+      INFO:     Application startup complete.  # ✅ Should see this
 
-    tags: ["debugging", "logging", "uvicorn", "output-buffering"]
+      '
+    actual_pattern: 'WARNING: WatchFiles detected changes...
 
-  - id: "DEBUG-003"
-    title: "Incomplete Server Reload Stuck in Loop"
-    severity: "medium"
-    scope: "fastapi"
+      # ❌ Nothing after, reload stuck
 
-    problem: |
-      Uvicorn auto-reload detects file changes but fails to complete reload.
-      Server shows "Reloading..." message but never shows "Application startup complete."
-      New code changes don't take effect, old worker continues running.
+      '
+  - step: Check process count
+    command: tasklist | findstr python
+    expected: 1 reloader + 1 worker = 2 processes
+    problem: Multiple reloaders from incomplete reloads
+  root_causes:
+  - Syntax error in new code prevents worker from starting
+  - Import error in reloaded module
+  - Worker crash during startup
+  - Port binding failure (old worker still holding port)
+  solutions:
+  - solution: Kill server and restart manually
+    code: '# 1. Kill all background servers
 
-    symptoms:
-      - "WARNING: WatchFiles detected changes in 'api_server.py'. Reloading..."
-      - "No 'Started server process' message after reload warning"
-      - "Code changes don't affect server behavior"
-      - "Multiple reloader processes in process list"
+      # 2. Fix syntax/import errors
 
-    diagnosis:
-      - step: "Check server logs for reload completion"
-        expected_pattern: |
-          WARNING: WatchFiles detected changes...
-          INFO:     Started server process [NEW_PID]
-          INFO:     Waiting for application startup.
-          INFO:     Application startup complete.  # ✅ Should see this
+      # 3. Start fresh with reload=False
 
-        actual_pattern: |
-          WARNING: WatchFiles detected changes...
-          # ❌ Nothing after, reload stuck
+      uv run python -c "
 
-      - step: "Check process count"
-        command: "tasklist | findstr python"
-        expected: "1 reloader + 1 worker = 2 processes"
-        problem: "Multiple reloaders from incomplete reloads"
+      import uvicorn
 
-    root_causes:
-      - "Syntax error in new code prevents worker from starting"
-      - "Import error in reloaded module"
-      - "Worker crash during startup"
-      - "Port binding failure (old worker still holding port)"
+      uvicorn.run(''app:app'', reload=False)
 
-    solutions:
-      - solution: "Kill server and restart manually"
-        code: |
-          # 1. Kill all background servers
-          # 2. Fix syntax/import errors
-          # 3. Start fresh with reload=False
-          uv run python -c "
-          import uvicorn
-          uvicorn.run('app:app', reload=False)
-          "
+      "
 
-      - solution: "Check for syntax errors before reload"
-        command: |
-          python -m py_compile src/notebooklm_mcp/api_server.py
+      '
+  - solution: Check for syntax errors before reload
+    command: 'python -m py_compile src/notebooklm_mcp/api_server.py
 
-      - solution: "Use --no-reload flag during development"
-        command: |
-          uvicorn notebooklm_mcp.api_server:app --no-reload
+      '
+  - solution: Use --no-reload flag during development
+    command: 'uvicorn notebooklm_mcp.api_server:app --no-reload
 
-    prevention:
-      - "Use reload=False during active debugging"
-      - "Run syntax check before editing running server"
-      - "Monitor logs for reload completion"
-      - "Kill incomplete reloads manually"
-      - "Consider using separate dev/prod configurations"
-
-    tags: ["auto-reload", "uvicorn", "watchfiles", "server-lifecycle"]
-
+      '
+  prevention:
+  - Use reload=False during active debugging
+  - Run syntax check before editing running server
+  - Monitor logs for reload completion
+  - Kill incomplete reloads manually
+  - Consider using separate dev/prod configurations
+  tags:
+  - auto-reload
+  - uvicorn
+  - watchfiles
+  - server-lifecycle
 best_practices:
   server_development:
-    - rule: "Disable auto-reload during debugging"
-      rationale: "Prevents reload loops and output buffering issues"
-      code: |
-        # Development with manual restart
-        uvicorn.run("app:app", reload=False, host="0.0.0.0", port=8000)
+  - rule: Disable auto-reload during debugging
+    rationale: Prevents reload loops and output buffering issues
+    code: '# Development with manual restart
 
-    - rule: "Use sys.stderr.write() + flush() for debug output"
-      rationale: "Guarantees output appears in logs"
-      code: |
-          import sys
-          sys.stderr.write(f"DEBUG: {variable}\n")
-          sys.stderr.flush()
+      uvicorn.run("app:app", reload=False, host="0.0.0.0", port=8000)
 
-    - rule: "Include traceback in error responses"
-      code: |
-          except Exception as e:
-              return {
-                  "error": str(e),
-                  "traceback": traceback.format_exc()
-              }
+      '
+  - rule: Use sys.stderr.write() + flush() for debug output
+    rationale: Guarantees output appears in logs
+    code: 'import sys
 
-    - rule: "Kill old processes before starting new server"
-      command: |
-        # Check what's on the port
-        netstat -ano | findstr :8000
+      sys.stderr.write(f"DEBUG: {variable}\n")
 
-        # Kill specific PIDs
-        taskkill /F /PID <pid>
+      sys.stderr.flush()
 
-    - rule: "Use alternate port when testing changes"
-      code: |
-          # Quick test on port 8001
-          uv run python -c "
-          import uvicorn
-          uvicorn.run('app:app', port=8001, reload=False)
-          "
+      '
+  - rule: Include traceback in error responses
+    code: "except Exception as e:\n    return {\n        \"error\": str(e),\n    \
+      \    \"traceback\": traceback.format_exc()\n    }\n"
+  - rule: Kill old processes before starting new server
+    command: '# Check what''s on the port
 
-  process_management:
-    - "Use process manager (systemd, supervisor) for production"
-    - "Implement graceful shutdown handlers"
-    - "Add health check endpoint for monitoring"
-    - "Log PID on startup for easy identification"
-    - "Don't rely on auto-reload in production environments"
+      netstat -ano | findstr :8000
 
-troubleshooting:
-  - symptom: "[Errno 10048] only one usage of each socket address"
-    quick_fix:
-      - "Use alternate port for testing"
-      - "Kill all processes listed in netstat for that port"
-      - "Disable auto-reload to prevent multiple workers"
 
-    proper_fix:
-      - "Implement graceful shutdown in server"
-      - "Use process manager instead of background processes"
-      - "Add health check to detect stale instances"
+      # Kill specific PIDs
 
-  - symptom: "Debug print() not showing in logs"
-    checks:
-      - "Using print() instead of sys.stderr.write()"
-      - "Output not flushed in async workers"
-      - "Auto-reload buffering output"
-      - "Exception handler masking error"
+      taskkill /F /PID <pid>
 
-    solutions:
-      - "Switch to sys.stderr.write() + flush()"
-      - "Use logging module instead of print()"
-      - "Disable auto-reload during debugging"
-      - "Add traceback to exception handlers"
+      '
+  - rule: Use alternate port when testing changes
+    code: '# Quick test on port 8001
 
-  - symptom: "Server reload incomplete"
-    diagnosis:
-      - "Check logs for 'Application startup complete'"
-      - "Look for syntax/import errors in new code"
-      - "Verify process count (should be 1 reloader + 1 worker)"
-      - "Test code compiles: python -m py_compile file.py"
-
-    solutions:
-      - "Kill server and restart manually"
-      - "Fix syntax errors before editing"
-      - "Use reload=False during debugging"
-      - "Test code in isolation before server reload"
-
-tools:
-  - name: "Check port usage"
-    command: "netstat -ano | findstr :8000"
-    purpose: "Find what's holding the port"
-
-  - name: "Kill process by PID"
-    command: "taskkill /F /PID <pid>"
-    warning: "Process must exist and be accessible"
-
-  - name: "Find Python processes"
-    command: "tasklist | findstr python"
-    purpose: "List all Python processes"
-
-  - name: "Test server on alternate port"
-    command: |
       uv run python -c "
+
       import uvicorn
-      uvicorn.run('app:app', port=8001, reload=False)
+
+      uvicorn.run(''app:app'', port=8001, reload=False)
+
       "
 
-  - name: "Compile check for syntax errors"
-    command: |
-      python -m py_compile src/module.py
+      '
+  process_management:
+  - Use process manager (systemd, supervisor) for production
+  - Implement graceful shutdown handlers
+  - Add health check endpoint for monitoring
+  - Log PID on startup for easy identification
+  - Don't rely on auto-reload in production environments
+troubleshooting:
+- symptom: '[Errno 10048] only one usage of each socket address'
+  quick_fix:
+  - Use alternate port for testing
+  - Kill all processes listed in netstat for that port
+  - Disable auto-reload to prevent multiple workers
+  proper_fix:
+  - Implement graceful shutdown in server
+  - Use process manager instead of background processes
+  - Add health check to detect stale instances
+- symptom: Debug print() not showing in logs
+  checks:
+  - Using print() instead of sys.stderr.write()
+  - Output not flushed in async workers
+  - Auto-reload buffering output
+  - Exception handler masking error
+  solutions:
+  - Switch to sys.stderr.write() + flush()
+  - Use logging module instead of print()
+  - Disable auto-reload during debugging
+  - Add traceback to exception handlers
+- symptom: Server reload incomplete
+  diagnosis:
+  - Check logs for 'Application startup complete'
+  - Look for syntax/import errors in new code
+  - Verify process count (should be 1 reloader + 1 worker)
+  - 'Test code compiles: python -m py_compile file.py'
+  solutions:
+  - Kill server and restart manually
+  - Fix syntax errors before editing
+  - Use reload=False during debugging
+  - Test code in isolation before server reload
+tools:
+- name: Check port usage
+  command: netstat -ano | findstr :8000
+  purpose: Find what's holding the port
+- name: Kill process by PID
+  command: taskkill /F /PID <pid>
+  warning: Process must exist and be accessible
+- name: Find Python processes
+  command: tasklist | findstr python
+  purpose: List all Python processes
+- name: Test server on alternate port
+  command: 'uv run python -c "
 
-  - name: "Debug authentication flow"
-    command: |
-      uv run python -c "
-      from module import load_tokens, Client
-      tokens = load_tokens()
-      print(f'Tokens: csrf={bool(tokens.csrf)}, sid={bool(tokens.sid)}')
-      client = Client(tokens.cookies, tokens.csrf, tokens.sid)
-      print('✅ Success')
-      "
+    import uvicorn
+
+    uvicorn.run(''app:app'', port=8001, reload=False)
+
+    "
+
+    '
+- name: Compile check for syntax errors
+  command: 'python -m py_compile src/module.py
+
+    '
+- name: Debug authentication flow
+  command: 'uv run python -c "
+
+    from module import load_tokens, Client
+
+    tokens = load_tokens()
+
+    print(f''Tokens: csrf={bool(tokens.csrf)}, sid={bool(tokens.sid)}'')
+
+    client = Client(tokens.cookies, tokens.csrf, tokens.sid)
+
+    print(''✅ Success'')
+
+    "
+
+    '

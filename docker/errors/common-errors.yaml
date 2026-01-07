@@ -1,60 +1,68 @@
-# Docker Common Errors
-version: "1.0"
-category: "docker-errors"
-scope: "docker"
-last_updated: "2026-01-04"
-
+version: '1.0'
+category: docker-errors
+scope: docker
+last_updated: '2026-01-04'
 errors:
-  - id: "DOCKER-001"
-    title: "Port Already in Use"
-    severity: "medium"
-    scope: "docker"
-    problem: |
-      Container fails because port is already allocated.
-    symptoms:
-      - "port is already allocated"
-      - "Bind for 0.0.0.0:3000 failed"
-    wrong_code: |
-      services:
-        app:
-          ports:
-            - "3000:3000"  # Already in use!
-    correct_code: |
-      services:
-        app:
-          ports:
-            - "3001:3000"  # Use different port
-    tags: ["docker", "ports", "networking"]
+- id: DOCKER-001
+  title: Port Already in Use
+  severity: medium
+  scope: docker
+  problem: 'Container fails because port is already allocated.
 
-  - id: "DOCKER-002"
-    title: "Container Cannot Resolve Hostname"
-    severity: "high"
-    scope: "docker"
-    problem: |
-      Container cannot communicate due to wrong hostname.
-    symptoms:
-      - "getaddrinfo ENOTFOUND"
-      - "Could not resolve host"
-    wrong_code: |
-      DATABASE_URL=postgres://localhost:5432/db  # Wrong!
-    correct_code: |
-      DATABASE_URL=postgres://postgres:5432/db  # Use service name
-    tags: ["docker", "networking", "dns"]
+    '
+  symptoms:
+  - port is already allocated
+  - Bind for 0.0.0.0:3000 failed
+  wrong_code: "services:\n  app:\n    ports:\n      - \"3000:3000\"  # Already in\
+    \ use!\n"
+  correct_code: "services:\n  app:\n    ports:\n      - \"3001:3000\"  # Use different\
+    \ port\n"
+  tags:
+  - docker
+  - ports
+  - networking
+  domains:
+    primary: docker
+    secondary: []
+- id: DOCKER-002
+  title: Container Cannot Resolve Hostname
+  severity: high
+  scope: docker
+  problem: 'Container cannot communicate due to wrong hostname.
 
-  - id: "DOCKER-003"
-    title: "Volume Mount Permission Denied"
-    severity: "medium"
-    scope: "docker"
-    problem: |
-      Container cannot read/write to volume due to permissions.
-    symptoms:
-      - "Permission denied"
-      - "EACCES"
-    wrong_code: |
-      volumes:
-        - ./data:/app/data  # Permission issues
-    correct_code: |
-      user: "${UID}:${GID}"
-      volumes:
-        - ./data:/app/data
-    tags: ["docker", "volumes", "permissions"]
+    '
+  symptoms:
+  - getaddrinfo ENOTFOUND
+  - Could not resolve host
+  wrong_code: 'DATABASE_URL=postgres://localhost:5432/db  # Wrong!
+
+    '
+  correct_code: 'DATABASE_URL=postgres://postgres:5432/db  # Use service name
+
+    '
+  tags:
+  - docker
+  - networking
+  - dns
+  domains:
+    primary: docker
+    secondary: []
+- id: DOCKER-003
+  title: Volume Mount Permission Denied
+  severity: medium
+  scope: docker
+  problem: 'Container cannot read/write to volume due to permissions.
+
+    '
+  symptoms:
+  - Permission denied
+  - EACCES
+  wrong_code: "volumes:\n  - ./data:/app/data  # Permission issues\n"
+  correct_code: "user: \"${UID}:${GID}\"\nvolumes:\n  - ./data:/app/data\n"
+  tags:
+  - docker
+  - volumes
+  - permissions
+  domains:
+    primary: docker
+    secondary: []

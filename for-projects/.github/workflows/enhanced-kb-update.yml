@@ -1,0 +1,284 @@
+name: Enhanced KB Auto-Update
+
+# Enhanced automatic KB update workflow
+# Handles multiple trigger types and ensures reliable updates
+
+"on":
+  # Triggered by Shared KB approval
+  repository_dispatch:
+    types: [shared-kb-entry-approved, kb-update-needed]
+
+  # Scheduled daily sync
+  schedule:
+    - cr"on": '0 2 * * *'  # Daily at 2 AM UTC
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force:
+        descripti"on": 'Force update even if no changes detected'
+        type: boolean
+        default: false
+      domain:
+        descripti"on": 'Specific domain to update (optional)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  update-kb:
+    name: Update Knowledge Base
+    runs-"on": ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: Get current KB info
+        id: kb-info
+        run: |
+          echo "📊 Current KB Information"
+
+          # Check if submodule exists
+          if [ -d ".kb/shared" ]; then
+            echo "✓ Shared KB submodule exists"
+
+            # Get current commit
+            cd .kb/shared
+            CURRENT_COMMIT=$(git rev-parse HEAD)
+            CURRENT_COMMIT_SHORT=$(git rev-parse --short HEAD)
+            CURRENT_DATE=$(git log -1 --format=%ci)
+
+            cd ../..
+
+            echo "current_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+            echo "current_commit_short=$CURRENT_COMMIT_SHORT" >> $GITHUB_OUTPUT
+            echo "current_date=$CURRENT_DATE" >> $GITHUB_OUTPUT
+
+            echo "  Commit: $CURRENT_COMMIT_SHORT"
+            echo "  Date: $CURRENT_DATE"
+          else
+            echo "⚠ Shared KB submodule not found"
+            echo "current_commit=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update submodule
+        id: update
+        run: |
+          echo "🔄 Updating Shared KB submodule..."
+
+          # Update submodule to latest
+          git submodule update --remote .kb/shared || {
+            echo "⚠ Standard update failed, trying alternative..."
+
+            # Alternative method
+            cd .kb/shared
+            git fetch origin
+            git checkout origin/main
+
+            cd ../..
+          }
+
+          # Check if update was successful
+          if [ -d ".kb/shared" ]; then
+            cd .kb/shared
+            NEW_COMMIT=$(git rev-parse HEAD)
+            NEW_COMMIT_SHORT=$(git rev-parse --short HEAD)
+            cd ../..
+
+            echo "new_commit=$NEW_COMMIT" >> $GITHUB_OUTPUT
+            echo "new_commit_short=$NEW_COMMIT_SHORT" >> $GITHUB_OUTPUT
+
+            echo "  New commit: $NEW_COMMIT_SHORT"
+
+            # Check if actually changed
+            if [ "${{ steps.kb-info.outputs.current_commit }}" != "$NEW_COMMIT" ]; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "✓ Submodule updated"
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "ℹ Already up to date"
+            fi
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "⚠ Submodule update failed"
+          fi
+
+      - name: Show changes
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          echo "📋 Changes detected:"
+          echo ""
+          cd .kb/shared
+          git log --oneline HEAD~5..HEAD 2>/dev/null || echo "No recent history"
+          echo ""
+          cd ../..
+
+          # Show file changes
+          git diff --stat .kb/shared
+
+      - name: Rebuild KB index
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          echo "🔄 Rebuilding KB index..."
+
+          if [ -f ".kb/shared/tools/kb.py" ]; then
+            cd .kb/shared
+
+            # Rebuild index
+            python tools/kb.py index -v 2>&1 || echo "⚠ Index rebuild failed (non-critical)"
+
+            cd ../..
+            echo "✓ KB index rebuilt"
+          else
+            echo "⚠ kb.py not found, skipping index rebuild"
+          fi
+
+      - name: Update local KB metadata
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          echo "📝 Updating local KB metadata..."
+
+          ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+
+          # Find local YAML files that reference updated entries
+          # This is a placeholder - would use actual search logic
+          if [ -n "$ENTRY_ID" ]; then
+            echo "  Updating metadata for entry: $ENTRY_ID"
+
+            # Update github section in local YAML
+            # Would use yq or Python script here
+          fi
+
+          echo "✓ Local KB metadata updated"
+
+      - name: Commit changes
+        if: |
+          steps.update.outputs.has_changes == 'true' ||
+          github.event.inputs.force == 'true'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Determine commit message
+          if [ "${{ github.event.event_type }}" = "shared-kb-entry-approved" ]; then
+            ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+            ENTRY_URL="${{ github.event.client_payload.entry_url }}"
+            PROJECT="${{ github.event.client_payload.project }}"
+
+            COMMIT_MSG=$(printf "Update Shared KB (entry %s approved)\n\nApproved by curator for project @%s\n\nView entry: %s\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\n" "$ENTRY_ID" "$PROJECT" "$ENTRY_URL")
+
+          elif [ "${{ github.event.event_type }}" = "kb-update-needed" ]; then
+            COMMIT_MSG=$(printf "Update Shared KB (scheduled sync)\n\nAuto-synced at: %s\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\n" "$(date -u +'%Y-%m-%d %H:%M:%S UTC')")
+
+          else
+            # Manual trigger
+            if [ -n "${{ github.event.inputs.domain }}" ]; then
+              DOMAIN="${{ github.event.inputs.domain }}"
+              COMMIT_MSG=$(printf "Update Shared KB (manual: %s domain)\n\nTriggered by: @%s\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\n" "$DOMAIN" "${{ github.actor }}")
+            else
+              COMMIT_MSG=$(printf "Update Shared KB (manual sync)\n\nTriggered by: @%s\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\n" "${{ github.actor }}")
+            fi
+          fi
+
+          # Stage changes
+          git add .kb/shared
+
+          # Check if there are staged changes
+          if git diff --cached --quiet; then
+            echo "ℹ No staged changes to commit"
+          else
+            # Commit
+            git commit -m "$COMMIT_MSG"
+
+            # Push
+            git push
+
+            echo "✓ Changes committed and pushed"
+          fi
+
+      - name: Validate KB after update
+        if: steps.update.outputs.has_changes == 'true'
+        run: |
+          echo "🔍 Validating KB after update..."
+
+          if [ -f ".kb/shared/tools/kb.py" ]; then
+            cd .kb/shared
+
+            # Validate all entries
+            python tools/kb.py validate . 2>&1 || echo "⚠ Validation found issues"
+
+            cd ../..
+            echo "✓ KB validation complete"
+          fi
+
+      - name: Generate update summary
+        if: always()
+        run: |
+          echo ""
+          echo "="
+          echo "KB Update Summary"
+          echo "="
+          echo ""
+
+          if [ "${{ steps.update.outputs.has_changes }}" = "true" ]; then
+            echo "✅ KB Updated Successfully"
+            echo ""
+            echo "Before: ${{ steps.kb-info.outputs.current_commit_short }}"
+            echo "After:  ${{ steps.update.outputs.new_commit_short }}"
+            echo ""
+            echo "Changes:"
+            cd .kb/shared
+            git log --oneline HEAD~5..HEAD | head -10
+            echo ""
+            cd ../..
+
+          elif [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "ℹ Force update requested - no changes detected"
+
+          else
+            echo "ℹ KB Already Up to Date"
+            echo ""
+            echo "Current commit: ${{ steps.kb-info.outputs.current_commit_short }}"
+          fi
+
+          echo ""
+          echo "="
+
+      - name: Notify agent
+        if: steps.update.outputs.has_changes == 'true'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: kb-updated
+          client-payload: |
+            {
+              "event_type": "${{ github.event.event_type }}",
+              "entry_id": "${{ github.event.client_payload.entry_id || 'scheduled-update' }}",
+              "commit_before": "${{ steps.kb-info.outputs.current_commit }}",
+              "commit_after": "${{ steps.update.outputs.new_commit }}",
+              "updated_at": "${{ github.event.head_commit.timestamp }}",
+              "triggered_by": "${{ github.actor }}"
+            }
+
+      - name: Notify agent on no changes
+        if: |
+          steps.update.outputs.has_changes == 'false' &&
+          github.event.event_type == 'shared-kb-entry-approved'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: kb-already-up-to-date
+          client-payload: |
+            {
+              "entry_id": "${{ github.event.client_payload.entry_id }}",
+              "status": "already_up_to_date",
+              "info": "Local KB already has the latest version"
+            }

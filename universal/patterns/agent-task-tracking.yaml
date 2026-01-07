@@ -1,423 +1,356 @@
-# Agent Task Tracking Pattern
-# Using TodoWrite tool for task management in agent sessions
-
-version: "1.0"
-category: "agent-workflow"
-last_updated: "2026-01-06"
-
+version: '1.0'
+category: agent-workflow
+last_updated: '2026-01-06'
 patterns:
-  - id: "AGENT-TASK-TRACKING-001"
-    title: "Agent Task Tracking with TodoWrite Tool"
-    severity: "medium"
-    scope: "universal"
-    tags: ["agent", "task-management", "tracking", "workflow", "progress", "claude-code", "automation"]
-
-    problem: |
-      AI agents working on complex multi-step tasks need to:
-      - Track progress across multiple operations
-      - Maintain state during long-running sessions
-      - Provide visibility to users
-      - Resume work after interruptions
-      - Avoid duplicating completed work
-
-      **Without proper tracking:**
-      - Agent forgets which steps completed
-      - User doesn't know progress
-      - Work duplicated after session crash
-      - No clear finish line
-      - Difficult to troubleshoot failures
-
-    impact: |
-      - **User visibility:** No progress indication
-      - **Efficiency:** Work repeated or skipped
-      - **Debugging:** Hard to identify where process failed
-      - **Session recovery:** Cannot resume after crash
-      - **Trust:** User unsure if agent is working correctly
-
-    solution: |
-      **Use TodoWrite Tool for Task Tracking**
-
-      The TodoWrite tool provides structured task tracking:
-      - Add tasks with clear descriptions
-      - Update status (pending → in_progress → completed)
-      - Provide active form (current action) for each task
-      - Auto-loaded on session resume
-
-    best_practices:
-      - practice: "Create todo list at start"
-        when: "Beginning multi-step work"
-        benefit: "Clear roadmap for user and agent"
-
-      - practice: "One task in_progress at a time"
-        rule: "Only ONE task can be in_progress"
-        reason: "Forces sequential work, prevents confusion"
-
-      - practice: "Mark completed immediately"
-        timing: "As soon as task finishes"
-        benefit: "Real-time progress visibility"
-
-      - practice: "Use active form for current action"
-        format: "Verb-ing + noun (e.g., 'Creating file', 'Running tests')"
-        example: |
-          ❌ "task1" (unclear action)
-          ✅ "Creating pattern file" (clear active form)
-
-      - practice: "Break down complex tasks"
-        guideline: "Each task should be < 30 minutes"
-        example: |
-          ❌ "Fix all YAML errors" (too vague, too long)
-          ✅ "Validate YAML files" (specific, doable)
-
-    implementation:
-      step_1_plan:
-        action: "Create initial todo list"
-        when: "Before starting work"
-        example: |
-          TodoWrite({
-            "todos": [
-              {
-                "content": "Update base-instructions.yaml",
-                "status": "pending",
-                "activeForm": "Updating base-instructions.yaml"
-              },
-              {
-                "content": "Create AGENT-QUICK-START.md",
-                "status": "pending",
-                "activeForm": "Creating AGENT-QUICK-START.md"
-              }
-            ]
-          })
-
-      step_2_track:
-        action: "Update status as you work"
-        workflow: |
-          1. Mark first task as in_progress
-          2. Work on task
-          3. Mark as completed
-          4. Move to next task
-          5. Repeat until all done
-
-        example: |
-          # Start first task
-          TodoWrite({
-            "todos": [
-              {"content": "...", "status": "in_progress", ...},
-              {"content": "...", "status": "pending", ...}
-            ]
-          })
-
-          # Complete first task
-          TodoWrite({
-            "todos": [
-              {"content": "...", "status": "completed", ...},
-              {"content": "...", "status": "in_progress", ...}
-            ]
-          })
-
-      step_3_resume:
-        action: "Load existing todo list on resume"
-        when: "Session restarts after crash"
-        benefit: "Continue from where you left off"
-
-    real_world_examples:
-      example_1_agent_fix_implementation:
-        scenario: "Implementing agent fix plan (4 phases)"
-
-        initial_plan:
-          todos:
-            - content: "Update base-instructions.yaml with submodule_access rules"
-              status: "pending"
-              activeForm: "Updating agent instructions with submodule access rules"
-
-            - content: "Create AGENT-QUICK-START.md with correct workflow examples"
-              status: "pending"
-              activeForm: "Creating AGENT-QUICK-START.md"
-
-            - content: "Update GIT-SUBMODULE-001 with agent usage section"
-              status: "pending"
-              activeForm: "Updating GIT-SUBMODULE-001 pattern"
-
-            - content: "Update KB-UPDATE-001 with agent commands section"
-              status: "pending"
-              activeForm: "Updating KB-UPDATE-001 pattern"
-
-            - content: "Update README.md with 'For AI Agents' section"
-              status: "pending"
-              activeForm: "Updating README.md"
-
-            - content: "Test changes and validate all YAML files"
-              status: "pending"
-              activeForm: "Testing and validating changes"
-
-        session_crash:
-          event: "System crashed after task 3"
-          status: "Tasks 1-3 completed, 4-6 pending"
-
-        session_resume:
-          action: "Agent reads todo list from file"
-          recovery: "Continues with task 4 (no work repeated)"
-          benefit: "✅ No duplication, seamless recovery"
-
-        final_state:
-          all_tasks: "completed"
-          result: "All 6 tasks finished, plan implemented"
-
-        lesson: |
-          TodoWrite provides session continuity.
-          Crash doesn't lose progress.
-          User sees real-time status.
-
-      example_2_validation_workflow:
-        scenario: "Validating multiple YAML files"
-
-        workflow:
-          - step: "Create todo list with all files to validate"
-            todos:
-              - "Validate agent-direct-submodule-access.yaml"
-              - "Validate stale-context.yaml"
-              - "Validate submodule-status-interpretation.yaml"
-              - "Validate agent-handoff-failures.yaml"
-
-          - step: "Process each file sequentially"
-            tracking: |
-              Task 1: in_progress → validate → completed
-              Task 2: in_progress → validate → completed
-              Task 3: in_progress → validate → completed
-              Task 4: in_progress → validate → completed
-
-          - step: "Provide progress summary"
-            output: "✅ 4/4 files validated successfully"
-
-        user_benefit: |
-          User sees progress: "25% → 50% → 75% → 100%"
-          Knows exactly which file currently validating
-          Can see which files remain
-
-      example_3_complex_multi_step:
-        scenario: "Creating new pattern from chat analysis"
-
-        breakdown:
-          - task: "Analyze chat messages"
-            status: "completed"
-            output: "Identified 2 key issues"
-
-          - task: "Check for duplicate patterns"
-            status: "completed"
-            output: "No duplicates found"
-
-          - task: "Create pattern YAML file"
-            status: "in_progress"
-            action: "Writing pattern content..."
-
-          - task: "Validate YAML syntax"
-            status: "pending"
-
-          - task: "Rebuild KB index"
-            status: "pending"
-
-          - task: "Commit to git"
-            status: "pending"
-
-        progress_visibility: |
-          User sees: "2/6 completed (33%), currently: Creating pattern"
-          Clear indication of remaining work
-
-    code_example:
-      basic_usage: |
-        # Create todo list
-        TodoWrite({
-          "todos": [
-            {
-              "content": "Update file X",
-              "status": "pending",
-              "activeForm": "Updating file X"
-            },
-            {
-              "content": "Test functionality",
-              "status": "pending",
-              "activeForm": "Testing functionality"
-            }
-          ]
-        })
-
-        # Start first task
-        TodoWrite({
-          "todos": [
-            {"content": "Update file X", "status": "in_progress", "activeForm": "Updating file X"},
-            {"content": "Test functionality", "status": "pending", "activeForm": "Testing functionality"}
-          ]
-        })
-
-        # Complete first task, start second
-        TodoWrite({
-          "todos": [
-            {"content": "Update file X", "status": "completed", "activeForm": "Updating file X"},
-            {"content": "Test functionality", "status": "in_progress", "activeForm": "Testing functionality"}
-          ]
-        })
-
-        # All done
-        TodoWrite({
-          "todos": [
-            {"content": "Update file X", "status": "completed", "activeForm": "Updating file X"},
-            {"content": "Test functionality", "status": "completed", "activeForm": "Testing functionality"}
-          ]
-        })
-
-      dynamic_updates: |
-        # Good: Update status as you work
-        for i, file in enumerate(files):
-            # Mark current task in_progress
-            todos[i]["status"] = "in_progress"
-            TodoWrite({"todos": todos})
-
-            # Do the work
-            validate_file(file)
-
-            # Mark completed
-            todos[i]["status"] = "completed"
-            TodoWrite({"todos": todos})
-
-        # User sees progress after each file
-
-    anti_patterns:
-      - pattern: "Create all tasks as completed initially"
-        wrong: |
-          TodoWrite({
-            "todos": [
-              {"content": "...", "status": "completed"},  # ❌ Not done yet!
-              {"content": "...", "status": "completed"}   # ❌ Not done yet!
-            ]
-          })
-        consequence: "User sees false progress, trust lost"
-
-      - pattern: "Keep multiple tasks in_progress"
-        wrong: |
-          TodoWrite({
-            "todos": [
-              {"content": "...", "status": "in_progress"},
-              {"content": "...", "status": "in_progress"}  # ❌ Only one allowed!
-            ]
-          })
-        consequence: "Confusing, unclear what agent is doing"
-
-      - pattern: "Vague task descriptions"
-        wrong: |
-          {"content": "work", "status": "pending"}  # ❌ What work?
-        consequence: "User doesn't know what's happening"
-
-      - pattern: "No activeForm provided"
-        wrong: |
-          {"content": "Update file", "status": "in_progress"}  # Missing activeForm
-        consequence: 'Progress shows "Task 1" instead of "Updating file"'
-
-      - pattern: "Never mark tasks as completed"
-        wrong: "All tasks stay in pending/in_progress forever"
-        consequence: "User thinks agent is stuck, work appears incomplete"
-
-    troubleshooting:
-      issue_empty_todo_list:
-        symptom: "Todo list shows []"
-
-        causes:
-          - "First time using TodoWrite"
-          - "Previous session todo list cleared"
-          - "Todo list file corrupted"
-
-        solutions:
-          - "Create new todo list at session start"
-          - "Always include todos when starting complex work"
-
-      issue_status_mismatch:
-        symptom: "Task marked completed but not actually done"
-
-        prevention: |
-          - Only mark completed when truly finished
-          - Verify task completion before status update
-          - User can verify by checking actual work
-
-      issue_task_too_large:
-        symptom: "Task takes hours, user thinks agent stuck"
-
-        solution: |
-          Break into smaller sub-tasks:
-          ❌ "Implement authentication system"
-          ✅ "Create auth API endpoint"
-          ✅ "Add auth middleware"
-          ✅ "Write auth tests"
-
-    benefits:
-      for_agent:
-        - "Clear work plan"
-        - "Track own progress"
-        - "Resume after crash"
-        - "Avoid duplication"
-
-      for_user:
-        - "Real-time progress visibility"
-        - "Know what's happening"
-        - "Estimate completion time"
-        - "Verify work completion"
-
-      for_system:
-        - "Session continuity"
-        - "Crash recovery"
-        - "Audit trail"
-        - "Debugging aid"
-
-    verification:
-      user_visible:
-        - "Can see current task"
-        - "Can see remaining tasks"
-        - "Can see progress percentage"
-        - "Can verify completion"
-
-      agent_visible:
-        - "Knows what to do next"
-        - "Knows what's completed"
-        - "Can prioritize correctly"
-        - "Can report status"
-
-    integration:
-      with_other_tools: |
-        TodoWrite works with:
-        - Read tool (check file before task)
-        - Write tool (complete write → mark task done)
-        - Bash tool (run script → update status)
-        - Edit tool (make edit → mark task done)
-
-      workflow_example: |
-        for pattern in patterns:
-            # Task: in_progress
-            TodoWrite({todos: [...]})
-
-            # Read file
-            Read(pattern)
-
-            # Update file
-            Edit(pattern, ...)
-
-            # Validate
-            Bash("kb validate " + pattern)
-
-            # Task: completed
-            TodoWrite({todos: [...]})
-
-    related_patterns:
-      - AGENT-ACCOUNTABILITY-001 (Self-accountability)
-      - AGENT-WORKFLOW-001 (Workflow patterns)
-      - AGENT-AUTO-001 (Auto-configuration)
-
-    references:
-      - "Claude Code TodoWrite documentation"
-      - "Session analysis: Agent fix implementation (2026-01-06)"
-
-    metadata:
-      created_at: "2026-01-06"
-      author: "Shared KB Curator"
-      source: "Agent workflow optimization"
-      reusable: true
-      severity_level: 3
-      difficulty: "elementary"
-      pattern_type: "workflow"
-      applicable_to: ["ai-agents", "claude-code", "task-management"]
+- id: AGENT-TASK-TRACKING-001
+  title: Agent Task Tracking with TodoWrite Tool
+  severity: medium
+  scope: universal
+  tags:
+  - agent
+  - task-management
+  - tracking
+  - workflow
+  - progress
+  - claude-code
+  - automation
+  problem: 'AI agents working on complex multi-step tasks need to:
+
+    - Track progress across multiple operations
+
+    - Maintain state during long-running sessions
+
+    - Provide visibility to users
+
+    - Resume work after interruptions
+
+    - Avoid duplicating completed work
+
+
+    **Without proper tracking:**
+
+    - Agent forgets which steps completed
+
+    - User doesn''t know progress
+
+    - Work duplicated after session crash
+
+    - No clear finish line
+
+    - Difficult to troubleshoot failures
+
+    '
+  impact: '- **User visibility:** No progress indication
+
+    - **Efficiency:** Work repeated or skipped
+
+    - **Debugging:** Hard to identify where process failed
+
+    - **Session recovery:** Cannot resume after crash
+
+    - **Trust:** User unsure if agent is working correctly
+
+    '
+  solution: '**Use TodoWrite Tool for Task Tracking**
+
+
+    The TodoWrite tool provides structured task tracking:
+
+    - Add tasks with clear descriptions
+
+    - Update status (pending → in_progress → completed)
+
+    - Provide active form (current action) for each task
+
+    - Auto-loaded on session resume
+
+    '
+  best_practices:
+  - practice: Create todo list at start
+    when: Beginning multi-step work
+    benefit: Clear roadmap for user and agent
+  - practice: One task in_progress at a time
+    rule: Only ONE task can be in_progress
+    reason: Forces sequential work, prevents confusion
+  - practice: Mark completed immediately
+    timing: As soon as task finishes
+    benefit: Real-time progress visibility
+  - practice: Use active form for current action
+    format: Verb-ing + noun (e.g., 'Creating file', 'Running tests')
+    example: '❌ "task1" (unclear action)
+
+      ✅ "Creating pattern file" (clear active form)
+
+      '
+  - practice: Break down complex tasks
+    guideline: Each task should be < 30 minutes
+    example: '❌ "Fix all YAML errors" (too vague, too long)
+
+      ✅ "Validate YAML files" (specific, doable)
+
+      '
+  implementation:
+    step_1_plan:
+      action: Create initial todo list
+      when: Before starting work
+      example: "TodoWrite({\n  \"todos\": [\n    {\n      \"content\": \"Update base-instructions.yaml\"\
+        ,\n      \"status\": \"pending\",\n      \"activeForm\": \"Updating base-instructions.yaml\"\
+        \n    },\n    {\n      \"content\": \"Create AGENT-QUICK-START.md\",\n   \
+        \   \"status\": \"pending\",\n      \"activeForm\": \"Creating AGENT-QUICK-START.md\"\
+        \n    }\n  ]\n})\n"
+    step_2_track:
+      action: Update status as you work
+      workflow: '1. Mark first task as in_progress
+
+        2. Work on task
+
+        3. Mark as completed
+
+        4. Move to next task
+
+        5. Repeat until all done
+
+        '
+      example: "# Start first task\nTodoWrite({\n  \"todos\": [\n    {\"content\"\
+        : \"...\", \"status\": \"in_progress\", ...},\n    {\"content\": \"...\",\
+        \ \"status\": \"pending\", ...}\n  ]\n})\n\n# Complete first task\nTodoWrite({\n\
+        \  \"todos\": [\n    {\"content\": \"...\", \"status\": \"completed\", ...},\n\
+        \    {\"content\": \"...\", \"status\": \"in_progress\", ...}\n  ]\n})\n"
+    step_3_resume:
+      action: Load existing todo list on resume
+      when: Session restarts after crash
+      benefit: Continue from where you left off
+  real_world_examples:
+    example_1_agent_fix_implementation:
+      scenario: Implementing agent fix plan (4 phases)
+      initial_plan:
+        todos:
+        - content: Update base-instructions.yaml with submodule_access rules
+          status: pending
+          activeForm: Updating agent instructions with submodule access rules
+        - content: Create AGENT-QUICK-START.md with correct workflow examples
+          status: pending
+          activeForm: Creating AGENT-QUICK-START.md
+        - content: Update GIT-SUBMODULE-001 with agent usage section
+          status: pending
+          activeForm: Updating GIT-SUBMODULE-001 pattern
+        - content: Update KB-UPDATE-001 with agent commands section
+          status: pending
+          activeForm: Updating KB-UPDATE-001 pattern
+        - content: Update README.md with 'For AI Agents' section
+          status: pending
+          activeForm: Updating README.md
+        - content: Test changes and validate all YAML files
+          status: pending
+          activeForm: Testing and validating changes
+      session_crash:
+        event: System crashed after task 3
+        status: Tasks 1-3 completed, 4-6 pending
+      session_resume:
+        action: Agent reads todo list from file
+        recovery: Continues with task 4 (no work repeated)
+        benefit: ✅ No duplication, seamless recovery
+      final_state:
+        all_tasks: completed
+        result: All 6 tasks finished, plan implemented
+      lesson: 'TodoWrite provides session continuity.
+
+        Crash doesn''t lose progress.
+
+        User sees real-time status.
+
+        '
+    example_2_validation_workflow:
+      scenario: Validating multiple YAML files
+      workflow:
+      - step: Create todo list with all files to validate
+        todos:
+        - Validate agent-direct-submodule-access.yaml
+        - Validate stale-context.yaml
+        - Validate submodule-status-interpretation.yaml
+        - Validate agent-handoff-failures.yaml
+      - step: Process each file sequentially
+        tracking: 'Task 1: in_progress → validate → completed
+
+          Task 2: in_progress → validate → completed
+
+          Task 3: in_progress → validate → completed
+
+          Task 4: in_progress → validate → completed
+
+          '
+      - step: Provide progress summary
+        output: ✅ 4/4 files validated successfully
+      user_benefit: 'User sees progress: "25% → 50% → 75% → 100%"
+
+        Knows exactly which file currently validating
+
+        Can see which files remain
+
+        '
+    example_3_complex_multi_step:
+      scenario: Creating new pattern from chat analysis
+      breakdown:
+      - task: Analyze chat messages
+        status: completed
+        output: Identified 2 key issues
+      - task: Check for duplicate patterns
+        status: completed
+        output: No duplicates found
+      - task: Create pattern YAML file
+        status: in_progress
+        action: Writing pattern content...
+      - task: Validate YAML syntax
+        status: pending
+      - task: Rebuild KB index
+        status: pending
+      - task: Commit to git
+        status: pending
+      progress_visibility: 'User sees: "2/6 completed (33%), currently: Creating pattern"
+
+        Clear indication of remaining work
+
+        '
+  code_example:
+    basic_usage: "# Create todo list\nTodoWrite({\n  \"todos\": [\n    {\n      \"\
+      content\": \"Update file X\",\n      \"status\": \"pending\",\n      \"activeForm\"\
+      : \"Updating file X\"\n    },\n    {\n      \"content\": \"Test functionality\"\
+      ,\n      \"status\": \"pending\",\n      \"activeForm\": \"Testing functionality\"\
+      \n    }\n  ]\n})\n\n# Start first task\nTodoWrite({\n  \"todos\": [\n    {\"\
+      content\": \"Update file X\", \"status\": \"in_progress\", \"activeForm\": \"\
+      Updating file X\"},\n    {\"content\": \"Test functionality\", \"status\": \"\
+      pending\", \"activeForm\": \"Testing functionality\"}\n  ]\n})\n\n# Complete\
+      \ first task, start second\nTodoWrite({\n  \"todos\": [\n    {\"content\": \"\
+      Update file X\", \"status\": \"completed\", \"activeForm\": \"Updating file\
+      \ X\"},\n    {\"content\": \"Test functionality\", \"status\": \"in_progress\"\
+      , \"activeForm\": \"Testing functionality\"}\n  ]\n})\n\n# All done\nTodoWrite({\n\
+      \  \"todos\": [\n    {\"content\": \"Update file X\", \"status\": \"completed\"\
+      , \"activeForm\": \"Updating file X\"},\n    {\"content\": \"Test functionality\"\
+      , \"status\": \"completed\", \"activeForm\": \"Testing functionality\"}\n  ]\n\
+      })\n"
+    dynamic_updates: "# Good: Update status as you work\nfor i, file in enumerate(files):\n\
+      \    # Mark current task in_progress\n    todos[i][\"status\"] = \"in_progress\"\
+      \n    TodoWrite({\"todos\": todos})\n\n    # Do the work\n    validate_file(file)\n\
+      \n    # Mark completed\n    todos[i][\"status\"] = \"completed\"\n    TodoWrite({\"\
+      todos\": todos})\n\n# User sees progress after each file\n"
+  anti_patterns:
+  - pattern: Create all tasks as completed initially
+    wrong: "TodoWrite({\n  \"todos\": [\n    {\"content\": \"...\", \"status\": \"\
+      completed\"},  # ❌ Not done yet!\n    {\"content\": \"...\", \"status\": \"\
+      completed\"}   # ❌ Not done yet!\n  ]\n})\n"
+    consequence: User sees false progress, trust lost
+  - pattern: Keep multiple tasks in_progress
+    wrong: "TodoWrite({\n  \"todos\": [\n    {\"content\": \"...\", \"status\": \"\
+      in_progress\"},\n    {\"content\": \"...\", \"status\": \"in_progress\"}  #\
+      \ ❌ Only one allowed!\n  ]\n})\n"
+    consequence: Confusing, unclear what agent is doing
+  - pattern: Vague task descriptions
+    wrong: '{"content": "work", "status": "pending"}  # ❌ What work?
+
+      '
+    consequence: User doesn't know what's happening
+  - pattern: No activeForm provided
+    wrong: '{"content": "Update file", "status": "in_progress"}  # Missing activeForm
+
+      '
+    consequence: Progress shows "Task 1" instead of "Updating file"
+  - pattern: Never mark tasks as completed
+    wrong: All tasks stay in pending/in_progress forever
+    consequence: User thinks agent is stuck, work appears incomplete
+  troubleshooting:
+    issue_empty_todo_list:
+      symptom: Todo list shows []
+      causes:
+      - First time using TodoWrite
+      - Previous session todo list cleared
+      - Todo list file corrupted
+      solutions:
+      - Create new todo list at session start
+      - Always include todos when starting complex work
+    issue_status_mismatch:
+      symptom: Task marked completed but not actually done
+      prevention: '- Only mark completed when truly finished
+
+        - Verify task completion before status update
+
+        - User can verify by checking actual work
+
+        '
+    issue_task_too_large:
+      symptom: Task takes hours, user thinks agent stuck
+      solution: 'Break into smaller sub-tasks:
+
+        ❌ "Implement authentication system"
+
+        ✅ "Create auth API endpoint"
+
+        ✅ "Add auth middleware"
+
+        ✅ "Write auth tests"
+
+        '
+  benefits:
+    for_agent:
+    - Clear work plan
+    - Track own progress
+    - Resume after crash
+    - Avoid duplication
+    for_user:
+    - Real-time progress visibility
+    - Know what's happening
+    - Estimate completion time
+    - Verify work completion
+    for_system:
+    - Session continuity
+    - Crash recovery
+    - Audit trail
+    - Debugging aid
+  verification:
+    user_visible:
+    - Can see current task
+    - Can see remaining tasks
+    - Can see progress percentage
+    - Can verify completion
+    agent_visible:
+    - Knows what to do next
+    - Knows what's completed
+    - Can prioritize correctly
+    - Can report status
+  integration:
+    with_other_tools: 'TodoWrite works with:
+
+      - Read tool (check file before task)
+
+      - Write tool (complete write → mark task done)
+
+      - Bash tool (run script → update status)
+
+      - Edit tool (make edit → mark task done)
+
+      '
+    workflow_example: "for pattern in patterns:\n    # Task: in_progress\n    TodoWrite({todos:\
+      \ [...]})\n\n    # Read file\n    Read(pattern)\n\n    # Update file\n    Edit(pattern,\
+      \ ...)\n\n    # Validate\n    Bash(\"kb validate \" + pattern)\n\n    # Task:\
+      \ completed\n    TodoWrite({todos: [...]})\n"
+  related_patterns:
+  - AGENT-ACCOUNTABILITY-001 (Self-accountability)
+  - AGENT-WORKFLOW-001 (Workflow patterns)
+  - AGENT-AUTO-001 (Auto-configuration)
+  references:
+  - Claude Code TodoWrite documentation
+  - 'Session analysis: Agent fix implementation (2026-01-06)'
+  metadata:
+    created_at: '2026-01-06'
+    author: Shared KB Curator
+    source: Agent workflow optimization
+    reusable: true
+    severity_level: 3
+    difficulty: elementary
+    pattern_type: workflow
+    applicable_to:
+    - ai-agents
+    - claude-code
+    - task-management
+  domains:
+    primary: asyncio
+    secondary: []

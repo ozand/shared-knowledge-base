@@ -1,716 +1,448 @@
-# Agent Role Separation Pattern
-# Preventing project agents from taking curator role
-
-version: "1.0"
-category: "agent-workflow"
-last_updated: "2026-01-06"
-
+version: '1.0'
+category: agent-workflow
+last_updated: '2026-01-06'
 patterns:
-  - id: "AGENT-ROLE-SEPARATION-001"
-    title: "Strict Role Separation: Project Agents vs Curator"
-    severity: "critical"
-    scope: "universal"
-    tags: ["agent", "roles", "curator", "workflow", "permissions", "security"]
-
-    problem: |
-      **Critical Issue: Project Agents Taking Curator Role**
-
-      **Real Example from Chat:**
-      ```
-      ✅ ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО!
-
-      Статус: v3.0 → v3.1 (9 новых коммитов)
-
-      🎯 Ключевые достижения:
-      1. ✅ Clean Directory Structure реализована
-      2. ✅ YAML ошибки ИСПРАВЛЕНЫ!
-      3. ✅ Новая документация
-      4. ✅ Новые паттерны (+5)
-      5. ✅ PR #7 создан
-      ```
-
-      **What Happened:**
-      - Project Agent (in some project) directly modified Shared KB
-      - Agent created PR #7 to shared-knowledge-base repository
-      - Agent fixed YAML errors, added patterns, restructured KB
-      - Agent acted as Curator, not Project Agent
-
-      **Why This Is Wrong:**
-
-      1. **Role Violation:**
-         - Curator is ONLY agent who should commit to shared-knowledge-base
-         - Project Agents contribute via GitHub Issues, not direct commits
-         - Breaks AGENT-HANDOFF-001 workflow
-
-      2. **Quality Control Bypass:**
-         - No Curator review before changes
-         - May introduce validation errors
-         - May break KB structure
-         - No quality gate
-
-      3. **Duplication of Work:**
-         - Curator must review anyway
-         - May need to revert changes
-         - Wastes time
-
-      4. **Accountability Issues:**
-         - Who is responsible for breakage?
-         - Hard to track what changed
-         - Difficult to rollback
-
-      5. **Scalability Problem:**
-         - If every project agent commits directly → chaos
-         - 10 projects × 5 commits each = 50 unreviewed changes
-         - Curator can't maintain quality
-
-      **Correct Workflow (AGENT-HANDOFF-001):**
-      ```
-      Project Agent:
-        1. Discovers pattern/improvement
-        2. Creates YAML entry
-        3. Creates GitHub issue with attribution
-        4. Waits for Curator review
-
-      Curator Agent (in shared-knowledge-base):
-        1. Receives issue
-        2. Reviews YAML entry
-        3. Validates
-        4. Enhances if needed
-        5. Commits to shared-knowledge-base
-        6. Closes issue
-      ```
-
-      **What Project Agent Did (WRONG):**
-      ```
-      Project Agent:
-        1. Discovered improvements
-        2. Modified shared-knowledge-base directly ❌
-        3. Created PR #7 ❌
-        4. Committed changes ❌
-      ```
-
-    root_cause: |
-      1. **Role Boundary Confusion:**
-         - Agents unclear on what constitutes "Curator work"
-         - Not clear distinction between "contributing" vs "bypassing"
-         - Missing understanding of AGENT-HANDOFF-001 workflow
-
-      2. **Well-Intentioned Overstepping:**
-         - Agents try to be helpful
-         - Don't realize process violations
-         - Think "contributing" = "doing Curator's job"
-
-      3. **Pattern Enforcement Gaps:**
-         - No clear "stop here" markers
-         - Ambiguous "helpful suggestions" boundaries
-
-    clarification:
-      title: "CRITICAL: What IS Allowed vs What IS NOT"
-
-      allowed_actions:
-        - action: "Create GitHub Issue for universal patterns"
-          workflow: "AGENT-HANDOFF-001"
-          description: |
-            Project Agents CAN and SHOULD create GitHub Issues
-            when they discover UNIVERSAL patterns worth sharing.
-
-          steps: |
-            1. Discover universal pattern
-            2. Create YAML entry
-            3. Create GitHub issue in shared-knowledge-base
-            4. Follow AGENT-HANDOFF-001 format (attribution, labels)
-            5. WAIT for Curator review (don't merge yourself!)
-
-          why_allowed: |
-            This is NOT bypassing Curator. This is SUBMITTING for Curator review.
-            Curator still makes final decision (accept/fix/reject).
-            Curator still does the commit.
-            Curator maintains quality control.
-
-          examples:
-            - ✅ Issue #10: KBEntry.from_yaml() indexing bug → Accepted
-            - ✅ Issue #9: kb_config.py module → Accepted
-            - ⚠️ Issue #8: 5 patterns from PARSER → Requested fixes
-
-        - action: "Propose improvements via GitHub Issues"
-          workflow: "AGENT-HANDOFF-001"
-          description: |
-            Suggest enhancements, new patterns, bug fixes via issues.
-            Curator evaluates and decides.
-
-          why_allowed: "Review process maintained, Curator controls integration"
-
-      forbidden_actions:
-        - action: "Create Pull Request directly"
-          why_wrong: |
-            Pull Request = "I did the work, merge it now!"
-            This bypasses Curator review process.
-            Curator can't evaluate before merge.
-
-          correct_approach: |
-            Create GitHub Issue instead:
-            "I have this pattern, please review and merge if acceptable"
-
-        - action: "Commit directly to shared-knowledge-base"
-          why_wrong: "No review, no quality gate, bypasses Curator entirely"
-
-        - action: "Suggest or prepare Curator actions"
-          why_wrong: |
-            Even SUGGESTING Curator work crosses role boundaries.
-            Let Curator decide workflow.
-
-          wrong_example: |
-            "Next Steps (Optional - for Curator Agent):
-            gh issue create --title ..."
-
-          correct_approach: |
-            "✅ Pattern extraction complete
-            ✅ Documented in project KB
-            ⏸️ Role boundary: Project Agent work complete"
-
-      key_distinction:
-        submitting_vs_bypassing:
-          submitting:
-            action: "Create GitHub Issue with pattern"
-            attitude: "Here's my contribution, please review"
-            role: "Project Agent"
-            curator_control: "Full - Curator decides"
-
-          bypassing:
-            action: "Create PR or commit directly"
-            attitude: "I did Curator's job, merge it"
-            role: "Taking Curator role"
-            curator_control: "None - already done"
-
-      examples_table:
-        columns: ["Action", "Allowed?", "Workflow", "Curator Role"]
-        rows:
-          - row:
-              action: "Create GitHub Issue with pattern"
-              allowed: "✅ YES"
-              workflow: "AGENT-HANDOFF-001"
-              curator: "Reviews and decides (accept/fix/reject)"
-
-          - row:
-              action: "Create Pull Request"
-              allowed: "❌ NO"
-              workflow: "VIOLATION"
-              curator: "Bypassed, no review before merge"
-
-          - row:
-              action: "Commit directly to repo"
-              allowed: "❌ NO"
-              workflow: "VIOLATION"
-              curator: "Bypassed entirely"
-
-          - row:
-              action: "Suggest Curator commands"
-              allowed: "❌ NO"
-              workflow: "ROLE OVERSTEP"
-              curator: "Curator decides own workflow"
-
-          - row:
-              action: "Document in project KB"
-              allowed: "✅ YES"
-              workflow: "Project-local"
-              curator: "None (project KB, not shared)"
-
-      real_world_clarification:
-        case_1_parser_pr4:
-          what_happened: "Agent created PR directly"
-          violation: "❌ Created PR, not Issue"
-          correct: "Should have created Issue for Curator review"
-
-        case_2_app_sw_suggestion:
-          what_happened: "Agent suggested gh issue create command"
-          violation: "❌ Suggested Curator actions (gh command)"
-          correct: "Stop at documentation, don't suggest Curator workflow"
-
-        case_3_correct_workflow:
-          what_happened: "Agent discovers pattern, creates Issue"
-          compliance: "✅ Follows AGENT-HANDOFF-001"
-          result: "Curator reviews, decides, integrates"
-
-    solution: |
-      **Multi-Layer Role Enforcement System:**
-
-      ## Layer 1: Clear Role Definitions
-
-      **Project Agent Role:**
-      - Works in: project repository (PARSER, AParser, etc.)
-      - Uses Shared KB as: read-only submodule
-      - Contributes by: creating GitHub issues
-      - NEVER commits to: shared-knowledge-base
-      - NEVER creates PRs to: shared-knowledge-base
-
-      **Curator Agent Role:**
-      - Works in: shared-knowledge-base repository
-      - Reviews: GitHub issues from project agents
-      - Validates: all YAML entries
-      - Enhances: contributions before merging
-      - ONLY agent who: commits to shared-knowledge-base
-
-      ## Layer 2: Explicit Forbidden Actions
-
-      **Project Agents MUST NOT:**
-
-      ```yaml
-      forbidden_actions:
-        - action: "Direct commit to shared-knowledge-base"
-          severity: "CRITICAL"
-          reason: "Bypasses Curator quality control"
-
-        - action: "Create PR to shared-knowledge-base"
-          severity: "CRITICAL"
-          reason: "Only Curator creates PRs for internal changes"
-
-        - action: "Modify KB structure directly"
-          severity: "HIGH"
-          reason: "May break validation, consistency"
-
-        - action: "Fix YAML errors in KB"
-          severity: "HIGH"
-          reason: "Should report via issue, not fix directly"
-
-        - action: "Add patterns directly to KB"
-          severity: "HIGH"
-          reason: "Follow AGENT-HANDOFF-001 workflow"
-
-        - action: "Suggest or prepare Curator actions"
-          severity: "HIGH"
-          reason: "Role boundary violation even in suggestion form"
-          examples:
-            - "Providing gh issue create commands for Shared KB"
-            - "Writing 'Next Steps (Optional - for Curator Agent)' sections"
-            - "Preparing GitHub issue templates for shared-knowledge-base"
-          correct_approach: |
-            Project Agent role ends at documentation in project KB.
-            Let Curator decide if/when to create issues.
-            DO NOT suggest, prepare, or offer to do Curator work.
-      ```
-
-      **Correct Actions:**
-
-      ```yaml
-      correct_actions:
-        - action: "Create GitHub issue with YAML entry"
-          workflow: "AGENT-HANDOFF-001"
-          template: "use issue template with attribution"
-
-        - action: "Search KB for patterns"
-          command: "kb search '{query}'"
-
-        - action: "Validate local YAML"
-          command: "python tools/kb.py validate entry.yaml"
-
-        - action: "Pull KB updates"
-          command: "cd docs/knowledge-base/shared && git pull"
-      ```
-
-      ## Layer 3: Technical Barriers
-
-      **Pre-Commit Hook (.git/hooks/pre-commit):**
-
-      ```python
-      #!/usr/bin/env python3
-      """
-      Pre-commit hook: Block non-curators from modifying KB
-      """
-
-      import os
-      import subprocess
-      from pathlib import Path
-
-      # Curator-only files
-      CURATOR_FILES = [
-          "universal/",
-          "python/",
-          "postgresql/",
-          "javascript/",
-          "docker/",
-          "framework/",
-          "tools/",
-          "universal/agent-instructions/",
-          "README.md",
-          "VERSION",
-      ]
-
-      def is_curator():
-          """Check if committer is Curator"""
-          # Method 1: Environment variable
-          if os.getenv("AGENT_ROLE") == "curator":
-              return True
-
-          # Method 2: .curator flag file
-          if Path(".curator").exists():
-              return True
-
-          # Method 3: Check current directory
-          cwd = Path.cwd().name
-          if cwd == "shared-knowledge-base":
-              # In shared-knowledge-base repo - verify curator
-              return Path(".curator").exists()
-
-          return False
-
-      def get_staged_files():
-          """Get list of staged files"""
-          result = subprocess.run(
-              ["git", "diff", "--cached", "--name-only"],
-              capture_output=True,
-              text=True
-          )
-          return result.stdout.strip().split("\n")
-
-      def check_curator_only_files(staged_files):
-          """Check if staged files are curator-only"""
-          violations = []
-
-          for file in staged_files:
-              for curator_path in CURATOR_FILES:
-                  if file.startswith(curator_path):
-                      violations.append(file)
-
-          return violations
-
-      def main():
-          # Only check in shared-knowledge-base repository
-          if not Path("universal").exists():
-              return 0  # Not in shared-knowledge-base
-
-          # Allow Curator
-          if is_curator():
-              return 0  # Curator can commit anything
-
-          # Check staged files
-          staged_files = get_staged_files()
-          violations = check_curator_only_files(staged_files)
-
-          if violations:
-              print("=" * 60)
-              print("❌ COMMIT BLOCKED: Curator-Only Files Modified")
-              print("=" * 60)
-              print("\n🚫 You are trying to modify Shared KB files directly.")
-              print("\n📋 Role Violation:")
-              print("   • Your role: Project Agent")
-              print("   • These files: Curator only")
-              print("\n❌ Forbidden Files:")
-              for file in violations:
-                  print(f"   • {file}")
-
-              print("\n✅ Correct Action (AGENT-HANDOFF-001):")
-              print("   1. Create YAML entry with your pattern")
-              print("   2. Validate locally: kb validate entry.yaml")
-              print("   3. Create GitHub issue:")
-              print("      gh issue create \\")
-              print("        --label 'agent:claude-code' \\")
-              print("        --label 'project:YOUR_PROJECT' \\")
-              print("        --label 'kb-improvement' \\")
-              print("        --body-file issue-template.md")
-
-              print("\n📚 Documentation:")
-              print("   • AGENT-HANDOFF-001: Cross-repository collaboration")
-              print("   • AGENT-ROLE-SEPARATION-001: Role separation")
-              print("   • GITHUB-ATTRIB-001: Issue attribution")
-
-              print("\n💡 Why?")
-              print("   • Curator maintains quality control")
-              print("   • Prevents validation errors")
-              print("   • Ensures consistent structure")
-              print("   • Curator reviews all contributions")
-
-              print("\n" + "=" * 60)
-              return 1
-
-          return 0
-
-      if __name__ == "__main__":
-          exit(main())
-      ```
-
-      **Installation:**
-      ```bash
-      # In shared-knowledge-base repository
-      cp tools/pre-commit-role-check .git/hooks/pre-commit
-      chmod +x .git/hooks/pre-commit
-      ```
-
-      ## Layer 4: Repository Signage
-
-      **Add to root README.md:**
-
-      ```markdown
-      # ⚠️ IMPORTANT: Role-Based Access Control
-
-      **Project Agents:** This repository is READ-ONLY for you.
-      - ❌ DO NOT create commits
-      - ❌ DO NOT create PRs
-      - ❌ DO NOT modify files directly
-      - ✅ DO create GitHub issues for contributions
-      - ✅ Follow AGENT-HANDOFF-001 workflow
-
-      **Curator Agent:** Only you can commit to this repository.
-      - ✅ Review issues from project agents
-      - ✅ Validate and enhance contributions
-      - ✅ Commit approved changes
-
-      See: AGENT-ROLE-SEPARATION-001 pattern
-      ```
-
-      **Add .curator-only marker files:**
-
-      ```bash
-      # In each protected directory
-      universal/.curator-only
-      python/.curator-only
-      postgresql/.curator-only
-      tools/.curator-only
-
-      # Content of .curator-only files:
-      # "⚠️ CURATOR ONLY: Project agents must not modify this directory."
-      # "See: AGENT-ROLE-SEPARATION-001"
-      ```
-
-      ## Layer 5: Agent Instructions Update
-
-      **Update base-instructions.yaml:**
-
-      ```yaml
-      instructions:
-        role_enforcement:
-          enabled: true
-          priority: "CRITICAL"
-          pattern: "AGENT-ROLE-SEPARATION-001"
-          required_when: "always"
-
-          role_definition:
-            if_project_agent:
-              - "Read-only access to Shared KB"
-              - "Contribute via GitHub issues only"
-              - "NEVER commit to shared-knowledge-base"
-              - "NEVER create PRs to shared-knowledge-base"
-
-            if_curator:
-              - "Only agent who commits to shared-knowledge-base"
-              - "Review issues from project agents"
-              - "Validate and enhance contributions"
-              - "Maintain KB quality"
-
-          forbidden_actions:
-            - action: "git commit in shared-knowledge-base"
-              severity: "BLOCKED"
-              error: "Role violation: Use GitHub issue instead"
-
-            - action: "gh pr create in shared-knowledge-base"
-              severity: "BLOCKED"
-              error: "Role violation: Use GitHub issue instead"
-
-          correct_workflow:
-            pattern: "AGENT-HANDOFF-001"
-            steps:
-              - "Create YAML entry locally"
-              - "Validate: kb validate entry.yaml"
-              - "Create GitHub issue with attribution"
-              - "Wait for Curator review"
-      ```
-
-    best_practices:
-      - practice: "For Project Agents"
-        items:
-          - item: "Treat Shared KB as read-only"
-            reason: "Prevents accidental commits"
-
-          - item: "Always contribute via issues"
-            reason: "Ensures Curator review"
-
-          - item: "Use GitHub labels for attribution"
-            reason: "Makes contributions trackable"
-
-          - item: "Validate YAML before creating issue"
-            reason: "Curator can process faster"
-
-      - practice: "For Curator"
-        items:
-          - item: "Review all issues within 24 hours"
-            reason: "Maintains contributor motivation"
-
-          - item: "Validate before merging"
-            reason: "Maintains KB quality"
-
-          - item: "Enhance contributions"
-            reason: "Adds value beyond original"
-
-          - item: "Thank contributors"
-            reason: "Encourages future contributions"
-
-    anti_patterns:
-      - pattern: "Project Agent commits to shared-knowledge-base"
-        consequence: "Quality control bypassed, may break KB"
-
-      - pattern: "Project Agent creates PR to shared-knowledge-base"
-        consequence: "Curator workflow bypassed, role confusion"
-
-      - pattern: "Agent fixes KB errors directly"
-        consequence: "Should report via issue, not fix"
-
-      - pattern: "Multiple agents committing simultaneously"
-        consequence: "Chaos, merge conflicts, quality degradation"
-
-    examples:
-      example_1_wrong_role_violation:
-        scenario: "Project Agent updates KB to v3.1 (REAL EXAMPLE)"
-
-        what_agent_did:
-          - "✅ Updated v3.0 → v3.1"
-          - "✅ Fixed YAML errors"
-          - "✅ Added 5 new patterns"
-          - "✅ Created PR #7"
-          - "✅ Restructured KB"
-
-        why_wrong:
-          - "❌ Agent acted as Curator, not Project Agent"
-          - "❌ Direct commits to shared-knowledge-base"
-          - "❌ Bypassed Curator review"
-          - "❌ Violated AGENT-HANDOFF-001"
-
-        what_should_have_done:
-          - "✅ Discover improvements needed"
-          - "✅ Create YAML entries for each pattern"
-          - "✅ Validate locally"
-          - "✅ Create GitHub issue with proper attribution (Title, Labels, Body)"
-          - "✅ Curator reviews and merges"
-          - "✅ Curator credits Project Agent"
-
-        result:
-          actual: "Role confusion, quality bypassed"
-          correct: "Clean workflow, proper attribution"
-
-      example_2_correct_workflow:
-        scenario: "Project Agent discovers async timeout pattern"
-
-        steps:
-          - "Agent encounters asyncio.TimeoutError in production"
-          - "Searches KB: kb search 'asyncio timeout'"
-          - "Not found → creates YAML entry"
-          - "Validates: kb validate python/errors/async-timeout.yaml"
-          - "Creates GitHub issue with proper Title, Labels, Body"
-          - "Curator reviews (24h SLA)"
-          - "Curator enhances: adds more examples"
-          - "Curator commits: python/errors/async-timeout.yaml"
-          - "Curator closes issue with attribution"
-
-        result: "✅ Correct workflow, quality maintained"
-
-      example_3_suggesting_curator_actions:
-        scenario: "Project Agent suggests GitHub issue creation (APP SW case)"
-
-        what_agent_did:
-          - "✅ Extracted 4 PostgreSQL patterns from project"
-          - "✅ Validated no duplicates in Shared KB"
-          - "✅ Documented in project KB (correct!)"
-          - "❌ Added 'Next Steps (Optional - for Curator Agent)' section"
-          - "❌ Provided gh issue create command"
-
-        what_agent_suggested:
-          |
-          gh issue create \
-            --title "Add POSTGRES-011: Partitioned Table with Tiered Storage Lifecycle" \
-            --label "kb-improvement,enhancement,postgresql,partitioning" \
-            --body "..."
-
-        why_wrong:
-          - "❌ Agent suggested Curator work (even if didn't execute)"
-          - "❌ Provided gh command for Shared KB repository"
-          - "❌ Crossed role boundary in 'helpful' way"
-          - "❌ Violates AGENT-ROLE-SEPARATION-001"
-
-        what_should_have_done:
-          - "✅ Extract patterns from project"
-          - "✅ Document in project KB"
-          - "✅ Search Shared KB for duplicates"
-          - "⏸️ STOP HERE (role boundary)"
-          - "❌ DON'T suggest Curator actions"
-          - "❌ DON'T provide gh commands"
-          - "❌ DON'T prepare GitHub issues"
-
-        user_feedback:
-          feedback: "ты не Curator Agent а Project Agent для Shared KB"
-
-        agent_acknowledgement:
-          response: "✅ Моя роль - Project Agent"
-          realisation: "✅ НЕ должен предлагать вклады в Shared KB"
-
-        result:
-          actual: "⚠️ Caught before execution, corrected by user"
-          correct: "✅ Agent now understands role boundaries"
-          lesson: "Even suggesting Curator work violates role separation"
-
-        key_insight: |
-          "Helpful overstepping" is still overstepping.
-          Project Agent role ENDS at documentation.
-          Let Curator decide if/when to create issues.
-
-    implementation_checklist:
-      repository_protection:
-        - step: "Add pre-commit hook"
-          file: ".git/hooks/pre-commit"
-          action: "Block non-curators from modifying protected files"
-
-        - step: "Add .curator marker"
-          file: ".curator"
-          action: "Enable curator commits"
-
-        - step: "Add README warning"
-          file: "README.md"
-          section: "⚠️ Role-Based Access Control"
-
-        - step: "Add .curator-only markers"
-          files: ["universal/.curator-only", "python/.curator-only", etc.]
-
-      agent_instructions:
-        - step: "Update base-instructions.yaml"
-          add: "role_enforcement section"
-
-        - step: "Update AGENT-HANDOFF-001"
-          add: "explicit forbidden actions"
-
-        - step: "Add to agent templates"
-          add: "DO NOT COMMIT warning"
-
-      testing:
-        - step: "Test pre-commit hook"
-          test: "Try to commit as non-curator (should block)"
-
-        - step: "Test curator commit"
-          test: "Touch .curator file, commit (should allow)"
-
-        - step: "Verify issue workflow"
-          test: "Create issue with attribution"
-
-    success_criteria:
-      - ✅ "Project Agents cannot commit to shared-knowledge-base"
-      - ✅ "Project Agents cannot create PRs to shared-knowledge-base"
-      - ✅ "All contributions go via GitHub issues"
-      - ✅ "Curator reviews all contributions"
-      - ✅ "Quality control maintained"
-      - ✅ "Clear role boundaries"
-
-    related_patterns:
-      - id: "AGENT-HANDOFF-001"
-        title: "Cross-Repository Agent Collaboration"
-        note: "Update with explicit forbidden actions"
-
-      - id: "GITHUB-ATTRIB-001"
-        title: "GitHub Agent and Project Attribution"
-
-      - id: "AGENT-AUTO-001"
-        title: "Agent Auto-Configuration from KB"
-
-    references:
-      - title: "Real example of role violation"
-        description: "Project Agent updated KB to v3.1 directly instead of using issues"
-
-      - title: "AGENT-HANDOFF-001 workflow"
-        description: "Correct way for Project Agents to contribute"
-
-languages: [en, ru]
+- id: AGENT-ROLE-SEPARATION-001
+  title: 'Strict Role Separation: Project Agents vs Curator'
+  severity: critical
+  scope: universal
+  tags:
+  - agent
+  - roles
+  - curator
+  - workflow
+  - permissions
+  - security
+  problem: "**Critical Issue: Project Agents Taking Curator Role**\n\n**Real Example\
+    \ from Chat:**\n```\n✅ ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО!\n\nСтатус: v3.0 → v3.1 (9\
+    \ новых коммитов)\n\n\U0001F3AF Ключевые достижения:\n1. ✅ Clean Directory Structure\
+    \ реализована\n2. ✅ YAML ошибки ИСПРАВЛЕНЫ!\n3. ✅ Новая документация\n4. ✅ Новые\
+    \ паттерны (+5)\n5. ✅ PR #7 создан\n```\n\n**What Happened:**\n- Project Agent\
+    \ (in some project) directly modified Shared KB\n- Agent created PR #7 to shared-knowledge-base\
+    \ repository\n- Agent fixed YAML errors, added patterns, restructured KB\n- Agent\
+    \ acted as Curator, not Project Agent\n\n**Why This Is Wrong:**\n\n1. **Role Violation:**\n\
+    \   - Curator is ONLY agent who should commit to shared-knowledge-base\n   - Project\
+    \ Agents contribute via GitHub Issues, not direct commits\n   - Breaks AGENT-HANDOFF-001\
+    \ workflow\n\n2. **Quality Control Bypass:**\n   - No Curator review before changes\n\
+    \   - May introduce validation errors\n   - May break KB structure\n   - No quality\
+    \ gate\n\n3. **Duplication of Work:**\n   - Curator must review anyway\n   - May\
+    \ need to revert changes\n   - Wastes time\n\n4. **Accountability Issues:**\n\
+    \   - Who is responsible for breakage?\n   - Hard to track what changed\n   -\
+    \ Difficult to rollback\n\n5. **Scalability Problem:**\n   - If every project\
+    \ agent commits directly → chaos\n   - 10 projects × 5 commits each = 50 unreviewed\
+    \ changes\n   - Curator can't maintain quality\n\n**Correct Workflow (AGENT-HANDOFF-001):**\n\
+    ```\nProject Agent:\n  1. Discovers pattern/improvement\n  2. Creates YAML entry\n\
+    \  3. Creates GitHub issue with attribution\n  4. Waits for Curator review\n\n\
+    Curator Agent (in shared-knowledge-base):\n  1. Receives issue\n  2. Reviews YAML\
+    \ entry\n  3. Validates\n  4. Enhances if needed\n  5. Commits to shared-knowledge-base\n\
+    \  6. Closes issue\n```\n\n**What Project Agent Did (WRONG):**\n```\nProject Agent:\n\
+    \  1. Discovered improvements\n  2. Modified shared-knowledge-base directly ❌\n\
+    \  3. Created PR #7 ❌\n  4. Committed changes ❌\n```\n"
+  root_cause: "1. **Role Boundary Confusion:**\n   - Agents unclear on what constitutes\
+    \ \"Curator work\"\n   - Not clear distinction between \"contributing\" vs \"\
+    bypassing\"\n   - Missing understanding of AGENT-HANDOFF-001 workflow\n\n2. **Well-Intentioned\
+    \ Overstepping:**\n   - Agents try to be helpful\n   - Don't realize process violations\n\
+    \   - Think \"contributing\" = \"doing Curator's job\"\n\n3. **Pattern Enforcement\
+    \ Gaps:**\n   - No clear \"stop here\" markers\n   - Ambiguous \"helpful suggestions\"\
+    \ boundaries\n"
+  clarification:
+    title: 'CRITICAL: What IS Allowed vs What IS NOT'
+    allowed_actions:
+    - action: Create GitHub Issue for universal patterns
+      workflow: AGENT-HANDOFF-001
+      description: 'Project Agents CAN and SHOULD create GitHub Issues
+
+        when they discover UNIVERSAL patterns worth sharing.
+
+        '
+      steps: '1. Discover universal pattern
+
+        2. Create YAML entry
+
+        3. Create GitHub issue in shared-knowledge-base
+
+        4. Follow AGENT-HANDOFF-001 format (attribution, labels)
+
+        5. WAIT for Curator review (don''t merge yourself!)
+
+        '
+      why_allowed: 'This is NOT bypassing Curator. This is SUBMITTING for Curator
+        review.
+
+        Curator still makes final decision (accept/fix/reject).
+
+        Curator still does the commit.
+
+        Curator maintains quality control.
+
+        '
+      examples:
+      - ✅ Issue
+      - ✅ Issue
+      - ⚠️ Issue
+    - action: Propose improvements via GitHub Issues
+      workflow: AGENT-HANDOFF-001
+      description: 'Suggest enhancements, new patterns, bug fixes via issues.
+
+        Curator evaluates and decides.
+
+        '
+      why_allowed: Review process maintained, Curator controls integration
+    forbidden_actions:
+    - action: Create Pull Request directly
+      why_wrong: 'Pull Request = "I did the work, merge it now!"
+
+        This bypasses Curator review process.
+
+        Curator can''t evaluate before merge.
+
+        '
+      correct_approach: 'Create GitHub Issue instead:
+
+        "I have this pattern, please review and merge if acceptable"
+
+        '
+    - action: Commit directly to shared-knowledge-base
+      why_wrong: No review, no quality gate, bypasses Curator entirely
+    - action: Suggest or prepare Curator actions
+      why_wrong: 'Even SUGGESTING Curator work crosses role boundaries.
+
+        Let Curator decide workflow.
+
+        '
+      wrong_example: '"Next Steps (Optional - for Curator Agent):
+
+        gh issue create --title ..."
+
+        '
+      correct_approach: '"✅ Pattern extraction complete
+
+        ✅ Documented in project KB
+
+        ⏸️ Role boundary: Project Agent work complete"
+
+        '
+    key_distinction:
+      submitting_vs_bypassing:
+        submitting:
+          action: Create GitHub Issue with pattern
+          attitude: Here's my contribution, please review
+          role: Project Agent
+          curator_control: Full - Curator decides
+        bypassing:
+          action: Create PR or commit directly
+          attitude: I did Curator's job, merge it
+          role: Taking Curator role
+          curator_control: None - already done
+    examples_table:
+      columns:
+      - Action
+      - Allowed?
+      - Workflow
+      - Curator Role
+      rows:
+      - row:
+          action: Create GitHub Issue with pattern
+          allowed: ✅ YES
+          workflow: AGENT-HANDOFF-001
+          curator: Reviews and decides (accept/fix/reject)
+      - row:
+          action: Create Pull Request
+          allowed: ❌ NO
+          workflow: VIOLATION
+          curator: Bypassed, no review before merge
+      - row:
+          action: Commit directly to repo
+          allowed: ❌ NO
+          workflow: VIOLATION
+          curator: Bypassed entirely
+      - row:
+          action: Suggest Curator commands
+          allowed: ❌ NO
+          workflow: ROLE OVERSTEP
+          curator: Curator decides own workflow
+      - row:
+          action: Document in project KB
+          allowed: ✅ YES
+          workflow: Project-local
+          curator: None (project KB, not shared)
+    real_world_clarification:
+      case_1_parser_pr4:
+        what_happened: Agent created PR directly
+        violation: ❌ Created PR, not Issue
+        correct: Should have created Issue for Curator review
+      case_2_app_sw_suggestion:
+        what_happened: Agent suggested gh issue create command
+        violation: ❌ Suggested Curator actions (gh command)
+        correct: Stop at documentation, don't suggest Curator workflow
+      case_3_correct_workflow:
+        what_happened: Agent discovers pattern, creates Issue
+        compliance: ✅ Follows AGENT-HANDOFF-001
+        result: Curator reviews, decides, integrates
+  solution: "**Multi-Layer Role Enforcement System:**\n\n## Layer 1: Clear Role Definitions\n\
+    \n**Project Agent Role:**\n- Works in: project repository (PARSER, AParser, etc.)\n\
+    - Uses Shared KB as: read-only submodule\n- Contributes by: creating GitHub issues\n\
+    - NEVER commits to: shared-knowledge-base\n- NEVER creates PRs to: shared-knowledge-base\n\
+    \n**Curator Agent Role:**\n- Works in: shared-knowledge-base repository\n- Reviews:\
+    \ GitHub issues from project agents\n- Validates: all YAML entries\n- Enhances:\
+    \ contributions before merging\n- ONLY agent who: commits to shared-knowledge-base\n\
+    \n## Layer 2: Explicit Forbidden Actions\n\n**Project Agents MUST NOT:**\n\n```yaml\n\
+    forbidden_actions:\n  - action: \"Direct commit to shared-knowledge-base\"\n \
+    \   severity: \"CRITICAL\"\n    reason: \"Bypasses Curator quality control\"\n\
+    \n  - action: \"Create PR to shared-knowledge-base\"\n    severity: \"CRITICAL\"\
+    \n    reason: \"Only Curator creates PRs for internal changes\"\n\n  - action:\
+    \ \"Modify KB structure directly\"\n    severity: \"HIGH\"\n    reason: \"May\
+    \ break validation, consistency\"\n\n  - action: \"Fix YAML errors in KB\"\n \
+    \   severity: \"HIGH\"\n    reason: \"Should report via issue, not fix directly\"\
+    \n\n  - action: \"Add patterns directly to KB\"\n    severity: \"HIGH\"\n    reason:\
+    \ \"Follow AGENT-HANDOFF-001 workflow\"\n\n  - action: \"Suggest or prepare Curator\
+    \ actions\"\n    severity: \"HIGH\"\n    reason: \"Role boundary violation even\
+    \ in suggestion form\"\n    examples:\n      - \"Providing gh issue create commands\
+    \ for Shared KB\"\n      - \"Writing 'Next Steps (Optional - for Curator Agent)'\
+    \ sections\"\n      - \"Preparing GitHub issue templates for shared-knowledge-base\"\
+    \n    correct_approach: |\n      Project Agent role ends at documentation in project\
+    \ KB.\n      Let Curator decide if/when to create issues.\n      DO NOT suggest,\
+    \ prepare, or offer to do Curator work.\n```\n\n**Correct Actions:**\n\n```yaml\n\
+    correct_actions:\n  - action: \"Create GitHub issue with YAML entry\"\n    workflow:\
+    \ \"AGENT-HANDOFF-001\"\n    template: \"use issue template with attribution\"\
+    \n\n  - action: \"Search KB for patterns\"\n    command: \"kb search '{query}'\"\
+    \n\n  - action: \"Validate local YAML\"\n    command: \"python tools/kb.py validate\
+    \ entry.yaml\"\n\n  - action: \"Pull KB updates\"\n    command: \"cd docs/knowledge-base/shared\
+    \ && git pull\"\n```\n\n## Layer 3: Technical Barriers\n\n**Pre-Commit Hook (.git/hooks/pre-commit):**\n\
+    \n```python\n#!/usr/bin/env python3\n\"\"\"\nPre-commit hook: Block non-curators\
+    \ from modifying KB\n\"\"\"\n\nimport os\nimport subprocess\nfrom pathlib import\
+    \ Path\n\n# Curator-only files\nCURATOR_FILES = [\n    \"universal/\",\n    \"\
+    python/\",\n    \"postgresql/\",\n    \"javascript/\",\n    \"docker/\",\n   \
+    \ \"framework/\",\n    \"tools/\",\n    \"universal/agent-instructions/\",\n \
+    \   \"README.md\",\n    \"VERSION\",\n]\n\ndef is_curator():\n    \"\"\"Check\
+    \ if committer is Curator\"\"\"\n    # Method 1: Environment variable\n    if\
+    \ os.getenv(\"AGENT_ROLE\") == \"curator\":\n        return True\n\n    # Method\
+    \ 2: .curator flag file\n    if Path(\".curator\").exists():\n        return True\n\
+    \n    # Method 3: Check current directory\n    cwd = Path.cwd().name\n    if cwd\
+    \ == \"shared-knowledge-base\":\n        # In shared-knowledge-base repo - verify\
+    \ curator\n        return Path(\".curator\").exists()\n\n    return False\n\n\
+    def get_staged_files():\n    \"\"\"Get list of staged files\"\"\"\n    result\
+    \ = subprocess.run(\n        [\"git\", \"diff\", \"--cached\", \"--name-only\"\
+    ],\n        capture_output=True,\n        text=True\n    )\n    return result.stdout.strip().split(\"\
+    \\n\")\n\ndef check_curator_only_files(staged_files):\n    \"\"\"Check if staged\
+    \ files are curator-only\"\"\"\n    violations = []\n\n    for file in staged_files:\n\
+    \        for curator_path in CURATOR_FILES:\n            if file.startswith(curator_path):\n\
+    \                violations.append(file)\n\n    return violations\n\ndef main():\n\
+    \    # Only check in shared-knowledge-base repository\n    if not Path(\"universal\"\
+    ).exists():\n        return 0  # Not in shared-knowledge-base\n\n    # Allow Curator\n\
+    \    if is_curator():\n        return 0  # Curator can commit anything\n\n   \
+    \ # Check staged files\n    staged_files = get_staged_files()\n    violations\
+    \ = check_curator_only_files(staged_files)\n\n    if violations:\n        print(\"\
+    =\" * 60)\n        print(\"❌ COMMIT BLOCKED: Curator-Only Files Modified\")\n\
+    \        print(\"=\" * 60)\n        print(\"\\n\U0001F6AB You are trying to modify\
+    \ Shared KB files directly.\")\n        print(\"\\n\U0001F4CB Role Violation:\"\
+    )\n        print(\"   • Your role: Project Agent\")\n        print(\"   • These\
+    \ files: Curator only\")\n        print(\"\\n❌ Forbidden Files:\")\n        for\
+    \ file in violations:\n            print(f\"   • {file}\")\n\n        print(\"\
+    \\n✅ Correct Action (AGENT-HANDOFF-001):\")\n        print(\"   1. Create YAML\
+    \ entry with your pattern\")\n        print(\"   2. Validate locally: kb validate\
+    \ entry.yaml\")\n        print(\"   3. Create GitHub issue:\")\n        print(\"\
+    \      gh issue create \\\\\")\n        print(\"        --label 'agent:claude-code'\
+    \ \\\\\")\n        print(\"        --label 'project:YOUR_PROJECT' \\\\\")\n  \
+    \      print(\"        --label 'kb-improvement' \\\\\")\n        print(\"    \
+    \    --body-file issue-template.md\")\n\n        print(\"\\n\U0001F4DA Documentation:\"\
+    )\n        print(\"   • AGENT-HANDOFF-001: Cross-repository collaboration\")\n\
+    \        print(\"   • AGENT-ROLE-SEPARATION-001: Role separation\")\n        print(\"\
+    \   • GITHUB-ATTRIB-001: Issue attribution\")\n\n        print(\"\\n\U0001F4A1\
+    \ Why?\")\n        print(\"   • Curator maintains quality control\")\n       \
+    \ print(\"   • Prevents validation errors\")\n        print(\"   • Ensures consistent\
+    \ structure\")\n        print(\"   • Curator reviews all contributions\")\n\n\
+    \        print(\"\\n\" + \"=\" * 60)\n        return 1\n\n    return 0\n\nif __name__\
+    \ == \"__main__\":\n    exit(main())\n```\n\n**Installation:**\n```bash\n# In\
+    \ shared-knowledge-base repository\ncp tools/pre-commit-role-check .git/hooks/pre-commit\n\
+    chmod +x .git/hooks/pre-commit\n```\n\n## Layer 4: Repository Signage\n\n**Add\
+    \ to root README.md:**\n\n```markdown\n# ⚠️ IMPORTANT: Role-Based Access Control\n\
+    \n**Project Agents:** This repository is READ-ONLY for you.\n- ❌ DO NOT create\
+    \ commits\n- ❌ DO NOT create PRs\n- ❌ DO NOT modify files directly\n- ✅ DO create\
+    \ GitHub issues for contributions\n- ✅ Follow AGENT-HANDOFF-001 workflow\n\n**Curator\
+    \ Agent:** Only you can commit to this repository.\n- ✅ Review issues from project\
+    \ agents\n- ✅ Validate and enhance contributions\n- ✅ Commit approved changes\n\
+    \nSee: AGENT-ROLE-SEPARATION-001 pattern\n```\n\n**Add .curator-only marker files:**\n\
+    \n```bash\n# In each protected directory\nuniversal/.curator-only\npython/.curator-only\n\
+    postgresql/.curator-only\ntools/.curator-only\n\n# Content of .curator-only files:\n\
+    # \"⚠️ CURATOR ONLY: Project agents must not modify this directory.\"\n# \"See:\
+    \ AGENT-ROLE-SEPARATION-001\"\n```\n\n## Layer 5: Agent Instructions Update\n\n\
+    **Update base-instructions.yaml:**\n\n```yaml\ninstructions:\n  role_enforcement:\n\
+    \    enabled: true\n    priority: \"CRITICAL\"\n    pattern: \"AGENT-ROLE-SEPARATION-001\"\
+    \n    required_when: \"always\"\n\n    role_definition:\n      if_project_agent:\n\
+    \        - \"Read-only access to Shared KB\"\n        - \"Contribute via GitHub\
+    \ issues only\"\n        - \"NEVER commit to shared-knowledge-base\"\n       \
+    \ - \"NEVER create PRs to shared-knowledge-base\"\n\n      if_curator:\n     \
+    \   - \"Only agent who commits to shared-knowledge-base\"\n        - \"Review\
+    \ issues from project agents\"\n        - \"Validate and enhance contributions\"\
+    \n        - \"Maintain KB quality\"\n\n    forbidden_actions:\n      - action:\
+    \ \"git commit in shared-knowledge-base\"\n        severity: \"BLOCKED\"\n   \
+    \     error: \"Role violation: Use GitHub issue instead\"\n\n      - action: \"\
+    gh pr create in shared-knowledge-base\"\n        severity: \"BLOCKED\"\n     \
+    \   error: \"Role violation: Use GitHub issue instead\"\n\n    correct_workflow:\n\
+    \      pattern: \"AGENT-HANDOFF-001\"\n      steps:\n        - \"Create YAML entry\
+    \ locally\"\n        - \"Validate: kb validate entry.yaml\"\n        - \"Create\
+    \ GitHub issue with attribution\"\n        - \"Wait for Curator review\"\n```\n"
+  best_practices:
+  - practice: For Project Agents
+    items:
+    - item: Treat Shared KB as read-only
+      reason: Prevents accidental commits
+    - item: Always contribute via issues
+      reason: Ensures Curator review
+    - item: Use GitHub labels for attribution
+      reason: Makes contributions trackable
+    - item: Validate YAML before creating issue
+      reason: Curator can process faster
+  - practice: For Curator
+    items:
+    - item: Review all issues within 24 hours
+      reason: Maintains contributor motivation
+    - item: Validate before merging
+      reason: Maintains KB quality
+    - item: Enhance contributions
+      reason: Adds value beyond original
+    - item: Thank contributors
+      reason: Encourages future contributions
+  anti_patterns:
+  - pattern: Project Agent commits to shared-knowledge-base
+    consequence: Quality control bypassed, may break KB
+  - pattern: Project Agent creates PR to shared-knowledge-base
+    consequence: Curator workflow bypassed, role confusion
+  - pattern: Agent fixes KB errors directly
+    consequence: Should report via issue, not fix
+  - pattern: Multiple agents committing simultaneously
+    consequence: Chaos, merge conflicts, quality degradation
+  examples:
+    example_1_wrong_role_violation:
+      scenario: Project Agent updates KB to v3.1 (REAL EXAMPLE)
+      what_agent_did:
+      - ✅ Updated v3.0 → v3.1
+      - ✅ Fixed YAML errors
+      - ✅ Added 5 new patterns
+      - '✅ Created PR #7'
+      - ✅ Restructured KB
+      why_wrong:
+      - ❌ Agent acted as Curator, not Project Agent
+      - ❌ Direct commits to shared-knowledge-base
+      - ❌ Bypassed Curator review
+      - ❌ Violated AGENT-HANDOFF-001
+      what_should_have_done:
+      - ✅ Discover improvements needed
+      - ✅ Create YAML entries for each pattern
+      - ✅ Validate locally
+      - ✅ Create GitHub issue with proper attribution (Title, Labels, Body)
+      - ✅ Curator reviews and merges
+      - ✅ Curator credits Project Agent
+      result:
+        actual: Role confusion, quality bypassed
+        correct: Clean workflow, proper attribution
+    example_2_correct_workflow:
+      scenario: Project Agent discovers async timeout pattern
+      steps:
+      - Agent encounters asyncio.TimeoutError in production
+      - 'Searches KB: kb search ''asyncio timeout'''
+      - Not found → creates YAML entry
+      - 'Validates: kb validate python/errors/async-timeout.yaml'
+      - Creates GitHub issue with proper Title, Labels, Body
+      - Curator reviews (24h SLA)
+      - 'Curator enhances: adds more examples'
+      - 'Curator commits: python/errors/async-timeout.yaml'
+      - Curator closes issue with attribution
+      result: ✅ Correct workflow, quality maintained
+    example_3_suggesting_curator_actions:
+      scenario: Project Agent suggests GitHub issue creation (APP SW case)
+      what_agent_did:
+      - ✅ Extracted 4 PostgreSQL patterns from project
+      - ✅ Validated no duplicates in Shared KB
+      - ✅ Documented in project KB (correct!)
+      - ❌ Added 'Next Steps (Optional - for Curator Agent)' section
+      - ❌ Provided gh issue create command
+      what_agent_suggested: "gh issue create \\\n  --title \"Add POSTGRES-011: Partitioned\
+        \ Table with Tiered Storage Lifecycle\" \\\n  --label \"kb-improvement,enhancement,postgresql,partitioning\"\
+        \ \\\n  --body \"...\"\n"
+      why_wrong:
+      - ❌ Agent suggested Curator work (even if didn't execute)
+      - ❌ Provided gh command for Shared KB repository
+      - ❌ Crossed role boundary in 'helpful' way
+      - ❌ Violates AGENT-ROLE-SEPARATION-001
+      what_should_have_done:
+      - ✅ Extract patterns from project
+      - ✅ Document in project KB
+      - ✅ Search Shared KB for duplicates
+      - ⏸️ STOP HERE (role boundary)
+      - ❌ DON'T suggest Curator actions
+      - ❌ DON'T provide gh commands
+      - ❌ DON'T prepare GitHub issues
+      user_feedback:
+        feedback: ты не Curator Agent а Project Agent для Shared KB
+      agent_acknowledgement:
+        response: ✅ Моя роль - Project Agent
+        realisation: ✅ НЕ должен предлагать вклады в Shared KB
+      result:
+        actual: ⚠️ Caught before execution, corrected by user
+        correct: ✅ Agent now understands role boundaries
+        lesson: Even suggesting Curator work violates role separation
+      key_insight: '"Helpful overstepping" is still overstepping.
+
+        Project Agent role ENDS at documentation.
+
+        Let Curator decide if/when to create issues.
+
+        '
+  implementation_checklist:
+    repository_protection:
+    - step: Add pre-commit hook
+      file: .git/hooks/pre-commit
+      action: Block non-curators from modifying protected files
+    - step: Add .curator marker
+      file: .curator
+      action: Enable curator commits
+    - step: Add README warning
+      file: README.md
+      section: ⚠️ Role-Based Access Control
+    - step: Add .curator-only markers
+      files:
+      - universal/.curator-only
+      - python/.curator-only
+      - etc.
+    agent_instructions:
+    - step: Update base-instructions.yaml
+      add: role_enforcement section
+    - step: Update AGENT-HANDOFF-001
+      add: explicit forbidden actions
+    - step: Add to agent templates
+      add: DO NOT COMMIT warning
+    testing:
+    - step: Test pre-commit hook
+      test: Try to commit as non-curator (should block)
+    - step: Test curator commit
+      test: Touch .curator file, commit (should allow)
+    - step: Verify issue workflow
+      test: Create issue with attribution
+  success_criteria:
+  - ✅ "Project Agents cannot commit to shared-knowledge-base"
+  - ✅ "Project Agents cannot create PRs to shared-knowledge-base"
+  - ✅ "All contributions go via GitHub issues"
+  - ✅ "Curator reviews all contributions"
+  - ✅ "Quality control maintained"
+  - ✅ "Clear role boundaries"
+  related_patterns:
+  - id: AGENT-HANDOFF-001
+    title: Cross-Repository Agent Collaboration
+    note: Update with explicit forbidden actions
+  - id: GITHUB-ATTRIB-001
+    title: GitHub Agent and Project Attribution
+  - id: AGENT-AUTO-001
+    title: Agent Auto-Configuration from KB
+  references:
+  - title: Real example of role violation
+    description: Project Agent updated KB to v3.1 directly instead of using issues
+  - title: AGENT-HANDOFF-001 workflow
+    description: Correct way for Project Agents to contribute
+  domains:
+    primary: security
+    secondary: []
+languages:
+- en
+- ru

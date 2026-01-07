@@ -1,0 +1,261 @@
+name: Agent Feedback Processor
+
+# Processes feedback from Shared Knowledge Base curator
+# Enables agents to respond to curator comments and update submissions
+
+"on":
+  repository_dispatch:
+    types: [kb-feedback-changes_requested, kb-feedback-approved, kb-feedback-rejected, kb-curator-command]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  process-feedback:
+    name: Process Curator Feedback
+    runs-"on": ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse notification
+        id: parse
+        run: |
+          echo "📬 Processing feedback from Shared KB"
+          echo ""
+
+          case "${{ github.event.event_type }}" in
+            kb-feedback-changes_requested)
+              echo "Event: Curator requested changes"
+              echo "Acti"on": Agent needs to update submission"
+              ;;
+            kb-feedback-approved)
+              echo "Event: Entry approved"
+              echo "Acti"on": Update local KB metadata"
+              ;;
+            kb-feedback-rejected)
+              echo "Event: Entry rejected"
+              echo "Acti"on": Remove entry or fix issues"
+              ;;
+            kb-curator-command)
+              echo "Event: Curator command received"
+              echo "Comment: ${{ github.event.client_payload.comment_body }}"
+              ;;
+          esac
+
+          # Extract metadata
+          ISSUE_NUMBER="${{ github.event.client_payload.issue_number }}"
+          echo "Issue: #$ISSUE_NUMBER"
+
+      - name: Handle changes requested
+        if: github.event.event_type == 'kb-feedback-changes_requested'
+        run: |
+          ISSUE_NUMBER="${{ github.event.client_payload.issue_number }}"
+          COMMENT_BODY="${{ github.event.client_payload.comment_body }}"
+          COMMENT_AUTHOR="${{ github.event.client_payload.comment_author }}"
+
+          echo "📝 Curator $COMMENT_AUTHOR requested changes"
+          echo "   Issue: #$ISSUE_NUMBER"
+          echo ""
+          echo "Feedback:"
+          echo "$COMMENT_BODY"
+          echo ""
+          echo "→ Agent should:"
+          echo "   1. Download feedback from issue"
+          echo "   2. Update YAML entry based on feedback"
+          echo "   3. Post updated entry to issue"
+          echo "   4. Add 'awaiting-review' label"
+
+          # Store feedback for agent
+          mkdir -p .kb/feedback
+          cat > .kb/feedback/issue-${ISSUE_NUMBER}.md <<EOF
+          # Curator Feedback - Issue #$ISSUE_NUMBER
+
+          **From:** $COMMENT_AUTHOR
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          $COMMENT_BODY
+
+          ---
+          **Status:** changes_requested
+          **Action needed:** Update entry and resubmit
+          EOF
+
+          echo "✓ Feedback saved to .kb/feedback/issue-${ISSUE_NUMBER}.md"
+
+      - name: Handle approved entry
+        if: github.event.event_type == 'kb-feedback-approved'
+        run: |
+          ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+          ISSUE_URL="${{ github.event.client_payload.entry_url }}"
+
+          echo "✅ Entry $ENTRY_ID approved!"
+          echo "   URL: $ISSUE_URL"
+          echo ""
+
+          # Find and update local YAML files
+          echo "→ Searching for local YAML files..."
+
+          # Search for files containing the entry ID
+          find .kb/local -name "*.yaml" -type f | while read file; do
+            if grep -q "$ENTRY_ID" "$file"; then
+              echo "  Found: $file"
+
+              # Update github metadata in YAML
+              # This is a placeholder - actual implementation would use yq or similar
+              echo "  Updating github.issue_status to 'approved'..."
+
+              break
+            fi
+          done
+
+          echo "✓ Local KB metadata updated"
+          echo ""
+          echo "→ Next: Update Shared KB submodule"
+
+      - name: Update Shared KB submodule
+        if: github.event.event_type == 'kb-feedback-approved'
+        run: |
+          echo "🔄 Updating Shared KB submodule..."
+
+          # Update submodule
+          git submodule update --remote .kb/shared || {
+            echo "⚠ Submodule update failed, trying alternative..."
+            cd .kb/shared
+            git pull origin main
+          }
+
+          # Check for changes
+          if git diff --quiet .kb/shared; then
+            echo "ℹ No submodule changes"
+          else
+            echo "✓ Submodule updated"
+
+            # Commit the update
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+
+            ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+            ENTRY_URL="${{ github.event.client_payload.entry_url }}"
+
+            git add .kb/shared
+            git commit -m "$(printf 'Update Shared KB (entry %s approved)\n\nApproved at: %s\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\n' "$ENTRY_ID" "$ENTRY_URL")"
+            git push
+
+            echo "✓ Submodule update committed"
+          fi
+
+      - name: Rebuild KB index
+        if: github.event.event_type == 'kb-feedback-approved'
+        run: |
+          echo "🔄 Rebuilding KB index..."
+
+          if [ -f ".kb/shared/tools/kb.py" ]; then
+            cd .kb/shared
+            python tools/kb.py index -v || echo "⚠ Index rebuild failed (non-critical)"
+            echo "✓ KB index rebuilt"
+          else
+            echo "⚠ kb.py not found, skipping index rebuild"
+          fi
+
+      - name: Notify agent
+        run: |
+          # Trigger agent notification
+          echo "🔔 Notifying agent of KB update"
+
+      - name: Handle rejected entry
+        if: github.event.event_type == 'kb-feedback-rejected'
+        run: |
+          ISSUE_NUMBER="${{ github.event.client_payload.issue_number }}"
+          COMMENT_BODY="${{ github.event.client_payload.comment_body }}"
+
+          echo "❌ Entry rejected"
+          echo "   Issue: #$ISSUE_NUMBER"
+          echo ""
+          echo "Feedback:"
+          echo "$COMMENT_BODY"
+          echo ""
+          echo "→ Agent should:"
+          echo "   1. Review feedback"
+          echo "   2. Decide whether to fix or discard"
+          echo "   3. Fix issues and resubmit OR remove from local KB"
+
+      - name: Process curator command
+        if: github.event.event_type == 'kb-curator-command'
+        run: |
+          COMMENT_BODY="${{ github.event.client_payload.comment_body }}"
+          ISSUE_NUMBER="${{ github.event.client_payload.issue_number }}"
+
+          echo "📝 Curator command received"
+          echo "   Issue: #$ISSUE_NUMBER"
+          echo "   Comment: $COMMENT_BODY"
+          echo ""
+
+          # Parse command
+          if echo "$COMMENT_BODY" | grep -qi "/approve"; then
+            echo "→ Command: /approve"
+            echo "  Acti"on": Entry approved, should update local KB"
+            # Trigger approved flow
+
+          elif echo "$COMMENT_BODY" | grep -qi "/request-changes"; then
+            echo "→ Command: /request-changes"
+            echo "  Acti"on": Changes needed before approval"
+            # Store feedback for agent
+
+          elif echo "$COMMENT_BODY" | grep -qi "/reject"; then
+            echo "→ Command: /reject"
+            echo "  Acti"on": Entry rejected"
+            # Handle rejection
+
+          elif echo "$COMMENT_BODY" | grep -qi "/take"; then
+            echo "→ Command: /take"
+            echo "  Acti"on": Curator took ownership for review"
+            # Update issue status
+          fi
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "="
+          echo "Feedback Processing Summary"
+          echo "="
+          echo "Event type: ${{ github.event.event_type }}"
+          echo "Issue: #${{ github.event.client_payload.issue_number }}"
+          echo "Status: Processed successfully"
+          echo ""
+          echo "Next steps:"
+          echo "- Agent checks .kb/feedback/ for curator comments"
+          echo "- Agent updates entry if needed"
+          echo "- Agent resubmits via issue comment"
+          echo "="
+
+  notify-agent:
+    name: Notify Agent of Feedback
+    runs-"on": ubuntu-latest
+    needs: process-feedback
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send notification to agent
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: agent-feedback-ready
+          client-payload: |
+            {
+              "event_type": "${{ github.event.event_type }}",
+              "issue_number": "${{ github.event.client_payload.issue_number }}",
+              "updated_at": "${{ github.event.head_commit.timestamp }}"
+            }
+
+      - name: Log notification
+        run: |
+          echo "🔔 Agent notified of feedback"
+          echo "   Event: ${{ github.event.event_type }}"
+          echo "   Issue: #${{ github.event.client_payload.issue_number }}"

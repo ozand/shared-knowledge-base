@@ -1,6 +1,6 @@
 # Shared Knowledge Base
 
-**Version 3.2** - Centralized knowledge base for software development
+**Version 4.0** - Centralized knowledge base for software development with progressive domain loading
 
 Centрализованная база знаний для разработки ПО с системой метаданных, предиктивной аналитикой и распознаванием паттернов.
 
@@ -38,23 +38,31 @@ Shared KB provides:
 
 ### Key Features
 
-**v3.2 Features:**
-- 📚 **101 knowledge entries** - Python, JavaScript, Docker, PostgreSQL, Universal patterns
-- 🔍 **Fast search** - SQLite FTS5 with sub-second queries
-- 🤖 **AI Agent Integration** - Auto-loaded instructions, multi-agent system
-- 📊 **Metadata & Analytics** - Quality scores, usage tracking, predictive analytics
-- 🔄 **Auto-updates** - Check and update with one command
+**v4.0 Features:**
+- 📚 **149 knowledge entries** - Python, JavaScript, Docker, PostgreSQL, Universal patterns
+- 🚀 **Progressive domain loading** - Load only what you need (83% token reduction)
+- 🔗 **GitHub-native contribution** - Submit via issues, automated feedback loop
+- 🤖 **AI Agent Integration** - Auto-loaded instructions, curator slash commands
+- ⚡ **Zero infrastructure** - 100% GitHub Actions automation
+- 📊 **Optimized indexing** - Domain index ~80 tokens (99.1% reduction)
 
 ### Documentation
 
 **Getting Started:**
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
+- **[QUICKSTART-DOMAINS.md](QUICKSTART-DOMAINS.md)** - Progressive domain loading (v3.1)
 - **[for-claude-code/README.md](for-claude-code/README.md)** - Complete Claude Code guide
+- **[for-claude-code/AGENT-QUICK-START.md](for-claude-code/AGENT-QUICK-START.md)** - Quick start for AI agents
 
-**Guides:**
-- **[docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md](docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md)** - Installation & update guide
-- **[AGENT-QUICK-START.md](AGENT-QUICK-START.md)** - Quick start for AI agents
-- **[GUIDE.md](GUIDE.md)** - Implementation guide
+**Core Documentation:**
+- **[GUIDE.md](GUIDE.md)** - Complete user guide
+- **[docs/README.md](docs/README.md)** - Documentation hub
+- **[docs/YAML-SCHEMA-V3.1.md](docs/YAML-SCHEMA-V3.1.md)** - YAML schema reference (v3.1)
+
+**Implementation (v3.1):**
+- **[docs/implementation/IMPLEMENTATION-SUMMARY.md](docs/implementation/IMPLEMENTATION-SUMMARY.md)** - Complete implementation summary
+- **[docs/implementation/PHASE3-COMPLETION-REPORT.md](docs/implementation/PHASE3-COMPLETION-REPORT.md)** - Phase 3: Automated Feedback Loop
+- **[docs/implementation/STRUCTURE-ANALYSIS.md](docs/implementation/STRUCTURE-ANALYSIS.md)** - Repository structure analysis
 
 **Integration:**
 - **[docs/guides/integration/SUBMODULE_VS_CLONE.md](docs/guides/integration/SUBMODULE_VS_CLONE.md)** - Submodule vs Clone comparison

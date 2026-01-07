@@ -1,442 +1,378 @@
-# Project Organization Patterns
-# Clean directory structure and file organization
-
-version: "1.0"
-category: "project-organization"
-last_updated: "2026-01-06"
-
+version: '1.0'
+category: project-organization
+last_updated: '2026-01-06'
 patterns:
-  - id: "PROJECT-ORG-001"
-    title: "Clean Directory Structure for Maintainable Projects"
-    severity: "medium"
-    scope: "universal"
-    tags: ["project-structure", "clean-code", "organization", "maintainability"]
+- id: PROJECT-ORG-001
+  title: Clean Directory Structure for Maintainable Projects
+  severity: medium
+  scope: universal
+  tags:
+  - project-structure
+  - clean-code
+  - organization
+  - maintainability
+  problem: 'Project root directories become cluttered with many files:
 
-    problem: |
-      Project root directories become cluttered with many files:
-      - 20+ Markdown documentation files in root
-      - Configuration files mixed with content
-      - No clear separation between user docs, curator docs, and AI tool docs
-      - Difficult to navigate for new contributors
-      - Hard to maintain as project grows
+    - 20+ Markdown documentation files in root
 
-      **Real example:** Shared Knowledge Base v3.0 had 21 .md files in root before cleanup.
+    - Configuration files mixed with content
 
-    root_cause: |
-      1. No documentation placement strategy
-      2. All docs added to root for "convenience"
-      3. No separation of concerns
-      4. Not thinking about scalability
+    - No clear separation between user docs, curator docs, and AI tool docs
 
-    solution:
-      clean_directory_structure:
-        description: "Maintain clean root with ≤7 essential files"
+    - Difficult to navigate for new contributors
 
-        root_max_files: 7
+    - Hard to maintain as project grows
 
-        essential_files_only:
-          user_facing_docs:
-            - "README.md - Project overview"
-            - "GUIDE.md - User guide"
-            - "QUICKSTART.md - Quick start"
-            - "LICENSE - Legal file"
 
-          deployment_guides:
-            - "SUBMODULE_VS_CLONE.md - Deployment decisions"
-            - "DEPLOYMENT.md - Deployment guide (if needed)"
+    **Real example:** Shared Knowledge Base v3.0 had 21 .md files in root before cleanup.
 
-          config_files:
-            - ".gitignore - Git ignore rules"
-            - ".kb-config.yaml - Base configuration (NOT local config)"
+    '
+  root_cause: '1. No documentation placement strategy
 
-        curator_documentation:
-          location: "curator/"
-          purpose: "For project maintainers"
-          contents:
-            - "INDEX.md - Main index"
-            - "README.md - Curator quick start"
-            - "AGENT.md - Role definition"
-            - "SKILLS.md - Curator skills"
-            - "WORKFLOWS.md - Standard procedures"
-            - "QUALITY_STANDARDS.md - Quality rubric"
-            - "PROMPTS.md - AI prompt templates"
+    2. All docs added to root for "convenience"
 
-        metadata_documentation:
-          location: "curator/metadata/"
-          purpose: "Technical docs for metadata systems"
-          contents:
-            - "ARCHITECTURE.md - System design"
-            - "SKILLS.md - Metadata-driven skills"
-            - "SUMMARY.md - Executive summary"
-            - "IMPLEMENTATION.md - Implementation details"
-            - "PHASE3.md - Phase documentation"
+    3. No separation of concerns
 
-        ai_tool_integration:
-          location: "for-claude-code/"
-          purpose: "AI tool specific documentation"
-          contents:
-            - "README.md - Main guide"
-            - "CLAUDE.md - Legacy/specific"
-          future:
-            - "for-copilot/ - GitHub Copilot integration"
-            - "for-cursor/ - Cursor AI integration"
+    4. Not thinking about scalability
 
-        project_specific:
-          location: "<project>/ or <category>/"
-          example: "vps/README.md, python/README.md"
-          rule: "Keep category-specific docs with content"
+    '
+  solution:
+    clean_directory_structure:
+      description: Maintain clean root with ≤7 essential files
+      root_max_files: 7
+      essential_files_only:
+        user_facing_docs:
+        - README.md - Project overview
+        - GUIDE.md - User guide
+        - QUICKSTART.md - Quick start
+        - LICENSE - Legal file
+        deployment_guides:
+        - SUBMODULE_VS_CLONE.md - Deployment decisions
+        - DEPLOYMENT.md - Deployment guide (if needed)
+        config_files:
+        - .gitignore - Git ignore rules
+        - .kb-config.yaml - Base configuration (NOT local config)
+      curator_documentation:
+        location: curator/
+        purpose: For project maintainers
+        contents:
+        - INDEX.md - Main index
+        - README.md - Curator quick start
+        - AGENT.md - Role definition
+        - SKILLS.md - Curator skills
+        - WORKFLOWS.md - Standard procedures
+        - QUALITY_STANDARDS.md - Quality rubric
+        - PROMPTS.md - AI prompt templates
+      metadata_documentation:
+        location: curator/metadata/
+        purpose: Technical docs for metadata systems
+        contents:
+        - ARCHITECTURE.md - System design
+        - SKILLS.md - Metadata-driven skills
+        - SUMMARY.md - Executive summary
+        - IMPLEMENTATION.md - Implementation details
+        - PHASE3.md - Phase documentation
+      ai_tool_integration:
+        location: for-claude-code/
+        purpose: AI tool specific documentation
+        contents:
+        - README.md - Main guide
+        - CLAUDE.md - Legacy/specific
+        future:
+        - for-copilot/ - GitHub Copilot integration
+        - for-cursor/ - Cursor AI integration
+      project_specific:
+        location: <project>/ or <category>/
+        example: vps/README.md, python/README.md
+        rule: Keep category-specific docs with content
+    file_placement_rules:
+      user_vs_curator:
+        rule: 'Ask: Who is the audience?'
+        user_facing:
+          destination: Root directory
+          examples:
+          - README.md
+          - GUIDE.md
+          - QUICKSTART.md
+        curator_facing:
+          destination: curator/
+          examples:
+          - AGENT.md
+          - SKILLS.md
+          - WORKFLOWS.md
+        ai_tool_facing:
+          destination: for-claude-code/
+          examples:
+          - CLAUDE.md
+          - Copilot integration
+      before_creating_doc:
+        checklist:
+        - Who will read this? Users, curators, or AI tools?
+        - Is it essential for all users? → Root
+        - Is it for maintainers only? → curator/
+        - Is it for AI tools only? → for-claude-code/
+        - Is it project-specific? → <category>/README.md
+    migration_checklist:
+      phase_1_assessment:
+      - Count .md files in root
+      - If >7, need cleanup
+      phase_2_categorize:
+      - List all files in root
+      - Mark each: user, curator, AI, project-specific"
+      phase_3_create_directories:
+      - mkdir -p curator/
+      - mkdir -p curator/metadata/
+      - mkdir -p for-claude-code/
+      phase_4_move_files:
+      - Move curator docs → curator/
+      - Move metadata docs → curator/metadata/
+      - Move AI tool docs → for-claude-code/
+      - Move project-specific → <category>/
+      phase_5_verify:
+      - Count files in root (should be ≤7)
+      - Test all documentation links
+      - Update README.md references
+    real_world_example:
+      project: Shared Knowledge Base v3.0
+      before:
+        root_files: 21
+        structure: All docs in root, no separation
+        problems:
+        - Hard to navigate
+        - Unclear who should read what
+        - Maintenance difficult
+      after:
+        root_files: 5
+        structure: 'Root: README.md, GUIDE.md, QUICKSTART.md, SUBMODULE_VS_CLONE.md
 
-      file_placement_rules:
-        user_vs_curator:
-          rule: "Ask: Who is the audience?"
-          user_facing:
-            destination: "Root directory"
-            examples: ["README.md", "GUIDE.md", "QUICKSTART.md"]
+          curator/: 13 files (organization, skills, workflows, etc.)
 
-          curator_facing:
-            destination: "curator/"
-            examples: ["AGENT.md", "SKILLS.md", "WORKFLOWS.md"]
+          curator/metadata/: 5 files (architecture, implementation, etc.)
 
-          ai_tool_facing:
-            destination: "for-claude-code/"
-            examples: ["CLAUDE.md", "Copilot integration"]
+          for-claude-code/: 2 files (Claude Code integration)
 
-        before_creating_doc:
-          checklist:
-            - "Who will read this? Users, curators, or AI tools?"
-            - "Is it essential for all users? → Root"
-            - "Is it for maintainers only? → curator/"
-            - "Is it for AI tools only? → for-claude-code/"
-            - "Is it project-specific? → <category>/README.md"
+          '
+      improvements:
+      - 76% reduction in root files
+      - Clear separation of concerns
+      - Easy navigation
+      - Professional structure
+      commit: '04800d6 - Refactor: Implement clean directory structure'
+    best_practices:
+    - item: Start with clean structure
+      reason: Easier to maintain than to refactor later
+    - item: Create directories before adding files
+      reason: Prevents clutter in root
+    - item: Document file placement rules
+      reason: Team consistency
+    - item: Review root directory monthly
+      reason: Prevent creep
+    - item: Use descriptive directory names
+      examples:
+      - curator/
+      - for-claude-code/"
+      - NOT docs/
+    anti_patterns:
+    - ❌ "Add all docs to root for 'convenience'"
+    - ❌ "Mix user and curator documentation"
+    - ❌ "Create docs/ for everything"
+    - ❌ "Put project-specific docs in root"
+    - ❌ "Use generic names like documentation/"
+    validation:
+      root_directory_check:
+        command: ls -1 *.md | wc -l
+        max_files: 7
+        action_if_exceeded: Perform cleanup
+      structure_check:
+        command: 'ls -1 curator/ 2>/dev/null | wc -l  # Should have files
 
-      migration_checklist:
-        phase_1_assessment:
-          - "Count .md files in root"
-          - "If >7, need cleanup"
+          ls -1 for-claude-code/ 2>/dev/null | wc -l  # Should have files
 
-        phase_2_categorize:
-          - "List all files in root"
-          - Mark each: user, curator, AI, project-specific"
+          '
+        expected_results:
+        - curator/ exists and has INDEX.md
+        - No user docs in curator/
+        - No curator docs in root
+  references:
+  - title: Clean Structure Proposal
+    url: https://github.com/ozand/shared-knowledge-base/blob/main/CLEAN_STRUCTURE_PROPOSAL.md
+  - title: Structure Comparison
+    url: https://github.com/ozand/shared-knowledge-base/blob/main/STRUCTURE_BEFORE_AFTER.txt
+  - title: Git Submodule vs Clone
+    url: https://github.com/ozand/shared-knowledge-base/blob/main/SUBMODULE_VS_CLONE.md
+- id: PROJECT-ORG-002
+  title: Git Submodule vs Clone Decision Matrix
+  severity: medium
+  scope: universal
+  tags:
+  - git
+  - submodule
+  - clone
+  - version-control
+  - dependency-management
+  problem: 'When integrating shared knowledge base or reusable components into projects:
 
-        phase_3_create_directories:
-          - "mkdir -p curator/"
-          - "mkdir -p curator/metadata/"
-          - "mkdir -p for-claude-code/"
+    - Unclear whether to use git submodule or direct clone
 
-        phase_4_move_files:
-          - "Move curator docs → curator/"
-          - "Move metadata docs → curator/metadata/"
-          - "Move AI tool docs → for-claude-code/"
-          - "Move project-specific → <category>/"
+    - Team uses different approaches inconsistently
 
-        phase_5_verify:
-          - "Count files in root (should be ≤7)"
-          - "Test all documentation links"
-          - "Update README.md references"
+    - Wrong choice leads to maintenance problems
 
-      real_world_example:
-        project: "Shared Knowledge Base v3.0"
+    - No clear decision criteria
 
-        before:
-          root_files: 21
-          structure: "All docs in root, no separation"
-          problems:
-            - "Hard to navigate"
-            - "Unclear who should read what"
-            - "Maintenance difficult"
+    '
+  solution:
+    decision_matrix:
+      recommendation: Use git submodule by default
+      use_submodule:
+        scenarios:
+        - scenario: Multi-project setup
+          reason: Each project pins specific version
+          priority: High
+        - scenario: Team collaboration
+          reason: Standard approach, clear ownership
+          priority: High
+        - scenario: Production project
+          reason: Reliable updates, version tracking
+          priority: High
+        - scenario: Long-term maintenance
+          reason: Clean history, easy updates
+          priority: High
+        - scenario: Multiple developers
+          reason: Consistent across team
+          priority: High
+      use_clone:
+        scenarios:
+        - scenario: Quick experiment / prototype
+          reason: Fastest setup, temporary
+          duration: Days to weeks
+        - scenario: Learning / exploration
+          reason: Understand how KB works
+          duration: Temporary
+        - scenario: Planning to fork heavily
+          reason: Will diverge significantly from upstream
+          condition: Accept breaking automatic updates
+        - scenario: Single developer pet project
+          reason: Overhead not worth it
+          condition: No team collaboration expected
+    comparison_table:
+    - dimension: Version Control
+      submodule: ✅ Excellent - Pins to specific commit
+      clone: ⚠️ Manual - Track separately
+    - dimension: Update Workflow
+      submodule: ✅ Simple - One command
+      clone: ❌ Manual - Clone again or git pull
+    - dimension: History
+      submodule: ✅ Clean - Separate from project
+      clone: ❌ Mixed - Upstream commits in project history
+    - dimension: Team Collaboration
+      submodule: ✅ Standard - Everyone uses same approach
+      clone: ⚠️ Variable - Each developer manages separately
+    - dimension: Onboarding
+      submodule: ✅ Standard - git clone --recurse-submodules
+      clone: ✅ Simple - git clone
+    - dimension: Setup Effort
+      submodule: ⚠️ Medium - 2-3 extra commands
+      clone: ✅ Low - One command
+    - dimension: Maintenance
+      submodule: ✅ Low - Automated updates
+      clone: ⚠️ High - Manual updates, merge conflicts
+    implementation:
+      using_submodule:
+        initial_setup: "# Add as submodule\ngit submodule add https://github.com/user/repo.git\
+          \ \\\n  docs/knowledge-base/shared\n\n# Copy tool (if needed)\ncp docs/knowledge-base/shared/tools/kb.py\
+          \ \\\n  docs/knowledge-base/tools/\n\n# Initialize\npython docs/knowledge-base/tools/kb.py\
+          \ index -v\n"
+        updating:
+          description: Update to latest version
+          commands: "# Update submodule\ngit submodule update --remote --merge \\\n\
+            \  docs/knowledge-base/shared\n\n# Or check first\ncd docs/knowledge-base/shared\n\
+            git fetch origin\ngit log HEAD..origin/main --oneline\n"
+        team_onboarding:
+          commands: "# Clone with submodules\ngit clone --recurse-submodules \\\n\
+            \  https://github.com/user/project.git\ncd project\n\n# Or if already\
+            \ cloned\ngit submodule update --init --recursive\n"
+      using_clone:
+        initial_setup: "# Clone directly\ngit clone https://github.com/user/repo.git\
+          \ \\\n  docs/knowledge-base/shared\n\n# Use immediately\npython docs/knowledge-base/shared/tools/kb.py\
+          \ \\\n  search \"keyword\"\n"
+        updating:
+          description: Get latest changes
+          commands: 'cd docs/knowledge-base/shared
 
-        after:
-          root_files: 5
-          structure: |
-            Root: README.md, GUIDE.md, QUICKSTART.md, SUBMODULE_VS_CLONE.md
-            curator/: 13 files (organization, skills, workflows, etc.)
-            curator/metadata/: 5 files (architecture, implementation, etc.)
-            for-claude-code/: 2 files (Claude Code integration)
+            git pull origin main
 
-        improvements:
-          - "76% reduction in root files"
-          - "Clear separation of concerns"
-          - "Easy navigation"
-          - "Professional structure"
+            cd ../..
 
-        commit: "04800d6 - Refactor: Implement clean directory structure"
+            # May have merge conflicts!
 
-      best_practices:
-        - item: "Start with clean structure"
-          reason: "Easier to maintain than to refactor later"
-
-        - item: "Create directories before adding files"
-          reason: "Prevents clutter in root"
-
-        - item: "Document file placement rules"
-          reason: "Team consistency"
-
-        - item: "Review root directory monthly"
-          reason: "Prevent creep"
-
-        - item: "Use descriptive directory names"
-          examples: ["curator/", for-claude-code/", "NOT docs/"]
-
-      anti_patterns:
-        - ❌ "Add all docs to root for 'convenience'"
-        - ❌ "Mix user and curator documentation"
-        - ❌ "Create docs/ for everything"
-        - ❌ "Put project-specific docs in root"
-        - ❌ "Use generic names like documentation/"
-
-      validation:
-        root_directory_check:
-          command: "ls -1 *.md | wc -l"
-          max_files: 7
-          action_if_exceeded: "Perform cleanup"
-
-        structure_check:
-          command: |
-            ls -1 curator/ 2>/dev/null | wc -l  # Should have files
-            ls -1 for-claude-code/ 2>/dev/null | wc -l  # Should have files
-
-          expected_results:
-            - "curator/ exists and has INDEX.md"
-            - "No user docs in curator/"
-            - "No curator docs in root"
-
+            '
+        caveats:
+        - Manual update process
+        - Potential merge conflicts
+        - No version pinning by default
+        - Team must remember to update separately
+    decision_tree:
+      title: Should I use submodule or clone?
+      questions:
+      - question: Will this be used in multiple projects?
+        true: Submodule ✅
+        false: Next question →
+      - question: Will team members work on this?
+        true: Submodule ✅
+        false: Next question →
+      - question: Is this a long-term production project?
+        true: Submodule ✅
+        false: Next question →
+      - question: Is this a quick experiment/prototype?
+        true: Clone (temporary) ⚠️
+        false: Submodule ✅
+    migration_path:
+      from_clone_to_submodule:
+        description: Migrate from clone to submodule
+        steps: "# 1. Remove cloned directory\nrm -rf docs/knowledge-base/shared\n\n\
+          # 2. Add as submodule\ngit submodule add https://github.com/user/repo.git\
+          \ \\\n  docs/knowledge-base/shared\n\n# 3. Copy tool (if using local copy)\n\
+          # Already in submodule now\n\n# 4. Update .gitignore\n# Ensure cloned version\
+          \ not ignored\n\n# 5. Commit\ngit add .\ngit commit -m \"Switch from clone\
+          \ to submodule\"\n"
+    real_world_examples:
+      example_1:
+        project: Multi-project company
+        decision: Submodule
+        reason: 3 projects share KB, need version consistency
+        result: ✅ Works perfectly, each project pins different version as needed
+      example_2:
+        project: Personal prototype
+        decision: Clone
+        reason: Quick test, will delete in 2 days
+        result: ⚠️ OK for temporary, but plan to migrate if continuing
+      example_3:
+        project: Production app with team of 5
+        decision: Submodule
+        reason: Team collaboration, long-term maintenance
+        result: ✅ Standard approach, easy onboarding, clean updates
+    best_practices:
+    - item: Default to submodule for anything serious
+      reason: Professional, scalable, standard
+    - item: Document decision in project README
+      reason: Team clarity
+    - item: Use clone only for truly temporary work
+      reason: Avoid refactoring later
+    - item: If using clone, set reminder to reconsider
+      reason: Don't let temporary become permanent
+    anti_patterns:
+    - ❌ "Using clone for production projects"
+    - ❌ "Mixing submodule and clone approaches in team"
+    - ❌ "Forgetting to update clone (stale KB)"
+    - ❌ "Using clone for shared components"
     references:
-      - title: "Clean Structure Proposal"
-        url: "https://github.com/ozand/shared-knowledge-base/blob/main/CLEAN_STRUCTURE_PROPOSAL.md"
-      - title: "Structure Comparison"
-        url: "https://github.com/ozand/shared-knowledge-base/blob/main/STRUCTURE_BEFORE_AFTER.txt"
-      - title: "Git Submodule vs Clone"
-        url: "https://github.com/ozand/shared-knowledge-base/blob/main/SUBMODULE_VS_CLONE.md"
-
-  - id: "PROJECT-ORG-002"
-    title: "Git Submodule vs Clone Decision Matrix"
-    severity: "medium"
-    scope: "universal"
-    tags: ["git", "submodule", "clone", "version-control", "dependency-management"]
-
-    problem: |
-      When integrating shared knowledge base or reusable components into projects:
-      - Unclear whether to use git submodule or direct clone
-      - Team uses different approaches inconsistently
-      - Wrong choice leads to maintenance problems
-      - No clear decision criteria
-
-    solution:
-      decision_matrix:
-        recommendation: "Use git submodule by default"
-
-        use_submodule:
-          scenarios:
-            - scenario: "Multi-project setup"
-              reason: "Each project pins specific version"
-              priority: "High"
-
-            - scenario: "Team collaboration"
-              reason: "Standard approach, clear ownership"
-              priority: "High"
-
-            - scenario: "Production project"
-              reason: "Reliable updates, version tracking"
-              priority: "High"
-
-            - scenario: "Long-term maintenance"
-              reason: "Clean history, easy updates"
-              priority: "High"
-
-            - scenario: "Multiple developers"
-              reason: "Consistent across team"
-              priority: "High"
-
-        use_clone:
-          scenarios:
-            - scenario: "Quick experiment / prototype"
-              reason: "Fastest setup, temporary"
-              duration: "Days to weeks"
-
-            - scenario: "Learning / exploration"
-              reason: "Understand how KB works"
-              duration: "Temporary"
-
-            - scenario: "Planning to fork heavily"
-              reason: "Will diverge significantly from upstream"
-              condition: "Accept breaking automatic updates"
-
-            - scenario: "Single developer pet project"
-              reason: "Overhead not worth it"
-              condition: "No team collaboration expected"
-
-      comparison_table:
-        - dimension: "Version Control"
-          submodule: "✅ Excellent - Pins to specific commit"
-          clone: "⚠️ Manual - Track separately"
-
-        - dimension: "Update Workflow"
-          submodule: "✅ Simple - One command"
-          clone: "❌ Manual - Clone again or git pull"
-
-        - dimension: "History"
-          submodule: "✅ Clean - Separate from project"
-          clone: "❌ Mixed - Upstream commits in project history"
-
-        - dimension: "Team Collaboration"
-          submodule: "✅ Standard - Everyone uses same approach"
-          clone: "⚠️ Variable - Each developer manages separately"
-
-        - dimension: "Onboarding"
-          submodule: "✅ Standard - git clone --recurse-submodules"
-          clone: "✅ Simple - git clone"
-
-        - dimension: "Setup Effort"
-          submodule: "⚠️ Medium - 2-3 extra commands"
-          clone: "✅ Low - One command"
-
-        - dimension: "Maintenance"
-          submodule: "✅ Low - Automated updates"
-          clone: "⚠️ High - Manual updates, merge conflicts"
-
-      implementation:
-        using_submodule:
-          initial_setup: |
-            # Add as submodule
-            git submodule add https://github.com/user/repo.git \
-              docs/knowledge-base/shared
-
-            # Copy tool (if needed)
-            cp docs/knowledge-base/shared/tools/kb.py \
-              docs/knowledge-base/tools/
-
-            # Initialize
-            python docs/knowledge-base/tools/kb.py index -v
-
-          updating:
-            description: "Update to latest version"
-            commands: |
-              # Update submodule
-              git submodule update --remote --merge \
-                docs/knowledge-base/shared
-
-              # Or check first
-              cd docs/knowledge-base/shared
-              git fetch origin
-              git log HEAD..origin/main --oneline
-
-          team_onboarding:
-            commands: |
-              # Clone with submodules
-              git clone --recurse-submodules \
-                https://github.com/user/project.git
-              cd project
-
-              # Or if already cloned
-              git submodule update --init --recursive
-
-        using_clone:
-          initial_setup: |
-            # Clone directly
-            git clone https://github.com/user/repo.git \
-              docs/knowledge-base/shared
-
-            # Use immediately
-            python docs/knowledge-base/shared/tools/kb.py \
-              search "keyword"
-
-          updating:
-            description: "Get latest changes"
-            commands: |
-              cd docs/knowledge-base/shared
-              git pull origin main
-              cd ../..
-              # May have merge conflicts!
-
-          caveats:
-            - "Manual update process"
-            - "Potential merge conflicts"
-            - "No version pinning by default"
-            - "Team must remember to update separately"
-
-      decision_tree:
-        title: "Should I use submodule or clone?"
-
-        questions:
-          - question: "Will this be used in multiple projects?"
-            yes: "Submodule ✅"
-            no: "Next question →"
-
-          - question: "Will team members work on this?"
-            yes: "Submodule ✅"
-            no: "Next question →"
-
-          - question: "Is this a long-term production project?"
-            yes: "Submodule ✅"
-            no: "Next question →"
-
-          - question: "Is this a quick experiment/prototype?"
-            yes: "Clone (temporary) ⚠️"
-            no: "Submodule ✅"
-
-      migration_path:
-        from_clone_to_submodule:
-          description: "Migrate from clone to submodule"
-          steps: |
-            # 1. Remove cloned directory
-            rm -rf docs/knowledge-base/shared
-
-            # 2. Add as submodule
-            git submodule add https://github.com/user/repo.git \
-              docs/knowledge-base/shared
-
-            # 3. Copy tool (if using local copy)
-            # Already in submodule now
-
-            # 4. Update .gitignore
-            # Ensure cloned version not ignored
-
-            # 5. Commit
-            git add .
-            git commit -m "Switch from clone to submodule"
-
-      real_world_examples:
-        example_1:
-          project: "Multi-project company"
-          decision: "Submodule"
-          reason: "3 projects share KB, need version consistency"
-          result: "✅ Works perfectly, each project pins different version as needed"
-
-        example_2:
-          project: "Personal prototype"
-          decision: "Clone"
-          reason: "Quick test, will delete in 2 days"
-          result: "⚠️ OK for temporary, but plan to migrate if continuing"
-
-        example_3:
-          project: "Production app with team of 5"
-          decision: "Submodule"
-          reason: "Team collaboration, long-term maintenance"
-          result: "✅ Standard approach, easy onboarding, clean updates"
-
-      best_practices:
-        - item: "Default to submodule for anything serious"
-          reason: "Professional, scalable, standard"
-
-        - item: "Document decision in project README"
-          reason: "Team clarity"
-
-        - item: "Use clone only for truly temporary work"
-          reason: "Avoid refactoring later"
-
-        - item: "If using clone, set reminder to reconsider"
-          reason: "Don't let temporary become permanent"
-
-      anti_patterns:
-        - ❌ "Using clone for production projects"
-        - ❌ "Mixing submodule and clone approaches in team"
-        - ❌ "Forgetting to update clone (stale KB)"
-        - ❌ "Using clone for shared components"
-
-      references:
-        - title: "Git Submodules Documentation"
-          url: "https://git-scm.com/docs/git-submodule"
-        - title: "Submodule vs Clone Guide"
-          url: "https://github.com/ozand/shared-knowledge-base/blob/main/SUBMODULE_VS_CLONE.md"
-        - title: "Git Submodule Tutorial"
-          url: "https://github.blog/2016-02-01-working-with-submodules/"
+    - title: Git Submodules Documentation
+      url: https://git-scm.com/docs/git-submodule
+    - title: Submodule vs Clone Guide
+      url: https://github.com/ozand/shared-knowledge-base/blob/main/SUBMODULE_VS_CLONE.md
+    - title: Git Submodule Tutorial
+      url: https://github.blog/2016-02-01-working-with-submodules/
+  domains:
+    primary: fastapi
+    secondary: []

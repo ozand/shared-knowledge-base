@@ -1,0 +1,257 @@
+name: Enhanced Notification System
+
+# Enhanced notification system for Shared Knowledge Base feedback loop
+# Provides bidirectional notifications between Shared KB and Project repositories
+
+"on":
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled, unlabeled, closed, reopened]
+  pull_request:
+    types: [closed, merged]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  notify-contributors:
+    name: Notify Contributors of Updates
+    runs-"on": ubuntu-latest
+    # Only process issues with specific labels
+    if: |
+      contains(github.event.issue.labels.*.name, 'agent:claude-code') ||
+      contains(github.event.issue.labels.*.name, 'agent-submission') ||
+      contains(github.event.issue.labels.*.name, 'approved') ||
+      contains(github.event.issue.labels.*.name, 'needs-revision') ||
+      contains(github.event.issue.labels.*.name, 'changes_requested')
+
+    steps:
+      - name: Extract comprehensive metadata
+        id: metadata
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+            const labels = issue.labels.map(l => l.name);
+
+            console.log('Processing issue:', issue.number);
+            console.log('Labels:', labels);
+
+            // Parse agent attribution from issue body
+            const agentMatch = body.match(/### Agent Attribution\n([\s\S]*?)###/);
+            let attribution = {};
+
+            if (agentMatch) {
+              agentMatch[1].split('\n').forEach(line => {
+                const [key, ...values] = line.split(':');
+                if (key && values.length) {
+                  const cleanKey = key.trim().toLowerCase().replace(/ /g, '_');
+                  attribution[cleanKey] = values.join(':').trim();
+                }
+              });
+            }
+
+            // Determine status from labels
+            let status = 'unknown';
+            if (labels.includes('approved')) status = 'approved';
+            else if (labels.includes('needs-revision') || labels.includes('changes_requested')) status = 'changes_requested';
+            else if (labels.includes('rejected')) status = 'rejected';
+            else if (labels.includes('reviewing')) status = 'reviewing';
+            else if (labels.includes('awaiting-review')) status = 'pending';
+
+            // Extract project/source repository
+            const sourceRepo = attribution.source_repository ||
+                             labels.find(l => l.startsWith('project:'))?.replace('project:', '') ||
+                             'unknown';
+
+            const [owner, repo] = sourceRepo.split('/');
+
+            core.setOutput('owner', owner || 'unknown');
+            core.setOutput('repo', repo || 'unknown');
+            core.setOutput('source_repository', sourceRepo);
+            core.setOutput('issue_number', issue.number);
+            core.setOutput('issue_title', issue.title);
+            core.setOutput('issue_url', issue.html_url);
+            core.setOutput('status', status);
+            core.setOutput('labels', labels.join(','));
+            core.setOutput('action', context.payload.action);
+
+            // Output comment excerpt if exists
+            if (context.payload.comment) {
+              const comment = context.payload.comment.body;
+              core.setOutput('comment_author', context.payload.comment.user.login);
+              core.setOutput('comment_body', comment.substring(0, 500));
+            }
+
+      - name: Determine notification type
+        id: notify-type
+        run: |
+          STATUS="${{ steps.metadata.outputs.status }}"
+          ACTION="${{ steps.metadata.outputs.action }}"
+
+          echo "Status: $STATUS"
+          echo "Acti"on": $ACTION"
+
+          case "$STATUS" in
+            approved)
+              echo "notify_type=approved" >> $GITHUB_OUTPUT
+              ;;
+            changes_requested)
+              echo "notify_type=changes_requested" >> $GITHUB_OUTPUT
+              ;;
+            rejected)
+              echo "notify_type=rejected" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "notify_type=update" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Send notification to project
+        if: steps.metadata.outputs.repo != 'unknown'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ steps.metadata.outputs.owner }}/${{ steps.metadata.outputs.repo }}
+          event-type: kb-feedback-${{ steps.notify-type.outputs.notify_type }}
+          client-payload: |
+            {
+              "issue_number": "${{ steps.metadata.outputs.issue_number }}",
+              "issue_title": "${{ steps.metadata.outputs.issue_title }}",
+              "issue_url": "${{ steps.metadata.outputs.issue_url }}",
+              "status": "${{ steps.metadata.outputs.status }}",
+              "action": "${{ steps.metadata.outputs.action }}",
+              "comment_author": "${{ steps.metadata.outputs.comment_author }}",
+              "comment_body": "${{ steps.metadata.outputs.comment_body }}",
+              "labels": "${{ steps.metadata.outputs.labels }}",
+              "notify_type": "${{ steps.notify-type.outputs.notify_type }}",
+              "repository": "${{ github.repository }}",
+              "timestamp": "${{ github.event.repository.updated_at }}"
+            }
+
+      - name: Log notification
+        run: |
+          echo "📧 Notification sent"
+          echo "   To: ${{ steps.metadata.outputs.owner }}/${{ steps.metadata.outputs.repo }}"
+          echo "   Issue: #${{ steps.metadata.outputs.issue_number }}"
+          echo "   Status: ${{ steps.metadata.outputs.status }}"
+          echo "   Type: ${{ steps.notify-type.outputs.notify_type }}"
+          echo "   Acti"on": ${{ steps.metadata.outputs.action }}"
+
+      - name: Post confirmation comment
+        if: steps.notify-type.outputs.notify_type == 'approved'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Entry Approved - Notification Sent**
+
+            This entry has been approved and the submitting project has been notified.
+
+            **Project:** @${{ steps.metadata.outputs.repo }}
+            **Issue URL:** ${{ steps.metadata.outputs.issue_url }}
+
+            The project will automatically:
+            1. Update local KB metadata
+            2. Update Shared KB submodule
+            3. Make knowledge available to agents
+
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+            `
+            });
+
+  notify-on-comment:
+    name: Notify on Curator Comment
+    if: github.event_name == 'issue_comment'
+    runs-"on": ubuntu-latest
+    # Only notify for curator comments (not bot comments)
+    if: |
+      contains(github.event.issue.labels.*.name, 'agent:claude-code') &&
+      !contains(github.event.comment.user.type, 'Bot')
+
+    steps:
+      - name: Check if curator comment
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body.toLowerCase();
+            const issue = context.payload.issue;
+
+            // Check for curator commands
+            const hasCommand = comment.includes('/approve') ||
+                              comment.includes('/request-changes') ||
+                              comment.includes('/reject');
+
+            // Check if comment is from maintainer/curator
+            const isCurator = context.payload.comment.author_association.includes('MAINTAINER') ||
+                             context.payload.comment.author_association.includes('OWNER') ||
+                             context.payload.comment.author_association.includes('MEMBER');
+
+            core.setOutput('has_command', hasCommand);
+            core.setOutput('is_curator', isCurator);
+            core.setOutput('commenter', context.payload.comment.user.login);
+
+      - name: Extract metadata
+        if: steps.check.outputs.is_curator == 'true'
+        id: metadata
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            // Parse agent attribution
+            const agentMatch = body.match(/### Agent Attribution\n([\s\S]*?)###/);
+            let sourceRepo = 'unknown';
+
+            if (agentMatch) {
+              const attribution = {};
+              agentMatch[1].split('\n').forEach(line => {
+                const [key, ...values] = line.split(':');
+                if (key && values.length) {
+                  const cleanKey = key.trim().toLowerCase().replace(/ /g, '_');
+                  attribution[cleanKey] = values.join(':').trim();
+                }
+              });
+              sourceRepo = attribution.source_repository || 'unknown';
+            }
+
+            const [owner, repo] = sourceRepo.split('/');
+            core.setOutput('owner', owner || 'unknown');
+            core.setOutput('repo', repo || 'unknown');
+            core.setOutput('issue_number', issue.number);
+
+      - name: Send notification
+        if: |
+          steps.check.outputs.is_curator == 'true' &&
+          steps.check.outputs.has_command == 'true' &&
+          steps.metadata.outputs.repo != 'unknown'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ steps.metadata.outputs.owner }}/${{ steps.metadata.outputs.repo }}
+          event-type: kb-curator-command
+          client-payload: |
+            {
+              "issue_number": "${{ steps.metadata.outputs.issue_number }}",
+              "commenter": "${{ steps.check.outputs.commenter }}",
+              "comment_body": "${{ github.event.comment.body }}",
+              "repository": "${{ github.repository }}"
+            }
+
+      - name: Log curator action
+        if: steps.check.outputs.has_command == 'true'
+        run: |
+          echo "📝 Curator command detected"
+          echo "   Commenter: ${{ steps.check.outputs.commenter }}"
+          echo "   Issue: #${{ steps.metadata.outputs.issue_number }}"
+          echo "   Acti"on": Review issue for details"

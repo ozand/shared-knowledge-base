@@ -1,266 +1,179 @@
-# Multi-Phase Documentation Reorganization Pattern
-# Systematic approach to reorganizing unwieldy documentation
-
-version: "1.0"
-category: "documentation"
-last_updated: "2025-01-06"
-
+version: '1.0'
+category: documentation
+last_updated: '2025-01-06'
 patterns:
-  - id: "DOC-REORG-001"
-    title: "Multi-Phase Documentation Reorganization"
-    severity: "low"
-    scope: "universal"
-    tags: ["documentation", "organization", "restructure", "phases", "planning", "project-management"]
+- id: DOC-REORG-001
+  title: Multi-Phase Documentation Reorganization
+  severity: low
+  scope: universal
+  tags:
+  - documentation
+  - organization
+  - restructure
+  - phases
+  - planning
+  - project-management
+  context: 'Large projects with extensive documentation often need periodic reorganization.
 
-    context: |
-      Large projects with extensive documentation often need periodic reorganization.
-      This pattern describes how to reorganize documentation when structure becomes
-      unwieldy or difficult to navigate.
+    This pattern describes how to reorganize documentation when structure becomes
 
-    problem: |
-      - Documentation scattered across multiple directories
-      - Long filenames (>100 chars) causing issues
-      - Duplicate content across multiple files
-      - Difficult to find specific information
-      - Legacy documentation mixed with current docs
-      - No clear navigation paths for different user types
+    unwieldy or difficult to navigate.
 
-    solution: |
-      **Phase 1: Archive Legacy Documentation** (30 minutes)
+    '
+  problem: '- Documentation scattered across multiple directories
 
-      1. Create archive directory structure:
-         ```bash
-         mkdir -p docs/archive/legacy
-         ```
+    - Long filenames (>100 chars) causing issues
 
-      2. Move problematic files:
-         - Files with very long names (>100 chars)
-         - Outdated documentation
-         - Files with encoding issues
-         - Duplicate content
+    - Duplicate content across multiple files
 
-      3. Create archive index:
-         ```markdown
-         # Archive Documentation Index
-         Maps old files to new equivalents
-         ```
+    - Difficult to find specific information
 
-      **Phase 2: Create New Documentation Hierarchy** (2 hours)
+    - Legacy documentation mixed with current docs
 
-      1. Organize by type and purpose:
-         ```
-         docs/
-         ├── api/              # API documentation (5-10 files)
-         ├── reference/        # Reference docs (10-15 files)
-         ├── guides/           # Guides and tutorials (5-10 files)
-         └── archive/          # Legacy docs
-         ```
+    - No clear navigation paths for different user types
 
-      2. Create index files for each section:
-         - `api/00-INDEX.md` - Overview and navigation
-         - `reference/00-INDEX.md` - Overview and navigation
-         - `guides/README.md` or similar
+    '
+  solution: "**Phase 1: Archive Legacy Documentation** (30 minutes)\n\n1. Create archive\
+    \ directory structure:\n   ```bash\n   mkdir -p docs/archive/legacy\n   ```\n\n\
+    2. Move problematic files:\n   - Files with very long names (>100 chars)\n   -\
+    \ Outdated documentation\n   - Files with encoding issues\n   - Duplicate content\n\
+    \n3. Create archive index:\n   ```markdown\n   # Archive Documentation Index\n\
+    \   Maps old files to new equivalents\n   ```\n\n**Phase 2: Create New Documentation\
+    \ Hierarchy** (2 hours)\n\n1. Organize by type and purpose:\n   ```\n   docs/\n\
+    \   ├── api/              # API documentation (5-10 files)\n   ├── reference/\
+    \        # Reference docs (10-15 files)\n   ├── guides/           # Guides and\
+    \ tutorials (5-10 files)\n   └── archive/          # Legacy docs\n   ```\n\n2.\
+    \ Create index files for each section:\n   - `api/00-INDEX.md` - Overview and\
+    \ navigation\n   - `reference/00-INDEX.md` - Overview and navigation\n   - `guides/README.md`\
+    \ or similar\n\n**Phase 3: Create Entry Points** (30 minutes)\n\n1. Main documentation\
+    \ README:\n   ```markdown\n   # Documentation\n\n   ## Quick Start Paths\n   -\
+    \ For Beginners: Quick Start → Basics → Configuration\n   - For Developers: Pattern\
+    \ Library → Reference\n   - For Integrators: API Overview → Methods → Redis\n\
+    \   ```\n\n2. Navigation by role:\n   - Beginner-friendly path\n   - Developer-focused\
+    \ path\n   - Integrator-focused path\n\n**Phase 4: Clean Examples Directory**\
+    \ (20 minutes)\n\n1. Remove backup files:\n   ```bash\n   find examples/ -name\
+    \ \"*.backup\" -delete\n   find examples/ -name \"*_old.*\" -delete\n   find examples/\
+    \ -name \"*.bak\" -delete\n   ```\n\n2. Update .gitignore:\n   ```gitignore\n\
+    \   # Backup files\n   *.backup\n   *.bak\n   *_old.*\n   ```\n\n**Phase 5: Create\
+    \ README for Directories** (1 hour)\n\n1. examples/README.md with:\n   - 126 parsers\
+    \ by difficulty\n   - Categories (Search, E-commerce, Social, etc.)\n   - Usage\
+    \ instructions\n   - Learning paths\n\n2. scripts/README.md with:\n   - Available\
+    \ scripts\n   - Usage examples\n   - Configuration\n\n3. lib/README.md with:\n\
+    \   - Available libraries\n   - Usage documentation\n\n**Phase 6: Update Technical\
+    \ Files** (30 minutes)\n\n1. Update PROJECT.md with new structure\n2. Update AGENTS.md\
+    \ with documentation links\n3. Update SKILLS.md with new resources\n4. Add cross-references\
+    \ (40+ new links)\n"
+  best_practices: "1. **Plan before executing**\n   - Analyze current structure\n\
+    \   - Identify issues\n   - Propose new structure\n   - Get approval\n\n2. **Use\
+    \ TodoWrite tool** for tracking phases\n   - Mark phases as in_progress\n   -\
+    \ Update as you complete\n   - Final verification\n\n3. **Keep legacy docs**\n\
+    \   - Move to archive/ instead of deleting\n   - Create index mapping old → new\n\
+    \   - Preserve for reference\n\n4. **Create README files**\n   - One per major\
+    \ directory\n   - Include navigation\n   - Add examples\n   - Link to related\
+    \ docs\n\n5. **Update all references**\n   - Technical files (PROJECT.md, AGENTS.md,\
+    \ etc.)\n   - Cross-links between sections\n   - Table of contents\n   - Quick\
+    \ start paths\n"
+  examples: "**Before (flat structure):**\n```\ndocs/\n├── _info_app/           #\
+    \ 13 problematic files\n├── _info_parsers/       # Archive candidate\n├── guide1.md\n\
+    ├── guide2.md\n└── ...                  # Mixed organization\n```\n\n**After (organized\
+    \ structure):**\n```\ndocs/\n├── README.md             # Main navigation\n├──\
+    \ api/                  # API docs (5 files)\n│   ├── 00-INDEX.md\n│   ├── 01-overview.md\n\
+    │   └── ...\n├── reference/            # Reference (12 files)\n│   ├── 00-INDEX.md\n\
+    │   ├── http-requests.md\n│   └── ...\n├── guides/               # Guides (7 files)\n\
+    │   ├── QUICK_START.md\n│   ├── PATTERN_LIBRARY.md\n│   └── ...\n└── archive/legacy/\
+    \       # Archived (100+ files)\n    ├── INDEX.md          # Maps old → new\n\
+    \    └── ...\n```\n"
+  lessons_learned: "1. **Archive, don't delete**\n   - Legacy docs may have value\n\
+    \   - Preserve history\n   - Allow rollback if needed\n\n2. **Create multiple\
+    \ entry points**\n   - Different users need different paths\n   - Beginner vs\
+    \ Developer vs Integrator\n   - Quick reference vs deep dive\n\n3. **README files\
+    \ are crucial**\n   - Every major directory needs one\n   - Include navigation,\
+    \ examples, links\n   - Make it self-explanatory\n\n4. **Cross-reference everything**\n\
+    \   - 40+ new links added\n   - Connect related concepts\n   - Aid discoverability\n\
+    \n5. **Track progress with TodoWrite**\n   - 6 phases tracked\n   - Clear status\
+    \ (pending/in_progress/completed)\n   - Easy to resume\n"
+  time_estimate: '- Phase 1 (Archive): 30 minutes
 
-      **Phase 3: Create Entry Points** (30 minutes)
+    - Phase 2 (New structure): 2 hours
 
-      1. Main documentation README:
-         ```markdown
-         # Documentation
+    - Phase 3 (Entry points): 30 minutes
 
-         ## Quick Start Paths
-         - For Beginners: Quick Start → Basics → Configuration
-         - For Developers: Pattern Library → Reference
-         - For Integrators: API Overview → Methods → Redis
-         ```
+    - Phase 4 (Clean examples): 20 minutes
 
-      2. Navigation by role:
-         - Beginner-friendly path
-         - Developer-focused path
-         - Integrator-focused path
+    - Phase 5 (README files): 1 hour
 
-      **Phase 4: Clean Examples Directory** (20 minutes)
+    - Phase 6 (Update technical): 30 minutes
 
-      1. Remove backup files:
-         ```bash
-         find examples/ -name "*.backup" -delete
-         find examples/ -name "*_old.*" -delete
-         find examples/ -name "*.bak" -delete
-         ```
 
-      2. Update .gitignore:
-         ```gitignore
-         # Backup files
-         *.backup
-         *.bak
-         *_old.*
-         ```
+    **Total**: ~4-5 hours
 
-      **Phase 5: Create README for Directories** (1 hour)
+    '
+  success_metrics: '- Navigation time: 5-10 min → 30 seconds
 
-      1. examples/README.md with:
-         - 126 parsers by difficulty
-         - Categories (Search, E-commerce, Social, etc.)
-         - Usage instructions
-         - Learning paths
+    - Documentation findability: 60% → 95%
 
-      2. scripts/README.md with:
-         - Available scripts
-         - Usage examples
-         - Configuration
+    - User satisfaction: Significantly improved
 
-      3. lib/README.md with:
-         - Available libraries
-         - Usage documentation
+    - Onboarding time: Reduced by 50%
 
-      **Phase 6: Update Technical Files** (30 minutes)
+    '
+  when_to_use: 'Use this pattern when:
 
-      1. Update PROJECT.md with new structure
-      2. Update AGENTS.md with documentation links
-      3. Update SKILLS.md with new resources
-      4. Add cross-references (40+ new links)
+    - Documentation becomes difficult to navigate
 
-    best_practices: |
-      1. **Plan before executing**
-         - Analyze current structure
-         - Identify issues
-         - Propose new structure
-         - Get approval
+    - Multiple duplicate or outdated files
 
-      2. **Use TodoWrite tool** for tracking phases
-         - Mark phases as in_progress
-         - Update as you complete
-         - Final verification
+    - New team members can''t find information
 
-      3. **Keep legacy docs**
-         - Move to archive/ instead of deleting
-         - Create index mapping old → new
-         - Preserve for reference
+    - Long filenames causing issues
 
-      4. **Create README files**
-         - One per major directory
-         - Include navigation
-         - Add examples
-         - Link to related docs
+    - No clear structure or organization
 
-      5. **Update all references**
-         - Technical files (PROJECT.md, AGENTS.md, etc.)
-         - Cross-links between sections
-         - Table of contents
-         - Quick start paths
+    - Legacy docs mixed with current
 
-    examples: |
-      **Before (flat structure):**
-      ```
-      docs/
-      ├── _info_app/           # 13 problematic files
-      ├── _info_parsers/       # Archive candidate
-      ├── guide1.md
-      ├── guide2.md
-      └── ...                  # Mixed organization
-      ```
+    '
+  anti_patterns: '❌ **Don''t delete without archiving**
 
-      **After (organized structure):**
-      ```
-      docs/
-      ├── README.md             # Main navigation
-      ├── api/                  # API docs (5 files)
-      │   ├── 00-INDEX.md
-      │   ├── 01-overview.md
-      │   └── ...
-      ├── reference/            # Reference (12 files)
-      │   ├── 00-INDEX.md
-      │   ├── http-requests.md
-      │   └── ...
-      ├── guides/               # Guides (7 files)
-      │   ├── QUICK_START.md
-      │   ├── PATTERN_LIBRARY.md
-      │   └── ...
-      └── archive/legacy/       # Archived (100+ files)
-          ├── INDEX.md          # Maps old → new
-          └── ...
-      ```
+    - Legacy docs may have value
 
-    lessons_learned: |
-      1. **Archive, don't delete**
-         - Legacy docs may have value
-         - Preserve history
-         - Allow rollback if needed
+    - Use archive/ directory
 
-      2. **Create multiple entry points**
-         - Different users need different paths
-         - Beginner vs Developer vs Integrator
-         - Quick reference vs deep dive
 
-      3. **README files are crucial**
-         - Every major directory needs one
-         - Include navigation, examples, links
-         - Make it self-explanatory
+    ❌ **Don''t skip README files**
 
-      4. **Cross-reference everything**
-         - 40+ new links added
-         - Connect related concepts
-         - Aid discoverability
+    - Every directory needs navigation
 
-      5. **Track progress with TodoWrite**
-         - 6 phases tracked
-         - Clear status (pending/in_progress/completed)
-         - Easy to resume
+    - Self-documenting structure
 
-    time_estimate: |
-      - Phase 1 (Archive): 30 minutes
-      - Phase 2 (New structure): 2 hours
-      - Phase 3 (Entry points): 30 minutes
-      - Phase 4 (Clean examples): 20 minutes
-      - Phase 5 (README files): 1 hour
-      - Phase 6 (Update technical): 30 minutes
 
-      **Total**: ~4-5 hours
+    ❌ **Don''t forget cross-references**
 
-    success_metrics: |
-      - Navigation time: 5-10 min → 30 seconds
-      - Documentation findability: 60% → 95%
-      - User satisfaction: Significantly improved
-      - Onboarding time: Reduced by 50%
+    - Connect related topics
 
-    when_to_use: |
-      Use this pattern when:
-      - Documentation becomes difficult to navigate
-      - Multiple duplicate or outdated files
-      - New team members can't find information
-      - Long filenames causing issues
-      - No clear structure or organization
-      - Legacy docs mixed with current
+    - Multiple navigation paths
 
-    anti_patterns: |
-      ❌ **Don't delete without archiving**
-      - Legacy docs may have value
-      - Use archive/ directory
 
-      ❌ **Don't skip README files**
-      - Every directory needs navigation
-      - Self-documenting structure
+    ❌ **Don''t do it all at once**
 
-      ❌ **Don't forget cross-references**
-      - Connect related topics
-      - Multiple navigation paths
+    - Break into phases
 
-      ❌ **Don't do it all at once**
-      - Break into phases
-      - Track progress
+    - Track progress
 
-    related_patterns:
-      - AI-SERVICE-001 (AI Service Files Updates)
-      - KB-MIGRATION-001 (Knowledge Base Migration)
-
-    references:
-      - PROJECT_REORGANIZATION_PLAN.md
-      - REORGANIZATION_SUMMARY.md
-      - docs/README.md (new structure)
-
-    metadata:
-      created_at: "2025-01-06"
-      author: "PARSER project"
-      reusable: true
-      severity_level: 3
-      difficulty: "advanced"
-      pattern_type: "project-management"
+    '
+  related_patterns:
+  - AI-SERVICE-001 (AI Service Files Updates)
+  - KB-MIGRATION-001 (Knowledge Base Migration)
+  references:
+  - PROJECT_REORGANIZATION_PLAN.md
+  - REORGANIZATION_SUMMARY.md
+  - docs/README.md (new structure)
+  metadata:
+    created_at: '2025-01-06'
+    author: PARSER project
+    reusable: true
+    severity_level: 3
+    difficulty: advanced
+    pattern_type: project-management
+  domains:
+    primary: api
+    secondary: []

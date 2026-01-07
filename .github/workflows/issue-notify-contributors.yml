@@ -1,0 +1,88 @@
+name: Notify Contributors of Issue Updates
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [closed, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  notify:
+    name: Notify Agent Projects
+    runs-on: ubuntu-latest
+    # Only run for issues with agent attribution
+    if: |
+      contains(github.event.issue.labels.*.name, 'agent:claude-code') ||
+      contains(github.event.issue.labels.*.name, 'agent-submission')
+
+    steps:
+      - name: Extract issue metadata
+        id: metadata
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            // Parse agent attribution from issue body
+            // Expected format: "### Agent Attribution" section
+            const agentMatch = body.match(/### Agent Attribution\n([\s\S]*?)###/);
+            if (!agentMatch) {
+              console.log('No agent attribution found');
+              return;
+            }
+
+            const attribution = {};
+            agentMatch[1].split('\n').forEach(line => {
+              const [key, ...values] = line.split(':');
+              if (key && values.length) {
+                const cleanKey = key.trim().toLowerCase().replace(/ /g, '_');
+                attribution[cleanKey] = values.join(':').trim();
+              }
+            });
+
+            if (!attribution.source_repository) {
+              console.log('No source repository found');
+              return;
+            }
+
+            // Parse owner/repo
+            const [owner, repo] = attribution.source_repository.split('/');
+
+            core.setOutput('owner', owner);
+            core.setOutput('repo', repo);
+            core.setOutput('issue_number', issue.number);
+            core.setOutput('action', context.payload.action);
+            core.setOutput('comment_author', context.payload.comment?.user.login || 'github-actions');
+            core.setOutput('issue_title', issue.title);
+            core.setOutput('issue_labels', issue.labels.map(l => l.name).join(','));
+
+      - name: Send notification to source repository
+        if: steps.metadata.outputs.owner
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ steps.metadata.outputs.owner }}/${{ steps.metadata.outputs.repo }}
+          event-type: kb-contribution-update
+          client-payload: |
+            {
+              "issue_number": "${{ steps.metadata.outputs.issue_number }}",
+              "issue_title": "${{ steps.metadata.outputs.issue_title }}",
+              "action": "${{ steps.metadata.outputs.action }}",
+              "comment_author": "${{ steps.metadata.outputs.comment_author }}",
+              "labels": "${{ steps.metadata.outputs.issue_labels }}",
+              "repository": "${{ github.repository }}",
+              "timestamp": "${{ github.event.repository.updated_at }}"
+            }
+
+      - name: Log notification
+        run: |
+          echo "📧 Notification sent to ${{ steps.metadata.outputs.owner }}/${{ steps.metadata.outputs.repo }}"
+          echo "   Issue: #${{ steps.metadata.outputs.issue_number }}"
+          echo "   Action: ${{ steps.metadata.outputs.action }}"
+          echo "   Comment by: ${{ steps.metadata.outputs.comment_author }}"

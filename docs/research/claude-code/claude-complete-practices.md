@@ -1,0 +1,1147 @@
+# Claude Code: Полный справочник всех практик и подходов
+## Beyond SKILLS, AGENTS, MEMORY, HOOKS: Комплексное руководство
+
+---
+
+## Оглавление
+
+1. [CLAUDE.md: Project Memory & Context](#claudemd-project-memory--context)
+2. [Permission Modes: Security & Workflow Balance](#permission-modes-security--workflow-balance)
+3. [Slash Commands: Custom Automation](#slash-commands-custom-automation)
+4. [MCP (Model Context Protocol): External Integration](#mcp-model-context-protocol-external-integration)
+5. [Projects: Collaborative Workspaces](#projects-collaborative-workspaces)
+6. [@ Referencing: Smart Context Management](#-referencing-smart-context-management)
+7. [Checkpoints & /rewind: Safe Experimentation](#checkpoints--rewind-safe-experimentation)
+8. [Planning Workflow: Plan Mode & Structured Approach](#planning-workflow-plan-mode--structured-approach)
+9. [Context Management: Optimization Strategies](#context-management-optimization-strategies)
+10. [Multi-Agent Coordination: Team Development](#multi-agent-coordination-team-development)
+11. [Workflow Optimization: Integration & Automation](#workflow-optimization-integration--automation)
+12. [Best Practices Matrix](#best-practices-matrix)
+
+---
+
+## CLAUDE.md: Project Memory & Context
+
+### Что такое CLAUDE.md?
+
+**CLAUDE.md** — это центральный файл проекта, который содержит **persistent context** о проекте. Это "шпаргалка" для Claude, которую он читает перед началом работы.
+
+```
+KEY INSIGHT:
+CLAUDE.md = Project's long-term memory
+Claude ALWAYS читает его перед работой
+Структурирует его понимание проекта
+```
+
+### Иерархическая структура
+
+```
+Структура:
+.claude/
+├── CLAUDE.md              ← Корневой контекст (вся система)
+│
+src/
+├── CLAUDE.md              ← Локальный контекст (src/)
+│
+src/auth/
+└── CLAUDE.md              ← Специфичный контекст (auth)
+
+Правило: Claude читает CLAUDE.md в текущей директории
+          + все родительские CLAUDE.md файлы
+          = накопленный контекст
+```
+
+### Что включать в CLAUDE.md?
+
+```markdown
+# Project Name
+
+## WHAT (Project overview)
+- Purpose: What does this project do?
+- Stack: TypeScript, React, PostgreSQL
+- Architecture: MVC, microservices, monolith?
+
+## WHY (Goals & reasoning)
+- Business goals
+- Technical decisions rationale
+- Key constraints
+
+## HOW (Workflow & standards)
+
+### Development Workflow
+1. Read requirements carefully
+2. Create detailed plan first
+3. Break into small PRs
+4. Require tests before merge
+
+### Coding Standards
+- TypeScript: strict mode, no any
+- Tests: 80%+ coverage required
+- Naming: PascalCase for classes, camelCase for functions
+- Performance: All queries <200ms p95
+
+### File Organization
+```
+src/
+├── services/      ← Business logic
+├── api/           ← REST endpoints
+├── components/    ← React components
+├── utils/         ← Helper functions
+└── types/         ← TypeScript types
+```
+
+### Build & Test Commands
+```
+npm run dev       ← Start dev server
+npm test          ← Run tests
+npm run lint      ← Check style
+npm run build     ← Production build
+```
+
+### Security Constraints
+- No secrets in code
+- All env vars must be in .env
+- Database queries must use ORM (no raw SQL)
+- Validate all inputs
+
+### Performance Budgets
+- API responses: <200ms
+- Page load: <3s
+- JS bundle: <100KB
+
+### Testing Strategy
+- Unit tests for business logic
+- Integration tests for APIs
+- E2E tests for critical flows
+- Coverage minimum: 80%
+
+## Key Decisions (ADRs)
+- Use JWT for auth (decided 2025-01-06)
+- PostgreSQL for persistence (better than MongoDB for this use case)
+- React for UI (team expertise)
+```
+
+### Template для нового проекта
+
+```bash
+# Создать CLAUDE.md
+cat > CLAUDE.md << 'EOF'
+# [Project Name]
+
+## Quick Overview
+- **What**: [Purpose]
+- **Stack**: [Technologies]
+- **Team**: [Members]
+
+## Before You Start
+1. Read this entire file
+2. Check /README.md for setup
+3. Run tests: `npm test`
+4. Check current branch: `git status`
+
+## Key Files
+@src/app.ts      - Entry point
+@src/config.ts   - Configuration
+@package.json    - Dependencies
+
+## Development Workflow
+1. **Plan**: Create detailed plan
+2. **Implement**: Small focused changes
+3. **Test**: 80%+ coverage required
+4. **Commit**: Descriptive messages
+
+## Important Rules
+- No direct SQL (use ORM)
+- All tests must pass before PR
+- Code review required
+- Update CLAUDE.md if architecture changes
+
+## Recent Decisions
+- [Decision 1]
+- [Decision 2]
+
+## Questions?
+Ask on Slack: #dev-team
+EOF
+```
+
+---
+
+## Permission Modes: Security & Workflow Balance
+
+### 4 Permission Modes
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           4 PERMISSION MODES IN CLAUDE CODE             │
+└─────────────────────────────────────────────────────────┘
+
+MODE              BEHAVIOR                  USE CASE
+─────────────────────────────────────────────────────────
+default           Prompts for permission    General dev
+                  on first tool use         Safe baseline
+
+acceptEdits       Auto-accepts file edits   Trusted projects
+                  Prompts for bash          Fast iteration
+                  (can disable via settings)
+
+plan              Read-only mode            Code review
+                  Analyzes, doesn't modify  Exploration
+                  Can't execute commands    Learning codebase
+
+bypassPermissions Skips ALL prompts         Automated envs
+                  Full autonomy             CI/CD only
+                  ⚠️  DANGEROUS - avoid!    Sandboxed only
+```
+
+### Когда использовать какой режим?
+
+```
+WORKFLOW PHASE:
+
+Exploration phase
+  → Use: plan mode
+  → Reason: Safe to read, prevents accidental changes
+  → Command: claude --permission-mode plan
+
+Planning phase
+  → Use: plan mode
+  → Reason: Create detailed plans without modifications
+
+Development phase
+  → Use: acceptEdits mode
+  → Reason: Fast iteration, trust the changes
+  → Command: claude --permission-mode acceptEdits
+
+Code review phase
+  → Use: plan mode
+  → Reason: Analysis only, no modifications
+
+Production deployment
+  → Use: bypassPermissions (sandboxed only!)
+  → Reason: Automated, no user interaction
+```
+
+### Настройка по умолчанию
+
+```json
+{
+  ".claude/settings.json": {
+    "defaultMode": "default",
+    
+    "permissions": {
+      "allow": [
+        "Read",
+        "Edit(src/*)",
+        "Bash(npm run test:*)",
+        "Bash(git add)",
+        "Bash(git commit)"
+      ],
+      "deny": [
+        "Bash(rm)",
+        "Bash(sudo)",
+        "Edit(.env)"
+      ]
+    }
+  }
+}
+```
+
+### Переключение режимов во время сессии
+
+```
+Во время работы:
+  Press: Shift + Tab
+
+Меню:
+  1. Switch to: plan
+  2. Switch to: acceptEdits
+  3. Switch to: default
+  4. Exit mode
+
+Или команда:
+  /permissions
+```
+
+---
+
+## Slash Commands: Custom Automation
+
+### Встроенные команды
+
+```
+/help                   Show all available commands
+/clear                  Clear conversation history
+/init CC                Initialize new Claude Code project
+/rewind                 Checkpoint system (undo changes)
+/compact                Manually trigger context compaction
+/permissions            Manage tool permissions
+/list                   List available commands
+/agents                 Manage subagents
+```
+
+### Создание Custom Commands
+
+#### Project-scoped commands (Shared with team)
+
+```bash
+# Структура
+.claude/commands/
+├── optimize.md                    # /optimize
+├── test-coverage.md               # /test-coverage
+└── frontend/
+    ├── new-component.md           # /component
+    └── fix-styles.md              # /fix-styles
+```
+
+#### Пример: /optimize command
+
+```markdown
+# File: .claude/commands/optimize.md
+
+---
+description: Analyze code for performance issues and suggest optimizations
+---
+
+# Performance Optimization Command
+
+Analyze the provided code for:
+
+1. **Time Complexity Issues**
+   - N+1 queries
+   - Unnecessary loops
+   - Inefficient algorithms
+
+2. **Space Complexity Issues**
+   - Large data structures
+   - Memory leaks
+   - Unnecessary caching
+
+3. **Runtime Performance**
+   - DOM operations
+   - Network requests
+   - Large bundle sizes
+
+4. **Suggestions**
+   - Specific improvements
+   - Code examples
+   - Expected impact
+
+Focus on practical, implementable optimizations.
+```
+
+#### Пример: /frontend:new-component command
+
+```markdown
+# File: .claude/commands/frontend/new-component.md
+
+---
+description: Create a new React component with tests
+---
+
+# Create New Component
+
+Generate a production-ready React component:
+
+1. **Component file** at `src/components/{arg1}.tsx`
+   - TypeScript with strict types
+   - Functional component with hooks
+   - Proper prop interface
+   - JSDoc comments
+
+2. **Styles** at `src/styles/{arg1}.css`
+   - BEM naming convention
+   - Mobile-first responsive
+   - CSS variables for colors
+
+3. **Tests** at `tests/{arg1}.test.tsx`
+   - React Testing Library
+   - 80%+ coverage
+   - Happy path + edge cases
+   - Accessibility tests
+
+4. **Export** from `src/components/index.ts`
+
+Use argument placeholder: {arg1}
+```
+
+#### Использование
+
+```
+Direct call (no conflicts):
+  /optimize
+
+With arguments:
+  /new-component Button
+  /frontend:new-component TextField
+
+Disambiguate:
+  /project:optimize      (project-scoped)
+  /user:optimize         (user-scoped)
+```
+
+### User-scoped commands (Personal across projects)
+
+```bash
+# Store in home directory
+~/.claude/commands/
+├── code-review.md
+├── debug.md
+├── deploy.md
+└── utilities/
+    ├── cleanup.md
+    └── backup.md
+
+# Access with /user: prefix
+/user:code-review
+/user:utilities:cleanup
+```
+
+---
+
+## MCP (Model Context Protocol): External Integration
+
+### Что такое MCP?
+
+**MCP** — это стандартный протокол для подключения Claude к внешним системам:
+
+```
+Claude Code ←→ MCP Server ←→ External System
+  (Client)      (Bridge)      (Tools/Data)
+```
+
+### Популярные MCP Servers
+
+```
+Категория           Примеры
+──────────────────────────────────────────
+Data               PostgreSQL, MySQL, MongoDB
+Cloud              AWS, Azure, Google Cloud
+Version Control    GitHub, GitLab
+Project Mgmt       Jira, Linear, Asana
+Communication      Slack, Discord, Email
+File Systems       Filesystem, S3
+Utilities          Zapier, Make, n8n
+```
+
+### Установка MCP Server
+
+```bash
+# Add PostgreSQL MCP
+claude mcp add postgresql \
+  --connection-string "postgresql://user:pass@localhost/db"
+
+# Add GitHub MCP
+claude mcp add github \
+  --token "ghp_xxxxxxxxxxxx"
+
+# Add Slack MCP
+claude mcp add slack \
+  --bot-token "xoxb-xxxxxxxxxxxx"
+
+# List connected MCPs
+claude mcp list
+```
+
+### Configuration (settings.json)
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "node",
+      "args": ["./mcp-postgres.js"],
+      "env": {
+        "DATABASE_URL": "postgresql://..."
+      }
+    },
+    "github": {
+      "command": "python3",
+      "args": ["./mcp-github.py"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+### Usage Examples
+
+```
+"List my GitHub issues"
+Claude: [Uses GitHub MCP]
+→ Lists recent issues
+
+"Query all users from production database"
+Claude: [Uses PostgreSQL MCP]
+→ Returns query results
+
+"Send message to #engineering Slack"
+Claude: [Uses Slack MCP]
+→ Posts message to channel
+```
+
+---
+
+## Projects: Collaborative Workspaces
+
+### Что такое Projects?
+
+**Projects** — это collaborative feature в Claude (Pro/Teams/Enterprise) для создания isolated workspaces с shared context.
+
+```
+Project = Shared knowledge + Custom instructions + Collaboration
+```
+
+### Когда использовать Projects?
+
+```
+USE:
+  ✅ Team collaboration (shared documents)
+  ✅ Consistent tone/style across conversations
+  ✅ Long-term institutional knowledge
+  ✅ Multi-person initiatives
+  
+SKIP:
+  ❌ Single-person dev (use CLAUDE.md instead)
+  ❌ Real-time coding (use Claude Code)
+  ❌ Quick one-off questions
+```
+
+### Создание Project
+
+```
+1. Go to claude.ai
+2. Click: "+ New Project"
+3. Name: "Marketing Campaign 2025"
+4. Add files:
+   - Brand guidelines.pdf
+   - Product specs.md
+   - Positioning brief.docx
+5. Set instructions:
+   - "Use our brand voice (friendly, technical)"
+   - "Cite sources when using knowledge"
+6. Share with team
+```
+
+### Features
+
+```
+Knowledge Base:
+  • Upload documents (PDF, text, code)
+  • Organize by category
+  • Search across uploads
+  • Auto-cite sources
+
+Custom Instructions:
+  • Project-level tone/style
+  • Formatting preferences
+  • Specific rules/constraints
+  • Overrides default settings
+
+Collaboration:
+  • Share with team members
+  • Permission levels (view/edit)
+  • Activity feed
+  • Shared conversations
+```
+
+---
+
+## @ Referencing: Smart Context Management
+
+### Что это такое?
+
+**@ referencing** — это способ явно указать Claude на файлы для включения в context.
+
+```
+Синтаксис: @filename или @path/to/file
+Результат: Claude читает файл и включает в контекст
+Преимущество: Быстрее чем файл-по-файлу вручную
+```
+
+### Использование
+
+```
+В промпте:
+  "Review this component @src/Header.tsx
+   and its styles @src/styles/Header.css"
+
+Claude читает оба файла автоматически
+
+С nested путями:
+  @src/components/dashboard/widgets/Chart.tsx
+  @tests/unit/services/auth.test.ts
+  @docs/API.md
+```
+
+### В CLAUDE.md
+
+```markdown
+# Key Files for Reference
+
+@src/config/database.ts  - Database config (use ORM!)
+@src/utils/helpers.ts    - Common utilities
+@types/domain.ts         - Domain types
+@docs/API.md             - API documentation
+
+Claude автоматически прочитает эти файлы
+```
+
+### Best Practices
+
+```
+GOOD:
+  "Update header: @src/components/Header.tsx
+   Update styles: @src/styles/Header.css
+   Update tests: @tests/Header.test.tsx"
+
+BETTER:
+  "Update header component (all related files):
+   @src/components/Header.tsx
+   @src/styles/Header.css
+   @tests/Header.test.tsx
+   @src/types/navigation.d.ts"
+
+BEST:
+  "Refactor header component:
+   Current implementation: @src/components/Header.tsx
+   Styles: @src/styles/Header.css
+   Tests: @tests/Header.test.tsx
+   Types: @src/types/navigation.d.ts
+   Please improve organization and add loading state"
+```
+
+---
+
+## Checkpoints & /rewind: Safe Experimentation
+
+### Checkpoint System
+
+```
+АВТОМАТИЧЕСКИЕ SNAPSHOTS:
+
+Turn 1: User prompt → Claude edits files
+        [CHECKPOINT 1]
+
+Turn 2: User prompt → Claude edits files
+        [CHECKPOINT 2]
+
+Turn 3: User prompt → Claude edits files
+        [CHECKPOINT 3]
+
+/rewind → Choose checkpoint to restore to
+```
+
+### Использование /rewind
+
+```bash
+# Во время сессии
+/rewind
+
+# Меню появляется:
+  Turn 1: "Implement authentication"
+    Files: auth.ts (+45 -10)
+
+  Turn 2: "Add tests for auth"
+    Files: auth.test.ts (+120 -)
+
+  Turn 3: "Refactor auth service"
+    Files: auth.ts (+30 -50), auth.test.ts (+5 -)
+
+Select: [1] [2] [3]
+
+# После выбора:
+  Restore code and conversation
+  Restore conversation only
+  Restore code only
+```
+
+### Restoration Options
+
+```
+RESTORE CODE AND CONVERSATION:
+  • Completely revert to checkpoint
+  • Conversation forks at that point
+  • Start fresh from checkpoint
+
+RESTORE CONVERSATION ONLY:
+  • Keep code changes
+  • Rewind conversation history
+  • Claude recalls context differently
+
+RESTORE CODE ONLY:
+  • Revert files to checkpoint
+  • Keep conversation visible
+  • Useful: "Code is wrong, but I want to discuss why"
+```
+
+### Best Practices
+
+```
+BEFORE RISKY WORK:
+  /rewind → Check current state
+  (Know where to rewind to if needed)
+
+DURING EXPERIMENTATION:
+  Claude tries approach A → Maybe doesn't work
+  /rewind → Back to checkpoint
+  Claude tries approach B
+
+AFTER COMPLETION:
+  Work looks good
+  /rewind → Not needed (git it instead)
+```
+
+---
+
+## Planning Workflow: Plan Mode & Structured Approach
+
+### Plan Mode Workflow
+
+```
+PHASE 1: EXPLORATION
+  claude --permission-mode plan
+  Claude reads codebase
+  Can't modify anything
+  → Understand architecture
+
+PHASE 2: PLANNING
+  Still in plan mode
+  Claude creates detailed plan
+  → MULTI_AGENT_PLAN.md or planning document
+  → Share with team for feedback
+
+PHASE 3: EXECUTION
+  claude --permission-mode acceptEdits
+  Claude executes plan
+  Can modify files
+  → Implement in phases
+  → Run tests after each phase
+
+PHASE 4: REVIEW
+  Plan mode again
+  Review what was implemented
+  → Check against original plan
+```
+
+### Plan Template
+
+```markdown
+# Implementation Plan: [Feature Name]
+
+## 1. Overview
+- **Goal**: [What to build]
+- **Scope**: [What's included, what's not]
+- **Effort**: [Estimated effort]
+- **Risk**: [Potential issues]
+
+## 2. Architecture
+- **Components**: [What will be created/modified]
+- **Data flow**: [How data moves]
+- **Dependencies**: [What it depends on]
+
+## 3. Implementation Phases
+
+### Phase 1: Skeleton (Est. 2h)
+- [ ] Create auth service
+- [ ] Create user model
+- [ ] Create authentication endpoints
+
+### Phase 2: Core Logic (Est. 4h)
+- [ ] Implement JWT generation
+- [ ] Implement password hashing
+- [ ] Implement refresh token rotation
+
+### Phase 3: Tests (Est. 3h)
+- [ ] Write unit tests (auth service)
+- [ ] Write integration tests (endpoints)
+- [ ] Achieve 85%+ coverage
+
+### Phase 4: Polish (Est. 1h)
+- [ ] Error messages
+- [ ] Documentation
+- [ ] Review & cleanup
+
+## 4. Success Criteria
+- [ ] All tests passing
+- [ ] Coverage ≥85%
+- [ ] No linting errors
+- [ ] Security review passed
+
+## 5. Risks & Mitigations
+- **Risk**: Token expiration issues
+  Mitigation: Extensive testing, use proven library
+
+- **Risk**: Password reset vulnerabilities
+  Mitigation: Follow OWASP guidelines
+
+## 6. Questions / Blockers
+- [Any unclear requirements?]
+- [Blocked on anything?]
+```
+
+---
+
+## Context Management: Optimization Strategies
+
+### Context Window Reality
+
+```
+Token Budget: 200,000 tokens
+├─ System prompt: ~1,000
+├─ Project context: ~20,000
+├─ Conversation history: ~100,000
+├─ Current request: ~10,000
+└─ REMAINING FOR WORK: ~69,000
+```
+
+### Auto-Compact Strategy
+
+```
+NEW (better) behavior:
+  Trigger compact at: 75% context usage
+  Reason: Leave 25% for reasoning/planning
+  Result: Smoother, more predictable
+
+OLD (problematic) behavior:
+  Trigger compact at: 95% context usage
+  Result: Mid-task compaction, loses context
+```
+
+### Manual Optimization
+
+```
+STRATEGY 1: Divide work into smaller tasks
+  Instead of: "Build entire system" (200k tokens)
+  Use: "Build auth" (50k), "Build API" (50k), etc
+  Benefit: Multiple fresh context windows
+
+STRATEGY 2: Create session summaries
+  After each phase, save summary:
+    - What was accomplished
+    - Key decisions made
+    - What needs doing
+    - Important constraints
+  Load summary at session start
+
+STRATEGY 3: Clean up as you go
+  /clear between unrelated tasks
+  Remove debug conversations
+  Archive old solutions
+
+STRATEGY 4: @ reference strategically
+  @important-file instead of pasting content
+  Claude reads file as-needed
+  Saves context for other work
+```
+
+### Using /compact command
+
+```bash
+# Manually trigger compaction
+/compact
+
+# Useful when:
+  - Context getting full
+  - Task shifting significantly
+  - Need clean slate
+  - Session running long
+
+# Claude will:
+  1. Summarize conversation
+  2. Extract key decisions
+  3. Save to memory/notes
+  4. Clear history
+  5. Continue with summary
+```
+
+---
+
+## Multi-Agent Coordination: Team Development
+
+### Parallel Development with Git Worktrees
+
+```
+Setup:
+  git worktree add feature-auth ../auth-feature
+  git worktree add feature-api ../api-feature
+  git worktree add feature-ui ../ui-feature
+
+Now you have:
+  project/          → Main (master branch)
+  auth-feature/     → Claude session 1 (auth feature)
+  api-feature/      → Claude session 2 (API feature)  
+  ui-feature/       → Claude session 3 (UI feature)
+
+Each Claude session:
+  1. cd feature-auth/
+  2. claude  → works on auth
+  3. Independent context per session
+  4. No file conflicts
+```
+
+### Multi-Instance Coordination
+
+```
+Agent Farm Pattern:
+
+Orchestrator (Main Agent)
+├─ Analyzes requirements
+├─ Creates master plan
+└─ Spawns specialist agents:
+
+    Agent 1: Backend (API, database)
+    Agent 2: Frontend (Components, UI)
+    Agent 3: Testing (Test suite)
+    Agent 4: DevOps (CI/CD, deployment)
+
+Coordination:
+  • Lock-based file claiming
+  • Completed work log
+  • Planned queue
+  • Git commits for handoffs
+```
+
+### Lock-based Coordination
+
+```
+/coordination/ directory:
+
+  active_work_registry.json
+  ├─ agent-1: working on src/auth/
+  ├─ agent-2: working on src/api/
+  └─ agent-3: waiting (src/api/ locked)
+
+  completed_work_log.json
+  ├─ "User service created" (agent-1)
+  ├─ "Auth endpoints" (agent-1)
+  └─ "Tests for auth" (agent-3)
+
+Lock files:
+  _locks/agent-1_auth_timestamp.lock
+  _locks/agent-2_api_timestamp.lock
+  
+Stale locks (>2h old) are automatically released
+```
+
+---
+
+## Workflow Optimization: Integration & Automation
+
+### Git Integration Patterns
+
+```
+PATTERN 1: Auto-commit after /rewind
+  Hook: Post-rewind check
+  Action: Commit if changes look good
+  Result: Auto-versioning of work
+
+PATTERN 2: Branch-per-task
+  Task: "Add authentication"
+  Branch: git checkout -b feat/auth
+  Work: Claude works on branch
+  Result: Easy PR workflow
+
+PATTERN 3: Commit before major refactors
+  Before: /compact (context clean)
+  Git: git commit -am "Before major refactor"
+  Work: Risky refactoring
+  Fallback: Can always git revert
+```
+
+### CI/CD Integration
+
+```
+GitHub Actions Example:
+
+on: [pull_request]
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Claude Code review
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          claude --permission-mode plan
+          /review-pr
+```
+
+### Automation Templates
+
+```
+Template 1: Daily standup
+  Time: 9 AM every day
+  Action: Claude summarizes overnight work
+  Output: Slack message to #standup
+
+Template 2: Weekly code health check
+  Time: Friday 5 PM
+  Action: Claude scans for:
+    - Dead code
+    - Missing tests
+    - Security issues
+  Output: GitHub issue with findings
+
+Template 3: Release checklist
+  Trigger: git tag v1.0.0
+  Action: Claude verifies:
+    - Changelog updated
+    - Tests passing
+    - Security audit done
+    - Performance checked
+```
+
+---
+
+## Best Practices Matrix
+
+### When to Use Each Practice
+
+```
+┌─────────────────┬──────────┬──────────┬─────────┬──────────┐
+│ Practice        │ Personal │ Small    │ Team    │ Scaling  │
+│                 │ Project  │ Startup  │ Project │ to 50k+ │
+├─────────────────┼──────────┼──────────┼─────────┼──────────┤
+│ CLAUDE.md       │ Essential│ Essential│ Essential│ Critical │
+│ Hooks           │ Nice     │ Important│ Critical│ Critical │
+│ Skills          │ Yes      │ Yes      │ Yes     │ Yes      │
+│ Agents          │ Maybe    │ Maybe    │ Yes     │ Yes      │
+│ Commands        │ Optional │ Yes      │ Yes     │ Yes      │
+│ MCP             │ Optional │ Optional │ Yes     │ Yes      │
+│ Projects        │ No       │ No       │ Yes*    │ Yes*     │
+│ Permission Modes│ Basic    │ Basic    │ Tuned   │ Advanced │
+│ Checkpoints     │ Yes      │ Yes      │ Yes     │ Yes      │
+│ Planning        │ Optional │ Important│ Important│ Critical │
+│ Worktrees       │ No       │ Maybe    │ Yes     │ Yes      │
+│ Multi-agent     │ No       │ No       │ Maybe   │ Yes      │
+└─────────────────┴──────────┴──────────┴─────────┴──────────┘
+
+*Requires Claude Pro/Teams/Enterprise
+```
+
+### Quick Setup Checklist
+
+```
+FOR ANY NEW PROJECT:
+
+☐ Create CLAUDE.md (2 min)
+  └─ Include architecture, workflow, rules
+
+☐ Create .claude/ directory (1 min)
+  └─ mkdir -p .claude/commands
+  └─ Create settings.json
+
+☐ Create hooks for quality (5 min)
+  └─ Post-write: run linter
+  └─ Pre-commit: verify tests
+
+☐ Create basic slash commands (5 min)
+  └─ /optimize (code review)
+  └─ /test-coverage (verify coverage)
+
+☐ Set up git integration (5 min)
+  └─ Connect GitHub hooks
+  └─ Auto-commit on completion
+
+TOTAL TIME: ~20 minutes
+BENEFIT: Proper setup prevents hours of rework
+```
+
+---
+
+## Real-World Workflow Example
+
+### Day-in-the-life: Feature Development
+
+```
+9:00 AM - EXPLORATION
+  claude --permission-mode plan
+  /list                    → See available commands
+  /help                    → Check recent context
+  Read @src/services/user.ts
+  → Understand existing patterns
+
+9:30 AM - PLANNING
+  Still in plan mode
+  "Create feature plan for user profile"
+  → Claude generates MULTI_AGENT_PLAN.md
+  Review plan, share with team
+
+10:00 AM - EXECUTION
+  claude --permission-mode acceptEdits
+  Read plan from @MULTI_AGENT_PLAN.md
+  Implement phase 1: Database schema
+  Hooks run tests automatically ✓
+
+11:00 AM - TEST
+  Hooks automatically run coverage check
+  Coverage 85%+ ✓
+  git commit automatically
+
+12:00 PM - CONTEXT ADJUSTMENT
+  /compact → Clean context
+  Summary saved to memory
+
+1:00 PM - PHASE 2 IMPLEMENTATION
+  Continue with API endpoints
+  Use @docs/API.md for guidance
+  Tests auto-run ✓
+
+2:00 PM - TESTING PHASE
+  /agent:testing-specialist → delegate
+  Subagent writes comprehensive tests
+  Coverage 90% ✓
+
+2:30 PM - REVIEW
+  claude --permission-mode plan
+  /review-implementation
+  → Check against plan requirements
+
+3:00 PM - POLISH & DEPLOY
+  Documentation auto-generated ✓
+  Security scan via MCP ✓
+  /deploy command runs CI/CD
+  → Live in production
+
+3:30 PM - RETROSPECTIVE
+  Save learnings to CLAUDE.md
+  Update team about workflow
+  → Better for next feature
+```
+
+---
+
+**Версия**: 1.0  
+**Дата**: 2025-01-07  
+**Статус**: Complete comprehensive guide  
+**Охват**: 12 ключевых практик Claude Code
+
+---
+
+## Related Guides
+
+### Getting Started
+- [INDEX.md](INDEX.md) - Master documentation index
+- [Complete Practices](CLAUDE-COMPLETE-PRACTICES.md) - Overview of all features (Russian)
+
+### Core Features
+- [Shared Architecture](claude-shared-architecture.md) - System overview
+- [CLAUDE.md Guide](CLAUDE-CLAUDE-MD-GUIDE.md) - Project memory (English)
+
+### Automation
+- [Hooks Guide](claude-hooks-guide.md) - Workflow automation
+- [Hooks Examples](claude-hooks-examples.md) - Production examples
+- [Hooks Advanced](claude-hooks-advanced.md) - Advanced patterns
+
+### Custom Capabilities
+- [Skills Guide](claude-skills-guide.md) - Custom skills
+- [Agents Guide](claude-agents-guide.md) - Agent system
+- [Templates](claude-templates.md) - Template system
+
+### Reference
+- [Troubleshooting](claude-troubleshooting.md) - Common issues
+

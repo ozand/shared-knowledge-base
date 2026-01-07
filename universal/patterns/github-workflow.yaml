@@ -1,1018 +1,864 @@
-# GitHub Workflow Patterns
-# Advanced GitHub workflows: hooks, releases, versioning
-
-version: "1.0"
-category: "github-workflow"
-last_updated: "2026-01-05"
-
+version: '1.0'
+category: github-workflow
+last_updated: '2026-01-05'
 patterns:
-  - id: "GITHUB-001"
-    title: "Git Hooks with Python Scripts Fail on Windows"
-    severity: "medium"
-    scope: "universal"
-    tags: ["git", "hooks", "python", "windows"]
-
-    problem: |
-      Git hooks that execute Python scripts fail on Windows with error:
-      "Python was not found; run without arguments to install from
-      the Microsoft Store, or disable this shortcut from Settings"
-
-    root_cause: |
-      Git hooks execute scripts via shebang line, but on Windows:
-      1. Git hook execution environment has different PATH than interactive shell
-      2. Python aliases in WindowsApps (Microsoft Store) confuse git
-      3. Python executable path not in git's limited execution environment
-
-    affected_scenarios:
-      - "pre-commit hooks running Python linting/tests"
-      - "post-merge hooks running Python scripts"
-      - "commit-msg hooks using Python validators"
-
-    solutions:
-      temporary_disable:
-        description: "Temporarily disable hooks for commits"
-        workflow: |
-          # 1. Disable hooks
-          mv .git/hooks/pre-commit .git/hooks/pre-commit.bak
-          mv .git/hooks/post-merge .git/hooks/post-merge.bak
-
-          # 2. Make commits
-          git add .
-          git commit -m "commit message"
-
-          # 3. Restore hooks
-          mv .git/hooks/pre-commit.bak .git/hooks/pre-commit
-          mv .git/hooks/post-merge.bak .git/hooks/post-merge
-
-        pros: "Quick, works immediately"
-        cons: "Not automated, must remember to restore"
-
-      fix_shebang:
-        description: "Fix shebang to use Python launcher"
-        wrong_code: |
-          #!/usr/bin/python3
-          # OR
-          #!/path/to/python
-
-        correct_code: |
-          #!py -3
-
-        explanation: |
-          Use Python launcher (py.exe) which handles Python 3 resolution
-          correctly on Windows. Works cross-platform.
-
-        setup: |
-          # Ensure py launcher is installed:
-          winget install Python.Python.3.11
-
-    prevention:
-      description: "Make hooks optional and resilient"
-      example: |
-        #!/usr/bin/env python3
-        import sys
-
-        try:
-            # Import hook logic
-            from hook_module import main
-        except ImportError:
-            # If imports fail, exit successfully (don't block commit)
-            print("Hook dependencies not available, skipping...")
-            sys.exit(0)
-
-        main()
-
-    references:
-      - title: "Git Hooks on Windows"
-        url: "https://stackoverflow.com/questions/3207455/how-to-setup-git-hooks-to-work-on-windows"
-
-  - id: "GITHUB-002"
-    title: "Git Tag vs GitHub Release - Understanding the Difference"
-    severity: "medium"
-    scope: "universal"
-    tags: ["git", "github", "releases", "versioning"]
-
-    problem: |
-      Developers create git tags but don't see releases on GitHub Releases page.
-      Common misconception: "Creating a git tag automatically creates a GitHub Release"
-
-    explanation: |
-      Git tags and GitHub Releases are separate concepts:
-
-      **Git Tag** (git reference):
-      - Points to specific commit
-      - Created with: git tag v3.0
-      - Stored in git history
-      - Visible in: git log, GitHub commits page
-
-      **GitHub Release** (release object):
-      - Has title, description, release notes
-      - Can have binary attachments
-      - Visible on: GitHub Releases page
-      - Created via: gh release create OR GitHub web UI
-      - Links to git tag but is NOT created automatically
-
-    wrong_approach:
-      description: "Create tag and assume Release is created"
-      steps: |
-        git tag -a v3.0 -m "Release v3.0"
-        git push origin v3.0
-        # ❌ Nothing appears on GitHub Releases page!
-
-    correct_approach:
-      description: "Create tag AND GitHub Release"
-      steps: |
-        # 1. Update documentation
-        vim README.md  # Update version to 3.0
-        git add README.md
-        git commit -m "Release v3.0: Update docs"
-
-        # 2. Push commits
-        git push origin main
-
-        # 3. Create and push tag
-        git tag -a v3.0 -m "Release v3.0"
-        git push origin v3.0
-
-        # 4. Create GitHub Release
-        gh release create v3.0 \
-          --title "v3.0: Release Title" \
-          --notes "Release notes here..."
-
-    automated_workflow:
-      description: "Create release with notes from file"
-      script: |
-        #!/bin/bash
-        VERSION=$1
-        NOTES_FILE="RELEASE_NOTES.md"
-
-        # Update docs
-        sed -i "s/Version .*/Version $VERSION/" README.md
-        git add README.md
-        git commit -m "Release $VERSION: Update docs"
-        git push
-
-        # Create tag
-        git tag -a $VERSION -m "Release $VERSION"
-        git push origin $VERSION
-
-        # Create GitHub Release
-        gh release create $VERSION \
-          --title "Release $VERSION" \
-          --notes-file $NOTES_FILE
-
-    github_cli_usage:
-      installation: |
-        # Windows
-        winget install --id GitHub.cli
-
-        # Authenticate
-        gh auth login
-
-      create_basic_release: |
-        gh release create v1.0 \
-          --title "Version 1.0" \
-          --notes "Release notes here"
-
-      create_from_file: |
-        gh release create v1.0 \
-          --title "Version 1.0" \
-          --notes-file RELEASE_NOTES.md
-
-      create_with_assets: |
-        gh release create v1.0 \
-          --notes "Release" \
-          ./build/app.zip \
-          ./dist/installer.exe
-
-      create_prerelease: |
-        gh release create v1.0-beta \
-          --prerelease \
-          --notes "Beta release"
-
-    best_practices:
-      - item: "Always update README.md before creating release"
-      - item: "Use semantic versioning (v1.0.0)"
-      - item: "Include release notes with breaking changes"
-      - item: "Test release on beta channel first"
-      - item: "Keep CHANGELOG.md in sync with releases"
-
-    troubleshooting:
-      issue: "Release not visible on GitHub"
-      solution: |
-        # Check if tag exists
-        git tag -l
-
-        # Check if tag pushed
-        git ls-remote --tags origin
-
-        # Check if release exists
-        gh release list
-
-      issue: "Need to update release"
-      solution: |
-        # Delete old release and tag
-        gh release delete v1.0
-        git tag -d v1.0
-        git push origin :refs/tags/v1.0
-
-        # Recreate
-        # [follow correct_approach steps]
-
-    references:
-      - title: "About Git Hooks"
-        url: "https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks"
-      - title: "GitHub Releases API"
-        url: "https://docs.github.com/en/rest/releases/releases"
-      - title: "GitHub CLI Manual"
-        url: "https://cli.github.com/manual/"
-
-  - id: "GITHUB-003"
-    title: "Version Synchronization Across Documentation"
-    severity: "low"
-    scope: "universal"
-    tags: ["documentation", "versioning", "quality"]
-
-    problem: |
-      Documentation shows incorrect version after release:
-      - README.md displays "Version 2.0" when releasing v3.0
-      - Package files show old version numbers
-      - Users confused about actual version
-
-    detection:
-      automatic_script: |
-        #!/bin/bash
-        # scripts/check-version.sh
-
-        VERSION="3.0"
-        ERRORS=0
-
-        # Check README
-        if ! grep -q "$VERSION" README.md; then
-          echo "✗ README.md doesn't mention v$VERSION"
-          ERRORS=$((ERRORS + 1))
-        fi
-
-        # Check package files
-        for file in package.json __init__.py setup.py; do
-          if [ -f "$file" ] && ! grep -q "$VERSION" "$file"; then
-            echo "✗ $file doesn't mention v$VERSION"
-            ERRORS=$((ERRORS + 1))
-          fi
-        done
-
-        # Check all markdown files
-        for file in *.md; do
-          if grep -qi "version" "$file"; then
-            if ! grep -q "$VERSION" "$file"; then
-              echo "⚠️  $file mentions 'version' but not v$VERSION"
-            fi
-          fi
-        done
-
-        if [ $ERRORS -gt 0 ]; then
-          echo "✗ Version inconsistency detected!"
-          echo "  Please update files to mention v$VERSION"
-          exit 1
-        fi
-
-        echo "✓ All files consistent with v$VERSION"
-
-    pre_release_checklist:
-      - item: "Update version in README.md header"
-        check: "grep -n 'Version' README.md"
-
-      - item: "Update version in package files"
-        check: "grep -n 'version' package.json __init__.py"
-
-      - item: "Update CHANGELOG.md"
-        check: "head -30 CHANGELOG.md"
-
-      - item: "Verify git tag doesn't exist"
-        check: "git tag -l 'v3.0' | wc -l"
-
-      - item: "Run version check script"
-        check: "./scripts/check-version.sh"
-
-    git_tricks:
-      search_versions:
-        description: "Find all version mentions in code"
-        command: "grep -r 'version' --include='*.py' --include='*.md' --include='*.json' ."
-
-      replace_version:
-        description: "Replace old version with new (use with caution!)"
-        command: "sed -i 's/v2.0/v3.0/g' README.md"
-        warning: "Review changes before committing!"
-
-      version_history:
-        description: "Show when version was last changed"
-        command: "git log --follow -S 'v3.0' -- README.md"
-
-    prevention:
-      description: "Add version check to CI/CD"
-      example_ci: |
-        # .github/workflows/release-check.yml
-        name: Version Consistency Check
-        on: [pull_request]
-
-        jobs:
-          check-version:
-            runs-on: ubuntu-latest
-            steps:
-              - uses: actions/checkout@v3
-              - name: Check version consistency
-                run: |
-                  VERSION=$(grep '^version:' package.json | sed 's/.*: "\(.*\)"/\1/')
-                  if ! grep -q "$VERSION" README.md; then
-                    echo "Version $VERSION in package.json but not in README.md"
-                    exit 1
-                  fi
-
-    references:
-      - title: "Semantic Versioning"
-        url: "https://semver.org/"
-      - title: "Keep a Changelog"
-        url: "https://keepachangelog.com/"
-
-  - id: "GITHUB-004"
-    title: ".gitignore Patterns for Knowledge Base Projects"
-    severity: "info"
-    scope: "universal"
-    tags: ["git", "gitignore", "knowledge-base", "metadata"]
-
-    context: |
-      Knowledge Base projects have specific requirements:
-      - Metadata files must sync across users
-      - Cache data must stay local
-      - Auto-generated files should not be committed
-
-    wrong_approach:
-      description: "Ignore all generated files"
-      example: |
-        # .gitignore (wrong)
-        *_meta.yaml
-        *.yaml
-        .cache/
-
-      problem: |
-        This prevents metadata synchronization, breaking the knowledge
-        sharing system.
-
-    correct_approach:
-      description: "Carefully choose what to include/exclude"
-      complete_example: |
-        # ========== Python ==========
-        __pycache__/
-        *.py[cod]
-        *.so
-        .Python
-        *.egg-info/
-        dist/
-        build/
-
-        # ========== IDE ==========
-        .vscode/
-        .idea/
-        *.swp
-        *.swo
-
-        # ========== OS ==========
-        .DS_Store
-        Thumbs.db
-
-        # ========== KB Cache (local only) ==========
-        .cache/
-        .cache/**/*
-        *.db
-        *.sqlite
-
-        # ========== Generated Index (local only) ==========
-        _index.yaml
-        _index.yaml.bak
-
-        # ========== Local Config (not git-synced) ==========
-        .kb-config-local.yaml
-
-        # ========== JSON Exports (regenerable) ==========
-        kb-export.json
-        kb-snapshot.json
-
-        # ========== NOTE: Metadata files ARE committed ==========
-        # *_meta.yaml files ARE committed to git
-        # They contain metadata that syncs across users
-
-        # ========== Generated Documentation ==========
-        docs/
-
-    explanation:
-      metadata_files:
-        file_pattern: "*_meta.yaml"
-        action: "KEEP in git ✓"
-        reason: |
-          Metadata files track:
-          - Quality scores (0-100)
-          - Creation/modification timestamps
-          - Tested library versions
-          - Validation status
-
-          These MUST sync across all users to maintain consistency.
-
-      cache_directory:
-        file_pattern: ".cache/"
-        action: "Exclude from git ✗"
-        reason: |
-          Contains:
-          - usage.json (local usage analytics)
-          - file_hashes.json (change detection cache)
-          - versions.json (version cache)
-          - community/ (aggregated community data)
-
-          This is private data specific to each installation.
-
-      index_files:
-        file_pattern: "_index.yaml"
-        action: "Exclude from git ✗"
-        reason: "Auto-generated search index, can be regenerated with kb.py index"
-
-      local_config:
-        file_pattern: ".kb-config-local.yaml"
-        action: "Exclude from git ✗"
-        reason: "Machine-specific configuration (paths, local settings)"
-
-    best_practices:
-      - item: "Comment .gitignore entries to explain WHY"
-        example: |
-          # Local usage analytics (private to this installation)
-          .cache/
-
-      - item: "Keep .gitignore in version control"
-        reason: "Team-wide ignore rules"
-
-      - item: "Use .git/info/exclude for local-only ignores"
-        example: |
-          # File: .git/info/exclude
-          # This only affects YOUR local repo
-          my-local-test-file.txt
-          personal-notes.md
-
-    troubleshooting:
-      issue: "Metadata files not being committed"
-      check: |
-        # Verify .gitignore doesn't block *_meta.yaml
-        grep '_meta.yaml' .gitignore
-        # Should see comment, not pattern
-
-      fix: |
-        # Remove bad pattern from .gitignore
-        sed -i '/_meta.yaml/d' .gitignore
-
-    references:
-      - title: "Gitignore Documentation"
-        url: "https://git-scm.com/docs/gitignore"
-
-  - id: "GITHUB-005"
-    title: "Git Push Rejected - Remote Has Work You Don't Have"
-    severity: "medium"
-    scope: "universal"
-    tags: ["git", "push", "rebase", "conflicts"]
-
-    problem: |
-      Attempting to push fails with:
-      "To https://github.com/user/repo.git
-       ! [rejected]        main -> main (fetch first)
-       error: failed to push some refs"
-
-    explanation: |
-      Remote repository has commits that aren't in your local branch.
-      This happens when:
-      1. Someone else pushed while you were working
-      2. You're working on an outdated branch
-      3. Force push was used on remote
-
-    solutions:
-      rebase_workflow:
-        description: "Rebase your commits on top of remote (recommended)"
-        steps: |
-          # 1. Fetch latest from remote
-          git fetch origin
-
-          # 2. Rebase your local commits onto origin/main
-          git rebase origin/main
-
-          # 3. If conflicts occur, resolve them
-          # Edit conflicting files
-          git add <resolved-files>
-          git rebase --continue
-
-          # 4. After rebase completes, push
-          git push origin main
-
-        advantages:
-          - "Creates linear, clean history"
-          - "Standard practice for feature branches"
-          - "Easier to understand git log"
-
-        disadvantages:
-          - "Rewrites history (don't use if pushed to shared branch)"
-          - "Can be confusing for beginners"
-
-      merge_workflow:
-        description: "Merge remote changes into local branch"
-        steps: |
-          # 1. Pull with merge (no rebase)
-          git pull origin main --no-rebase
-
-          # 2. If conflicts occur, resolve them
-          # Edit conflicting files
-          git add <resolved-files>
-          git commit -m "Merge remote changes"
-
-          # 3. Push
-          git push origin main
-
-        advantages:
-          - "Preserves true history"
-          - "Easier to understand"
-          - "Safer for shared branches"
-
-        disadvantages:
-          - "Creates merge commits"
-          - "History becomes more complex"
-
-      force_push:
-        description: "Force push your local version (DANGER!)"
-        warning: |
-          ⚠️  ONLY use this if:
-          - You are the only one working on the branch
-          - You know remote commits should be discarded
-          - You're fixing a mistake you just pushed
-
-          NEVER force push to shared main branch!
-
-        steps: |
-          git push --force origin main
-
-        risks:
-          - "Loses other developers' work"
-          - "Creates inconsistent repos"
-          - "Hard to recover"
-
-    recommendations:
-      personal_projects: "Use rebase for cleaner history"
-      team_projects: "Use merge to preserve everyone's work"
-      emergency_only: "Force push only if absolutely necessary"
-
-    prevention:
-      describe: "Sync frequently to avoid large conflicts"
-      best_practice: |
-        # Before starting work
-        git pull origin main
-
-        # While working (every few hours)
+- id: GITHUB-001
+  title: Git Hooks with Python Scripts Fail on Windows
+  severity: medium
+  scope: universal
+  tags:
+  - git
+  - hooks
+  - python
+  - windows
+  problem: 'Git hooks that execute Python scripts fail on Windows with error:
+
+    "Python was not found; run without arguments to install from
+
+    the Microsoft Store, or disable this shortcut from Settings"
+
+    '
+  root_cause: 'Git hooks execute scripts via shebang line, but on Windows:
+
+    1. Git hook execution environment has different PATH than interactive shell
+
+    2. Python aliases in WindowsApps (Microsoft Store) confuse git
+
+    3. Python executable path not in git''s limited execution environment
+
+    '
+  affected_scenarios:
+  - pre-commit hooks running Python linting/tests
+  - post-merge hooks running Python scripts
+  - commit-msg hooks using Python validators
+  solutions:
+    temporary_disable:
+      description: Temporarily disable hooks for commits
+      workflow: '# 1. Disable hooks
+
+        mv .git/hooks/pre-commit .git/hooks/pre-commit.bak
+
+        mv .git/hooks/post-merge .git/hooks/post-merge.bak
+
+
+        # 2. Make commits
+
+        git add .
+
+        git commit -m "commit message"
+
+
+        # 3. Restore hooks
+
+        mv .git/hooks/pre-commit.bak .git/hooks/pre-commit
+
+        mv .git/hooks/post-merge.bak .git/hooks/post-merge
+
+        '
+      pros: Quick, works immediately
+      cons: Not automated, must remember to restore
+    fix_shebang:
+      description: Fix shebang to use Python launcher
+      wrong_code: '#!/usr/bin/python3
+
+        # OR
+
+        #!/path/to/python
+
+        '
+      correct_code: '#!py -3
+
+        '
+      explanation: 'Use Python launcher (py.exe) which handles Python 3 resolution
+
+        correctly on Windows. Works cross-platform.
+
+        '
+      setup: '# Ensure py launcher is installed:
+
+        winget install Python.Python.3.11
+
+        '
+  prevention:
+    description: Make hooks optional and resilient
+    example: "#!/usr/bin/env python3\nimport sys\n\ntry:\n    # Import hook logic\n\
+      \    from hook_module import main\nexcept ImportError:\n    # If imports fail,\
+      \ exit successfully (don't block commit)\n    print(\"Hook dependencies not\
+      \ available, skipping...\")\n    sys.exit(0)\n\nmain()\n"
+  references:
+  - title: Git Hooks on Windows
+    url: https://stackoverflow.com/questions/3207455/how-to-setup-git-hooks-to-work-on-windows
+  domains:
+    primary: websocket
+    secondary: []
+- id: GITHUB-002
+  title: Git Tag vs GitHub Release - Understanding the Difference
+  severity: medium
+  scope: universal
+  tags:
+  - git
+  - github
+  - releases
+  - versioning
+  problem: 'Developers create git tags but don''t see releases on GitHub Releases
+    page.
+
+    Common misconception: "Creating a git tag automatically creates a GitHub Release"
+
+    '
+  explanation: 'Git tags and GitHub Releases are separate concepts:
+
+
+    **Git Tag** (git reference):
+
+    - Points to specific commit
+
+    - Created with: git tag v3.0
+
+    - Stored in git history
+
+    - Visible in: git log, GitHub commits page
+
+
+    **GitHub Release** (release object):
+
+    - Has title, description, release notes
+
+    - Can have binary attachments
+
+    - Visible on: GitHub Releases page
+
+    - Created via: gh release create OR GitHub web UI
+
+    - Links to git tag but is NOT created automatically
+
+    '
+  wrong_approach:
+    description: Create tag and assume Release is created
+    steps: 'git tag -a v3.0 -m "Release v3.0"
+
+      git push origin v3.0
+
+      # ❌ Nothing appears on GitHub Releases page!
+
+      '
+  correct_approach:
+    description: Create tag AND GitHub Release
+    steps: "# 1. Update documentation\nvim README.md  # Update version to 3.0\ngit\
+      \ add README.md\ngit commit -m \"Release v3.0: Update docs\"\n\n# 2. Push commits\n\
+      git push origin main\n\n# 3. Create and push tag\ngit tag -a v3.0 -m \"Release\
+      \ v3.0\"\ngit push origin v3.0\n\n# 4. Create GitHub Release\ngh release create\
+      \ v3.0 \\\n  --title \"v3.0: Release Title\" \\\n  --notes \"Release notes here...\"\
+      \n"
+  automated_workflow:
+    description: Create release with notes from file
+    script: "#!/bin/bash\nVERSION=$1\nNOTES_FILE=\"RELEASE_NOTES.md\"\n\n# Update\
+      \ docs\nsed -i \"s/Version .*/Version $VERSION/\" README.md\ngit add README.md\n\
+      git commit -m \"Release $VERSION: Update docs\"\ngit push\n\n# Create tag\n\
+      git tag -a $VERSION -m \"Release $VERSION\"\ngit push origin $VERSION\n\n# Create\
+      \ GitHub Release\ngh release create $VERSION \\\n  --title \"Release $VERSION\"\
+      \ \\\n  --notes-file $NOTES_FILE\n"
+  github_cli_usage:
+    installation: '# Windows
+
+      winget install --id GitHub.cli
+
+
+      # Authenticate
+
+      gh auth login
+
+      '
+    create_basic_release: "gh release create v1.0 \\\n  --title \"Version 1.0\" \\\
+      \n  --notes \"Release notes here\"\n"
+    create_from_file: "gh release create v1.0 \\\n  --title \"Version 1.0\" \\\n \
+      \ --notes-file RELEASE_NOTES.md\n"
+    create_with_assets: "gh release create v1.0 \\\n  --notes \"Release\" \\\n  ./build/app.zip\
+      \ \\\n  ./dist/installer.exe\n"
+    create_prerelease: "gh release create v1.0-beta \\\n  --prerelease \\\n  --notes\
+      \ \"Beta release\"\n"
+  best_practices:
+  - item: Always update README.md before creating release
+  - item: Use semantic versioning (v1.0.0)
+  - item: Include release notes with breaking changes
+  - item: Test release on beta channel first
+  - item: Keep CHANGELOG.md in sync with releases
+  troubleshooting:
+    issue: Need to update release
+    solution: '# Delete old release and tag
+
+      gh release delete v1.0
+
+      git tag -d v1.0
+
+      git push origin :refs/tags/v1.0
+
+
+      # Recreate
+
+      # [follow correct_approach steps]
+
+      '
+  references:
+  - title: About Git Hooks
+    url: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks
+  - title: GitHub Releases API
+    url: https://docs.github.com/en/rest/releases/releases
+  - title: GitHub CLI Manual
+    url: https://cli.github.com/manual/
+  domains:
+    primary: deployment
+    secondary: []
+- id: GITHUB-003
+  title: Version Synchronization Across Documentation
+  severity: low
+  scope: universal
+  tags:
+  - documentation
+  - versioning
+  - quality
+  problem: 'Documentation shows incorrect version after release:
+
+    - README.md displays "Version 2.0" when releasing v3.0
+
+    - Package files show old version numbers
+
+    - Users confused about actual version
+
+    '
+  detection:
+    automatic_script: "#!/bin/bash\n# scripts/check-version.sh\n\nVERSION=\"3.0\"\n\
+      ERRORS=0\n\n# Check README\nif ! grep -q \"$VERSION\" README.md; then\n  echo\
+      \ \"✗ README.md doesn't mention v$VERSION\"\n  ERRORS=$((ERRORS + 1))\nfi\n\n\
+      # Check package files\nfor file in package.json __init__.py setup.py; do\n \
+      \ if [ -f \"$file\" ] && ! grep -q \"$VERSION\" \"$file\"; then\n    echo \"\
+      ✗ $file doesn't mention v$VERSION\"\n    ERRORS=$((ERRORS + 1))\n  fi\ndone\n\
+      \n# Check all markdown files\nfor file in *.md; do\n  if grep -qi \"version\"\
+      \ \"$file\"; then\n    if ! grep -q \"$VERSION\" \"$file\"; then\n      echo\
+      \ \"⚠️  $file mentions 'version' but not v$VERSION\"\n    fi\n  fi\ndone\n\n\
+      if [ $ERRORS -gt 0 ]; then\n  echo \"✗ Version inconsistency detected!\"\n \
+      \ echo \"  Please update files to mention v$VERSION\"\n  exit 1\nfi\n\necho\
+      \ \"✓ All files consistent with v$VERSION\"\n"
+  pre_release_checklist:
+  - item: Update version in README.md header
+    check: grep -n 'Version' README.md
+  - item: Update version in package files
+    check: grep -n 'version' package.json __init__.py
+  - item: Update CHANGELOG.md
+    check: head -30 CHANGELOG.md
+  - item: Verify git tag doesn't exist
+    check: git tag -l 'v3.0' | wc -l
+  - item: Run version check script
+    check: ./scripts/check-version.sh
+  git_tricks:
+    search_versions:
+      description: Find all version mentions in code
+      command: grep -r 'version' --include='*.py' --include='*.md' --include='*.json'
+        .
+    replace_version:
+      description: Replace old version with new (use with caution!)
+      command: sed -i 's/v2.0/v3.0/g' README.md
+      warning: Review changes before committing!
+    version_history:
+      description: Show when version was last changed
+      command: git log --follow -S 'v3.0' -- README.md
+  prevention:
+    description: Add version check to CI/CD
+    example_ci: "# .github/workflows/release-check.yml\nname: Version Consistency\
+      \ Check\non: [pull_request]\n\njobs:\n  check-version:\n    runs-on: ubuntu-latest\n\
+      \    steps:\n      - uses: actions/checkout@v3\n      - name: Check version\
+      \ consistency\n        run: |\n          VERSION=$(grep '^version:' package.json\
+      \ | sed 's/.*: \"\\(.*\\)\"/\\1/')\n          if ! grep -q \"$VERSION\" README.md;\
+      \ then\n            echo \"Version $VERSION in package.json but not in README.md\"\
+      \n            exit 1\n          fi\n"
+  references:
+  - title: Semantic Versioning
+    url: https://semver.org/
+  - title: Keep a Changelog
+    url: https://keepachangelog.com/
+- id: GITHUB-004
+  title: .gitignore Patterns for Knowledge Base Projects
+  severity: info
+  scope: universal
+  tags:
+  - git
+  - gitignore
+  - knowledge-base
+  - metadata
+  context: 'Knowledge Base projects have specific requirements:
+
+    - Metadata files must sync across users
+
+    - Cache data must stay local
+
+    - Auto-generated files should not be committed
+
+    '
+  wrong_approach:
+    description: Ignore all generated files
+    example: '# .gitignore (wrong)
+
+      *_meta.yaml
+
+      *.yaml
+
+      .cache/
+
+      '
+    problem: 'This prevents metadata synchronization, breaking the knowledge
+
+      sharing system.
+
+      '
+  correct_approach:
+    description: Carefully choose what to include/exclude
+    complete_example: '# ========== Python ==========
+
+      __pycache__/
+
+      *.py[cod]
+
+      *.so
+
+      .Python
+
+      *.egg-info/
+
+      dist/
+
+      build/
+
+
+      # ========== IDE ==========
+
+      .vscode/
+
+      .idea/
+
+      *.swp
+
+      *.swo
+
+
+      # ========== OS ==========
+
+      .DS_Store
+
+      Thumbs.db
+
+
+      # ========== KB Cache (local only) ==========
+
+      .cache/
+
+      .cache/**/*
+
+      *.db
+
+      *.sqlite
+
+
+      # ========== Generated Index (local only) ==========
+
+      _index.yaml
+
+      _index.yaml.bak
+
+
+      # ========== Local Config (not git-synced) ==========
+
+      .kb-config-local.yaml
+
+
+      # ========== JSON Exports (regenerable) ==========
+
+      kb-export.json
+
+      kb-snapshot.json
+
+
+      # ========== NOTE: Metadata files ARE committed ==========
+
+      # *_meta.yaml files ARE committed to git
+
+      # They contain metadata that syncs across users
+
+
+      # ========== Generated Documentation ==========
+
+      docs/
+
+      '
+  explanation:
+    metadata_files:
+      file_pattern: '*_meta.yaml'
+      action: KEEP in git ✓
+      reason: 'Metadata files track:
+
+        - Quality scores (0-100)
+
+        - Creation/modification timestamps
+
+        - Tested library versions
+
+        - Validation status
+
+
+        These MUST sync across all users to maintain consistency.
+
+        '
+    cache_directory:
+      file_pattern: .cache/
+      action: Exclude from git ✗
+      reason: 'Contains:
+
+        - usage.json (local usage analytics)
+
+        - file_hashes.json (change detection cache)
+
+        - versions.json (version cache)
+
+        - community/ (aggregated community data)
+
+
+        This is private data specific to each installation.
+
+        '
+    index_files:
+      file_pattern: _index.yaml
+      action: Exclude from git ✗
+      reason: Auto-generated search index, can be regenerated with kb.py index
+    local_config:
+      file_pattern: .kb-config-local.yaml
+      action: Exclude from git ✗
+      reason: Machine-specific configuration (paths, local settings)
+  best_practices:
+  - item: Comment .gitignore entries to explain WHY
+    example: '# Local usage analytics (private to this installation)
+
+      .cache/
+
+      '
+  - item: Keep .gitignore in version control
+    reason: Team-wide ignore rules
+  - item: Use .git/info/exclude for local-only ignores
+    example: '# File: .git/info/exclude
+
+      # This only affects YOUR local repo
+
+      my-local-test-file.txt
+
+      personal-notes.md
+
+      '
+  troubleshooting:
+    issue: Metadata files not being committed
+    check: '# Verify .gitignore doesn''t block *_meta.yaml
+
+      grep ''_meta.yaml'' .gitignore
+
+      # Should see comment, not pattern
+
+      '
+    fix: '# Remove bad pattern from .gitignore
+
+      sed -i ''/_meta.yaml/d'' .gitignore
+
+      '
+  references:
+  - title: Gitignore Documentation
+    url: https://git-scm.com/docs/gitignore
+- id: GITHUB-005
+  title: Git Push Rejected - Remote Has Work You Don't Have
+  severity: medium
+  scope: universal
+  tags:
+  - git
+  - push
+  - rebase
+  - conflicts
+  problem: "Attempting to push fails with:\n\"To https://github.com/user/repo.git\n\
+    \ ! [rejected]        main -> main (fetch first)\n error: failed to push some\
+    \ refs\"\n"
+  explanation: 'Remote repository has commits that aren''t in your local branch.
+
+    This happens when:
+
+    1. Someone else pushed while you were working
+
+    2. You''re working on an outdated branch
+
+    3. Force push was used on remote
+
+    '
+  solutions:
+    rebase_workflow:
+      description: Rebase your commits on top of remote (recommended)
+      steps: '# 1. Fetch latest from remote
+
         git fetch origin
+
+
+        # 2. Rebase your local commits onto origin/main
+
         git rebase origin/main
 
-        # Before pushing
-        git pull --rebase origin main
-        git push
 
-    references:
-      - title: "Git Branching and Merging"
-        url: "https://www.atlassian.com/git/tutorials/using-branches/merging"
-      - title: "Rebasing Safely"
-        url: "https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase"
+        # 3. If conflicts occur, resolve them
 
-  - id: "GITHUB-006"
-    title: "GitHub API Timeout and Connectivity Handling"
-    severity: "medium"
-    scope: "universal"
-    tags: ["github-api", "timeout", "retry", "resilience", "network"]
+        # Edit conflicting files
 
-    problem: |
-      GitHub CLI (gh) commands fail due to network timeouts, connectivity issues,
-      or API unavailability, causing automated workflows to fail unexpectedly.
+        git add <resolved-files>
 
-      **Real example:** When closing Issue #10, connection timeout occurred:
-      ```
-      Post "https://api.github.com/graphql": dial tcp 140.82.121.6:443: connectex:
-      A connection attempt failed because the connected party did not properly
-      respond after a period of time, or established connection failed to respond
-      ```
+        git rebase --continue
 
-    affected_scenarios:
-      - "Automated issue closure in CI/CD pipelines"
-      - "Bulk PR operations via scripts"
-      - "Curator workflows processing multiple issues"
-      - "GitHub release automation"
-      - "Label management and updates"
 
+        # 4. After rebase completes, push
+
+        git push origin main
+
+        '
+      advantages:
+      - Creates linear, clean history
+      - Standard practice for feature branches
+      - Easier to understand git log
+      disadvantages:
+      - Rewrites history (don't use if pushed to shared branch)
+      - Can be confusing for beginners
+    merge_workflow:
+      description: Merge remote changes into local branch
+      steps: '# 1. Pull with merge (no rebase)
+
+        git pull origin main --no-rebase
+
+
+        # 2. If conflicts occur, resolve them
+
+        # Edit conflicting files
+
+        git add <resolved-files>
+
+        git commit -m "Merge remote changes"
+
+
+        # 3. Push
+
+        git push origin main
+
+        '
+      advantages:
+      - Preserves true history
+      - Easier to understand
+      - Safer for shared branches
+      disadvantages:
+      - Creates merge commits
+      - History becomes more complex
+    force_push:
+      description: Force push your local version (DANGER!)
+      warning: '⚠️  ONLY use this if:
+
+        - You are the only one working on the branch
+
+        - You know remote commits should be discarded
+
+        - You''re fixing a mistake you just pushed
+
+
+        NEVER force push to shared main branch!
+
+        '
+      steps: 'git push --force origin main
+
+        '
+      risks:
+      - Loses other developers' work
+      - Creates inconsistent repos
+      - Hard to recover
+  recommendations:
+    personal_projects: Use rebase for cleaner history
+    team_projects: Use merge to preserve everyone's work
+    emergency_only: Force push only if absolutely necessary
+  prevention:
+    describe: Sync frequently to avoid large conflicts
+    best_practice: '# Before starting work
+
+      git pull origin main
+
+
+      # While working (every few hours)
+
+      git fetch origin
+
+      git rebase origin/main
+
+
+      # Before pushing
+
+      git pull --rebase origin main
+
+      git push
+
+      '
+  references:
+  - title: Git Branching and Merging
+    url: https://www.atlassian.com/git/tutorials/using-branches/merging
+  - title: Rebasing Safely
+    url: https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase
+- id: GITHUB-006
+  title: GitHub API Timeout and Connectivity Handling
+  severity: medium
+  scope: universal
+  tags:
+  - github-api
+  - timeout
+  - retry
+  - resilience
+  - network
+  problem: 'GitHub CLI (gh) commands fail due to network timeouts, connectivity issues,
+
+    or API unavailability, causing automated workflows to fail unexpectedly.
+
+
+    **Real example:** When closing Issue #10, connection timeout occurred:
+
+    ```
+
+    Post "https://api.github.com/graphql": dial tcp 140.82.121.6:443: connectex:
+
+    A connection attempt failed because the connected party did not properly
+
+    respond after a period of time, or established connection failed to respond
+
+    ```
+
+    '
+  affected_scenarios:
+  - Automated issue closure in CI/CD pipelines
+  - Bulk PR operations via scripts
+  - Curator workflows processing multiple issues
+  - GitHub release automation
+  - Label management and updates
+  solutions:
+    python_retry_with_backoff:
+      description: Python retry decorator with exponential backoff
+      code: "import time\nimport subprocess\nfrom functools import wraps\nfrom typing\
+        \ import Callable, Any\n\ndef retry_github_command(max_retries: int = 3, base_delay:\
+        \ float = 1.0):\n    \"\"\"\n    Retry decorator for GitHub CLI commands with\
+        \ exponential backoff.\n\n    Args:\n        max_retries: Maximum number of\
+        \ retry attempts\n        base_delay: Base delay in seconds (multiplied by\
+        \ 2^attempt)\n    \"\"\"\n    def decorator(func: Callable) -> Callable:\n\
+        \        @wraps(func)\n        def wrapper(*args, **kwargs) -> Any:\n    \
+        \        last_exception = None\n\n            for attempt in range(max_retries):\n\
+        \                try:\n                    return func(*args, **kwargs)\n\
+        \                except (subprocess.CalledProcessError,\n                \
+        \      OSError,\n                      TimeoutError) as e:\n             \
+        \       last_exception = e\n\n                    if attempt < max_retries\
+        \ - 1:\n                        delay = base_delay * (2 ** attempt)\n    \
+        \                    print(f\"  ⚠️  GitHub API failed (attempt {attempt +\
+        \ 1}/{max_retries})\")\n                        print(f\"  \U0001F504 Retrying\
+        \ in {delay:.1f}s...\")\n                        time.sleep(delay)\n     \
+        \               else:\n                    print(f\"  ❌ All {max_retries}\
+        \ attempts failed\")\n\n            raise last_exception\n        return wrapper\n\
+        \    return decorator\nreturn decorator\n\n# Usage:\n@retry_github_command(max_retries=3,\
+        \ base_delay=2.0)\ndef close_issue(issue_number: int, comment: str):\n   \
+        \ cmd = [\n        'gh', 'issue', 'close', str(issue_number),\n        '--comment',\
+        \ comment\n    ]\n    subprocess.run(cmd, check=True, capture_output=True)\n\
+        \n# Try it:\nclose_issue(10, \"Issue resolved\")\n"
+      pros: Automatic retry, exponential backoff prevents API overload
+      cons: Requires Python, adds code complexity
+    bash_retry_wrapper:
+      description: Bash function to retry commands
+      code: "#!/bin/bash\n# retry_github.sh - Retry GitHub CLI commands with backoff\n\
+        \nretry_gh() {\n    local max_attempts=$1\n    shift\n    local command=(\"\
+        $@\")\n\n    for ((attempt=1; attempt<=max_attempts; attempt++)); do\n   \
+        \     echo \"\U0001F504 Attempt $attempt/$max_attempts: ${command[*]}\"\n\n\
+        \        if \"${command[@]}\"; then\n            echo \"✅ Success on attempt\
+        \ $attempt\"\n            return 0\n        else\n            exit_code=$?\n\
+        \            if [ $attempt -lt $max_attempts ]; then\n                delay=$((2\
+        \ ** (attempt - 1)))\n                echo \"⚠️  Failed (exit code: $exit_code)\"\
+        \n                echo \"⏳ Waiting ${delay}s before retry...\"\n         \
+        \       sleep $delay\n            else\n                echo \"❌ All $max_attempts\
+        \ attempts failed\"\n                return $exit_code\n            fi\n \
+        \       fi\n    done\n}\n\n# Usage examples:\nretry_gh 3 gh issue close 10\
+        \ --comment \"Resolved\"\nretry_gh 3 gh pr create --title \"Fix bug\" --body\
+        \ \"Description\"\nretry_gh 3 gh release create v1.0 --notes \"Release notes\"\
+        \n"
+      pros: Pure bash, works in scripts, simple to understand
+      cons: No exponential backoff (unless enhanced), bash syntax limitations
+    graceful_degradation:
+      description: Queue failed operations for manual retry
+      python_code: "import json\nfrom datetime import datetime\nfrom pathlib import\
+        \ Path\n\nclass PendingOperations:\n    \"\"\"Queue GitHub operations that\
+        \ failed due to connectivity\"\"\"\n\n    def __init__(self, queue_file: Path\
+        \ = Path('.pending_operations.json')):\n         self.queue_file = queue_file\n\
+        \         self.queue = self._load_queue()\n\n    def _load_queue(self):\n\
+        \         if self.queue_file.exists():\n             with self.queue_file.open()\
+        \ as f:\n                 return json.load(f)\n         return []\n\n    def\
+        \ _save_queue(self):\n         with self.queue_file.open('w') as f:\n    \
+        \         json.dump(self.queue, f, indent=2)\n\n    def add(self, operation:\
+        \ str, params: dict):\n         \"\"\"Add failed operation to queue\"\"\"\n\
+        \         self.queue.append({\n             'operation': operation,\n    \
+        \         'params': params,\n             'timestamp': datetime.now().isoformat(),\n\
+        \             'retries': 0\n         })\n         self._save_queue()\n\n \
+        \   def process(self, executor: Callable):\n         \"\"\"\n         Process\
+        \ queued operations\n\n         Args:\n             executor: Function that\
+        \ takes (operation, params) and executes\n         \"\"\"\n         remaining\
+        \ = []\n\n         for item in self.queue:\n             try:\n          \
+        \       executor(item['operation'], item['params'])\n                 print(f\"\
+        ✅ Processed: {item['operation']}\")\n             except Exception as e:\n\
+        \                 item['retries'] += 1\n                 if item['retries']\
+        \ < 3:\n                     print(f\"⚠️  Queued for later: {item['operation']}\"\
+        )\n                     remaining.append(item)\n                 else:\n \
+        \                    print(f\"❌ Gave up after 3 retries: {item['operation']}\"\
+        )\n\n         self.queue = remaining\n         self._save_queue()\n\n# Usage:\n\
+        pending = PendingOperations()\n\ndef close_issue_safe(issue_number: int, comment:\
+        \ str):\n    try:\n        subprocess.run(['gh', 'issue', 'close', str(issue_number),\n\
+        \                      '--comment', comment], check=True)\n    except Exception\
+        \ as e:\n        print(f\"⚠️  Failed to close issue #{issue_number}: {e}\"\
+        )\n        pending.add('close_issue', {\n            'issue': issue_number,\n\
+        \            'comment': comment\n        })\n\n# Later, when connectivity\
+        \ improves:\npending.process(lambda op, params: subprocess.run(\n    ['gh',\
+        \ 'issue', 'close', str(params['issue']),\n     '--comment', params['comment']],\n\
+        \    check=True\n))\n"
+      pros: No work lost, can retry later, audit trail
+      cons: Requires manual re-run or scheduled job
+    pre_flight_check:
+      description: Check connectivity before attempting operations
+      code: "#!/bin/bash\n# check_github_connectivity.sh\n\ncheck_github() {\n   \
+        \ echo \"\U0001F50D Checking GitHub connectivity...\"\n\n    # Test 1: DNS\
+        \ resolution\n    if ! nslookup api.github.com >/dev/null 2>&1; then\n   \
+        \     echo \"❌ Cannot resolve api.github.com\"\n        return 1\n    fi\n\
+        \n    # Test 2: TCP connection\n    if ! bash -c 'cat < /dev/null > /dev/tcp/api.github.com/443'\
+        \ 2>/dev/null; then\n        echo \"❌ Cannot connect to api.github.com:443\"\
+        \n        return 1\n    fi\n\n    # Test 3: gh CLI auth\n    if ! gh auth\
+        \ status >/dev/null 2>&1; then\n        echo \"❌ gh auth failed - not authenticated\"\
+        \n        return 1\n    fi\n\n    # Test 4: Simple API call\n    if ! gh api\
+        \ /user >/dev/null 2>&1; then\n        echo \"❌ GitHub API not responding\"\
+        \n        return 1\n    fi\n\n    echo \"✅ GitHub connectivity confirmed\"\
+        \n    return 0\n}\n\n# Usage in scripts:\nif ! check_github; then\n    echo\
+        \ \"⚠️  GitHub is not accessible, queuing operations\"\n    # Queue operations\
+        \ or exit gracefully\n    exit 1\nfi\n\n# Proceed with GitHub operations\n\
+        gh issue close 10 --comment \"...\"\n"
+      pros: Fail fast, clear error messages, prevents partial failures
+      cons: Adds latency, doesn't handle mid-operation failures
+  best_practices:
+  - practice_1: Use exponential backoff for retries
+    reason: Prevents API overload, gives network time to recover
+  - practice_2: Set maximum retry limit (3-5 attempts)
+    reason: Don't retry indefinitely, fail eventually
+  - practice_3: Log all retries with timestamps
+    reason: Debugging, audit trail, capacity planning
+  - practice_4: Check connectivity before bulk operations
+    reason: Fail fast instead of processing half the items
+  - practice_5: Queue failed operations for retry
+    reason: Don't lose work, can recover when connectivity returns
+  - practice_6: Use timeouts on all gh commands
+    example: gh issue close 10 --comment '...' --timeout 30
+  anti_patterns:
+    anti_pattern_1:
+      description: Infinite retry without backoff
+      wrong_code: "while ! gh issue close 10; do\n    echo \"Retrying...\"\n    #\
+        \ No delay, no limit\ndone\n"
+      why_wrong: Overloads API, never fails, wastes resources
+      correct_approach: Use retry with exponential backoff and max attempts
+    anti_pattern_2:
+      description: Silent failure handling
+      wrong_code: "try:\n    gh issue close 10\nexcept:\n    pass  # Ignore all errors\n"
+      why_wrong: Loses work, no error visibility, can't debug
+      correct_approach: Log error, queue operation, raise alert
+    anti_pattern_3:
+      description: No timeout on long-running operations
+      wrong_code: '# May hang forever
+
+        subprocess.run([''gh'', ''pr'', ''create'', ...])
+
+        '
+      why_wrong: Script hangs indefinitely, blocks pipeline
+      correct_code: 'subprocess.run([''gh'', ''pr'', ''create'', ...], timeout=60)
+
+        '
+  implementation_example:
+    scenario: Curator closing multiple issues after review
+    without_resilience: "# ❌ Fails completely on first network issue\nissues = [8,\
+      \ 9, 10]\nfor issue in issues:\n    subprocess.run(['gh', 'issue', 'close',\
+      \ str(issue)])\n# If issue 8 fails due to timeout, 9 and 10 never closed\n"
+    with_resilience: "# ✅ Handles failures gracefully\nfrom retry_github import retry_github_command\n\
+      import json\n\npending = PendingOperations()\n\n@retry_github_command(max_retries=3,\
+      \ base_delay=2.0)\ndef close_issue(issue_number: int, comment: str):\n     subprocess.run(\n\
+      \         ['gh', 'issue', 'close', str(issue_number),\n          '--comment',\
+      \ comment],\n         check=True, timeout=30\n     )\n\n# Process all issues\n\
+      issues = {\n    8: \"Closed: 5 patterns need YAML fixes\",\n    9: \"Closed:\
+      \ kb_config.py module merged\",\n    10: \"Closed: Indexing bug fixed\"\n}\n\
+      \nfor issue_number, comment in issues.items():\n    try:\n        close_issue(issue_number,\
+      \ comment)\n        print(f\"✅ Closed issue #{issue_number}\")\n    except Exception\
+      \ as e:\n        print(f\"⚠️  Failed to close #{issue_number}: {e}\")\n    \
+      \    pending.add('close_issue', {\n            'issue': issue_number,\n    \
+      \        'comment': comment\n        })\n\n# Report queued operations\nif pending.queue:\n\
+      \    print(f\"\\n⚠️  {len(pending.queue)} operations queued for later:\")\n\
+      \    print(f\"   Run: python process_pending.py\")\n"
+  monitoring:
+    metrics_to_track:
+    - metric: GitHub API failure rate
+      calculation: failed_requests / total_requests
+      threshold: < 5%
+    - metric: Average retry count
+      calculation: sum(retries) / successful_requests
+      threshold: < 1.5
+    - metric: Pending operations queue size
+      check: len(pending.queue)
+      alert_if: '> 10 operations'
+    logging_example: "import logging\n\nlogging.basicConfig(\n    level=logging.INFO,\n\
+      \    format='%(asctime)s - %(levelname)s - %(message)s',\n    handlers=[\n \
+      \       logging.FileHandler('github_operations.log'),\n        logging.StreamHandler()\n\
+      \    ]\n)\n\n# In retry decorator:\nlogging.warning(f\"GitHub API failed (attempt\
+      \ {attempt + 1}): {e}\")\n"
+  related_patterns:
+  - id: GITHUB-001
+    title: Git Hooks with Python Scripts Fail on Windows
+    relationship: related
+    explanation: Both deal with GitHub operations in automation
+  - id: GITHUB-005
+    title: Git Push Rejected
+    relationship: related
+    explanation: Both cover network-related git operations failures
+  real_world_examples:
+    example_1:
+      context: 'Issue #10 closure failure'
+      error: 'Post https://api.github.com/graphql: dial tcp 140.82.121.6:443: connectex'
+      workaround_used: '# Manually closed when connectivity returned
+
+        gh issue close 10 --comment "..."
+
+        '
+      better_approach: "# Should have used retry decorator\n@retry_github_command(max_retries=3)\n\
+        def close_issue_with_comment():\n    with open('tmp/issue-10-comment.md')\
+        \ as f:\n        comment = f.read()\n    subprocess.run(['gh', 'issue', 'close',\
+        \ '10',\n                  '--comment', comment], check=True)\n"
+  troubleshooting:
+    issue: Intermittent GitHub API failures
+    diagnosis: '1. Check GitHub status: https://www.githubstatus.com/
+
+      2. Test connectivity: check_github()
+
+      3. Review logs: tail -f github_operations.log
+
+      4. Check rate limits: gh api /rate_limit
+
+      '
     solutions:
-      python_retry_with_backoff:
-        description: "Python retry decorator with exponential backoff"
-        code: |
-          import time
-          import subprocess
-          from functools import wraps
-          from typing import Callable, Any
-
-          def retry_github_command(max_retries: int = 3, base_delay: float = 1.0):
-              """
-              Retry decorator for GitHub CLI commands with exponential backoff.
-
-              Args:
-                  max_retries: Maximum number of retry attempts
-                  base_delay: Base delay in seconds (multiplied by 2^attempt)
-              """
-              def decorator(func: Callable) -> Callable:
-                  @wraps(func)
-                  def wrapper(*args, **kwargs) -> Any:
-                      last_exception = None
-
-                      for attempt in range(max_retries):
-                          try:
-                              return func(*args, **kwargs)
-                          except (subprocess.CalledProcessError,
-                                OSError,
-                                TimeoutError) as e:
-                              last_exception = e
-
-                              if attempt < max_retries - 1:
-                                  delay = base_delay * (2 ** attempt)
-                                  print(f"  ⚠️  GitHub API failed (attempt {attempt + 1}/{max_retries})")
-                                  print(f"  🔄 Retrying in {delay:.1f}s...")
-                                  time.sleep(delay)
-                              else:
-                              print(f"  ❌ All {max_retries} attempts failed")
-
-                      raise last_exception
-                  return wrapper
-              return decorator
-          return decorator
-
-          # Usage:
-          @retry_github_command(max_retries=3, base_delay=2.0)
-          def close_issue(issue_number: int, comment: str):
-              cmd = [
-                  'gh', 'issue', 'close', str(issue_number),
-                  '--comment', comment
-              ]
-              subprocess.run(cmd, check=True, capture_output=True)
-
-          # Try it:
-          close_issue(10, "Issue resolved")
-        pros: "Automatic retry, exponential backoff prevents API overload"
-        cons: "Requires Python, adds code complexity"
-
-      bash_retry_wrapper:
-        description: "Bash function to retry commands"
-        code: |
-          #!/bin/bash
-          # retry_github.sh - Retry GitHub CLI commands with backoff
-
-          retry_gh() {
-              local max_attempts=$1
-              shift
-              local command=("$@")
-
-              for ((attempt=1; attempt<=max_attempts; attempt++)); do
-                  echo "🔄 Attempt $attempt/$max_attempts: ${command[*]}"
-
-                  if "${command[@]}"; then
-                      echo "✅ Success on attempt $attempt"
-                      return 0
-                  else
-                      exit_code=$?
-                      if [ $attempt -lt $max_attempts ]; then
-                          delay=$((2 ** (attempt - 1)))
-                          echo "⚠️  Failed (exit code: $exit_code)"
-                          echo "⏳ Waiting ${delay}s before retry..."
-                          sleep $delay
-                      else
-                          echo "❌ All $max_attempts attempts failed"
-                          return $exit_code
-                      fi
-                  fi
-              done
-          }
-
-          # Usage examples:
-          retry_gh 3 gh issue close 10 --comment "Resolved"
-          retry_gh 3 gh pr create --title "Fix bug" --body "Description"
-          retry_gh 3 gh release create v1.0 --notes "Release notes"
-        pros: "Pure bash, works in scripts, simple to understand"
-        cons: "No exponential backoff (unless enhanced), bash syntax limitations"
-
-      graceful_degradation:
-        description: "Queue failed operations for manual retry"
-        python_code: |
-          import json
-          from datetime import datetime
-          from pathlib import Path
-
-          class PendingOperations:
-              """Queue GitHub operations that failed due to connectivity"""
-
-              def __init__(self, queue_file: Path = Path('.pending_operations.json')):
-                   self.queue_file = queue_file
-                   self.queue = self._load_queue()
-
-              def _load_queue(self):
-                   if self.queue_file.exists():
-                       with self.queue_file.open() as f:
-                           return json.load(f)
-                   return []
-
-              def _save_queue(self):
-                   with self.queue_file.open('w') as f:
-                       json.dump(self.queue, f, indent=2)
-
-              def add(self, operation: str, params: dict):
-                   """Add failed operation to queue"""
-                   self.queue.append({
-                       'operation': operation,
-                       'params': params,
-                       'timestamp': datetime.now().isoformat(),
-                       'retries': 0
-                   })
-                   self._save_queue()
-
-              def process(self, executor: Callable):
-                   """
-                   Process queued operations
-
-                   Args:
-                       executor: Function that takes (operation, params) and executes
-                   """
-                   remaining = []
-
-                   for item in self.queue:
-                       try:
-                           executor(item['operation'], item['params'])
-                           print(f"✅ Processed: {item['operation']}")
-                       except Exception as e:
-                           item['retries'] += 1
-                           if item['retries'] < 3:
-                               print(f"⚠️  Queued for later: {item['operation']}")
-                               remaining.append(item)
-                           else:
-                               print(f"❌ Gave up after 3 retries: {item['operation']}")
-
-                   self.queue = remaining
-                   self._save_queue()
-
-          # Usage:
-          pending = PendingOperations()
-
-          def close_issue_safe(issue_number: int, comment: str):
-              try:
-                  subprocess.run(['gh', 'issue', 'close', str(issue_number),
-                                '--comment', comment], check=True)
-              except Exception as e:
-                  print(f"⚠️  Failed to close issue #{issue_number}: {e}")
-                  pending.add('close_issue', {
-                      'issue': issue_number,
-                      'comment': comment
-                  })
-
-          # Later, when connectivity improves:
-          pending.process(lambda op, params: subprocess.run(
-              ['gh', 'issue', 'close', str(params['issue']),
-               '--comment', params['comment']],
-              check=True
-          ))
-        pros: "No work lost, can retry later, audit trail"
-        cons: "Requires manual re-run or scheduled job"
-
-      pre_flight_check:
-        description: "Check connectivity before attempting operations"
-        code: |
-          #!/bin/bash
-          # check_github_connectivity.sh
-
-          check_github() {
-              echo "🔍 Checking GitHub connectivity..."
-
-              # Test 1: DNS resolution
-              if ! nslookup api.github.com >/dev/null 2>&1; then
-                  echo "❌ Cannot resolve api.github.com"
-                  return 1
-              fi
-
-              # Test 2: TCP connection
-              if ! bash -c 'cat < /dev/null > /dev/tcp/api.github.com/443' 2>/dev/null; then
-                  echo "❌ Cannot connect to api.github.com:443"
-                  return 1
-              fi
-
-              # Test 3: gh CLI auth
-              if ! gh auth status >/dev/null 2>&1; then
-                  echo "❌ gh auth failed - not authenticated"
-                  return 1
-              fi
-
-              # Test 4: Simple API call
-              if ! gh api /user >/dev/null 2>&1; then
-                  echo "❌ GitHub API not responding"
-                  return 1
-              fi
-
-              echo "✅ GitHub connectivity confirmed"
-              return 0
-          }
-
-          # Usage in scripts:
-          if ! check_github; then
-              echo "⚠️  GitHub is not accessible, queuing operations"
-              # Queue operations or exit gracefully
-              exit 1
-          fi
-
-          # Proceed with GitHub operations
-          gh issue close 10 --comment "..."
-        pros: "Fail fast, clear error messages, prevents partial failures"
-        cons: "Adds latency, doesn't handle mid-operation failures"
-
-    best_practices:
-      - practice_1: "Use exponential backoff for retries"
-        reason: "Prevents API overload, gives network time to recover"
-
-      - practice_2: "Set maximum retry limit (3-5 attempts)"
-        reason: "Don't retry indefinitely, fail eventually"
-
-      - practice_3: "Log all retries with timestamps"
-        reason: "Debugging, audit trail, capacity planning"
-
-      - practice_4: "Check connectivity before bulk operations"
-        reason: "Fail fast instead of processing half the items"
-
-      - practice_5: "Queue failed operations for retry"
-        reason: "Don't lose work, can recover when connectivity returns"
-
-      - practice_6: "Use timeouts on all gh commands"
-        example: "gh issue close 10 --comment '...' --timeout 30"
-
-    anti_patterns:
-      anti_pattern_1:
-        description: "Infinite retry without backoff"
-        wrong_code: |
-          while ! gh issue close 10; do
-              echo "Retrying..."
-              # No delay, no limit
-          done
-
-        why_wrong: "Overloads API, never fails, wastes resources"
-
-        correct_approach: "Use retry with exponential backoff and max attempts"
-
-      anti_pattern_2:
-        description: "Silent failure handling"
-        wrong_code: |
-          try:
-              gh issue close 10
-          except:
-              pass  # Ignore all errors
-
-        why_wrong: "Loses work, no error visibility, can't debug"
-
-        correct_approach: "Log error, queue operation, raise alert"
-
-      anti_pattern_3:
-        description: "No timeout on long-running operations"
-        wrong_code: |
-          # May hang forever
-          subprocess.run(['gh', 'pr', 'create', ...])
-
-        why_wrong: "Script hangs indefinitely, blocks pipeline"
-
-        correct_code: |
-          subprocess.run(['gh', 'pr', 'create', ...], timeout=60)
-
-    implementation_example:
-      scenario: "Curator closing multiple issues after review"
-
-      without_resilience: |
-        # ❌ Fails completely on first network issue
-        issues = [8, 9, 10]
-        for issue in issues:
-            subprocess.run(['gh', 'issue', 'close', str(issue)])
-        # If issue 8 fails due to timeout, 9 and 10 never closed
-
-      with_resilience: |
-        # ✅ Handles failures gracefully
-        from retry_github import retry_github_command
-        import json
-
-        pending = PendingOperations()
-
-        @retry_github_command(max_retries=3, base_delay=2.0)
-        def close_issue(issue_number: int, comment: str):
-             subprocess.run(
-                 ['gh', 'issue', 'close', str(issue_number),
-                  '--comment', comment],
-                 check=True, timeout=30
-             )
-
-        # Process all issues
-        issues = {
-            8: "Closed: 5 patterns need YAML fixes",
-            9: "Closed: kb_config.py module merged",
-            10: "Closed: Indexing bug fixed"
-        }
-
-        for issue_number, comment in issues.items():
-            try:
-                close_issue(issue_number, comment)
-                print(f"✅ Closed issue #{issue_number}")
-            except Exception as e:
-                print(f"⚠️  Failed to close #{issue_number}: {e}")
-                pending.add('close_issue', {
-                    'issue': issue_number,
-                    'comment': comment
-                })
-
-        # Report queued operations
-        if pending.queue:
-            print(f"\n⚠️  {len(pending.queue)} operations queued for later:")
-            print(f"   Run: python process_pending.py")
-
-    monitoring:
-      metrics_to_track:
-        - metric: "GitHub API failure rate"
-          calculation: "failed_requests / total_requests"
-          threshold: "< 5%"
-
-        - metric: "Average retry count"
-          calculation: "sum(retries) / successful_requests"
-          threshold: "< 1.5"
-
-        - metric: "Pending operations queue size"
-          check: "len(pending.queue)"
-          alert_if: "> 10 operations"
-
-      logging_example: |
-         import logging
-
-         logging.basicConfig(
-             level=logging.INFO,
-             format='%(asctime)s - %(levelname)s - %(message)s',
-             handlers=[
-                 logging.FileHandler('github_operations.log'),
-                 logging.StreamHandler()
-             ]
-         )
-
-         # In retry decorator:
-         logging.warning(f"GitHub API failed (attempt {attempt + 1}): {e}")
-
-    related_patterns:
-      - id: "GITHUB-001"
-        title: "Git Hooks with Python Scripts Fail on Windows"
-        relationship: "related"
-        explanation: "Both deal with GitHub operations in automation"
-
-      - id: "GITHUB-005"
-        title: "Git Push Rejected"
-        relationship: "related"
-        explanation: "Both cover network-related git operations failures"
-
-    real_world_examples:
-      example_1:
-        context: "Issue #10 closure failure"
-        error: "Post https://api.github.com/graphql: dial tcp 140.82.121.6:443: connectex"
-
-        workaround_used: |
-          # Manually closed when connectivity returned
-          gh issue close 10 --comment "..."
-        # Comment with detailed explanation was already in tmp/issue-10-comment.md
-
-        better_approach: |
-          # Should have used retry decorator
-          @retry_github_command(max_retries=3)
-          def close_issue_with_comment():
-              with open('tmp/issue-10-comment.md') as f:
-                  comment = f.read()
-              subprocess.run(['gh', 'issue', 'close', '10',
-                            '--comment', comment], check=True)
-
-    troubleshooting:
-      issue: "Intermittent GitHub API failures"
-      diagnosis: |
-        1. Check GitHub status: https://www.githubstatus.com/
-        2. Test connectivity: check_github()
-        3. Review logs: tail -f github_operations.log
-        4. Check rate limits: gh api /rate_limit
-
-      solutions:
-        - solution_1: "Implement retry logic (see solutions above)"
-        - solution_2: "Check for GitHub API incidents"
-        - solution_3: "Verify network stability"
-        - solution_4: "Check gh authentication: gh auth status"
-
-    references:
-      - title: "GitHub CLI Manual"
-        url: "https://cli.github.com/manual/"
-      - title: "GitHub API Rate Limiting"
-        url: "https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting"
-      - title: "GitHub Status"
-        url: "https://www.githubstatus.com/"
-      - title: "Retry Pattern in Python"
-        url: "https://docs.python.org/3/library/functools.html#functools.wraps"
+    - solution_1: Implement retry logic (see solutions above)
+    - solution_2: Check for GitHub API incidents
+    - solution_3: Verify network stability
+    - solution_4: 'Check gh authentication: gh auth status'
+  references:
+  - title: GitHub CLI Manual
+    url: https://cli.github.com/manual/
+  - title: GitHub API Rate Limiting
+    url: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
+  - title: GitHub Status
+    url: https://www.githubstatus.com/
+  - title: Retry Pattern in Python
+    url: https://docs.python.org/3/library/functools.html#functools.wraps
+  domains:
+    primary: asyncio
+    secondary: []

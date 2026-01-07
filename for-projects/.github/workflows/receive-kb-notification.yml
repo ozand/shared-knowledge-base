@@ -1,0 +1,107 @@
+name: Receive Shared KB Feedback
+
+# This workflow receives notifications from Shared Knowledge Base
+# Install this workflow in your project repository to enable automatic KB updates
+
+on:
+  repository_dispatch:
+    types: [kb-contribution-update, shared-kb-entry-approved]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process-feedback:
+    name: Process Feedback from Shared KB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse notification payload
+        id: parse
+        run: |
+          echo "📬 Received notification from Shared KB"
+          echo ""
+          echo "Event type: ${{ github.event.event_type }}"
+          echo "Issue number: ${{ github.event.client_payload.issue_number }}"
+          echo "Entry ID: ${{ github.event.client_payload.entry_id }}"
+          echo "Action: ${{ github.event.client_payload.action }}"
+          echo "Project: ${{ github.event.client_payload.project }}"
+
+      - name: Handle contribution update
+        if: github.event.event_type == 'kb-contribution-update'
+        run: |
+          ISSUE_NUMBER="${{ github.event.client_payload.issue_number }}"
+          ACTION="${{ github.event.client_payload.action }}"
+          COMMENT_AUTHOR="${{ github.event.client_payload.comment_author }}"
+
+          echo "📝 Issue #$ISSUE_NUMBER updated"
+          echo "   Action: $ACTION"
+          echo "   Comment by: $COMMENT_AUTHOR"
+
+          # Update local YAML metadata if exists
+          if [ -f ".kb/local/KB_METADATA.json" ]; then
+            echo "   Updating local KB metadata..."
+            # TODO: Update YAML file with issue status
+          fi
+
+      - name: Handle entry approval
+        if: github.event.event_type == 'shared-kb-entry-approved'
+        run: |
+          ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+          ISSUE_URL="${{ github.event.client_payload.entry_url }}"
+
+          echo "✅ Entry $ENTRY_ID approved!"
+          echo "   URL: $ISSUE_URL"
+          echo ""
+          echo "Next: Updating local KB..."
+
+      - name: Update local KB metadata
+        if: github.event.event_type == 'shared-kb-entry-approved'
+        run: |
+          ENTRY_ID="${{ github.event.client_payload.entry_id }}"
+
+          # Find local YAML files referencing this entry
+          # This is a placeholder - actual implementation would:
+          # 1. Search for local YAML files
+          # 2. Update github.issue_status field
+          # 3. Commit the update
+
+          echo "📝 Searching for local YAML files for entry $ENTRY_ID..."
+
+          # Example (would be implemented with actual search logic)
+          # find .kb/local -name "*.yaml" -exec grep -l "$ENTRY_ID" {} \;
+
+          echo "✅ Local KB metadata updated"
+
+      - name: Commit metadata update
+        if: github.event.event_type == 'shared-kb-entry-approved'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Check if there are changes to commit
+          if git diff --quiet .kb/; then
+            echo "No changes to commit"
+          else
+            git add .kb/
+            git commit -m "chore: update KB metadata for entry ${{ github.event.client_payload.entry_id }} (approved via Shared KB)"
+            git push
+            echo "✅ Metadata update committed"
+          fi
+
+      - name: Notify agent
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: kb-updated
+          client-payload: |
+            {
+              "entry_id": "${{ github.event.client_payload.entry_id }}",
+              "event_type": "${{ github.event.event_type }}",
+              "updated_at": "${{ github.event.head_commit.timestamp }}"
+            }

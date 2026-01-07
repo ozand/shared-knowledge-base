@@ -1,0 +1,101 @@
+name: Approve Knowledge Entry
+
+on:
+  issues:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue Number'
+        required: true
+
+jobs:
+  process-approval:
+    name: Process Entry Approval
+    runs-on: ubuntu-latest
+    # Only run when issue is closed with 'approved' label
+    if: |
+      (github.event.action == 'closed' && contains(github.event.issue.labels.*.name, 'approved')) ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout Shared KB
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata from issue
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue || context.payload.inputs;
+            const issueNumber = issue.number || context.payload.inputs.issue_number;
+            const title = issue.title;
+
+            // Extract project name from title
+            // Expected format: "[Project-A] ERROR-001: Title" or "ERROR-001: Title"
+            const projectMatch = title.match(/\[([^\]]+)\]/);
+            const projectName = projectMatch ? projectMatch[1] : 'unknown';
+
+            // Extract entry ID
+            const entryMatch = title.match(/\]?\s*([A-Z]+-[0-9]+):/);
+            const entryId = entryMatch ? entryMatch[1] : 'unknown';
+
+            core.setOutput('project', projectName);
+            core.setOutput('entry_id', entryId);
+            core.setOutput('issue_number', issueNumber);
+            core.setOutput('issue_title', title);
+            core.setOutput('issue_url', issue.html_url);
+
+      - name: Comment approval confirmation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = '${{ steps.extract.outputs.issue_number }}';
+            const projectName = '${{ steps.extract.outputs.project }}';
+            const entryId = '${{ steps.extract.outputs.entry_id }}';
+            const issueUrl = '${{ steps.extract.outputs.issue_url }}';
+
+            // Post approval comment
+            github.rest.issues.createComment({
+              issue_number: issueNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Entry Approved**
+
+            **Entry ID:** ${entryId}
+            **Project:** @${projectName}
+
+            This entry has been approved and merged to the Shared Knowledge Base.
+
+            **View entry:** ${issueUrl}
+
+            Next steps:
+            1. The project will receive a notification
+            2. Local KB will be updated automatically
+            3. Knowledge is ready to use ✨
+            `
+            });
+
+      - name: Trigger webhook to project (if agent submission)
+        if: steps.extract.outputs.project != 'unknown'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository_owner }}/${{ steps.extract.outputs.project }}
+          event-type: shared-kb-entry-approved
+          client-payload: |
+            {
+              "issue_number": "${{ steps.extract.outputs.issue_number }}",
+              "entry_id": "${{ steps.extract.outputs.entry_id }}",
+              "entry_url": "${{ steps.extract.outputs.issue_url }}",
+              "project": "${{ steps.extract.outputs.project }}"
+            }
+
+      - name: Log approval
+        run: |
+          echo "✅ Entry approved"
+          echo "   Entry ID: ${{ steps.extract.outputs.entry_id }}"
+          echo "   Project: ${{ steps.extract.outputs.project }}"
+          echo "   Issue: #${{ steps.extract.outputs.issue_number }}"

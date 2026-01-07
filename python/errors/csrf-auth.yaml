@@ -1,275 +1,279 @@
-# CSRF Token and Authentication Error Patterns
-# Common issues with CSRF tokens, session management, and auto-refresh logic
-
-version: "1.0"
-category: "authentication-and-csrf"
-last_updated: "2026-01-05"
-
+version: '1.0'
+category: authentication-and-csrf
+last_updated: '2026-01-05'
 errors:
-  - id: "AUTH-001"
-    title: "Unnecessary CSRF Token Auto-Refresh Causing Failures"
-    severity: "high"
-    scope: "python"
+- id: AUTH-001
+  title: Unnecessary CSRF Token Auto-Refresh Causing Failures
+  severity: high
+  scope: python
+  problem: 'API client always attempts to refresh CSRF token from page HTML on initialization,
 
-    problem: |
-      API client always attempts to refresh CSRF token from page HTML on initialization,
-      even when valid tokens are already provided via auth.json or environment variables.
-      This causes "Could not extract CSRF token from page" errors when the page structure
-      changes or when network requests fail.
+    even when valid tokens are already provided via auth.json or environment variables.
 
-    symptoms:
-      - ValueError: Could not extract CSRF token from page
-      - Error message about page structure changes
-      - API health check returns unhealthy status
-      - Client initialization fails despite valid auth.json
+    This causes "Could not extract CSRF token from page" errors when the page structure
 
-    root_cause: |
-      Client __init__ method unconditionally calls _refresh_auth_tokens() which:
-      1. Makes HTTP request to NotebookLM homepage
-      2. Attempts to extract CSRF token using regex: r'"SNlM0e":"([^"]+)"'
-      3. Fails when page structure changes or regex pattern doesn't match
-      4. Ignores already-provided valid tokens from auth.json
+    changes or when network requests fail.
 
-    affected_files:
-      - "src/notebooklm_mcp/api_client.py"
-      - Lines 236-243 in client initialization
+    '
+  symptoms:
+  - ValueError: Could not extract CSRF token from page
+  - Error message about page structure changes
+  - API health check returns unhealthy status
+  - Client initialization fails despite valid auth.json
+  root_cause: 'Client __init__ method unconditionally calls _refresh_auth_tokens()
+    which:
 
-    wrong_code: |
-      # ALWAYS refresh CSRF token on initialization - they expire quickly (minutes)
-      # Even if a CSRF token was provided, it may be stale
-      self._refresh_auth_tokens()  # ❌ Called unconditionally
+    1. Makes HTTP request to NotebookLM homepage
 
-    correct_code: |
-      # Only auto-refresh if CSRF token or session ID are missing
-      # If both are provided, skip the page fetch (avoids CSRF extraction failures)
-      if not self.csrf_token or not self._session_id:
-          print("⚠️ Tokens missing, calling _refresh_auth_tokens()")
-          self._refresh_auth_tokens()
-      else:
-          print("✅ Tokens provided, skipping auto-refresh")
+    2. Attempts to extract CSRF token using regex: r''"SNlM0e":"([^"]+)"''
 
-    explanation: |
-      CSRF tokens from auth.json are typically recent (user just extracted them).
-      Only auto-refresh when tokens are actually missing, not as a blanket policy.
-      This avoids unnecessary HTTP requests and page parsing failures.
+    3. Fails when page structure changes or regex pattern doesn''t match
 
-    verification_steps:
-      - name: "Check token presence before initialization"
-        code: |
-          tokens = load_cached_tokens()
-          print(f'CSRF token present: {bool(tokens.csrf_token)}')
-          print(f'Session ID present: {bool(tokens.session_id)}')
-          print(f'CSRF token length: {len(tokens.csrf_token)}')
+    4. Ignores already-provided valid tokens from auth.json
 
-      - name: "Verify auto-refresh is skipped"
-        output: |
-          🔍 Token check: csrf_token=True, session_id=True
-          ✅ Tokens provided, skipping auto-refresh
-          ✅ Client created successfully!
+    '
+  affected_files:
+  - src/notebooklm_mcp/api_client.py
+  - Lines 236-243 in client initialization
+  wrong_code: '# ALWAYS refresh CSRF token on initialization - they expire quickly
+    (minutes)
 
-      - name: "Test API endpoint"
-        code: |
-          curl http://localhost:8001/api/notebooks
-        expected: "Returns notebook list, not authentication error"
+    # Even if a CSRF token was provided, it may be stale
 
-    prevention:
-      - "Check if tokens exist before calling auto-refresh logic"
-      - "Add debug logging to track token refresh decisions"
-      - "Make auto-refresh conditional, not unconditional"
-      - "Document token lifecycle and expiration clearly"
-      - "Add health check that uses existing tokens without refresh"
+    self._refresh_auth_tokens()  # ❌ Called unconditionally
 
-    debugging_tips:
-      - tip: "Add sys.stderr.write() with flush() for debug output"
-        reason: "print() may not flush in uvicorn workers"
-        code: |
-          import sys
-          sys.stderr.write("🔍 Debug message\n")
-          sys.stderr.flush()
+    '
+  correct_code: "# Only auto-refresh if CSRF token or session ID are missing\n# If\
+    \ both are provided, skip the page fetch (avoids CSRF extraction failures)\nif\
+    \ not self.csrf_token or not self._session_id:\n    print(\"⚠️ Tokens missing,\
+    \ calling _refresh_auth_tokens()\")\n    self._refresh_auth_tokens()\nelse:\n\
+    \    print(\"✅ Tokens provided, skipping auto-refresh\")\n"
+  explanation: 'CSRF tokens from auth.json are typically recent (user just extracted
+    them).
 
-      - tip: "Test client initialization directly"
-        reason: "Bypasses server reload issues"
-        code: |
-          uv run python -c "
-          from notebooklm_mcp.auth import load_cached_tokens
-          from notebooklm_mcp.api_client import NotebookLMClient
+    Only auto-refresh when tokens are actually missing, not as a blanket policy.
 
-          tokens = load_cached_tokens()
-          client = NotebookLMClient(
-              cookies=tokens.cookies,
-              csrf_token=tokens.csrf_token,
-              session_id=tokens.session_id,
-          )
-          print('Success!')
-          "
+    This avoids unnecessary HTTP requests and page parsing failures.
 
-      - tip: "Check auth.json contents"
-        code: |
-          cat ~/.notebooklm-mcp/auth.json | jq '.csrf_token, .session_id'
+    '
+  verification_steps:
+  - name: Check token presence before initialization
+    code: 'tokens = load_cached_tokens()
 
-      - tip: "Verify regex pattern still matches page"
-        code: |
-          curl -s https://notebooklm.google.com/ | grep -o '"SNlM0e":"[^"]+"'
+      print(f''CSRF token present: {bool(tokens.csrf_token)}'')
 
-    related_commits:
-      - "TBD - Fix CSRF auto-refresh logic to skip when tokens provided"
+      print(f''Session ID present: {bool(tokens.session_id)}'')
 
-    tags: ["csrf", "authentication", "auto-refresh", "token-management", "api-client"]
+      print(f''CSRF token length: {len(tokens.csrf_token)}'')
 
-  - id: "AUTH-002"
-    title: "Authentication Token Storage and Loading"
-    severity: "medium"
-    scope: "python"
+      '
+  - name: Verify auto-refresh is skipped
+    output: '🔍 Token check: csrf_token=True, session_id=True
 
-    problem: |
-      Tokens stored in auth.json but not loaded correctly by API client due to
-      environment variable precedence or cache loading issues.
+      ✅ Tokens provided, skipping auto-refresh
 
-    symptoms:
-      - Health check returns "[Errno 2] No such file or directory"
-      - Client reports missing CSRF token despite auth.json existence
-      - Environment variables override cached tokens unexpectedly
+      ✅ Client created successfully!
 
-    root_cause: |
-      get_client() in api_server.py checks environment variables first,
-      then falls back to cached tokens. Empty string env vars cause
-      cached tokens to be ignored:
+      '
+  - name: Test API endpoint
+    code: 'curl http://localhost:8001/api/notebooks
 
-      csrf_token = csrf_token or cached.csrf_token  # Wrong order!
-      session_id = session_id or cached.session_id
+      '
+    expected: Returns notebook list, not authentication error
+  prevention:
+  - Check if tokens exist before calling auto-refresh logic
+  - Add debug logging to track token refresh decisions
+  - Make auto-refresh conditional, not unconditional
+  - Document token lifecycle and expiration clearly
+  - Add health check that uses existing tokens without refresh
+  debugging_tips:
+  - tip: Add sys.stderr.write() with flush() for debug output
+    reason: print() may not flush in uvicorn workers
+    code: 'import sys
 
-      Should be:
-      csrf_token = cached.csrf_token or csrf_token
-      session_id = cached.session_id or session_id
+      sys.stderr.write("🔍 Debug message\n")
 
-    affected_files:
-      - "src/notebooklm_mcp/api_server.py"
-      - "src/notebooklm_mcp/auth.py"
+      sys.stderr.flush()
 
-    solution:
-      code: |
-        def get_client() -> NotebookLMClient:
-            global _client
-            if _client is None:
-                cookie_header = os.environ.get("NOTEBOOKLM_COOKIES", "")
-                csrf_token = os.environ.get("NOTEBOOKLM_CSRF_TOKEN", "")
-                session_id = os.environ.get("NOTEBOOKLM_SESSION_ID", "")
+      '
+  - tip: Test client initialization directly
+    reason: Bypasses server reload issues
+    code: "uv run python -c \"\nfrom notebooklm_mcp.auth import load_cached_tokens\n\
+      from notebooklm_mcp.api_client import NotebookLMClient\n\ntokens = load_cached_tokens()\n\
+      client = NotebookLMClient(\n    cookies=tokens.cookies,\n    csrf_token=tokens.csrf_token,\n\
+      \    session_id=tokens.session_id,\n)\nprint('Success!')\n\"\n"
+  - tip: Check auth.json contents
+    code: 'cat ~/.notebooklm-mcp/auth.json | jq ''.csrf_token, .session_id''
 
-                if cookie_header:
-                    cookies = extract_cookies_from_chrome_export(cookie_header)
-                else:
-                    cached = load_cached_tokens()
-                    if cached:
-                        cookies = cached.cookies
-                        # Use cached tokens if env vars are empty
-                        csrf_token = cached.csrf_token or csrf_token
-                        session_id = cached.session_id or session_id
-                    else:
-                        raise ValueError("No authentication found")
+      '
+  - tip: Verify regex pattern still matches page
+    code: 'curl -s https://notebooklm.google.com/ | grep -o ''"SNlM0e":"[^"]+"''
 
-    prevention:
-      - "Treat empty string env vars as 'not set'"
-      - "Log token source (env vs cache) for debugging"
-      - "Add validation that tokens are non-empty before use"
-      - "Provide clear error message when no tokens available"
-      - "Include token source in health check response"
+      '
+  related_commits:
+  - TBD - Fix CSRF auto-refresh logic to skip when tokens provided
+  tags:
+  - csrf
+  - authentication
+  - auto-refresh
+  - token-management
+  - api-client
+  domains:
+    primary: authentication
+    secondary: []
+- id: AUTH-002
+  title: Authentication Token Storage and Loading
+  severity: medium
+  scope: python
+  problem: 'Tokens stored in auth.json but not loaded correctly by API client due
+    to
 
-    tags: ["authentication", "environment-variables", "token-loading", "cache"]
+    environment variable precedence or cache loading issues.
 
+    '
+  symptoms:
+  - Health check returns "[Errno 2] No such file or directory"
+  - Client reports missing CSRF token despite auth.json existence
+  - Environment variables override cached tokens unexpectedly
+  root_cause: 'get_client() in api_server.py checks environment variables first,
+
+    then falls back to cached tokens. Empty string env vars cause
+
+    cached tokens to be ignored:
+
+
+    csrf_token = csrf_token or cached.csrf_token  # Wrong order!
+
+    session_id = session_id or cached.session_id
+
+
+    Should be:
+
+    csrf_token = cached.csrf_token or csrf_token
+
+    session_id = cached.session_id or session_id
+
+    '
+  affected_files:
+  - src/notebooklm_mcp/api_server.py
+  - src/notebooklm_mcp/auth.py
+  solution:
+    code: "def get_client() -> NotebookLMClient:\n    global _client\n    if _client\
+      \ is None:\n        cookie_header = os.environ.get(\"NOTEBOOKLM_COOKIES\", \"\
+      \")\n        csrf_token = os.environ.get(\"NOTEBOOKLM_CSRF_TOKEN\", \"\")\n\
+      \        session_id = os.environ.get(\"NOTEBOOKLM_SESSION_ID\", \"\")\n\n  \
+      \      if cookie_header:\n            cookies = extract_cookies_from_chrome_export(cookie_header)\n\
+      \        else:\n            cached = load_cached_tokens()\n            if cached:\n\
+      \                cookies = cached.cookies\n                # Use cached tokens\
+      \ if env vars are empty\n                csrf_token = cached.csrf_token or csrf_token\n\
+      \                session_id = cached.session_id or session_id\n            else:\n\
+      \                raise ValueError(\"No authentication found\")\n"
+  prevention:
+  - Treat empty string env vars as 'not set'
+  - Log token source (env vs cache) for debugging
+  - Add validation that tokens are non-empty before use
+  - Provide clear error message when no tokens available
+  - Include token source in health check response
+  tags:
+  - authentication
+  - environment-variables
+  - token-loading
+  - cache
+  domains:
+    primary: authentication
+    secondary: []
 best_practices:
   token_management:
-    - rule: "Skip auto-refresh when valid tokens exist"
-      rationale: "Avoids unnecessary HTTP requests and parsing failures"
+  - rule: Skip auto-refresh when valid tokens exist
+    rationale: Avoids unnecessary HTTP requests and parsing failures
+  - rule: Make token refresh conditional, not blanket policy
+    example: "# Good: Conditional refresh\nif not self.csrf_token or not self._session_id:\n\
+      \    self._refresh_auth_tokens()\n\n# Bad: Unconditional refresh\nself._refresh_auth_tokens()\
+      \  # ❌\n"
+  - rule: Add debug logging for token operations
+    example: 'print(f"🔍 Token check: csrf_token={bool(csrf)}, sid={bool(sid)}")
 
-    - rule: "Make token refresh conditional, not blanket policy"
-      example: |
-        # Good: Conditional refresh
-        if not self.csrf_token or not self._session_id:
-            self._refresh_auth_tokens()
+      print("✅ Tokens provided, skipping auto-refresh")
 
-        # Bad: Unconditional refresh
-        self._refresh_auth_tokens()  # ❌
+      '
+  - rule: Document token expiration and refresh policy
+    content: '# Tokens from auth.json are typically fresh (user just extracted them)
 
-    - rule: "Add debug logging for token operations"
-      example: |
-         print(f"🔍 Token check: csrf_token={bool(csrf)}, sid={bool(sid)}")
-         print("✅ Tokens provided, skipping auto-refresh")
+      # Only auto-refresh when tokens are missing, not as blanket policy
 
-    - rule: "Document token expiration and refresh policy"
-      content: |
-        # Tokens from auth.json are typically fresh (user just extracted them)
-        # Only auto-refresh when tokens are missing, not as blanket policy
-        # CSRF tokens expire in minutes but session cookies last weeks
+      # CSRF tokens expire in minutes but session cookies last weeks
 
+      '
   error_handling:
-    - "Save HTML page when CSRF extraction fails for debugging"
-    - "Include token source (env/cache) in error messages"
-    - "Distinguish between 'missing' and 'expired' tokens"
-    - "Provide recovery instructions in error messages"
-
+  - Save HTML page when CSRF extraction fails for debugging
+  - Include token source (env/cache) in error messages
+  - Distinguish between 'missing' and 'expired' tokens
+  - Provide recovery instructions in error messages
   testing:
-    - "Test client initialization with and without tokens"
-    - "Mock _refresh_auth_tokens() to avoid network calls"
-    - "Verify auto-refresh is skipped when tokens present"
-    - "Test health endpoint returns correct status"
-
+  - Test client initialization with and without tokens
+  - Mock _refresh_auth_tokens() to avoid network calls
+  - Verify auto-refresh is skipped when tokens present
+  - Test health endpoint returns correct status
 troubleshooting:
-  - symptom: "Could not extract CSRF token from page"
-    checks:
-      - "Verify auth.json exists and contains tokens"
-      - "Check if auto-refresh is necessary (tokens should exist)"
-      - "Confirm regex pattern matches page HTML"
-      - "Test with auto-refresh disabled"
-
-    solutions:
-      - "Check tokens are loaded from auth.json"
-      - "Verify conditional auto-refresh logic is working"
-      - "Skip auto-refresh by providing both tokens"
-      - "Use debug logging to track token state"
-
-  - symptom: "[Errno 2] No such file or directory"
-    checks:
-      - "Verify auth.json exists at ~/.notebooklm-mcp/auth.json"
-      - "Check file permissions"
-      - "Confirm token loading code is executing"
-      - "Look for exception in traceback"
-
-    solutions:
-      - "Create auth.json with valid tokens"
-      - "Run notebooklm-mcp-auth to extract tokens"
-      - "Set environment variables as alternative"
-      - "Check error traceback for actual file path"
-
-  - symptom: "Health check returns unhealthy despite valid auth.json"
-    diagnosis:
-      - "Add debug output to health endpoint"
-      - "Check get_client() is being called"
-      - "Verify global _client is None (forces re-init)"
-      - "Look for exceptions in server logs"
-
-    code_fix:
-      - "Add traceback to health check error response"
-      - "Use sys.stderr.write() for debug output in uvicorn"
-      - "Flush stderr after debug writes"
-      - "Check for exception handlers masking errors"
-
+- symptom: Could not extract CSRF token from page
+  checks:
+  - Verify auth.json exists and contains tokens
+  - Check if auto-refresh is necessary (tokens should exist)
+  - Confirm regex pattern matches page HTML
+  - Test with auto-refresh disabled
+  solutions:
+  - Check tokens are loaded from auth.json
+  - Verify conditional auto-refresh logic is working
+  - Skip auto-refresh by providing both tokens
+  - Use debug logging to track token state
+- symptom: '[Errno 2] No such file or directory'
+  checks:
+  - Verify auth.json exists at ~/.notebooklm-mcp/auth.json
+  - Check file permissions
+  - Confirm token loading code is executing
+  - Look for exception in traceback
+  solutions:
+  - Create auth.json with valid tokens
+  - Run notebooklm-mcp-auth to extract tokens
+  - Set environment variables as alternative
+  - Check error traceback for actual file path
+- symptom: Health check returns unhealthy despite valid auth.json
+  diagnosis:
+  - Add debug output to health endpoint
+  - Check get_client() is being called
+  - Verify global _client is None (forces re-init)
+  - Look for exceptions in server logs
+  code_fix:
+  - Add traceback to health check error response
+  - Use sys.stderr.write() for debug output in uvicorn
+  - Flush stderr after debug writes
+  - Check for exception handlers masking errors
 tools:
-  - name: "Debug authentication"
-    command: |
-      uv run python -c "
-      from notebooklm_mcp.auth import load_cached_tokens
-      tokens = load_cached_tokens()
-      print(f'CSRF: {bool(tokens.csrf_token)} ({len(tokens.csrf_token)} chars)')
-      print(f'Session: {bool(tokens.session_id)} ({len(tokens.session_id)} chars)')
-      from notebooklm_mcp.api_client import NotebookLMClient
-      client = NotebookLMClient(tokens.cookies, tokens.csrf_token, tokens.session_id)
-      print('✅ Client initialized')
-      "
+- name: Debug authentication
+  command: 'uv run python -c "
 
-  - name: "Test CSRF extraction from page"
-    command: |
-      curl -s https://notebooklm.google.com/ | grep -o '"SNlM0e":"[^"]+"'
+    from notebooklm_mcp.auth import load_cached_tokens
 
-  - name: "Check auth.json contents"
-    command: |
-      cat ~/.notebooklm-mcp/auth.json | jq '{csrf_token, session_id, extracted_at}'
+    tokens = load_cached_tokens()
+
+    print(f''CSRF: {bool(tokens.csrf_token)} ({len(tokens.csrf_token)} chars)'')
+
+    print(f''Session: {bool(tokens.session_id)} ({len(tokens.session_id)} chars)'')
+
+    from notebooklm_mcp.api_client import NotebookLMClient
+
+    client = NotebookLMClient(tokens.cookies, tokens.csrf_token, tokens.session_id)
+
+    print(''✅ Client initialized'')
+
+    "
+
+    '
+- name: Test CSRF extraction from page
+  command: 'curl -s https://notebooklm.google.com/ | grep -o ''"SNlM0e":"[^"]+"''
+
+    '
+- name: Check auth.json contents
+  command: 'cat ~/.notebooklm-mcp/auth.json | jq ''{csrf_token, session_id, extracted_at}''
+
+    '

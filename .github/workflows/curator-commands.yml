@@ -1,0 +1,302 @@
+name: Curator Slash Commands
+
+# GitHub Actions workflow that implements slash commands for issue review
+# Curators can use commands like /approve, /request-changes, /reject in comments
+
+"on":
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  process-commands:
+    name: Process Curator Command
+    runs-"on": ubuntu-latest
+    # Only process comments from maintainers/owners
+    if: |
+      contains(github.event.comment.author_association, 'OWNER') ||
+      contains(github.event.comment.author_association, 'MAINTAINER') ||
+      contains(github.event.comment.author_association, 'MEMBER')
+
+    steps:
+      - name: Parse command
+        id: command
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body;
+            const issue = context.payload.issue;
+
+            // Check for commands
+            const commands = [];
+            let action = null;
+            let reason = null;
+
+            if (comment.includes('/approve')) {
+              action = 'approve';
+              commands.push('/approve');
+            }
+
+            if (comment.includes('/request-changes') || comment.includes('/reject-changes') || comment.includes('/changes')) {
+              action = 'request-changes';
+              commands.push('/request-changes');
+            }
+
+            if (comment.includes('/reject')) {
+              action = 'reject';
+              commands.push('/reject');
+            }
+
+            if (comment.includes('/take')) {
+              action = 'take';
+              commands.push('/take');
+            }
+
+            // Extract reason after command (e.g., "/approve because it's correct")
+            const reasonMatch = comment.match(/\/(?:approve|reject|request-changes|take)\s+(?:because|reas"on":)?\s*(.+)/i);
+            if (reasonMatch && reasonMatch[1]) {
+              reason = reasonMatch[1].trim();
+            }
+
+            core.setOutput('action', action || 'none');
+            core.setOutput('commands', commands.join(', '));
+            core.setOutput('reason', reason || '');
+            core.setOutput('commenter', context.payload.comment.user.login);
+
+            console.log('Commands:', commands.join(', '));
+            console.log('Acti"on":', action);
+            console.log('Reas"on":', reason);
+
+      - name: Execute /approve command
+        if: steps.command.outputs.action == 'approve'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const reason = '${{ steps.command.outputs.reason }}';
+
+            // Remove old status labels
+            const oldLabels = issue.labels.filter(l =>
+              l.name.startsWith('status:') ||
+              l.name === 'awaiting-review' ||
+              l.name === 'needs-revision' ||
+              l.name === 'changes_requested' ||
+              l.name === 'reviewing'
+            );
+
+            if (oldLabels.length > 0) {
+              await github.rest.issues.removeLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: oldLabels.map(l => l.name)
+              });
+            }
+
+            // Add approved label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['approved', 'status:approved']
+            });
+
+            // Post approval comment
+            let commentBody = `✅ **Entry Approved**\n\n`;
+            commentBody += `This entry has been approved and is ready to be merged to the Shared Knowledge Base.\n\n`;
+
+            if (reason) {
+              commentBody += `**Reas"on":** ${reason}\n\n`;
+            }
+
+            commentBody += `Next steps:\n`;
+            commentBody += `1. Entry will be merged to main branch\n`;
+            commentBody += `2. Project will be notified automatically\n`;
+            commentBody += `3. Local KB will be updated\n\n`;
+            commentBody += `🤖 Generated with [Claude Code](https://claude.com/claude-code)`;
+
+            await github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+      - name: Execute /request-changes command
+        if: steps.command.outputs.action == 'request-changes'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const reason = '${{ steps.command.outputs.reason }}';
+
+            // Remove old status labels
+            const oldLabels = issue.labels.filter(l =>
+              l.name.startsWith('status:') ||
+              l.name === 'awaiting-review' ||
+              l.name === 'approved'
+            );
+
+            if (oldLabels.length > 0) {
+              await github.rest.issues.removeLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: oldLabels.map(l => l.name)
+              });
+            }
+
+            // Add labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['needs-revision', 'status:changes_requested', 'awaiting-review']
+            });
+
+            // Post comment
+            let commentBody = `📝 **Changes Requested**\n\n`;
+            commentBody += `This entry needs changes before it can be approved.\n\n`;
+
+            if (reason) {
+              commentBody += `**Reas"on":** ${reason}\n\n`;
+            }
+
+            commentBody += `**Agent Action Required:**\n`;
+            commentBody += `1. Review the feedback in this issue\n`;
+            commentBody += `2. Update the YAML entry accordingly\n`;
+            commentBody += `3. Post the updated entry in a new comment\n`;
+            commentBody += `4. Add the 'awaiting-review' label\n\n`;
+            commentBody += `The project agent has been notified and will respond to your feedback.\n\n`;
+            commentBody += `🤖 Generated with [Claude Code](https://claude.com/claude-code)`;
+
+            await github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+      - name: Execute /reject command
+        if: steps.command.outputs.action == 'reject'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const reason = '${{ steps.command.outputs.reason }}';
+
+            // Remove old status labels
+            const oldLabels = issue.labels.filter(l =>
+              l.name.startsWith('status:') ||
+              l.name === 'awaiting-review' ||
+              l.name === 'needs-revision'
+            );
+
+            if (oldLabels.length > 0) {
+              await github.rest.issues.removeLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: oldLabels.map(l => l.name)
+              });
+            }
+
+            // Add rejected label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['rejected', 'status:rejected']
+            });
+
+            // Post rejection comment
+            let commentBody = `❌ **Entry Rejected**\n\n`;
+            commentBody += `This entry is not appropriate for the Shared Knowledge Base in its current form.\n\n`;
+
+            if (reason) {
+              commentBody += `**Reas"on":** ${reason}\n\n`;
+            }
+
+            commentBody += `**Agent Action Required:**\n`;
+            commentBody += `1. Review the feedback\n`;
+            commentBody += `2. Decide whether to fix the issues or withdraw the submission\n`;
+            commentBody += `3. If fixing, make significant improvements and resubmit\n\n`;
+            commentBody += `The project agent has been notified.\n\n`;
+            commentBody += `🤖 Generated with [Claude Code](https://claude.com/claude-code)`;
+
+            await github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+      - name: Execute /take command
+        if: steps.command.outputs.action == 'take'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            // Add reviewing label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['reviewing', 'status:reviewing']
+            });
+
+            // Remove awaiting-review if present
+            const hasAwaiting = issue.labels.some(l => l.name === 'awaiting-review');
+            if (hasAwaiting) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                name: 'awaiting-review'
+              });
+            }
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `📋 **Issue Taken for Review**\n\n@${{ steps.command.outputs.commenter }} has taken this issue for review.\n\nStatus: **Under Review**\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+            });
+
+      - name: Log action
+        run: |
+          echo "📝 Curator command executed"
+          echo "   Command: ${{ steps.command.outputs.commands }}"
+          echo "   Acti"on": ${{ steps.command.outputs.action }}"
+          echo "   By: @${{ steps.command.outputs.commenter }}"
+
+      - name: Unknown command message
+        if: steps.command.outputs.action == 'none'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Unknown Command**
+
+              The comment didn't contain a recognized command.
+
+              **Available Commands:**
+              - \`/approve\` - Approve entry for merge
+              - \`/request-changes\` - Request changes before approval
+              - \`/reject\` - Reject entry
+              - \`/take\` - Take issue for review
+
+              Usage example:
+              > /approve because this is a great addition to the KB
+
+              🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+            });

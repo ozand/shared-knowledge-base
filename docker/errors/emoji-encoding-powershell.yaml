@@ -1,190 +1,196 @@
-version: "1.0"
-category: "encoding"
-last_updated: "2026-01-07"
-
+version: '1.0'
+category: encoding
+last_updated: '2026-01-07'
 errors:
-  - id: "ENCODING-001"
-    title: "Emoji Characters Cause PowerShell Encoding Errors"
-    severity: "high"
-    scope: "docker"
+- id: ENCODING-001
+  title: Emoji Characters Cause PowerShell Encoding Errors
+  severity: high
+  scope: docker
+  problem: 'Using emoji characters (✅, ❌, ⚠️, 🚀, etc.) in PowerShell scripts
 
-    problem: |
-      Using emoji characters (✅, ❌, ⚠️, 🚀, etc.) in PowerShell scripts
-      causes encoding errors and script failures on Windows.
+    causes encoding errors and script failures on Windows.
 
-    symptoms:
-      - "Missing argument in parameter list"
-      - "Unrecognized token in source text"
-      - Script fails at emoji character position
-      - Works on Unix/Mac, fails on Windows
+    '
+  symptoms:
+  - Missing argument in parameter list
+  - Unrecognized token in source text
+  - Script fails at emoji character position
+  - Works on Unix/Mac, fails on Windows
+  root_cause: 'PowerShell on Windows uses different encoding for emoji characters
+    than
 
-    root_cause: |
-      PowerShell on Windows uses different encoding for emoji characters than
-      Unix/Linux/Mac systems. When scripts with emoji are created on Unix/Mac
-      and then run on Windows, the encoding mismatch causes syntax errors.
+    Unix/Linux/Mac systems. When scripts with emoji are created on Unix/Mac
 
-      Example error:
-      ```
-      At T:\temp\shared-kb-setup\scripts\setup-shared-kb-sparse.ps1:97 char:40
-      + Write-Host "   ✅ Patterns (universal/, python/, postgresql/, docker ...
-      +                                        ~
+    and then run on Windows, the encoding mismatch causes syntax errors.
+
+
+    Example error:
+
+    ```
+
+    At T:\temp\shared-kb-setup\scripts\setup-shared-kb-sparse.ps1:97 char:40
+
+    + Write-Host "   ✅ Patterns (universal/, python/, postgresql/, docker ...
+
+    +                                        ~
+
+    Missing argument in parameter list.
+
+    ```
+
+
+    The ✅ emoji at position 40 is interpreted as an unrecognized token,
+
+    causing PowerShell to fail parsing the command.
+
+    '
+  solution:
+    code: "# ❌ WRONG: Using emoji in output\nWrite-Host \"✅ Installation complete\"\
+      \nWrite-Host \"❌ Installation failed\"\nWrite-Host \"⚠️  Warning: Deprecated\
+      \ method\"\n\n# ✅ CORRECT: Use ASCII-only output\nWrite-Host \"[OK] Installation\
+      \ complete\"\nWrite-Host \"[X] Installation failed\"\nWrite-Host \"[!] Warning:\
+      \ Deprecated method\"\n\n# ✅ CORRECT: Use ASCII dictionary\n$ASCII = @{\n  \
+      \  'OK' = '[OK]'\n    'X' = '[X]'\n    '!' = '[!]'\n    '>>' = '>>'\n}\n\nWrite-Host\
+      \ \"$($ASCII['OK']) Installation complete\"\n"
+    explanation: '**Why this works:**
+
+      1. ASCII characters work consistently across all platforms
+
+      2. No encoding issues between Unix/Mac and Windows
+
+      3. PowerShell can parse ASCII without problems
+
+      4. Still provides visual feedback without emoji
+
+
+      **Alternative: Use Python scripts instead**
+
+      Python scripts have better cross-platform compatibility and can
+
+      handle Unicode more reliably than PowerShell.
+
+      '
+  prevention:
+  - Never use emoji in shell scripts (bash, PowerShell, sh)
+  - Use ASCII-only output for cross-platform compatibility
+  - Prefer Python scripts over shell scripts for cross-platform tools
+  - Test scripts on all target platforms (Windows, Mac, Linux)
+  - 'Use ASCII dictionaries: $ASCII = @{''OK'' = ''[OK]'', ''X'' = ''[X]''}'
+  - If Unicode needed, use Python not PowerShell/bash
+  alternatives:
+  - title: Use Python scripts (RECOMMENDED)
+    code: '# Python handles Unicode better
+
+      print("[OK] Installation complete")
+
+      # Can use emoji if really needed (still risky)
+
+      # print("✅ Installation complete")
+
+      '
+    reason: Python has better Unicode support across platforms
+  - title: Use ANSI color codes
+    code: '# Cross-platform coloring without emoji
+
+      Write-Host "[OK] " -NoNewline
+
+      Write-Host "Installation complete" -ForegroundColor Green
+
+      '
+    reason: ANSI codes work better than emoji
+  tags:
+  - encoding
+  - powershell
+  - windows
+  - emoji
+  - cross-platform
+  - unicode
+  examples:
+  - scenario: PowerShell script with emoji fails on Windows
+    before: '# Script created on Mac
+
+      Write-Host "✅ Patterns installed"
+
+      Write-Host "⚠️  Using deprecated method"
+
+      '
+    error: 'At line 97 char 40
+
       Missing argument in parameter list.
-      ```
 
-      The ✅ emoji at position 40 is interpreted as an unrecognized token,
-      causing PowerShell to fail parsing the command.
+      '
+    after: '# Fixed version
 
-    solution:
-      code: |
-        # ❌ WRONG: Using emoji in output
-        Write-Host "✅ Installation complete"
-        Write-Host "❌ Installation failed"
-        Write-Host "⚠️  Warning: Deprecated method"
+      Write-Host "[OK] Patterns installed"
 
-        # ✅ CORRECT: Use ASCII-only output
-        Write-Host "[OK] Installation complete"
-        Write-Host "[X] Installation failed"
-        Write-Host "[!] Warning: Deprecated method"
+      Write-Host "[!] Using deprecated method"
 
-        # ✅ CORRECT: Use ASCII dictionary
-        $ASCII = @{
-            'OK' = '[OK]'
-            'X' = '[X]'
-            '!' = '[!]'
-            '>>' = '>>'
-        }
+      '
+    result: Works on Windows, Mac, and Linux
+  - scenario: Bash script with emoji
+    before: '# Script works on Unix/Mac
 
-        Write-Host "$($ASCII['OK']) Installation complete"
+      echo "✅ Installation complete"
 
-      explanation: |
-        **Why this works:**
-        1. ASCII characters work consistently across all platforms
-        2. No encoding issues between Unix/Mac and Windows
-        3. PowerShell can parse ASCII without problems
-        4. Still provides visual feedback without emoji
+      echo "❌ Installation failed"
 
-        **Alternative: Use Python scripts instead**
-        Python scripts have better cross-platform compatibility and can
-        handle Unicode more reliably than PowerShell.
+      '
+    after: '# Cross-platform version
 
-    prevention:
-      - "Never use emoji in shell scripts (bash, PowerShell, sh)"
-      - "Use ASCII-only output for cross-platform compatibility"
-      - "Prefer Python scripts over shell scripts for cross-platform tools"
-      - "Test scripts on all target platforms (Windows, Mac, Linux)"
-      - "Use ASCII dictionaries: $ASCII = @{'OK' = '[OK]', 'X' = '[X]'}"
-      - "If Unicode needed, use Python not PowerShell/bash"
+      echo "[OK] Installation complete"
 
-    alternatives:
-      - title: "Use Python scripts (RECOMMENDED)"
-        code: |
-          # Python handles Unicode better
-          print("[OK] Installation complete")
-          # Can use emoji if really needed (still risky)
-          # print("✅ Installation complete")
-        reason: "Python has better Unicode support across platforms"
+      echo "[X] Installation failed"
 
-      - title: "Use ANSI color codes"
-        code: |
-          # Cross-platform coloring without emoji
-          Write-Host "[OK] " -NoNewline
-          Write-Host "Installation complete" -ForegroundColor Green
-        reason: "ANSI codes work better than emoji"
+      '
+    result: Works everywhere
+  - scenario: Python script (recommended)
+    code: "# Python script with ASCII output\nASCII = {\n    'OK': '[OK]',\n    'X':\
+      \ '[X]',\n    '!': '[!]',\n}\n\nprint(f\"{ASCII['OK']} Installation complete\"\
+      )\n"
+    result: Cross-platform, no encoding issues
+  real_world_examples:
+  - example: Shared KB installation scripts
+    before: '# setup-shared-kb-sparse.ps1 with emoji
 
-    tags: ["encoding", "powershell", "windows", "emoji", "cross-platform", "unicode"]
+      Write-Host "   ✅ Patterns (universal/, python/, postgresql/, docker ..."
 
-    examples:
-      - scenario: "PowerShell script with emoji fails on Windows"
-        before: |
-          # Script created on Mac
-          Write-Host "✅ Patterns installed"
-          Write-Host "⚠️  Using deprecated method"
+      '
+    problem: Failed on Windows with encoding error
+    after: '# unified-install.py (Python script)
 
-        error: |
-          At line 97 char 40
-          Missing argument in parameter list.
+      print("[OK] Patterns (universal/, python/, postgresql/, docker ...")
 
-        after: |
-          # Fixed version
-          Write-Host "[OK] Patterns installed"
-          Write-Host "[!] Using deprecated method"
-
-        result: "Works on Windows, Mac, and Linux"
-
-      - scenario: "Bash script with emoji"
-        before: |
-          # Script works on Unix/Mac
-          echo "✅ Installation complete"
-          echo "❌ Installation failed"
-
-        after: |
-          # Cross-platform version
-          echo "[OK] Installation complete"
-          echo "[X] Installation failed"
-
-        result: "Works everywhere"
-
-      - scenario: "Python script (recommended)"
-        code: |
-          # Python script with ASCII output
-          ASCII = {
-              'OK': '[OK]',
-              'X': '[X]',
-              '!': '[!]',
-          }
-
-          print(f"{ASCII['OK']} Installation complete")
-
-        result: "Cross-platform, no encoding issues"
-
-    real_world_examples:
-      - example: "Shared KB installation scripts"
-        before: |
-          # setup-shared-kb-sparse.ps1 with emoji
-          Write-Host "   ✅ Patterns (universal/, python/, postgresql/, docker ..."
-
-        problem: "Failed on Windows with encoding error"
-
-        after: |
-          # unified-install.py (Python script)
-          print("[OK] Patterns (universal/, python/, postgresql/, docker ...")
-
-        result: "Works on all platforms, no encoding issues"
-
-        location: "scripts/unified-install.py"
-
-    testing:
-      - test: "Test on Windows"
-        command: "powershell -ExecutionPolicy Bypass -File script.ps1"
-        expected: "No encoding errors"
-
-      - test: "Test on Mac/Linux"
-        command: "bash script.sh"
-        expected: "No encoding errors"
-
-      - test: "Check for emoji"
-        command: "grep -P '[\\x{1F300}-\\x{1F9FF}]' script.ps1"
-        expected: "No emoji found"
-
-    related_patterns:
-      - "UNIFIED-INSTALL-001 - Unified installation using Python"
-      - "DOC-ORGANIZATION-001 - Documentation organization"
-      - "PYTHON-CROSS-PLATFORM-001 - Cross-platform Python patterns"
-
-    references:
-      - "docs/research/SESSION-ANALYSIS-2026-01-07.md - Session analysis"
-      - "docs/archive/BOOTSTRAP-GUIDE.md - Broken PowerShell script example"
-      - "scripts/unified-install.py - Working Python alternative"
-
-    quality_checks:
-      - check: "No emoji in .ps1 files"
-        command: "! grep -P '[\\x{1F300}-\\x{1F9FF}]' *.ps1"
-        pass_if: "No results"
-
-      - check: "No emoji in .sh files"
-        command: "! grep -P '[\\x{1F300}-\\x{1F9FF}]' *.sh"
-        pass_if: "No results"
-
-      - check: "Scripts use ASCII output"
-        pattern: "\\[(OK|X|!)\\]"
-        pass_if: "Found in scripts"
+      '
+    result: Works on all platforms, no encoding issues
+    location: scripts/unified-install.py
+  testing:
+  - test: Test on Windows
+    command: powershell -ExecutionPolicy Bypass -File script.ps1
+    expected: No encoding errors
+  - test: Test on Mac/Linux
+    command: bash script.sh
+    expected: No encoding errors
+  - test: Check for emoji
+    command: grep -P '[\x{1F300}-\x{1F9FF}]' script.ps1
+    expected: No emoji found
+  related_patterns:
+  - UNIFIED-INSTALL-001 - Unified installation using Python
+  - DOC-ORGANIZATION-001 - Documentation organization
+  - PYTHON-CROSS-PLATFORM-001 - Cross-platform Python patterns
+  references:
+  - docs/research/SESSION-ANALYSIS-2026-01-07.md - Session analysis
+  - docs/archive/BOOTSTRAP-GUIDE.md - Broken PowerShell script example
+  - scripts/unified-install.py - Working Python alternative
+  quality_checks:
+  - check: No emoji in .ps1 files
+    command: '! grep -P ''[\x{1F300}-\x{1F9FF}]'' *.ps1'
+    pass_if: No results
+  - check: No emoji in .sh files
+    command: '! grep -P ''[\x{1F300}-\x{1F9FF}]'' *.sh'
+    pass_if: No results
+  - check: Scripts use ASCII output
+    pattern: \[(OK|X|!)\]
+    pass_if: Found in scripts
+  domains:
+    primary: websocket
+    secondary: []

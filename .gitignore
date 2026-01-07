@@ -53,6 +53,17 @@ _index.yaml.bak
 # NOTE: Metadata files (*_meta.yaml) ARE committed to git
 # They contain metadata that syncs across users
 
-# NOTE: docs/ directory is excluded (generated documentation)
-docs/
-.curator
+# NOTE: docs/ directory IS committed (user documentation)
+# Only generated subdirectories are excluded:
+docs/generated/
+
+# NOTE: .curator IS committed (marker file for curator repositories)
+
+# Temporary files in tmp/
+tmp/*.txt
+tmp/*.tmp
+tmp/NUL
+
+# Local-only configuration files
+*.local
+*.local.*
