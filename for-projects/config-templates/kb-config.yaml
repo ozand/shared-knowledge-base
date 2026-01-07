@@ -1,0 +1,92 @@
+# Shared Knowledge Base Configuration
+# Customize for your project
+
+# KB Paths
+shared_kb: "docs/knowledge-base/shared"
+local_kb: "docs/knowledge-base"
+
+# Project Settings
+project:
+  name: "your-project-name"
+  framework: "[FastAPI, React, etc.]"
+  language: "[Python, JavaScript, etc.]"
+  version: "1.0.0"
+
+# Search Settings
+search:
+  ignore_case: true
+  max_results: 50
+  fuzzy_search: false
+
+# Validation Settings
+validation:
+  min_quality_score: 75
+  strict_mode: false
+  check_duplicates: true
+  check_references: true
+
+# Sync Settings
+sync:
+  auto_push: false
+  create_issues: true
+  require_approval: true
+  commit_template: |
+    Add {error_id}: {title}
+
+    - Brief description
+    - Related entries
+    - Real-world context
+
+    🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+# Index Settings
+index:
+  auto_rebuild: true
+  rebuild_on_change: true
+  include_metadata: true
+
+# Subagent Settings
+subagents:
+  researcher:
+    enabled: true
+    timeout: 120
+    max_results: 10
+    quality_threshold: 70
+
+  debugger:
+    enabled: true
+    timeout: 60
+    stack_trace_depth: 50
+
+  validator:
+    enabled: true
+    timeout: 60
+    test_before_apply: true
+
+  knowledge_curator:
+    enabled: true
+    auto_categorize: true
+    min_quality_score: 75
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: ".claude/kb.log"
+  max_size_mb: 10
+
+# Features
+features:
+  auto_research: true
+  auto_capture: true
+  auto_validate: true
+  git_integration: true
+  github_issues: true
+
+# Advanced
+advanced:
+  parallel_subagents: true
+  cache_results: true
+  cache_ttl_seconds: 3600
+  max_concurrent_requests: 3

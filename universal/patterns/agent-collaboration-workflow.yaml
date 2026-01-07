@@ -1,0 +1,311 @@
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "AGENT-COLLABORATION-001"
+    title: "Multi-Agent Collaboration with Autonomous Subagents"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      Primary agents working on complex tasks need to:
+      1. Research solutions when encountering errors (blocking)
+      2. Document discovered knowledge (post-task)
+      3. Validate solutions before implementation
+      4. Handle multiple tasks in parallel when possible
+
+      Manual orchestration is inefficient and error-prone. Agents need autonomous
+      coordination with specialized subagents for research, knowledge capture,
+      validation, and debugging.
+
+    symptoms:
+      - "Agent blocked on error without research"
+      - "Knowledge lost after task completion"
+      - "Suboptimal solutions due to lack of research"
+      - "Redundant problem-solving across sessions"
+
+    root_cause: |
+      Lack of autonomous agent coordination system. Primary agents lack:
+      - Automatic research triggering on errors
+      - Automatic knowledge capture after solutions
+      - Parallel subagent execution for efficiency
+      - Communication protocols for agent coordination
+
+    solution:
+      code: |
+        # Multi-Agent Collaboration Architecture
+        #
+        # Primary Agent (orchestrator)
+        #   ├─> Researcher Subagent (background, non-blocking)
+        #   ├─> Debugger Subagent (background, analysis)
+        #   ├─> Validator Subagent (sequential, after solution)
+        #   └─> Knowledge Curator Subagent (sequential, post-task)
+        #
+        # Workflow:
+        # 1. Primary agent works on task
+        # 2. Error encountered → Launch Researcher + Debugger (parallel)
+        # 3. Researcher returns solution → Primary agent implements
+        # 4. Validator tests solution
+        # 5. Knowledge Curator documents results
+
+        # Example: Primary Agent with Autonomous Subagents
+
+        # Primary agent main loop
+        async def primary_agent_task():
+            while not task_complete:
+                try:
+                    # Work on primary task
+                    result = implement_feature()
+
+                except Exception as error:
+                    # ERROR - Launch parallel subagents
+                    print(f"❌ Error: {error}")
+
+                    # Subagent 1: Researcher (find solution)
+                    research_task = launch_researcher(error)
+
+                    # Subagent 2: Debugger (analyze error)
+                    debug_task = launch_debugger(error)
+
+                    # Primary agent can do other work while research happens
+                    prepare_error_handling()
+
+                    # Block until research complete (ERROR IS BLOCKING)
+                    solution = await research_task
+
+                    # Get debug analysis
+                    analysis = await debug_task
+
+                    # Apply solution
+                    apply_solution(solution, analysis)
+
+                # Task completed successfully
+                if task_complete:
+                    # Launch knowledge curator subagent
+                    await launch_knowledge_curator(session_context)
+
+        # Subagent 1: Researcher (parallel, non-blocking if possible)
+        def launch_researcher(error):
+            """
+            Researches solution to error using web search, documentation.
+            Runs in background to not block primary agent.
+            """
+            return Task(
+                subagent_type="researcher",
+                prompt=f"""
+                Research solution for error:
+                Error: {error}
+                Context: {get_context()}
+                Urgency: blocking
+                """,
+                run_in_background=True  # KEY: Parallel execution
+            )
+
+        # Subagent 2: Debugger (parallel, analysis only)
+        def launch_debugger(error):
+            """
+            Analyzes error stack trace, code context.
+            Non-blocking (analysis doesn't stop other work).
+            """
+            return Task(
+                subagent_type="debugger",
+                prompt=f"""
+                Analyze error:
+                Error: {error}
+                Stack trace: {get_stack_trace()}
+                Code context: {get_code_context()}
+                """,
+                run_in_background=True
+            )
+
+        # Subagent 3: Validator (sequential, after solution)
+        async def validate_solution(solution):
+            """
+            Tests proposed solution before applying to production.
+            Runs sequentially (must validate before proceeding).
+            """
+            result = await Task(
+                subagent_type="validator",
+                prompt=f"""
+                Validate solution:
+                Solution: {solution}
+                Test cases: {generate_test_cases()}
+                """,
+                run_in_background=False  # Sequential - must wait
+            )
+
+            if result.valid:
+                return result
+            else:
+                # Solution failed - research again
+                return await launch_researcher(result.error)
+
+        # Subagent 4: Knowledge Curator (sequential, post-task)
+        async def launch_knowledge_curator(session):
+            """
+            Documents discovered knowledge after task completion.
+            Runs after primary agent finishes.
+            """
+            result = await Task(
+                subagent_type="knowledge-curator",
+                prompt=f"""
+                Capture knowledge from session:
+                Session: {session}
+                Errors encountered: {session.errors}
+                Solutions found: {session.solutions}
+                Decisions made: {session.decisions}
+                """,
+                run_in_background=False  # Sequential - document after completion
+            )
+
+            return result
+
+      explanation: |
+        This architecture enables autonomous multi-agent collaboration:
+
+        **Parallel Execution (Non-Blocking):**
+        - Researcher: Searches web/documentation in background
+        - Debugger: Analyzes error in background
+        - Primary agent: Can prepare error handling while waiting
+
+        **Sequential Execution (Blocking):**
+        - Validator: Must validate before proceeding
+        - Knowledge Curator: Documents after task completes
+
+        **Communication Protocol:**
+        1. Primary agent → Subagents: Task requests with context
+        2. Subagents → Primary agent: Structured responses
+        3. Inter-subagent: Researcher → Knowledge Curator (solution → documentation)
+
+        **Autonomous Triggers:**
+        - Error detected → Researcher + Debugger (automatic)
+        - Solution found → Validator (automatic)
+        - Task complete → Knowledge Curator (automatic)
+
+        Benefits:
+        ✅ Faster resolution (parallel research + debugging)
+        ✅ No knowledge loss (automatic documentation)
+        ✅ Higher quality (validated solutions)
+        ✅ Continuous learning (KB grows automatically)
+
+    prevention:
+      - "Configure subagent triggers in .claude/settings.json hooks"
+      - "Document subagent communication protocols"
+      - "Test subagent workflows before production"
+      - "Monitor subagent performance and optimize"
+
+    tags: ["agents", "subagents", "collaboration", "automation", "multi-agent"]
+
+    examples:
+      - scenario: "FastAPI WebSocket Timeout Error"
+        workflow: |
+          1. Primary agent implements WebSocket
+          2. Error: Timeout after 5 seconds
+          3. Automatically launch:
+             - Researcher: "Search FastAPI websocket timeout"
+             - Debugger: "Analyze stack trace"
+          4. Primary agent prepares error handling while waiting
+          5. Researcher returns: "Configure uvicorn ws_max_size"
+          6. Debugger returns: "Timeout in uvicorn, not FastAPI"
+          7. Primary agent applies solution
+          8. Validator tests: WebSocket timeout now 30s ✅
+          9. Task completes
+          10. Knowledge Curator documents:
+              - GitHub issue for Shared KB (common FastAPI issue)
+              - YAML entry for project KB (our specific config)
+          11. Summary: "✅ 1 KB entry created (quality: 85/100)"
+
+      - scenario: "Docker Volume Permissions"
+        workflow: |
+          1. Primary agent builds Docker container
+          2. Error: Permission denied on volume mount
+          3. Launch Researcher: "Docker volume permissions Linux"
+          4. Researcher finds: "Run as specific UID/GID"
+          5. Primary agent applies: user: "${UID}:${GID}"
+          6. Validator tests: Container can read/write ✅
+          7. Knowledge Curator creates GitHub issue
+          8. Sync to shared repository
+
+      - scenario: "Database Connection Pool Exhaustion"
+        workflow: |
+          1. Primary agent implements async endpoints
+          2. Error: "Connection pool exhausted"
+          3. Launch Researcher + Debugger (parallel)
+          4. Researcher finds: "Increase pool_size, add pool_recycle"
+          5. Debugger finds: "Connections not being closed properly"
+          6. Primary agent:
+             - Fixes connection leak (add async with)
+             - Increases pool_size
+          7. Validator: Load test with 100 concurrent requests ✅
+          8. Knowledge Curator: Documents both solutions
+
+    best_practices:
+      - "Use background=True for non-blocking subagents (research, debug)"
+      - "Use background=False for blocking subagents (validation, documentation)"
+      - "Provide clear context and urgency in subagent requests"
+      - "Set reasonable timeouts for subagent tasks"
+      - "Monitor subagent results and iterate if needed"
+
+    common_mistakes:
+      - mistake: "Running all subagents sequentially"
+        consequence: "Slower execution, wasted parallelization potential"
+        correction: "Use run_in_background=True for research/debug/analysis"
+
+      - mistake: "Not providing context to subagents"
+        consequence: "Poor research results, irrelevant solutions"
+        correction: "Always include error, environment, what tried"
+
+      - mistake: "Forgetting to capture knowledge"
+        consequence: "Same error researched multiple times"
+        correction: "Always launch knowledge curator after task completion"
+
+      - mistake: "Applying unvalidated solutions"
+        consequence: "New errors introduced, wasted time"
+        correction: "Always validate solutions before final implementation"
+
+    integration:
+      required_files:
+        - ".claude/agents/subagents/RESEARCHER.md"
+        - ".claude/agents/subagents/KNOWLEDGE-CURATOR.md"
+        - ".claude/agents/subagents/DEBUGGER.md" (optional)
+        - ".claude/agents/subagents/VALIDATOR.md" (optional)
+
+      configuration:
+        file: ".claude/settings.json"
+        content: |
+          {
+            "hooks": {
+              "error-research": {
+                "events": ["PreToolUse"],
+                "condition": "error OR exception",
+                "action": "launch_researcher_subagent",
+                "mode": "background"
+              },
+              "knowledge-capture": {
+                "events": ["Stop", "SessionEnd"],
+                "action": "launch_knowledge_curator",
+                "mode": "sequential"
+              }
+            },
+            "agents": {
+              "paths": [".claude/agents", ".claude/agents/subagents"],
+              "auto_discover": true
+            }
+          }
+
+      tools_required:
+        - "Task" (for launching subagents)
+        - "TaskOutput" (for getting subagent results)
+        - "WebSearch" (for researcher)
+        - "Grep/Read/Write" (for all subagents)
+
+    quality_metrics:
+      autonomy: "high"  # Subagents work autonomously
+      efficiency: "high"  # Parallel execution saves time
+      reliability: "high"  # Validation reduces errors
+      learning: "high"  # Automatic knowledge capture
+
+    version: "1.0"
+    author: "KB Curator"
+    license: "MIT"

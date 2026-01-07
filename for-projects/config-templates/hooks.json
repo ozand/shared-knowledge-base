@@ -1,0 +1,110 @@
+{
+  "hooks": {
+    "kb-index-on-change": {
+      "name": "Rebuild KB Index on Change",
+      "events": ["PostToolUse"],
+      "condition": "file_modified == true && file_extension == '.yaml' && file_path.contains('knowledge-base')",
+      "actions": [
+        {
+          "type": "shell",
+          "command": "python docs/knowledge-base/shared/tools/kb.py index --force",
+          "mode": "background",
+          "timeout": 30
+        }
+      ]
+    },
+    "error-research-launch": {
+      "name": "Launch Research on Error",
+      "events": ["PreToolUse"],
+      "condition": "error_detected == true || exception_raised == true",
+      "actions": [
+        {
+          "type": "subagent",
+          "subagent_type": "researcher",
+          "prompt": "Research solution for error: {error_message}",
+          "mode": "background"
+        },
+        {
+          "type": "subagent",
+          "subagent_type": "debugger",
+          "prompt": "Analyze error: {error_message}",
+          "context": {
+            "stack_trace": "{stack_trace}"
+          },
+          "mode": "background"
+        }
+      ]
+    },
+    "solution-validation": {
+      "name": "Validate Solution Before Apply",
+      "events": ["PostToolUse"],
+      "condition": "solution_proposed == true",
+      "actions": [
+        {
+          "type": "subagent",
+          "subagent_type": "validator",
+          "prompt": "Validate solution: {solution_code}",
+          "mode": "sequential"
+        }
+      ]
+    },
+    "knowledge-capture-session-end": {
+      "name": "Capture Knowledge on Session End",
+      "events": ["Stop", "SessionEnd"],
+      "condition": "session_duration_minutes > 5",
+      "actions": [
+        {
+          "type": "subagent",
+          "subagent_type": "knowledge-curator",
+          "prompt": "Analyze session and capture knowledge",
+          "context": {
+            "session_duration": "{session_duration}",
+            "errors_encountered": "{error_count}",
+            "tasks_completed": "{task_count}"
+          },
+          "mode": "sequential"
+        }
+      ]
+    },
+    "kb-validate-before-commit": {
+      "name": "Validate KB Entries Before Commit",
+      "events": ["PreCommit"],
+      "condition": "staged_files.contains('.yaml') && staged_files.any(f => f.path.contains('knowledge-base'))",
+      "actions": [
+        {
+          "type": "shell",
+          "command": "python docs/knowledge-base/shared/tools/kb.py validate docs/knowledge-base",
+          "mode": "blocking",
+          "timeout": 60
+        }
+      ]
+    },
+    "kb-quality-check": {
+      "name": "Quality Check for New KB Entries",
+      "events": ["PostToolUse"],
+      "condition": "file_created == true && file_path.contains('knowledge-base') && file_extension == '.yaml'",
+      "actions": [
+        {
+          "type": "skill",
+          "skill": "kb-validate",
+          "input": {
+            "file": "{file_path}"
+          },
+          "mode": "background"
+        }
+      ]
+    },
+    "retrospective-on-feature-complete": {
+      "name": "Run Retrospective on Feature Complete",
+      "events": ["Stop"],
+      "condition": "feature_complete == true",
+      "actions": [
+        {
+          "type": "command",
+          "command": "/retrospective --context 'feature_complete'",
+          "mode": "sequential"
+        }
+      ]
+    }
+  }
+}

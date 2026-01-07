@@ -1,8 +1,8 @@
 # Shared Knowledge Base
 
-**Version 3.0 - Complete Metadata System** 🚀
+**Version 3.2** - Centralized knowledge base for software development
 
-Централизованная база знаний для разработки ПО с продвинутой системой метаданных, предиктивной аналитикой и распознаванием паттернов.
+Centрализованная база знаний для разработки ПО с системой метаданных, предиктивной аналитикой и распознаванием паттернов.
 
 [English](#english) | [Русский](#russian)
 
@@ -10,518 +10,183 @@
 
 ## <a name="english"></a>English
 
-### What's New in v3.0
-
-- ✅ **Metadata Management** - Quality scores (0-100), usage tracking, change detection
-- ✅ **Freshness Checking** - Automatic library version monitoring (PyPI, npm, GitHub)
-- ✅ **Predictive Analytics** - Update predictions, risk assessment, quality estimation
-- ✅ **Pattern Recognition** - Find similar patterns across projects
-- ✅ **Community Analytics** - Privacy-first aggregation across projects
-- ✅ **Automated Scripts** - Daily/weekly/monthly maintenance automation
-- ✅ **GitHub Issues Integration** - Automatic issue creation for migration errors (NEW)
-
----
-
-## ⚠️ IMPORTANT: Role-Based Access Control
-
-**For Project Agents:**
-This repository is **READ-ONLY** for you. Follow these rules:
-
-- ❌ **DO NOT** create commits to shared-knowledge-base
-- ❌ **DO NOT** create PRs to shared-knowledge-base
-- ❌ **DO NOT** modify files directly
-- ✅ **DO** create GitHub issues for contributions
-- ✅ Follow AGENT-HANDOFF-001 workflow
-
-**How to Contribute:**
-1. Create YAML entry locally
-2. Validate: `python tools/kb.py validate entry.yaml`
-3. Create GitHub issue with attribution (GITHUB-ATTRIB-001)
-4. Wait for Curator review
-
-**For Curator Agent:**
-You are the **ONLY** agent who can commit to this repository:
-- ✅ Review issues from project agents
-- ✅ Validate and enhance contributions
-- ✅ Commit approved changes
-
-**Enforcement:** Pre-commit hooks block non-curator commits (AGENT-ROLE-SEPARATION-001)
-
-**Documentation:**
-- [AGENT-ROLE-SEPARATION-001](universal/patterns/agent-role-separation.yaml)
-- [AGENT-HANDOFF-001](universal/patterns/agent-handoff.yaml)
-- [GITHUB-ATTRIB-001](universal/patterns/github-agent-attribution.yaml)
-
----
-
-## 🤖 For AI Agents
-
-**Quick Start Guide for AI Agents:**
-
-**⚠️ CRITICAL RULES:**
-1. ✅ Always use `git submodule` commands (NEVER `git -C` or `cd` into submodule)
-2. ✅ Verify state before referencing (check issues/PRs with `gh issue view`)
-3. ✅ Check submodule status before operations
-4. ❌ Never commit to shared-knowledge-base (unless you're Curator)
-
-**Quick Reference:**
-```bash
-# Update Shared KB (CORRECT workflow)
-git submodule status docs/knowledge-base/shared
-git submodule update --remote docs/knowledge-base/shared
-
-# Verify before referencing
-gh issue view NUMBER --json state,title
-
-# Search KB
-kb search '{query}'
-```
-
-**📖 Complete Guide:** [AGENT-QUICK-START.md](AGENT-QUICK-START.md)
-
-**Key Patterns for Agents:**
-- [AGENT-DIRECT-SUBMODULE-ACCESS-001](universal/patterns/agent-direct-submodule-access.yaml) - Submodule access rules
-- [STALE-CONTEXT-001](universal/patterns/stale-context.yaml) - Verify before referencing
-- [SUBMODULE-STATUS-INTERPRETATION-001](universal/patterns/submodule-status-interpretation.yaml) - Understanding status
-- [AGENT-HANDOFF-FAILURE-001](universal/patterns/agent-handoff-failures.yaml) - Common submission mistakes
-
-**Agent Instructions:**
-All agents auto-load `universal/agent-instructions/base-instructions.yaml` with:
-- Submodule access rules (forbidden/required commands)
-- Role-based access control (Project Agent vs Curator)
-- GitHub attribution requirements
-- Quality standards and workflows
-
----
-
-**v2.0 Features:**
-- ✅ Cross-platform Python CLI (`kb.py`) - works on Windows/Mac/Linux
-- ✅ SQLite indexing - fast search with 1M+ entries
-- ✅ AI-agnostic - works with Claude Code, GitHub Copilot, Cursor, Roo Code
-- ✅ Multi-language - Python, JavaScript, Docker, and more
-- ✅ JSON export - programmatic access for AI tools
-
 ### Quick Start
 
-**🌟 Recommended (v3.1): Git Submodule with Sparse Checkout**
-
-**New in v3.1:** Sparse checkout excludes Curator files, loading only Project Agent content!
+**One-command installation:**
 
 ```bash
-# Option 1: Automated setup (RECOMMENDED)
-# Linux/Mac:
-bash /path/to/shared-knowledge-base/scripts/setup-shared-kb-sparse.sh
-
-# Windows (PowerShell):
-powershell -ExecutionPolicy Bypass -File \
-  C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
-
-# What it does:
-# ✅ Adds submodule with sparse checkout enabled
-# ✅ Loads only patterns + agent guides (excludes curator/)
-# ✅ Saves ~22% space + clean context for agents
+python scripts/unified-install.py --full
 ```
 
-**Option 2: Standard Git Submodule**
-```bash
-# 1. Add as submodule (best practice for multi-project setups)
-git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
-
-# 2. Copy kb.py tool
-cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/
-
-# 3. Install dependencies
-pip install pyyaml
-
-# 4. Build index
-python docs/knowledge-base/tools/kb.py index -v
-
-# 5. Search!
-python docs/knowledge-base/tools/kb.py search "async"
-```
-
-**Alternative: Quick Clone** (for testing/learning only)
-```bash
-# Simple clone (not recommended for production)
-git clone https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
-```
-
-**Documentation:**
-- **[QUICKSTART.md](QUICKSTART.md)** - Detailed setup guide
-- **[SUBMODULE_VS_CLONE.md](SUBMODULE_VS_CLONE.md)** - Submodule vs Clone vs Sparse Checkout comparison
-- **[SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md](SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md)** - Why sparse checkout matters
-
-### 📚 For Knowledge Base Curators
-
-**Are you maintaining this knowledge base?** See the [Curator Documentation Index](curator/INDEX.md) for:
-
-- 🎯 **[AGENT.md](curator/AGENT.md)** - Curator role definition and responsibilities
-- 🛠️ **[SKILLS.md](curator/SKILLS.md)** - Available skills (audit-quality, find-duplicates, research-enhance, etc.)
-- 📋 **[WORKFLOWS.md](curator/WORKFLOWS.md)** - Standard operating procedures
-- ⭐ **[QUALITY_STANDARDS.md](curator/QUALITY_STANDARDS.md)** - Entry quality rubric (0-100)
-- 💬 **[PROMPTS.md](curator/PROMPTS.md)** - Reusable AI prompt templates
-- 🚀 **[README.md](curator/README.md)** - Quick start guide for curators
-
-**Key capabilities:**
-- Quality assurance and validation
-- Duplicate detection and merging
-- Deep research enhancement (Perplexity, Gemini, etc.)
-- Gap analysis and knowledge expansion
-- Version updates and deprecation
-- Cross-reference optimization
-
-### What's Inside
-
-**Supported Languages:**
-- 🐍 **Python** - imports, type checking, async, testing
-- 🟨 **JavaScript** - async/await, Promises, event loop
-- 🐳 **Docker** - networking, volumes, ports
-- 🌍 **Universal** - Git workflows, Clean Architecture
-
-**Content:**
-- **Errors** - Common mistakes with solutions
-- **Patterns** - Best practices and proven patterns
-- **Tools** - Automation scripts and utilities
-
-### Project Structure
-
-```
-shared-knowledge-base/
-├── python/              # Python-specific
-│   ├── errors/
-│   └── patterns/
-├── javascript/          # JavaScript-specific
-│   ├── errors/
-│   └── patterns/
-├── docker/              # Docker-specific
-│   ├── errors/
-│   └── patterns/
-├── universal/           # Cross-language
-│   ├── errors/
-│   └── patterns/
-├── framework/           # Framework-specific
-│   ├── django/
-│   ├── fastapi/
-│   ├── react/
-│   └── vue/
-├── tools/               # Enhanced tooling (v3.0) ⭐
-│   ├── kb.py           # Main CLI tool (enhanced with 6 new commands)
-│   ├── kb_meta.py      # Metadata manager
-│   ├── kb_usage.py     # Usage tracker
-│   ├── kb_changes.py   # Change detector
-│   ├── kb_freshness.py # Freshness checker
-│   ├── kb_git.py       # Git integration
-│   ├── kb_versions.py  # Version monitor
-│   ├── kb_community.py # Community analytics
-│   ├── kb_predictive.py # Predictive analytics
-│   ├── kb_patterns.py  # Pattern recognizer
-│   └── kb_issues.py    # GitHub issues integration (NEW)
-├── scripts/             # Automation scripts (NEW in v3.0)
-│   ├── init_metadata.py
-│   ├── daily_freshness.py
-│   ├── weekly_usage.py
-│   └── monthly_community.py
-└── *_meta.yaml         # Metadata files (git-synced)
-```
-
-### Using kb.py
+Or remote download:
 
 ```bash
-# Search
-kb search "keyword"
-kb search --category python --severity high
-kb search --tags async pytest
-
-# Statistics
-kb stats
-
-# Validate
-kb validate path/to/file.yaml
-
-# Export for AI tools
-kb export --format json --output kb.json
+curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
 ```
 
-**New in v3.0 - Metadata Commands:**
+**For detailed instructions:** [QUICKSTART.md](QUICKSTART.md) (5 minutes setup)
 
-```bash
-# Initialize metadata for all entries
-kb init-metadata
+### What It Does
 
-# Detect changes since last check
-kb detect-changes
+Shared KB provides:
 
-# Check entry freshness
-kb check-freshness
+- ✅ **Centralized knowledge** - Verified solutions for common errors across all languages/frameworks
+- ✅ **AI-agnostic** - Works with Claude Code, GitHub Copilot, Cursor, Roo Code
+- ✅ **Metadata system** - Quality scores, usage tracking, change detection
+- ✅ **Auto-discovery** - Agents automatically find and use relevant patterns
+- ✅ **Cross-platform** - Windows, macOS, Linux (Python-based, no emoji issues)
 
-# Analyze usage patterns
-kb analyze-usage
+### Key Features
 
-# Update entry metadata
-kb update-metadata --entry-id ERROR-ID --quality-score 85
-
-# Reindex metadata
-kb reindex-metadata
-```
-
-**New in v3.0 - Advanced Analytics:**
-
-```bash
-# Check library versions
-python -m tools.kb_versions check --library fastapi
-
-# Predict updates needed
-python -m tools.kb_predictive predict-updates --days 30
-
-# Find similar patterns
-python -m tools.kb_patterns report
-
-# Export community analytics
-python -m tools.kb_community export-analytics --project-name "MyApp"
-```
-
-**New in v3.0 - GitHub Issues Integration:**
-
-```bash
-# Scan for issues and create GitHub tickets automatically
-python -m tools.kb_issues scan --type all
-
-# Create issues for specific problem types
-python -m tools.kb_issues scan --type yaml-errors
-python -m tools.kb_issues scan --type quality-issues
-python -m tools.kb_issues scan --type missing-metadata
-
-# Manually create issue for specific error
-python -m tools.kb_issues create \
-  --type yaml-errors \
-  --file postgresql/errors.yaml \
-  --reason "Mapping value error at line 410"
-```
-
-**Use Case:** When migrating KB to new projects, automatically create GitHub issues for any YAML errors or quality problems. A separate KB Curator agent then fixes these issues, and you sync back the corrections.
-
-### Scope Levels
-
-Knowledge is organized hierarchically:
-
-1. **universal** - Cross-language (Git, testing, architecture)
-2. **python, javascript, etc.** - Language-specific
-3. **django, react, etc.** - Framework-specific
-4. **project** - Project-specific (not shared)
-
-### Contributing
-
-We welcome contributions!
-
-1. Fork this repository
-2. Add your error/pattern with proper scope
-3. Validate: `kb validate your-file.yaml`
-4. Submit Pull Request
-
-**See [GUIDE.md](GUIDE.md) for detailed guidelines.**
-
-### Integration with AI Tools
-
-**Claude Code:**
-```bash
-kb search "error description"
-```
-
-**GitHub Copilot / Cursor / Roo Code:**
-```bash
-kb export --format json --output kb-snapshot.json
-# AI tools can consume this JSON
-```
-
-### Scalability
-
-| Entries | Search Time |
-|---------|-------------|
-| 1,000 | < 10ms |
-| 10,000 | < 50ms |
-| 100,000 | < 200ms |
-| 1,000,000 | < 1s |
-
-Powered by SQLite FTS5.
+**v3.2 Features:**
+- 📚 **101 knowledge entries** - Python, JavaScript, Docker, PostgreSQL, Universal patterns
+- 🔍 **Fast search** - SQLite FTS5 with sub-second queries
+- 🤖 **AI Agent Integration** - Auto-loaded instructions, multi-agent system
+- 📊 **Metadata & Analytics** - Quality scores, usage tracking, predictive analytics
+- 🔄 **Auto-updates** - Check and update with one command
 
 ### Documentation
 
 **Getting Started:**
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[for-claude-code/README.md](for-claude-code/README.md)** - Complete guide for Claude Code (v3.0)
-- **[README_INTEGRATION.md](README_INTEGRATION.md)** - Integration guide for new projects
+- **[for-claude-code/README.md](for-claude-code/README.md)** - Complete Claude Code guide
+
+**Guides:**
+- **[docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md](docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md)** - Installation & update guide
+- **[AGENT-QUICK-START.md](AGENT-QUICK-START.md)** - Quick start for AI agents
+- **[GUIDE.md](GUIDE.md)** - Implementation guide
+
+**Integration:**
+- **[docs/guides/integration/SUBMODULE_VS_CLONE.md](docs/guides/integration/SUBMODULE_VS_CLONE.md)** - Submodule vs Clone comparison
+- **[docs/guides/integration/AGENT_AUTOCONFIG_GUIDE.md](docs/guides/integration/AGENT_AUTOCONFIG_GUIDE.md)** - Agent configuration
+
+**Workflows:**
+- **[docs/guides/workflows/GITHUB_ATTRIBUTION_GUIDE.md](docs/guides/workflows/GITHUB_ATTRIBUTION_GUIDE.md)** - GitHub contribution workflow
+- **[docs/guides/workflows/ROLE_SEPARATION_GUIDE.md](docs/guides/workflows/ROLE_SEPARATION_GUIDE.md)** - Project Agent vs Curator roles
+
+**Research & Analysis:**
+- **[docs/research/](docs/research/)** - Architecture analysis, research papers, implementation reports
+
+### ⚠️ Role-Based Access Control
+
+**Project Agents:**
+- ❌ DO NOT commit to shared-knowledge-base
+- ✅ DO create GitHub issues with contributions
+- ✅ Follow [AGENT-HANDOFF-001](universal/patterns/agent-handoff.yaml) workflow
+
+**Curator Agent:**
+- ✅ Review issues from project agents
+- ✅ Commit approved changes
+- ✅ ONLY agent who can commit to KB
+
+**See:** [docs/guides/workflows/ROLE_SEPARATION_GUIDE.md](docs/guides/workflows/ROLE_SEPARATION_GUIDE.md)
+
+### Architecture
+
+```
+shared-knowledge-base/
+├── python/              # Python errors & patterns
+├── javascript/          # JavaScript/Node.js
+├── docker/              # Docker/container
+├── postgresql/          # PostgreSQL
+├── universal/           # Cross-language patterns
+│   ├── patterns/        # Best practices
+│   └── agent-instructions/  # Auto-loaded by agents
+├── tools/               # kb.py CLI tool
+├── for-claude-code/     # Claude Code integration
+├── for-projects/        # Agent/skill/command templates
+├── docs/
+│   ├── research/        # Analysis & research
+│   ├── archive/         # Deprecated guides
+│   └── guides/          # Specialized guides
+└── scripts/
+    └── unified-install.py  # Cross-platform installer
+```
+
+### Usage
+
+```bash
+# Search knowledge base
+python docs/knowledge-base/shared/tools/kb.py search "websocket"
+python docs/knowledge-base/shared/tools/kb.py search --category python
+
+# Statistics
+python docs/knowledge-base/shared/tools/kb.py stats
+
+# Build index
+python docs/knowledge-base/shared/tools/kb.py index -v
+
+# Check for updates
+python docs/knowledge-base/shared/scripts/unified-install.py --check
+```
+
+### Contributing
+
+**For Users:**
+1. Search KB first: `python tools/kb.py search "error"`
+2. If not found, document the solution in YAML
+3. Validate: `python tools/kb.py validate entry.yaml`
+4. Create GitHub issue with attribution
+5. Wait for Curator review
 
 **For Curators:**
-- **[curator/INDEX.md](curator/INDEX.md)** - Documentation index
-- **[curator/AGENT.md](curator/AGENT.md)** - Curator role definition
-- **[curator/SKILLS.md](curator/SKILLS.md)** - All available skills
-- **[curator/WORKFLOWS.md](curator/WORKFLOWS.md)** - Standard procedures
-- **[curator/QUALITY_STANDARDS.md](curator/QUALITY_STANDARDS.md)** - Quality rubric (0-100)
-- **[curator/PROMPTS.md](curator/PROMPTS.md)** - Reusable AI prompts
+- Review GitHub issues
+- Validate and enhance contributions
+- Commit to shared-knowledge-base
+- See [curator/](curator/) for details
 
-**Technical:**
-- **[curator/metadata/ARCHITECTURE.md](curator/metadata/ARCHITECTURE.md)** - Metadata system design
-- **[curator/metadata/IMPLEMENTATION.md](curator/metadata/IMPLEMENTATION.md)** - Implementation details
-- **[curator/metadata/PHASE3.md](curator/metadata/PHASE3.md)** - Phase 3 features
-- **Repository:** https://github.com/ozand/shared-knowledge-base
+### Community
+
+- **Issues:** [GitHub Issues](https://github.com/ozand/shared-knowledge-base/issues)
+- **Documentation:** See [Documentation](#documentation) section above
+- **Research:** [docs/research/](docs/research/)
 
 ### License
 
-MIT License - Free to use in any project.
+MIT License - see [LICENSE](LICENSE) for details
 
 ---
 
 ## <a name="russian"></a>Русский
 
-### Что нового в v3.0
+### Быстрый Старт
 
-- ✅ **Управление метаданными** - Quality scores (0-100), трекинг использования, детекция изменений
-- ✅ **Проверка актуальности** - Автоматический мониторинг версий библиотек (PyPI, npm, GitHub)
-- ✅ **Предиктивная аналитика** - Прогнозирование обновлений, оценка рисков, оценка качества
-- ✅ **Распознавание паттернов** - Поиск похожих паттернов между проектами
-- ✅ **Аналитика сообщества** - Приватная агрегация данных между проектами
-- ✅ **Автоматизация** - Daily/weekly/monthly скрипты обслуживания
-
-**Возможности v2.0:**
-- ✅ Кросс-платформенный Python CLI (`kb.py`) - работает на Windows/Mac/Linux
-- ✅ SQLite индексация - быстрый поиск до 1М+ записей
-- ✅ AI-агностичность - работает с Claude Code, GitHub Copilot, Cursor, Roo Code
-- ✅ Многоязычность - Python, JavaScript, Docker и др.
-- ✅ JSON экспорт - программный доступ для AI инструментов
-
-### Быстрый старт
+**Установка одной командой:**
 
 ```bash
-# 1. Клонировать или добавить как submodule
-git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
-
-# 2. Скопировать kb.py
-cp docs/knowledge-base/shared/tools/kb.py docs/knowledge-base/tools/
-
-# 3. Установить зависимости
-pip install pyyaml
-
-# 4. Построить индекс
-python docs/knowledge-base/tools/kb.py index -v
-
-# 5. Искать!
-python docs/knowledge-base/tools/kb.py search "async"
+python scripts/unified-install.py --full
 ```
 
-**См. [QUICKSTART.md](QUICKSTART.md) для подробной настройки.**
-
-### Что внутри
-
-**Поддерживаемые языки:**
-- 🐍 **Python** - импорты, типизация, async, тестирование
-- 🟨 **JavaScript** - async/await, Promises, event loop
-- 🐳 **Docker** - сети, volumes, порты
-- 🌍 **Universal** - Git workflows, Clean Architecture
-
-**Содержимое:**
-- **Errors** - Типовые ошибки с решениями
-- **Patterns** - Best practices и проверенные паттерны
-- **Tools** - Скрипты автоматизации
-
-### Использование kb.py
+Или удаленная загрузка:
 
 ```bash
-# Поиск
-kb search "ключевое слово"
-kb search --category python --severity high
-kb search --tags async pytest
-
-# Статистика
-kb stats
-
-# Валидация
-kb validate путь/к/файлу.yaml
-
-# Экспорт для AI
-kb export --format json --output kb.json
+curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
 ```
 
-### Уровни Scope
+**Подробные инструкции:** [QUICKSTART.md](QUICKSTART.md) (настройка за 5 минут)
 
-Знания организованы иерархически:
+### Основные Возможности
 
-1. **universal** - Кросс-языковые (Git, тестирование, архитектура)
-2. **python, javascript, и т.д.** - Специфичные для языка
-3. **django, react, и т.д.** - Специфичные для фреймворка
-4. **project** - Специфичные для проекта (не публикуются)
-
-### Вклад
-
-Приветствуем вклад в базу знаний!
-
-1. Fork этого репозитория
-2. Добавьте свою ошибку/паттерн с правильным scope
-3. Валидируйте: `kb validate ваш-файл.yaml`
-4. Создайте Pull Request
-
-**См. [GUIDE.md](GUIDE.md) для подробных инструкций.**
-
-### Интеграция с AI инструментами
-
-**Claude Code:**
-```bash
-kb search "описание ошибки"
-```
-
-**GitHub Copilot / Cursor / Roo Code:**
-```bash
-kb export --format json --output kb-snapshot.json
-# AI инструменты могут использовать этот JSON
-```
-
-### Масштабируемость
-
-| Записей | Время поиска |
-|---------|--------------|
-| 1,000 | < 10ms |
-| 10,000 | < 50ms |
-| 100,000 | < 200ms |
-| 1,000,000 | < 1s |
-
-На базе SQLite FTS5.
+- ✅ **Централизованная база знаний** - Проверенные решения для распространенных ошибок
+- ✅ **AI-agnostic** - Работает с Claude Code, GitHub Copilot, Cursor, Roo Code
+- ✅ **Система метаданных** - Оценка качества, отслеживание использования
+- ✅ **Авто-обнаружение** - Агенты автоматически находят и используют паттерны
+- ✅ **Cross-platform** - Windows, macOS, Linux (на базе Python)
 
 ### Документация
 
 **Начало работы:**
-- **[QUICKSTART.md](QUICKSTART.md)** - Установка за 5 минут
-- **[FOR_CLAUDE_CODE.md](FOR_CLAUDE_CODE.md)** - Полный гайд для Claude Code (v3.0)
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Инструкции по деплою
+- **[QUICKSTART.md](QUICKSTART.md)** - Гайд быстрого старта (5 минут)
+- **[for-claude-code/README.md](for-claude-code/README.md)** - Полный гайд для Claude Code
 
-**Для кураторов:**
-- **[CURATOR_DOCS_INDEX.md](CURATOR_DOCS_INDEX.md)** - Индекс документации
-- **[AGENT.md](AGENT.md)** - Определение роли куратора
-- **[SKILLS.md](SKILLS.md)** - Все доступные навыки
-- **[WORKFLOWS.md](WORKFLOWS.md)** - Стандартные процедуры
-- **[QUALITY_STANDARDS.md](QUALITY_STANDARDS.md)** - Рубрика качества (0-100)
-- **[PROMPTS.md](PROMPTS.md)** - Переиспользуемые AI промпты
+**Руководства:**
+- **[docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md](docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md)** - Установка и обновление
+- **[AGENT-QUICK-START.md](AGENT-QUICK-START.md)** - Quick start для AI агентов
 
-**Техническая документация:**
-- **[METADATA_ARCHITECTURE.md](METADATA_ARCHITECTURE.md)** - Архитектура метасистемы
-- **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** - Детали реализации
-- **[PHASE3_SUMMARY.md](PHASE3_SUMMARY.md)** - Возможности Phase 3
-- **Репозиторий:** https://github.com/ozand/shared-knowledge-base
-
-### Лицензия
-
-MIT License - Свободно для использования в любых проектах.
+**См. раздел [Documentation](#documentation) выше для полного списка.**
 
 ---
 
-## Statistics
-
-**Current Knowledge Base:**
-- Python: 12+ errors, 3+ patterns
-- JavaScript: 3+ errors
-- Docker: 3+ errors
-- Universal: 5+ patterns
-
-**Continuously growing** - contributions welcome!
-
----
-
-**Start using now:** See [QUICKSTART.md](QUICKSTART.md) 🚀
+**Version:** 3.2
+**Last Updated:** 2026-01-07
+**Repository:** https://github.com/ozand/shared-knowledge-base

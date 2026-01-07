@@ -1,0 +1,64 @@
+{
+  "agents": {
+    "paths": ["./.claude/agents"],
+    "enabled": [
+      "kb-agent"
+    ],
+    "auto_discover": true
+  },
+  "skills": {
+    "paths": ["./.claude/skills"],
+    "enabled": [
+      "kb-search",
+      "kb-validate",
+      "kb-index",
+      "kb-create",
+      "audit-quality",
+      "find-duplicates",
+      "research-enhance"
+    ],
+    "auto_discover": true
+  },
+  "commands": {
+    "paths": ["./.claude/commands"]
+  },
+  "hooks": {
+    "kb-index-on-change": {
+      "events": ["PostToolUse"],
+      "condition": "file_modified && file_ext == '.yaml' && file_path.includes('knowledge-base')",
+      "action": "rebuild_kb_index",
+      "command": "python docs/knowledge-base/shared/tools/kb.py index --force",
+      "mode": "background"
+    },
+    "error-research": {
+      "events": ["PreToolUse"],
+      "condition": "error OR exception",
+      "action": "launch_parallel_subagents",
+      "subagents": ["researcher", "debugger"],
+      "mode": "background"
+    },
+    "validation-required": {
+      "events": ["PostToolUse"],
+      "condition": "code_modified OR fix_applied",
+      "action": "launch_validator_subagent",
+      "mode": "sequential"
+    },
+    "knowledge-capture": {
+      "events": ["Stop", "SessionEnd"],
+      "action": "launch_knowledge_curator_subagent",
+      "mode": "sequential"
+    },
+    "kb-validate-before-commit": {
+      "events": ["PreCommit"],
+      "condition": "yaml_files_staged && files_in_kb",
+      "action": "validate_kb_entries",
+      "command": "python docs/knowledge-base/shared/tools/kb.py validate docs/knowledge-base",
+      "mode": "blocking"
+    }
+  },
+  "env": {
+    "KB_SHARED_PATH": "docs/knowledge-base/shared",
+    "KB_LOCAL_PATH": "docs/knowledge-base",
+    "KB_PROJECT": "your-project-name"
+  }
+}

@@ -1,0 +1,178 @@
+version: "1.0"
+category: "documentation"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "DOCUMENTATION-TRANSLATION-001"
+    title: "Bilingual Documentation Strategy"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Mixed language documentation without metadata leads to:
+
+      Symptoms:
+        • English speakers can't use Russian documentation
+        • Language not clearly marked
+        • No way to discover equivalent content in other languages
+        • Difficult to maintain consistency across languages
+
+      Root Cause:
+        Documentation created in multiple languages without:
+        1. Clear language metadata
+        2. Organization by language
+        3. Cross-references between language versions
+        4. Summaries for accessibility
+
+      Real Example:
+        8 Russian guides (8,700 lines) added to docs/research/claude-code/
+        - No English summaries
+        - Not marked as Russian
+        - No links to English equivalents
+        - English speakers excluded from content
+
+    symptoms:
+      - "I can't find English documentation on this topic"
+      - "Is this guide available in English?"
+      - "What language is this document?"
+      - "Duplicate content across languages"
+
+    root_cause: |
+      No bilingual documentation strategy.
+      No standards for multi-language projects.
+
+    solution:
+      code: |
+        # Bilingual Documentation Strategy
+
+        ## 1. Language Metadata (Required)
+
+        For ALL non-English documentation, add at top:
+
+        ```markdown
+        # GUIDE_TITLE
+
+        ## English Summary
+
+        This [Russian/Spanish/etc] guide covers [topic].
+
+        **Key Topics:**
+        - Topic 1
+        - Topic 2
+        - Topic 3
+
+        **Language:** [Language] (~X,000 words)
+        **English Equivalent:** See [english-guide.md](link)
+        **Quality:** [description]
+
+        **For English Readers:**
+        [Brief guidance for English speakers]
+
+        ---
+        ```
+
+        ## 2. Organization by Language
+
+        INDEX.md structure:
+        ```markdown
+        ## By Language
+
+        ### English Documentation
+        - List all English guides
+
+        ### Russian Documentation
+        - List all Russian guides with summaries
+        - Mark which have English versions
+
+        ### Bilingual Guides
+        - List guides available in multiple languages
+        ```
+
+        ## 3. Three Translation Approaches
+
+        ### Approach 1: English Summary (Recommended for all)
+        - Add 2-3 paragraph English summary
+        - List key topics
+        - Link to related English documentation
+        - ~5-10 minutes per guide
+
+        ### Approach 2: Condensed Translation (Critical guides)
+        - Translate key sections to English
+        - Preserve structure
+        - Keep examples and code
+        - ~1-2 hours per guide
+
+        ### Approach 3: Full Translation (Essential only)
+        - Complete English translation
+        - Maintain both language versions
+        - Cross-reference each other
+        - ~3-5 hours per guide
+
+        ## 4. Language Column in Tables
+
+        Always include language column:
+        ```markdown
+        | File | Purpose | Lines | Language |
+        |------|---------|-------|----------|
+        | guide.md | Description | 1000 | English |
+        | guia.md | Descripción | 1000 | Spanish |
+        ```
+      explanation: |
+        Benefits:
+        1. English speakers can discover and use all content
+        2. Clear language metadata prevents confusion
+        3. Organized access by language preference
+        4. Cross-references connect equivalent content
+        5. Maintains accessibility for diverse audiences
+
+        Implementation Order:
+        1. Add English summaries to ALL non-English guides (Quick win)
+        2. Organize INDEX.md by language
+        3. Add language columns to all tables
+        4. Translate critical guides to English (Long-term)
+        5. Maintain consistency across updates
+
+    prevention:
+      - "Never add non-English documentation without English summary"
+      - "Always include language metadata in tables"
+      - "Organize master index by language"
+      - "Provide cross-references to equivalent content"
+      - "Mark language clearly in all documentation"
+
+    examples:
+      - name: "Claude Code Documentation"
+        description: "8 Russian guides enhanced with English summaries"
+        implementation: |
+          Phase 1: English Summaries (Completed)
+          - Added English summary to all 7 Russian guides
+          - Included key topics, language metadata
+          - Linked to related English documentation
+
+          Result:
+          - English speakers can now discover all content
+          - Language clearly marked in all guides
+          - INDEX.md organized by language
+          - Accessibility improved from 0% to 100%
+
+      - name: "Multilingual Project Documentation"
+        description: "Spanish project docs with English summaries"
+        implementation: |
+          docs/
+          ├── README.md (English - main)
+          ├── guia-usuario.md (Spanish + English summary)
+          ├── guía-desarrollador.md (Spanish + English summary)
+          └── INDEX.md (organized by language)
+
+          Each Spanish guide has:
+          ## English Summary
+          **Language:** Spanish (~8,000 words)
+          **English Equivalent:** See README.md
+          **Topics:** [listed in English]
+
+    tags: ["documentation", "translation", "bilingual", "internationalization", "i18n"]
+    quality_score: 90
+
+    related_patterns:
+      - "PROGRESSIVE-DISCLOSURE-001"
+      - "DOCUMENTATION-HIERARCHY-001"
+      - "LLM-CONTEXT-001"

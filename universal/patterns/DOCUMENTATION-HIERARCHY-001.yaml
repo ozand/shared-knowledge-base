@@ -1,0 +1,212 @@
+version: "1.0"
+category: "documentation"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "DOCUMENTATION-HIERARCHY-001"
+    title: "Multi-Dimensional Documentation Indexing"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Single organization method insufficient for complex documentation:
+
+      Symptoms:
+        • Users can't find documentation by their preferred method
+        • No way to discover content by learning path
+        • Difficulty finding related topics
+        • New users don't know where to start
+        • Experts can't find advanced content quickly
+
+      Root Cause:
+      Documentation organized only by one dimension (usually alphabetical).
+      No multi-dimensional indexing.
+
+      Real Example:
+        23 Claude Code guides (~16,100 lines)
+        - Alphabetical listing? Not useful
+        - By file size? Not useful
+        - Need organization by:
+          * Language (English vs Russian)
+          * Topic (Core, Automation, Skills, etc.)
+          * Learning path (Beginner → Expert)
+          * Frequency of use
+
+    symptoms:
+      - "Where do I start for learning X?"
+      - "What's the advanced guide for Y?"
+      - "Is there documentation on Z topic?"
+      - "I'm a beginner, what should I read first?"
+      - "Show me all guides on topic Q"
+
+    root_cause: |
+      Flat documentation structure.
+      No hierarchical indexing.
+      Single access path only.
+
+    solution:
+      code: |
+        # Multi-Dimensional Documentation Indexing
+
+        ## Dimension 1: By Language
+
+        ```markdown
+        ## By Language
+
+        ### English Documentation (~7,400 lines)
+        - [Guide 1]
+        - [Guide 2]
+
+        ### Russian Documentation (~8,700 lines)
+        - [Guide 3] ✅ English summary added
+        - [Guide 4] ✅ English summary added
+        ```
+
+        Purpose: Access by language preference
+        Users: "I only read English" / "I prefer Russian"
+
+        ## Dimension 2: By Category
+
+        ```markdown
+        ## By Topic
+
+        ### CLAUDE.md & Project Memory
+        - English: claude-shared-architecture.md
+        - Detailed: CLAUDE-CLAUDE-MD-GUIDE.md (1,393 lines)
+
+        ### Hooks (Workflow Automation)
+        - English: claude-hooks-guide.md
+        - Examples: claude-hooks-examples.md
+        - Advanced: claude-hooks-advanced.md
+
+        ### Skills & Agents
+        - Skills: claude-skills-guide.md
+        - Agents: claude-agents-guide.md
+        ```
+
+        Purpose: Access by topic/domain
+        Users: "I need documentation on hooks"
+
+        ## Dimension 3: By Learning Path
+
+        ```markdown
+        ## Learning Path
+
+        ### Beginner (New to Claude Code)
+        1. CLAUDE-COMPLETE-PRACTICES.md (overview)
+        2. claude-shared-architecture.md (fundamentals)
+        3. CLAUDE-CLAUDE-MD-GUIDE.md (project memory)
+
+        ### Intermediate (Using Features)
+        4. claude-hooks-guide.md (automation)
+        5. CLAUDE-PERMISSION-MODES-GUIDE.md (security)
+        6. CLAUDE-SLASH-COMMANDS-GUIDE.md (commands)
+
+        ### Advanced (Power User)
+        7. claude-skills-guide.md (skills)
+        8. claude-agents-guide.md (agents)
+        9. CLAUDE-MCP-GUIDE.md (MCP)
+
+        ### Expert (Team/Enterprise)
+        10. CLAUDE-PROJECTS-COLLABORATION-GUIDE.md (teams)
+        11. ENTERPRISE-KNOWLEDGE-GRAPH.md (distribution)
+        ```
+
+        Purpose: Guided learning progression
+        Users: "I'm new, where do I start?"
+
+        ## Dimension 4: By Type
+
+        ```markdown
+        ## By Type
+
+        ### Reference Guides (12 files)
+        - Comprehensive reference documentation
+
+        ### Practical Examples (6 files)
+        - Real-world examples and use cases
+
+        ### Integration Guides (3 files)
+        - How to integrate with other tools
+
+        ### Troubleshooting (2 files)
+        - Common issues and solutions
+        ```
+
+        Purpose: Access by documentation type
+        Users: "I need examples / I have an error"
+      explanation: |
+        Multi-dimensional indexing provides multiple access paths:
+        1. **By Language** - Cultural/language preference
+        2. **By Topic** - Domain-specific knowledge
+        3. **By Learning Path** - Progressive skill building
+        4. **By Type** - Usage pattern (reference vs examples)
+
+        Benefits:
+        - Users can find content by their preferred method
+        - New users have clear starting point
+        - Experts can jump to advanced content
+        - Related content grouped together
+        - Cross-references between dimensions
+
+        Implementation:
+        - Create INDEX.md with all 4 dimensions
+        - Add cross-references between sections
+        - Update when new guides added
+        - Maintain consistency across dimensions
+
+    prevention:
+      - "Never use flat alphabetical listing for guides"
+      - "Always organize by multiple dimensions"
+      - "Include learning paths for new users"
+      - "Group related content by topic"
+      - "Provide type-based organization (reference vs examples)"
+      - "Update all dimensions when adding new documentation"
+
+    best_practices:
+      - "Start with 3-4 dimensions, expand as needed"
+      - "Cross-link between dimensions"
+      - "Keep each dimension < 100 lines"
+      - "Use clear section headers"
+      - "Include line counts and complexity indicators"
+      - "Mark language for all content"
+
+    examples:
+      - name: "Claude Code Documentation Index"
+        description: "23 guides organized by 4 dimensions"
+        implementation: |
+          INDEX.md structure:
+
+          📚 Quick Navigation (Beginner → Expert flow)
+          🌐 By Language (English vs Russian)
+          📖 By Topic (Core, Automation, Skills, etc.)
+          📊 By Type (Reference, Examples, Integration)
+
+          Result:
+          - 4 different access paths
+          - Clear starting point for new users
+          - Quick discovery by topic
+          - Language preference respected
+          - Usage pattern accommodated
+
+      - name: "Software Documentation Portal"
+        description: "API docs organized by user type and level"
+        implementation: |
+          docs/
+          ├── INDEX.md
+          │   ├── By Role (Admin, Developer, End User)
+          │   ├── By Level (Beginner, Intermediate, Advanced)
+          │   ├── By Topic (Auth, Database, API)
+          │   └── By Type (Tutorials, Reference, Examples)
+          │
+          ├── tutorials/     (Beginner)
+          ├── guides/        (Intermediate)
+          └── reference/     (Advanced)
+
+    tags: ["documentation", "indexing", "organization", "navigation", "hierarchy"]
+    quality_score: 92
+
+    related_patterns:
+      - "PROGRESSIVE-DISCLOSURE-001"
+      - "DOCUMENTATION-TRANSLATION-001"
+      - "AGENT-AUTO-001"

@@ -547,6 +547,162 @@ instructions:
           - "curator/WORKFLOWS.md"
           - "universal/patterns/pr-review-process.yaml"
 
+  # Shared KB Installation Detection
+  installation_detection:
+    enabled: true
+    priority: "HIGH"
+    pattern: "UNIFIED-INSTALL-001"
+    required_when: "kb_not_detected"
+
+    description: |
+      ⚠️ Auto-detect if Shared KB is installed in project.
+
+      If Shared KB is not detected, suggest unified-install.py installation.
+
+    detection:
+      check_paths:
+        - path: "docs/knowledge-base/shared"
+          check_type: "directory_exists"
+          required: true
+
+        - path: "docs/knowledge-base/shared/tools/kb.py"
+          check_type: "file_exists"
+          required: true
+
+        - path: ".claude/agents/kb-agent.md"
+          check_type: "file_exists"
+          required: false
+          reason: "Optional: Agent templates may not be installed"
+
+        - path: ".gitmodules"
+          check_type: "file_contains"
+          contains: "shared-knowledge-base"
+          required: false
+          reason: "Optional: May use clone instead of submodule"
+
+      detection_command: |
+        # Check if KB is installed
+        if [ -d "docs/knowledge-base/shared" ]; then
+          echo "KB detected: docs/knowledge-base/shared"
+          exit 0
+        else
+          echo "KB not detected"
+          exit 1
+        fi
+
+    on_not_detected:
+      action: "suggest_installation"
+      message: |
+        ⚠️ Shared KB not detected in this project.
+
+        To install Shared KB, run:
+
+        # Method 1: From repository
+        python scripts/unified-install.py --full
+
+        # Method 2: Remote download (one-line)
+        curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
+
+        This will:
+        - Add submodule with sparse checkout
+        - Install agents/skills/commands
+        - Build search index
+        - Verify installation
+
+        For more info: python scripts/unified-install.py --help
+
+      reference_pattern: "UNIFIED-INSTALL-001"
+      reference_documentation:
+        - "README.md - Quick Start section"
+        - "AGENT-QUICK-START.md - Installation section"
+        - "HARMONIZED-INSTALLATION-GUIDE.md - Complete guide"
+
+    installation_methods:
+      unified_install:
+        method: "python scripts/unified-install.py --full"
+        recommended: true
+        reason: "Cross-platform, automated, includes all features"
+        platforms:
+          - "Windows"
+          - "macOS"
+          - "Linux"
+
+        what_it_does:
+          - "Adds submodule: docs/knowledge-base/shared"
+          - "Configures sparse checkout (excludes curator/)"
+          - "Installs agents (1 main + 4 subagents)"
+          - "Installs skills (7 skills)"
+          - "Installs commands (7 commands)"
+          - "Creates configuration files"
+          - "Builds search index"
+          - "Verifies installation"
+
+        flags:
+          full: "--full (complete installation with all features)"
+          minimal: "--minimal (core features only)"
+          update: "--update (update existing installation)"
+          check: "--check (check for updates)"
+          verify: "--verify (verify installation)"
+
+      manual_install:
+        method: "git submodule add + install.py"
+        recommended: false
+        reason: "Requires additional manual steps"
+        platforms:
+          - "All"
+
+        steps:
+          - "git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared"
+          - "python docs/knowledge-base/shared/for-projects/scripts/install.py --full"
+
+    deprecations:
+      - method: "bash scripts/setup-shared-kb-sparse.sh"
+        deprecated: true
+        reason: "Only works on Unix/Linux, use unified-install.py for cross-platform support"
+
+      - method: "powershell scripts/setup-shared-kb-sparse.ps1"
+        deprecated: true
+        reason: "BROKEN: Emoji in PowerShell causes 'Missing argument in parameter list' errors"
+
+      - method: "sku install"
+        deprecated: true
+        reason: "SKU CLI not published to PyPI, use unified-install.py instead"
+
+    examples:
+      - scenario: "Agent starts in project without KB"
+        detection: "Agent checks docs/knowledge-base/shared"
+        result: "Not found"
+        action: "Agent suggests unified-install.py"
+        output: |
+          ⚠️ Shared KB not detected in this project.
+
+          To install Shared KB, run:
+
+          python scripts/unified-install.py --full
+
+      - scenario: "Agent starts in project with KB"
+        detection: "Agent checks docs/knowledge-base/shared"
+        result: "Found"
+        action: "Agent continues normal workflow"
+        output: "✅ Shared KB detected at docs/knowledge-base/shared"
+
+      - scenario: "Agent sees old installation method in docs"
+        reads: "bash scripts/setup-shared-kb-sparse.sh"
+        checks: "UNIFIED-INSTALL-001 pattern"
+        sees: "Method deprecated, use unified-install.py instead"
+        action: "Uses unified-install.py"
+        output: "python scripts/unified-install.py --full"
+
+    references:
+      - pattern: "UNIFIED-INSTALL-001"
+        description: "Complete unified installation pattern"
+
+      - documentation: "HARMONIZED-INSTALLATION-GUIDE.md"
+        description: "Complete installation guide"
+
+      - documentation: "AGENT-INFORMATION-FLOW-ANALYSIS.md"
+        description: "How agents discover installation methods"
+
 # Agent capabilities registry
 # Agents discover what they can do from this list
 capabilities:

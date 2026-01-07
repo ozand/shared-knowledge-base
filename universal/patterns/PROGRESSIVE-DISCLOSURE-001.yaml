@@ -1,0 +1,133 @@
+version: "1.0"
+category: "documentation"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "PROGRESSIVE-DISCLOSURE-001"
+    title: "Progressive Disclosure for Documentation"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Large documentation files (1000+ lines) lead to multiple issues:
+
+      Symptoms:
+        • "Fading memory" phenomenon - Claude can't attend to all parts
+        • Performance degradation - token usage spikes
+        • Difficulty finding information - no clear structure
+        • Attention diffuses - too much context at once
+
+      Root Cause:
+        Monolithic documentation dumps the entire content at once.
+        Like reading a 1000-page book vs a 50-page summary.
+
+      Real Example:
+        CLAUDE.md with 1000+ lines:
+        ├─ Full API docs
+        ├─ Complete database schema
+        ├─ All code examples
+        └─ All historical decisions
+
+        Result: Claude seems to "forget" parts, misses instructions.
+    symptoms:
+      - "Claude doesn't follow my CLAUDE.md instructions"
+      - "Wrong patterns used consistently"
+      - "Performance drops with large files"
+      - "Context overflow errors"
+
+    root_cause: |
+      No layered information architecture.
+      All documentation treated equally regardless of usage frequency.
+
+    solution:
+      code: |
+        # Three-Layer Documentation Structure
+
+        Layer 1: INDEX.md (Navigation)
+        ├─ By Language (English vs Russian)
+        ├─ By Category (Core, Automation, Skills, etc.)
+        ├─ By Learning Path (Beginner → Expert)
+        └─ Quick links to all guides
+
+        Layer 2: README.md (Quick Reference)
+        ├─ Table of all guides
+        ├─ Brief descriptions
+        ├─ Line counts
+        └─ Key metadata
+
+        Layer 3: Full Guides (Detailed)
+        ├─ Complete documentation
+        ├─ Examples & patterns
+        ├─ Cross-references
+        └─ "Related Guides" sections
+
+        # Example: claude-hooks-guide.md
+
+        ## Quick Overview (Layer 2 - in README)
+        Hooks automation reference for Claude Code.
+        1,200 lines. 10 hook types documented.
+
+        ## Full Guide (Layer 3 - in guide file)
+        [Complete detailed documentation...]
+
+        ## Related Guides (Layer 3 - cross-references)
+        - Hooks Examples: @claude-hooks-examples.md
+        - Hooks Advanced: @claude-hooks-advanced.md
+        - Complete Practices: @CLAUDE-COMPLETE-PRACTICES.md
+      explanation: |
+        Progressive Disclosure = Show what exists and how to access it,
+        let Claude fetch details on demand.
+
+        Benefits:
+        1. Claude sees overview first (Layer 1)
+        2. Fetches details only when needed (Layer 3)
+        3. Better attention to each section
+        4. Reduced token usage
+        5. Improved performance
+
+        Implementation:
+        - INDEX.md = master navigation
+        - README.md = quick reference
+        - Individual guides = detailed content
+        - Cross-references between layers
+
+    prevention:
+      - "Always create master INDEX.md for documentation collections"
+      - "Keep root README.md lean (< 300 lines)"
+      - "Use 'Related Guides' sections for cross-references"
+      - "Organize by multiple dimensions (language, topic, level)"
+      - "Never dump monolithic documentation without navigation"
+
+    examples:
+      - name: "Claude Code Documentation"
+        description: "23 guides (~16,100 lines) organized with progressive disclosure"
+        implementation: |
+          docs/research/claude-code/
+          ├── INDEX.md              # Layer 1: Master index
+          ├── README.md             # Layer 2: Quick reference
+          ├── CLAUDE-*.md           # Layer 3: Detailed guides
+          └── claude-*.md           # Layer 3: Detailed guides
+
+          Each guide has "Related Guides" section at end.
+          INDEX.md organizes by language, topic, and learning path.
+
+      - name: "Project CLAUDE.md Structure"
+        description: "Progressive disclosure for project memory"
+        implementation: |
+          ./CLAUDE.md (Core - 50 lines)
+          ├── What: Project overview
+          ├── How: Quick commands
+          └── Key rules
+
+          .claude/references/ (Detailed)
+          ├── architecture.md    # Moved from CLAUDE.md
+          ├── standards.md       # Moved from CLAUDE.md
+          └── decisions.md       # Moved from CLAUDE.md
+
+    tags: ["documentation", "claude-code", "progressive-disclosure", "organization"]
+    quality_score: 95
+
+    related_patterns:
+      - "DOCUMENTATION-HIERARCHY-001"
+      - "DOCUMENTATION-TRANSLATION-001"
+      - "CLAUDE-CLAUDE-MD-GUIDE"

@@ -1,0 +1,119 @@
+version: "1.0"
+category: "agent-workflow"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "UNIFIED-INSTALL-001"
+    title: "Unified Installation Method for Shared KB"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      Agents need to know how to install Shared KB in projects.
+      Multiple installation methods exist causing confusion.
+      Old methods have issues:
+      - PowerShell scripts break due to emoji encoding errors
+      - SKU CLI not published to PyPI
+      - Bash scripts only work on Unix/Linux
+
+    solution:
+      code: |
+        # RECOMMENDED: Unified installation (cross-platform)
+        python scripts/unified-install.py --full
+
+        # Alternative: Remote download (one-line)
+        curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
+
+        # For existing projects:
+        python docs/knowledge-base/shared/scripts/unified-install.py --check
+        python docs/knowledge-base/shared/scripts/unified-install.py --update
+
+      explanation: |
+        unified-install.py is a cross-platform Python script that:
+        - Works on Windows, Mac, Linux (no encoding issues)
+        - Installs submodule with sparse checkout
+        - Installs agents/skills/commands automatically
+        - Creates configuration files
+        - Builds search index
+        - Verifies installation
+
+        The script uses ASCII-only output to avoid emoji encoding problems
+        that break PowerShell scripts on Windows.
+
+    alternatives:
+      - title: "Manual submodule setup"
+        code: |
+          git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+          python docs/knowledge-base/shared/for-projects/scripts/install.py --full
+        deprecated: false
+        reason: "Requires additional manual steps (sparse checkout, agents, config, index)"
+
+      - title: "Bash script (Unix/Linux only)"
+        code: |
+          bash scripts/setup-shared-kb-sparse.sh
+        deprecated: true
+        reason: "Only works on Unix/Linux, use unified-install.py for cross-platform support"
+
+      - title: "PowerShell script (Windows)"
+        code: |
+          powershell -ExecutionPolicy Bypass -File scripts/setup-shared-kb-sparse.ps1
+        deprecated: true
+        reason: "BROKEN: Emoji in PowerShell causes 'Missing argument in parameter list' errors"
+
+      - title: "SKU CLI"
+        code: |
+          sku install
+        deprecated: true
+        reason: "SKU CLI not published to PyPI, use unified-install.py instead"
+
+    prevention:
+      - "Always use unified-install.py for new projects"
+      - "Check if unified-install.py exists before using manual methods"
+      - "Update old projects to use unified-install.py --update"
+
+    tags: ["installation", "unified", "cross-platform", "automation"]
+
+    examples:
+      - scenario: "New project setup"
+        workflow: |
+          User: "Install Shared KB in my project"
+          Agent: python scripts/unified-install.py --full
+          Result: KB fully installed and configured
+
+      - scenario: "Update existing project"
+        workflow: |
+          User: "Update Shared KB"
+          Agent: python docs/knowledge-base/shared/scripts/unified-install.py --check
+          Agent: python docs/knowledge-base/shared/scripts/unified-install.py --update
+          Result: KB and templates updated
+
+      - scenario: "Windows installation"
+        workflow: |
+          User: "Install Shared KB on Windows"
+          Agent: python scripts/unified-install.py --full
+          Result: Installation succeeds (no emoji encoding issues)
+
+      - scenario: "Agent sees old method in documentation"
+        workflow: |
+          Agent reads: "git submodule add https://github.com/ozand/shared-knowledge-base.git..."
+          Agent checks pattern UNIFIED-INSTALL-001
+          Agent sees: Manual method is available but not recommended
+          Agent uses: python scripts/unified-install.py --full
+          Result: Unified method used
+
+    quality_metrics:
+      success_rate: "95%+"
+      cross_platform: true
+      time_to_install: "5 minutes"
+      windows_compatible: true
+      requires_manual_steps: false
+
+    references:
+      - "scripts/unified-install.py - Implementation"
+      - "HARMONIZED-INSTALLATION-GUIDE.md - Complete guide"
+      - "AGENT-INFORMATION-FLOW-ANALYSIS.md - How agents discover this"
+      - "for-projects/README.md - Integration guide"
+
+    related_patterns:
+      - "AGENT-DIRECT-SUBMODULE-ACCESS-001 - Submodule access rules"
+      - "PROGRESSIVE-DISCLOSURE-001 - Information layering"

@@ -6,7 +6,40 @@
 
 ---
 
-## 🎯 Problem Solved
+## ⚠️ DEPRECATION NOTICE
+
+**This document describes the OLD SKU CLI installation method.**
+
+**Status:** DEPRECATED (2026-01-07)
+
+**Why Deprecated:**
+- SKU CLI is not published to PyPI
+- Installation requires manual steps
+- Not cross-platform (encoding issues on Windows)
+- No longer recommended for new projects
+
+**✅ RECOMMENDED:** Use **unified-install.py** instead:
+
+```bash
+# For new projects (one command)
+python scripts/unified-install.py --full
+
+# Or remote download
+curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
+```
+
+**See:**
+- **[README.md](README.md)** - Updated Quick Start with unified installation
+- **[HARMONIZED-INSTALLATION-GUIDE.md](HARMONIZED-INSTALLATION-GUIDE.md)** - Complete guide
+- **[UNIFIED-INSTALL-001](universal/patterns/unified-installation-001.yaml)** - Pattern reference
+
+**Migration:**
+- If you're using SKU CLI, see [HARMONIZED-INSTALLATION-GUIDE.md](HARMONIZED-INSTALLATION-GUIDE.md) for migration guide
+- For new projects, use unified-install.py directly
+
+---
+
+## 🎯 Problem Solved (Legacy Approach)
 
 **The "Chicken and Egg" Problem:**
 - New project needs SKU CLI to install artifacts

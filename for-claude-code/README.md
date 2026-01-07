@@ -42,6 +42,52 @@ The Shared Knowledge Base now includes:
 
 ---
 
+## Installation for New Projects
+
+### Unified Installation (Recommended)
+
+**For new projects setting up Shared KB:**
+
+```bash
+# Method 1: From cloned repository
+python scripts/unified-install.py --full
+
+# Method 2: Remote download (one-line)
+curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
+```
+
+**What it does:**
+- ✅ Adds submodule with sparse checkout (excludes curator/)
+- ✅ Installs agents (1 main + 4 subagents)
+- ✅ Installs skills (7 skills)
+- ✅ Installs commands (7 commands)
+- ✅ Creates configuration files
+- ✅ Builds search index
+- ✅ Verifies installation
+
+**For existing projects:**
+```bash
+# Check for updates
+python docs/knowledge-base/shared/scripts/unified-install.py --check
+
+# Update existing installation
+python docs/knowledge-base/shared/scripts/unified-install.py --update
+```
+
+### Manual Installation (Alternative)
+
+```bash
+# Add submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+
+# Install integration
+python docs/knowledge-base/shared/for-projects/scripts/install.py --full
+```
+
+**See:** `UNIFIED-INSTALL-001` pattern for details
+
+---
+
 ## Quick Reference for Claude Code
 
 ### Basic Commands

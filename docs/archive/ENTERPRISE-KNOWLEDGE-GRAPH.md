@@ -825,3 +825,103 @@ uvx sku install skill testing
 **Quality Score:** 95/100
 
 Ready to transform your team's knowledge management! 🚀
+
+---
+
+## 📖 Claude Code Documentation Distribution (NEW)
+
+### Overview
+
+Teams can distribute their Claude Code documentation through the Enterprise Knowledge Graph, ensuring all projects use consistent practices and always have up-to-date information.
+
+### Publishing Claude Code Documentation
+
+```bash
+# ===== shared-knowledge-base =====
+# Куратор создаёт документацию Claude Code
+
+# claude-code-documentation/
+# ├── INDEX.md                           # Master index (26 guides)
+# ├── README.md                          # Quick reference
+# ├── CLAUDE-COMPLETE-PRACTICES-EN.md    # Full English translation
+# ├── CLAUDE-PERMISSION-MODES-GUIDE-EN.md
+# ├── CLAUDE-SLASH-COMMANDS-GUIDE-EN.md
+# ├── claude-hooks-guide.md
+# ├── claude-skills-guide.md
+# ├── claude-agents-guide.md
+# └── metadata.yaml
+
+# Публикация документации как артефакта
+uvx sku publish claude-code-documentation \
+  --type documentation \
+  --name "Claude Code Complete Guide" \
+  --version 1.0.0 \
+  --tags "claude-code,documentation,automation"
+```
+
+### Installing in Team Projects
+
+```bash
+# ===== любой проект команды =====
+# Устанавливают документацию
+
+uvx sku install documentation claude-code-complete-guide
+
+# В CLAUDE.md проекта:
+"""
+## Team Documentation
+
+Our team uses Claude Code with the following standard practices:
+
+@claude-code-documentation/INDEX.md
+
+Key Guides:
+- @claude-code-documentation/CLAUDE-COMPLETE-PRACTICES-EN.md
+- @claude-code-documentation/claude-hooks-guide.md
+- @claude-code-documentation/claude-skills-guide.md
+
+When working with this project:
+1. Follow permission modes best practices
+2. Use team slash commands (.claude/commands/)
+3. Implement hooks for quality gates
+"""
+```
+
+### Benefits
+
+| Aspect | Without Distribution | With Enterprise Knowledge Graph |
+|--------|---------------------|----------------------------------|
+| **Updates** | Manual copy to all projects | `uvx sku update` - once |
+| **Versioning** | None | Semver for documentation |
+| **Freshness** | Stales across projects | Single source, always fresh |
+| **Discovery** | File search | `uvx sku search --tag claude-code` |
+| **Size** | Copy all guides (~20K lines) | Index (10 KB) + lazy load |
+| **Onboarding** | Multiple separate docs | One link to INDEX.md |
+
+### Update Workflow
+
+```bash
+# ===== shared-knowledge-base =====
+# Curator updates documentation
+
+# Added new section to CLAUDE-COMPLETE-PRACTICES-EN.md
+# Updated version to 1.1.0
+
+uvx sku publish claude-code-documentation \
+  --type documentation \
+  --version 1.1.0 \
+  --changelog "Added MCP integration section"
+
+# ===== all team projects =====
+# SessionStart hook automatically shows notification
+
+# Developer updates
+uvx sku update documentation claude-code-complete-guide
+
+# Now all projects know about MCP integration!
+# Claude Code uses new information in any project
+```
+
+**Status:** ✅ Implemented (January 7, 2026)
+**Documentation:** 26 guides (~20,000 lines)
+**Languages:** English (primary), Russian (supplementary)
