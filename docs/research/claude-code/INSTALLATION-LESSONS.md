@@ -97,12 +97,26 @@ ERROR: Could not find a version that satisfies the requirement sku-cli
 
 **Impact:** No alternative installation method
 
-**Recommendation:**
-- Option A: Publish to PyPI
-- Option B: Document that SKU CLI is GitHub-only
-- Option C: Recommend kb.py as primary method
+**Why No PyPI:**
+- This is a **private repository**
+- Cannot publish to public PyPI
+- Team-internal tool only
 
-**Status:** ⚠️ **RECOMMENDATION** - Document kb.py as fallback
+**Recommendation:**
+- Option A: **Document kb.py as primary method** (always works)
+- Option B: **Local pip install** from cloned repo:
+  ```bash
+  cd shared-knowledge-base
+  pip install -e tools/skb-cli/
+  ```
+- Option C: **Private PyPI** (requires infrastructure):
+  ```bash
+  # Setup private PyPI server
+  # Publish internally
+  pip install --index-url https://pypi.example.com/ sku-cli
+  ```
+
+**Status:** ⚠️ **RECOMMENDATION** - Use kb.py as primary, local pip as fallback
 
 ---
 
@@ -183,13 +197,14 @@ All 5 verification steps passed:
   - Remove emoji from `install-sku.ps1`
   - Or replace with `-fixed` versions
 
-- [ ] **Publish SKU CLI to PyPI**
-  - Package name: `sku-cli` or `shared-knowledge-utility`
-  - Enables: `pip install sku-cli`
+- [ ] **Document local pip install method**
+  - Add to docs: `pip install -e tools/skb-cli/`
+  - For teams with repo access
 
 - [ ] **Update QUICK_SETUP_CLAUDE.md**
   - Replace with `-fixed` version
   - Add Windows-specific notes
+  - Emphasize kb.py as primary method
 
 ### Long-term (Nice-to-Have)
 

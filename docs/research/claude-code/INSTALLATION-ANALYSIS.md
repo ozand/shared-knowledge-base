@@ -301,9 +301,12 @@ Missing argument in parameter list.  # PowerShell error
 
 **Impact:** No fallback installation method
 
+**Why:** This is a **private repository** - cannot publish to public PyPI
+
 **Fix Required:**
-- Publish to PyPI: `sku-cli` or `shared-knowledge-utility`
-- Or document that CLI is GitHub-only
+- Document kb.py as primary method (always works)
+- Add local pip install instructions: `pip install -e tools/skb-cli/`
+- Optional: Setup private PyPI for internal use
 
 ---
 
@@ -412,20 +415,26 @@ python docs/knowledge-base/shared/tools/kb.py search "async"
 
 ### Nice-to-Have Improvements
 
-4. **Publish SKU CLI to PyPI**
+4. **Document Local Installation**
    ```bash
-   # Allows:
-   pip install sku-cli
+   # For teams with repo access:
+   cd shared-knowledge-base
+   pip install -e tools/skb-cli/
 
-   # Fallback if installer fails
+   # Creates editable install
    ```
 
-5. **Windows-Specific Installer**
+5. **Optional: Private PyPI Server**
+   - Setup devpi or similar
+   - Publish internally only
+   - Team access control
+
+6. **Windows-Specific Installer**
    - Test on actual Windows machine
    - Use Windows-style line endings (CRLF)
    - Avoid special characters
 
-6. **Better Error Messages**
+7. **Better Error Messages**
    ```powershell
    # Instead of:
    Missing argument in parameter list.
