@@ -7,6 +7,12 @@ set -e
 echo "## 📋 Shared Knowledge Base Session"
 echo ""
 
+# Check Shared KB updates
+if [[ -f ".claude/hooks/check-shared-kb-updates.sh" ]]; then
+  bash .claude/hooks/check-shared-kb-updates.sh || true
+  echo ""
+fi
+
 # Show KB statistics
 if [[ -f "tools/kb.py" ]] && command -v python &> /dev/null; then
   echo "### KB Statistics"
