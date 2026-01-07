@@ -113,14 +113,93 @@ uvx sku publish project analytics-dashboard \
 ### Update
 
 ```bash
-# Check for updates
+# Check for updates to installed artifacts
 uvx sku check-updates
+
+# Check specific artifact type
+uvx sku check-updates --type mcp
+
+# Check specific artifact
+uvx sku check-updates --type mcp --artifact youtube-comments-mcp
+
+# Update all (smart: patches auto, minor/major prompt)
+uvx sku update --all
 
 # Update specific artifact
 uvx sku update agent code-review
+uvx sku update mcp mcp-youtube/youtube-comments-mcp
 
-# Update all installed artifacts
-uvx sku update --all
+# Update all without prompting (use with caution!)
+uvx sku update --all --no-prompt
+
+# Disable patch auto-updates
+uvx sku update --all --no-auto-patch
+```
+
+**Update Policy:**
+
+| Type | Example | Behavior |
+|------|---------|----------|
+| **Patch** | `1.0.0` → `1.0.1` | ✅ Auto-update (bug fixes) |
+| **Minor** | `1.0.0` → `1.1.0` | 🔍 Prompt (new features) |
+| **Major** | `1.0.0` → `2.0.0` | ⚠️ Warn + Prompt (breaking changes) |
+
+**Automatic Update Checks:**
+
+SKU automatically checks for updates at Claude Code session start (via SessionStart hook):
+
+```json
+// .claude/settings.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python $CLAUDE_PROJECT_DIR/.claude/hooks/check-artifact-updates.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+When updates are available, you'll see:
+
+```
+======================================================================
+📦 SKU ARTIFACT UPDATES AVAILABLE
+======================================================================
+
+Updates Available (3)
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┓
+┃ Artifact                   ┃ Current  ┃ Latest   ┃ Type   ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━┩
+│ mcp/youtube-comments-mcp    │ 1.0.0    │ 1.1.0    │ ⊙ minor│
+│ skill/testing               │ 2.0.0    │ 2.0.1    │ ✓ patch│
+│ agent/code-review           │ 1.2.0    │ 2.0.0    │ ⚠ major│
+└─────────────────────────────┴──────────┴──────────┴────────┘
+
+Quick commands:
+  uvx sku update --all    - Update all (patches auto)
+======================================================================
+```
+
+**Configuration:**
+
+```bash
+# Auto-update policy (default: smart)
+export SKU_AUTO_UPDATE_PATCH="true"   # auto-update patches
+export SKU_AUTO_UPDATE_PATCH="false"  # prompt for patches
+
+# Check interval (default: 24 hours)
+export SKU_CHECK_INTERVAL_HOURS="24"
+
+# Disable automatic checks
+export SKU_AUTO_CHECK="false"
 ```
 
 ### Uninstall

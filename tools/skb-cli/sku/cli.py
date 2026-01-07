@@ -16,7 +16,8 @@ from sync import SyncManager
 from install import InstallManager
 from publish import PublishManager
 from auth import AuthManager
-from utils import console, error, success, warning
+from update import UpdateManager
+from utils import console, error, success, warning, info
 
 @click.group()
 @click.version_option(version="1.0.0")
@@ -266,30 +267,162 @@ def publish(path, artifact_type, version, name, tags, description):
         sys.exit(1)
 
 @cli.command()
-@click.option('--type', help='Update specific type')
-@click.option('--artifact', 'artifact_id', help='Update specific artifact')
-@click.option('--all', 'update_all', is_flag=True, help='Update all installed')
-def update(type, artifact_id, update_all):
-    """Update installed artifacts"""
-    # TODO: Implement update logic
+@click.option('--type', 'artifact_type', help='Update specific artifact type')
+@click.option('--artifact', 'artifact_id', help='Update specific artifact ID')
+@click.option('--all', 'update_all', is_flag=True, help='Update all installed artifacts')
+@click.option('--auto-patch', is_flag=True, default=True, help='Auto-update patch versions (default: True)')
+@click.option('--no-prompt', is_flag=True, help='Update without prompting (use with caution)')
+def update(artifact_type, artifact_id, update_all, auto_patch, no_prompt):
+    """Update installed artifacts to latest versions"""
+    update_mgr = UpdateManager(
+        catalog_path=Path.home() / ".sku" / "catalog",
+        state_path=Path.home() / ".sku"
+    )
+
     if update_all:
-        console.print("[dim]Checking for updates...[/dim]")
-        # Check all installed artifacts
-        # Update if newer version available
-    elif type and artifact_id:
-        console.print(f"[dim]Updating {type}/{artifact_id}...[/dim]")
+        # Update all artifacts
+        console.print("[dim]Checking for updates to all installed artifacts...[/dim]\n")
+        result = update_mgr.update_all(auto_patch=auto_patch)
+
+        # Show results
+        if result['updated']:
+            success(f"\n✓ Updated {len(result['updated'])} artifacts")
+            for artifact in result['updated']:
+                console.print(f"  • {artifact}")
+
+        if result['skipped']:
+            info(f"\n⊘ Skipped {len(result['skipped'])} artifacts")
+            for artifact in result['skipped']:
+                console.print(f"  • {artifact}")
+
+        if result['failed']:
+            error(f"\n✗ Failed to update {len(result['failed'])} artifacts")
+            for artifact in result['failed']:
+                console.print(f"  • {artifact}")
+
+    elif artifact_type and artifact_id:
         # Update specific artifact
+        console.print(f"[dim]Checking for updates to {artifact_type}/{artifact_id}...[/dim]")
+        success = update_mgr.update(artifact_type, artifact_id, auto_patch=auto_patch)
+
+        if not success:
+            sys.exit(1)
+
     else:
-        console.print("[dim]Checking for updates...[/dim]")
-        # Just check, don't update
+        # Just show what can be updated
+        console.print("[dim]Checking for available updates...[/dim]\n")
+        updates = update_mgr.check_updates()
+
+        if not updates:
+            info("No updates available")
+            return
+
+        # Show available updates
+        from rich.table import Table
+        from rich.console import Console as RichConsole
+        rich_console = RichConsole()
+
+        table = Table(title="Available Updates")
+        table.add_column("Artifact", style="cyan", width=30)
+        table.add_column("Current", style="dim", width=12)
+        table.add_column("Latest", style="green", width=12)
+        table.add_column("Type", style="yellow", width=10)
+
+        for upd in updates:
+            artifact_key = f"{upd['type']}/{upd['id']}"
+            update_type_emoji = {
+                'major': '⚠️ ',
+                'minor': '⊙',
+                'patch': '✓'
+            }.get(upd['update_type'], '')
+
+            table.add_row(
+                artifact_key,
+                upd['local_version'],
+                upd['remote_version'],
+                f"{update_type_emoji} {upd['update_type']}"
+            )
+
+        rich_console.print(table)
+        console.print(f"\nTotal: {len(updates)} updates available")
+        console.print("\n[yellow]Commands:[/yellow]")
+        console.print("  sku update --all           - Update all (patch auto, minor/major prompt)")
+        console.print("  sku update <type> <id>    - Update specific artifact")
+        console.print("  sku update --no-prompt    - Update all without prompting")
 
 @cli.command()
-def check_updates():
+@click.option('--type', 'artifact_type', help='Check specific artifact type')
+@click.option('--artifact', 'artifact_id', help='Check specific artifact')
+@click.option('--remote', is_flag=True, default=True, help='Check remote repository (default: True)')
+def check_updates(artifact_type, artifact_id, remote):
     """Check if updates are available for installed artifacts"""
-    # TODO: Implement check updates logic
-    console.print("[dim]Checking for updates...[/dim]")
-    # Compare installed versions with catalog
-    # Show available updates
+    from rich.table import Table
+    from rich.console import Console as RichConsole
+
+    update_mgr = UpdateManager(
+        catalog_path=Path.home() / ".sku" / "catalog",
+        state_path=Path.home() / ".sku"
+    )
+
+    console.print("[dim]Checking for updates...[/dim]\n")
+
+    updates = update_mgr.check_updates(
+        artifact_type=artifact_type,
+        artifact_id=artifact_id,
+        remote=remote
+    )
+
+    if not updates:
+        success("✓ All artifacts are up to date")
+        return
+
+    # Show updates
+    rich_console = RichConsole()
+
+    table = Table(title=f"Updates Available ({len(updates)})")
+    table.add_column("Artifact", style="cyan", width=35)
+    table.add_column("Current", style="dim", width=12)
+    table.add_column("Latest", style="green", width=12)
+    table.add_column("Type", style="yellow", width=10)
+    table.add_column("Published", style="dim", width=20)
+
+    for upd in updates:
+        artifact_key = f"{upd['type']}/{upd['id']}"
+
+        # Style based on update type
+        update_style = {
+            'major': 'bold red',
+            'minor': 'yellow',
+            'patch': 'green'
+        }.get(upd['update_type'], 'white')
+
+        table.add_row(
+            artifact_key,
+            upd['local_version'],
+            upd['remote_version'],
+            f"[{update_style}]{upd['update_type']}[/{update_style}]",
+            upd.get('published', 'N/A')[:19]
+        )
+
+    rich_console.print(table)
+
+    # Summary
+    console.print(f"\nTotal: {len(updates)} update(s) available")
+
+    majors = sum(1 for u in updates if u['update_type'] == 'major')
+    minors = sum(1 for u in updates if u['update_type'] == 'minor')
+    patches = sum(1 for u in updates if u['update_type'] == 'patch')
+
+    if majors > 0:
+        console.print(f"  ⚠️  {majors} major (may contain breaking changes)")
+    if minors > 0:
+        console.print(f"  ⊙ {minors} minor (new features)")
+    if patches > 0:
+        console.print(f"  ✓ {patches} patch (bug fixes)")
+
+    console.print("\n[yellow]Commands:[/yellow]")
+    console.print("  sku update --all           - Update all (patches auto, minor/major prompt)")
+    console.print("  sku update <type> <id>    - Update specific artifact")
 
 @cli.command()
 def status():
