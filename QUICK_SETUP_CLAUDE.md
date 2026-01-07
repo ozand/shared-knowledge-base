@@ -27,6 +27,8 @@ powershell -ExecutionPolicy Bypass -File C:\temp\shared-kb-setup\scripts\setup-s
 Remove-Item -Recurse -Force C:\temp\shared-kb-setup
 ```
 
+**IMPORTANT:** If PowerShell script shows encoding errors, use manual commands below.
+
 ---
 
 ## ✅ Verify Installation
@@ -38,11 +40,11 @@ git submodule status docs/knowledge-base/shared
 
 # 2. Verify curator/ is NOT loaded
 ls docs/knowledge-base/shared/curator/
-# Expected: "No such file or directory" ✅
+# Expected: "No such file or directory" [OK]
 
 # 3. Verify patterns ARE loaded
 ls docs/knowledge-base/shared/universal/patterns/
-# Expected: List of .yaml files ✅
+# Expected: List of .yaml files [OK]
 
 # 4. Build search index
 python docs/knowledge-base/shared/tools/kb.py index -v
@@ -50,27 +52,27 @@ python docs/knowledge-base/shared/tools/kb.py index -v
 
 # 5. Test search
 python docs/knowledge-base/shared/tools/kb.py search "async"
-# Expected: Search results ✅
+# Expected: Search results [OK]
 ```
 
 ---
 
 ## 📖 What You Get
 
-### ✅ Loaded (Project Agent):
+### [OK] Loaded (Project Agent):
 - **Patterns:** universal/, python/, postgresql/, docker/, javascript/
 - **Documentation:** README.md, AGENT-QUICK-START.md, agent guides
 - **Tools:** tools/kb.py, scripts/
 - **Agent Instructions:** universal/agent-instructions/base-instructions.yaml
 
-### ❌ Excluded (Curator):
+### [X] Excluded (Curator):
 - **Curator docs:** curator/ (entire directory)
 - **Analysis:** *_ANALYSIS.md, *_REPORT.md, CHAT_*.md
 - **Generated:** .agent-config.local, _index*.yaml
 
 ---
 
-## 🎯 Daily Commands
+## 🛠️ Daily Commands
 
 ```bash
 # Update Shared KB
@@ -85,15 +87,84 @@ python docs/knowledge-base/shared/tools/kb.py check-updates
 
 ---
 
+## 🔄 Troubleshooting
+
+### Problem: PowerShell Script Shows Encoding Errors
+
+**Symptoms:**
+- `[X]` or `???` instead of boxes
+- "Missing argument in parameter list" errors
+
+**Solution:** Use manual commands
+
+```powershell
+cd C:\path\to\your\project
+
+# Add submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+
+# Enable sparse checkout
+cd docs/knowledge-base/shared
+git config core.sparsecheckout true
+
+# Create sparse checkout file
+mkdir .git\info
+cat > .git\info\sparse-checkout <<'EOF'
+README.md
+GUIDE.md
+QUICKSTART.md
+universal/
+python/
+postgresql/
+docker/
+javascript/
+tools/
+scripts/
+EOF
+
+# Checkout
+git read-tree -mu HEAD
+cd ..\..\..
+
+# Verify
+python docs\knowledge-base\shared\tools\kb.py index -v
+```
+
+### Problem: SKU CLI Installation Fails
+
+**Symptoms:**
+- `sku: command not found`
+- Encoding errors in installer
+- `pip install sku-cli` fails
+
+**Solution:** Use kb.py directly (no SKU CLI needed!)
+
+```bash
+# kb.py works standalone
+python docs/knowledge-base/shared/tools/kb.py search "keyword"
+
+# Build index
+python docs/knowledge-base/shared/tools/kb.py index -v
+
+# Check stats
+python docs/knowledge-base/shared/tools/kb.py stats
+```
+
+**Note:** SKU CLI is OPTIONAL. kb.py provides all core functionality.
+
+**For Team Members:** If you want to install SKU CLI locally, see [LOCAL-INSTALL-GUIDE.md](LOCAL-INSTALL-GUIDE.md) for instructions.
+
+---
+
 ## ⚠️ Critical Rules
 
-### ✅ Always:
+### [OK] Always:
 ```bash
 git submodule status docs/knowledge-base/shared
 git submodule update --remote docs/knowledge-base/shared
 ```
 
-### ❌ Never:
+### [X] Never:
 ```bash
 git -C docs/knowledge-base/shared fetch  # WRONG
 cd docs/knowledge-base/shared && git pull  # WRONG
@@ -104,11 +175,40 @@ cd docs/knowledge-base/shared && git pull  # WRONG
 ## 📚 Full Documentation
 
 - **Complete Guide:** [SETUP_GUIDE_FOR_CLAUDE.md](SETUP_GUIDE_FOR_CLAUDE.md)
+- **Local Installation (Team):** [LOCAL-INSTALL-GUIDE.md](LOCAL-INSTALL-GUIDE.md)
 - **Agent Quick Start:** [AGENT-QUICK-START.md](docs/knowledge-base/shared/AGENT-QUICK-START.md)
 - **Setup Details:** [QUICKSTART.md](docs/knowledge-base/shared/QUICKSTART.md)
 
 ---
 
-**Done!** 🎉 Shared KB is ready for use in ~5 minutes.
+**Done!** [OK] Shared KB is ready for use in ~5 minutes.
 
 **Need help?** See [SETUP_GUIDE_FOR_CLAUDE.md](SETUP_GUIDE_FOR_CLAUDE.md) for troubleshooting.
+
+---
+
+## Appendix: kb.py Command Reference
+
+```bash
+# Search
+python docs/knowledge-base/shared/tools/kb.py search "async"
+python docs/knowledge-base/shared/tools/kb.py search --category python "websocket"
+
+# Index
+python docs/knowledge-base/shared/tools/kb.py index
+python docs/knowledge-base/shared/tools/kb.py index --force
+
+# Stats
+python docs/knowledge-base/shared/tools/kb.py stats
+
+# Validate
+python docs/knowledge-base/shared/tools/kb.py validate path/to/file.yaml
+
+# Export
+python docs/knowledge-base/shared/tools/kb.py export --format json --output kb.json
+
+# Check updates
+python docs/knowledge-base/shared/tools/kb.py check-updates
+```
+
+**All kb.py commands work without SKU CLI!**

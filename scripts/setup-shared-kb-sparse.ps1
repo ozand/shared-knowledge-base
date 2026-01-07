@@ -7,9 +7,13 @@
 #   cd C:\path\to\your\project
 #   powershell -ExecutionPolicy Bypass -File C:\path\to\shared-knowledge-base\scripts\setup-shared-kb-sparse.ps1
 
+# IMPORTANT: Set UTF-8 encoding immediately
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 $ErrorActionPreference = "Stop"
 
-Write-Host "🔧 Setting up Shared KB with sparse checkout..." -ForegroundColor Cyan
+Write-Host "[*] Setting up Shared KB with sparse checkout..." -ForegroundColor Cyan
 Write-Host ""
 
 # Configuration
@@ -18,7 +22,7 @@ $SHARED_KB_DIR = "docs/knowledge-base/shared"
 
 # Check if already exists
 if (Test-Path "$SHARED_KB_DIR/.git") {
-    Write-Host "⚠️  Shared KB already exists at $SHARED_KB_DIR" -ForegroundColor Yellow
+    Write-Host "[!] Shared KB already exists at $SHARED_KB_DIR" -ForegroundColor Yellow
     Write-Host "   Remove it first if you want to re-setup:"
     Write-Host "   git submodule deinit -f $SHARED_KB_DIR"
     Write-Host "   Remove-Item -Recurse -Force $SHARED_KB_DIR"
@@ -27,18 +31,18 @@ if (Test-Path "$SHARED_KB_DIR/.git") {
 }
 
 # Create parent directory
-Write-Host "📁 Creating directory structure..." -ForegroundColor Green
+Write-Host "[DIR] Creating directory structure..." -ForegroundColor Green
 $parentDir = Split-Path -Parent $SHARED_KB_DIR
 if (-not (Test-Path $parentDir)) {
     New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
 }
 
 # Add submodule
-Write-Host "📦 Adding submodule..." -ForegroundColor Green
+Write-Host "[PKG] Adding submodule..." -ForegroundColor Green
 git submodule add $SHARED_KB_URL $SHARED_KB_DIR
 
 # Enable sparse checkout
-Write-Host "✂️  Enabling sparse checkout..." -ForegroundColor Green
+Write-Host "[CUT] Enabling sparse checkout..." -ForegroundColor Green
 Push-Location $SHARED_KB_DIR
 git config core.sparseCheckout true
 
@@ -49,7 +53,7 @@ if (-not (Test-Path $sparseCheckoutDir)) {
 }
 
 # Create sparse-checkout file
-Write-Host "📝 Creating sparse-checkout configuration..." -ForegroundColor Green
+Write-Host "[DOC] Creating sparse-checkout configuration..." -ForegroundColor Green
 $sparseCheckoutContent = @"
 # Core documentation
 README.md
@@ -84,32 +88,32 @@ scripts/
 Set-Content -Path "$sparseCheckoutDir/sparse-checkout" -Value $sparseCheckoutContent -NoNewline
 
 # Pull only specified content
-Write-Host "⬇️  Pulling only specified content..." -ForegroundColor Green
+Write-Host "[DOWN] Pulling only specified content..." -ForegroundColor Green
 git pull origin main
 
 Pop-Location
 
 # Verify
 Write-Host ""
-Write-Host "✅ Setup complete!" -ForegroundColor Green
+Write-Host "[OK] Setup complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "📊 What's loaded:"
-Write-Host "   ✅ Patterns (universal/, python/, postgresql/, docker/, javascript/)"
-Write-Host "   ✅ Documentation (README.md, GUIDE.md, agent guides)"
-Write-Host "   ✅ Tools (tools/kb.py, scripts/)"
+Write-Host "INFO: What's loaded:"
+Write-Host "   [OK] Patterns (universal/, python/, postgresql/, docker/, javascript/)"
+Write-Host "   [OK] Documentation (README.md, GUIDE.md, agent guides)"
+Write-Host "   [OK] Tools (tools/kb.py, scripts/)"
 Write-Host ""
-Write-Host "🚫 What's EXCLUDED (not loaded):"
-Write-Host "   ❌ curator/ (Curator instructions)"
-Write-Host "   ❌ *_ANALYSIS.md (analysis documents)"
-Write-Host "   ❌ *_REPORT.md (Curator reports)"
-Write-Host "   ❌ CHAT_*.md (chat analysis)"
-Write-Host "   ❌ Generated files (.agent-config.local, _index*.yaml)"
+Write-Host "[NO] What's EXCLUDED (not loaded):"
+Write-Host "   [X] curator/ (Curator instructions)"
+Write-Host "   [X] *_ANALYSIS.md (analysis documents)"
+Write-Host "   [X] *_REPORT.md (Curator reports)"
+Write-Host "   [X] CHAT_*.md (chat analysis)"
+Write-Host "   [X] Generated files (.agent-config.local, _index*.yaml)"
 Write-Host ""
-Write-Host "📁 Location: $SHARED_KB_DIR"
+Write-Host "DIR: Location: $SHARED_KB_DIR"
 Write-Host ""
-Write-Host "💡 To update Shared KB:"
+Write-Host "TIP: To update Shared KB:"
 Write-Host "   git submodule update --remote --merge $SHARED_KB_DIR"
 Write-Host ""
-Write-Host "💡 To check for updates:"
+Write-Host "TIP: To check for updates:"
 Write-Host "   python $SHARED_KB_DIR/tools/kb.py check-updates"
 Write-Host ""
