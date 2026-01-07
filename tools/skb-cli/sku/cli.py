@@ -7,6 +7,7 @@ Main entry point for CLI commands
 import click
 from pathlib import Path
 import sys
+import subprocess
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -17,6 +18,8 @@ from install import InstallManager
 from publish import PublishManager
 from auth import AuthManager
 from update import UpdateManager
+from self_update import SelfUpdateManager
+from init import InitManager
 from utils import console, error, success, warning, info
 
 @click.group()
@@ -463,6 +466,131 @@ def status():
         rich_console.print(table)
     else:
         console.print("\n[dim]No artifacts installed yet[/dim]")
+
+@cli.command()
+@click.option('--path', 'project_path', type=click.Path(exists=True), help='Project directory (default: current)')
+@click.option('--type', 'project_type', help='Project type (typescript|python|go|java|generic)')
+@click.option('--team', help='Team name for access control')
+@click.option('--no-hooks', is_flag=True, help='Skip installing Claude Code hooks')
+def init(project_path, project_type, team, no_hooks):
+    """Initialize new project with Enterprise Knowledge Graph"""
+    init_mgr = InitManager()
+
+    install_hooks = not no_hooks
+
+    success = init_mgr.init(
+        project_path=Path(project_path) if project_path else Path.cwd(),
+        project_type=project_type,
+        team=team,
+        install_hooks=install_hooks
+    )
+
+    if not success:
+        sys.exit(1)
+
+@cli.command()
+@click.option('--auto-patch', is_flag=True, default=True, help='Auto-update patch versions (default: True)')
+def self_update(auto_patch):
+    """Update SKU CLI itself to the latest version"""
+    self_update_mgr = SelfUpdateManager()
+
+    # Check for updates
+    update_info = self_update_mgr.check_update()
+
+    if not update_info:
+        info("SKU CLI is already up to date")
+        return
+
+    # Show update info
+    console.print(f"\n[bold cyan]SKU CLI Update Available[/bold cyan]")
+    console.print(f"  Current: [dim]{update_info['current']}[/dim]")
+    console.print(f"  Latest:  [green]{update_info['remote']}[/green]")
+    console.print(f"  Type:    [yellow]{update_info['update_type']}[/yellow]\n")
+
+    # Perform update
+    success = self_update_mgr.update(auto_patch=auto_patch)
+
+    if not success:
+        sys.exit(1)
+
+@cli.command()
+def doctor():
+    """Check SKU installation and configuration"""
+    from rich.panel import Panel
+    from rich.console import Console as RichConsole
+    from rich.table import Table
+
+    rich_console = RichConsole()
+
+    console.print("\n[bold cyan]SKU Doctor - Checking Installation[/bold cyan]\n")
+
+    issues = []
+
+    # Check uv
+    try:
+        result = subprocess.run(['uv', '--version'], capture_output=True, timeout=5)
+        if result.returncode == 0:
+            version = result.stdout.decode().strip()
+            console.print(f"[green]✓[/green] uv: {version}")
+        else:
+            console.print("[red]✗[/red] uv not found")
+            issues.append("uv not installed")
+    except:
+        console.print("[red]✗[/red] uv not found")
+        issues.append("uv not installed")
+
+    # Check Python
+    try:
+        import sys
+        console.print(f"[green]✓[/green] Python: {sys.version.split()[0]}")
+    except:
+        console.print("[red]✗[/red] Python not found")
+        issues.append("Python not installed")
+
+    # Check .sku directory
+    sku_dir = Path.home() / ".sku"
+    if sku_dir.exists():
+        console.print(f"[green]✓[/green] .sku directory exists")
+
+        # Check catalog
+        catalog_file = sku_dir / "catalog" / "index.yaml"
+        if catalog_file.exists():
+            console.print(f"[green]✓[/green] Catalog downloaded")
+        else:
+            console.print("[yellow]⚠[/yellow] Catalog not downloaded")
+            issues.append("Run: sku sync --index-only")
+    else:
+        console.print("[red]✗[/red] .sku directory not found")
+        issues.append("Run installation script")
+
+    # Check config
+    config_file = sku_dir / "config.yaml"
+    if config_file.exists():
+        console.print(f"[green]✓[/green] Configuration exists")
+    else:
+        console.print("[yellow]⚠[/yellow] Configuration not found")
+        issues.append("Run: sku auth login")
+
+    # Check if in git repo
+    try:
+        result = subprocess.run(['git', 'rev-parse', '--git-dir'], capture_output=True, timeout=5)
+        if result.returncode == 0:
+            console.print(f"[green]✓[/green] Git repository detected")
+        else:
+            console.print("[dim]⊘ Not in a git repository[/dim]")
+    except:
+        console.print("[dim]⊘ Git not found[/dim]")
+
+    # Summary
+    console.print("")
+    if issues:
+        console.print(f"[bold red]Issues found: {len(issues)}[/bold red]")
+        for issue in issues:
+            console.print(f"  • {issue}")
+    else:
+        console.print("[bold green]✓ Everything looks good![/bold green]")
+
+    console.print("")
 
 def main():
     """Main entry point"""
