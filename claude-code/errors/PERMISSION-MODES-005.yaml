@@ -1,0 +1,142 @@
+version: "1.0"
+category: claude-code
+last_updated: "2026-01-08"
+
+errors:
+  - id: "PERMISSION-MODES-005"
+    title: "Claude Code Permission Modes: Complete Guide"
+    severity: "high"
+    scope: claude-code
+    tags:
+      - claude-code
+      - permissions
+      - security
+      - configuration
+
+    problem: |
+      Claude Code needs different permission levels for various use cases.
+      Without understanding permission modes, projects face either too much
+      friction (too many confirmations) or security risks (too little oversight).
+
+    impact: |
+      - **Productivity:** Excessive confirmations slow down work
+      - **Security:** Insufficient oversight risks dangerous operations
+      - **Flexibility:** Can't adapt to different workflow needs
+      - **User Experience:** Poor balance of automation vs control
+
+    solution:
+      code: |
+        # Permission modes in settings.json
+
+        {
+          "permissions": {
+            "mode": "auto"  // allow | ditto | auto | confirm
+          }
+        }
+
+        // Mode behaviors:
+
+        ALLOW - No confirmations
+        ├─ Claude executes all operations immediately
+        ├─ Fastest workflow
+        └─ Use for: Safe projects, experienced users
+
+        DITTO - Smart defaults
+        ├─ Allows if similar operation succeeded before
+        ├─ Blocks if new or different
+        └─ Use for: Balanced workflow
+
+        AUTO - Adaptive (recommended)
+        ├─ Learns from your patterns
+        ├─ Asks for new operations
+        ├─ Remembers decisions
+        └─ Use for: Most projects (default)
+
+        CONFIRM - Always ask
+        ├─ Prompts before every operation
+        ├─ Full control
+        └─ Use for: Critical systems, learning
+
+      explanation: |
+        **Permission Modes Explained:**
+
+        1. **ALLOW (No confirmations)**
+           - Claude executes without asking
+           - Fastest workflow
+           - Best for: Safe operations, trusted environments
+           - Risk: No safety net
+
+        2. **DITTO (Smart defaults)**
+           - Allows if similar operation OK'd before
+           - Blocks if operation is new/different
+           - Best for: Consistent workflows
+           - Balance: Speed + safety for known operations
+
+        3. **AUTO (Adaptive, recommended)**
+           - Learns from your decisions
+           - Asks about new operations
+           - Remembers your preferences
+           - Best for: Most projects (default mode)
+           - Balance: Adaptive to your patterns
+
+        4. **CONFIRM (Always ask)**
+           - Prompts before every operation
+           - Full control and oversight
+           - Best for: Critical systems, learning Claude
+           - Safety: Maximum control
+
+        **Choosing the Right Mode:**
+
+        - Development: AUTO or DITTO
+        - Production: CONFIRM or AUTO
+        - Learning: CONFIRM
+        - Trusted environment: ALLOW
+
+      references:
+        - "docs/research/claude-code/CLAUDE-PERMISSION-MODES-GUIDE.md"
+
+    mode_comparison:
+      - mode: "ALLOW"
+        speed: "Fastest"
+        safety: "Lowest"
+        use_case: "Trusted environments, safe operations"
+
+      - mode: "DITTO"
+        speed: "Fast"
+        safety: "Medium"
+        use_case: "Consistent workflows, repetitive tasks"
+
+      - mode: "AUTO"
+        speed: "Adaptive"
+        safety: "High"
+        use_case: "Most projects (recommended)"
+
+      - mode: "CONFIRM"
+        speed: "Slowest"
+        safety: "Highest"
+        use_case: "Critical systems, learning"
+
+    best_practices:
+      - tip: "Start with AUTO"
+        reason: "Learns your patterns, balanced approach"
+
+      - tip: "Use CONFIRM when learning"
+        reason: "Understand what Claude does"
+
+      - tip: "Switch to ALLOW for trusted operations"
+        reason: "Reduce friction for safe tasks"
+
+      - tip: "Use DITTO for consistent workflows"
+        reason: "Fast for repeated operations"
+
+    security_considerations:
+      - risk: "ALLOW mode in production"
+        mitigation: "Only for well-tested operations"
+
+      - risk: "CONFORM mode slows development"
+        mitigation: "Use only for critical changes"
+
+    metadata:
+      difficulty: beginner
+      frequency: high_impact
+      quality_score: 95/100

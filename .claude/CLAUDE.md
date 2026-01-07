@@ -36,6 +36,26 @@ python tools/kb.py export --format json --output kb.json
 
 **📘 Complete CLI Reference:** `@references/cli-reference.md`
 
+### ⚠️ Shared KB Updates
+
+**CRITICAL:** When updating Shared KB submodule (`.kb/shared/`):
+
+1. **Read:** `@for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md` (strict rules)
+2. **Follow:** `@for-claude-code/KB-UPDATE-QUICK-REFERENCE.md` (quick reference)
+
+**🚨 3 Golden Rules:**
+- ⛔ **NEVER** modify files in `.kb/shared/` (submodule is read-only)
+- ✅ **DATA** is source of truth (if tool breaks → tool has bug)
+- ❓ **When unsure** → ASK, don't fix
+
+**Common mistakes to avoid:**
+- ❌ Don't edit `_domain_index.yaml` to "fix" format
+- ❌ Don't add fields not in v4.0.0 specification
+- ✅ Do check upstream if tool fails
+- ✅ Do report tool bugs to Shared KB repository
+
+**📘 Full instructions:** `@for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md`
+
 ---
 
 ## Architecture

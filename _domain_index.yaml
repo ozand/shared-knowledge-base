@@ -1,13 +1,14 @@
 version: "2.0"
-last_updated: "2026-01-07"
+last_updated: "2026-01-08"
 total_entries: 149
-entries_with_domains: 65
-coverage_percentage: 43.6
+entries_with_domains: 69
+coverage_percentage: 46.3
 
 domains:
   api: 4
   asyncio: 6
   authentication: 6
+  claude-code: 4
   deployment: 4
   docker: 11
   fastapi: 3

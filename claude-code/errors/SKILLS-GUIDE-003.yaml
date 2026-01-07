@@ -1,0 +1,135 @@
+version: "1.0"
+category: claude-code
+last_updated: "2026-01-08"
+
+errors:
+  - id: "SKILLS-GUIDE-003"
+    title: "Claude Code Skills: Complete Design Guide"
+    severity: "medium"
+    scope: claude-code
+    tags:
+      - claude-code
+      - skills
+      - knowledge
+      - automation
+      - reusability
+
+    problem: |
+      Projects need reusable knowledge units for common workflows.
+      Without skills, teams face duplication, inconsistent approaches,
+      and difficulty sharing knowledge across projects.
+
+    impact: |
+      - **Duplication:** Same solutions implemented multiple times
+      - **Inconsistency:** Different approaches for same problems
+      - **Discovery:** Hard to find existing solutions
+      - **Maintenance:** Changes need to be applied in multiple places
+
+    solution:
+      code: |
+        # .claude/skills/my-skill/SKILL.md
+
+        ## What this Skill does
+        Brief description of what the skill accomplishes
+
+        ## Trigger
+        - User mentions specific keywords
+        - Context indicates need for this workflow
+        - Related tools are used
+
+        ## What Claude can do with this Skill
+
+        ### 1. Task Description
+        Step-by-step instructions...
+
+        ### 2. Prerequisites
+        - Required tools
+        - Required context
+        - Required permissions
+
+        ### 3. Examples
+        ```bash
+        # Example usage
+        command with options
+        ```
+
+        ## Resources
+        ### Reference Material
+        - Link to docs
+
+        ### Code Examples
+        - Path to examples/
+
+      explanation: |
+        **Core Concepts:**
+
+        1. **Skills vs Other Tools:**
+           - **Skills:** Reusable procedures ("how to")
+           - **Projects:** Context knowledge ("what to know")
+           - **MCP:** External integrations ("where to find")
+           - **Prompts:** One-time instructions ("do this now")
+
+        2. **Auto-Activation:**
+           - Skills load based on context relevance
+           - No explicit invocation needed
+           - Claude detects need automatically
+
+        3. **Skill Structure:**
+           ```
+           .claude/skills/my-skill/
+           ├── SKILL.md              # Main skill file
+           ├── resources/            # Reference material
+           │   ├── guide.md
+           │   └── examples.md
+           └── examples/             # Code examples
+               └── basic-example.py
+           ```
+
+        4. **Best Practices:**
+           - One skill = one clear purpose
+           - Include concrete examples
+           - Keep descriptions concise
+           - Test skills thoroughly
+           - Document triggers clearly
+
+      references:
+        - "docs/research/claude-code/claude-skills-guide.md"
+        - "claude-code/patterns/skill-design.yaml"
+
+    skill_design_checklist:
+      - name: "Clear Purpose"
+        description: "Single, well-defined responsibility"
+        check: "Can you describe what it does in one sentence?"
+
+      - name: "Relevant Triggers"
+        description: "Document when skill should activate"
+        check: "Are triggers specific but not overly narrow?"
+
+      - name: "Concrete Examples"
+        description: "Include real code examples"
+        check: "Can user copy-paste examples?"
+
+      - name: "Test Coverage"
+        description: "Verify skill works as expected"
+        check: "Did you test the skill end-to-end?"
+
+    anti_patterns:
+      - pattern: "Overly broad skills"
+        problem: "Activate too often, not specific enough"
+        solution: "Split into focused, single-purpose skills"
+
+      - pattern: "No examples"
+        problem: "Hard to understand how to use"
+        solution: "Always include concrete examples"
+
+      - pattern: "Vague triggers"
+        problem: "Activates in wrong contexts"
+        solution: "Be specific about when to use"
+
+    metadata:
+      difficulty: intermediate
+      frequency: high_impact
+      quality_score: 92/100
+      related_patterns:
+        - SKILL-RULES-JSON-001
+        - MODULAR-SKILLS-001

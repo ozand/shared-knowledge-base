@@ -1,0 +1,137 @@
+version: "1.0"
+category: claude-code
+last_updated: "2026-01-08"
+
+errors:
+  - id: "HOOKS-GUIDE-002"
+    title: "Claude Code Hooks: Complete Automation Guide"
+    severity: "high"
+    scope: claude-code
+    tags:
+      - claude-code
+      - hooks
+      - automation
+      - workflow
+      - validation
+
+    problem: |
+      LLM is probabilistic by nature - even when asked to perform actions,
+      Claude may forget or skip steps. Projects need deterministic automation
+      for critical operations.
+
+    impact: |
+      - **Reliability:** Tests may not run, linting may be skipped
+      - **Quality:** No guaranteed validation gates
+      - **Consistency:** Behavior varies across sessions
+      - **Integration:** Difficult to integrate with external tools
+
+    solution:
+      code: |
+        # .claude/settings.json
+
+        {
+          "hooks": [
+            {
+              "name": "run-tests-after-edit",
+              "events": ["PostToolUse"],
+              "matchers": [["tool", "Edit"], ["tool", "Write"]],
+              "command": "npm test",
+              "type": "command"
+            },
+            {
+              "name": "type-check-before-commit",
+              "events": ["PreToolUse"],
+              "matchers": [["tool", "Bash"], ["args", "git", "commit"]],
+              "command": "npx tsc --noEmit",
+              "type": "command"
+            },
+            {
+              "name": "block-dangerous-commands",
+              "events": ["PreToolUse"],
+              "matchers": [["tool", "Bash"], ["args", "rm", "-rf"]],
+              "type": "prompt",
+              "prompt": "BLOCK: Dangerous command detected"
+            }
+          ]
+        }
+
+      explanation: |
+        **Core Concepts:**
+
+        1. **Hooks = Promises, Not Suggestions**
+           - Deterministic execution at specific workflow points
+           - Unlike prompts, hooks are guaranteed to run
+
+        2. **Hook Events:**
+           - **PreToolUse** - Before tool execution (validation, blocking)
+           - **PostToolUse** - After tool execution (formatting, testing)
+           - **SessionStart** - On session start (setup, checks)
+           - **Stop** - On session end (cleanup, logging)
+
+        3. **Matcher Types:**
+           - `["tool", "Edit"]` - Match specific tool
+           - `["tool", "Bash"], ["args", "git", "commit"]` - Match git commits
+           - Complex boolean logic supported
+
+        4. **Hook Types:**
+           - **command** - Execute shell command
+           - **prompt** - Ask LLM for decision
+           - **output** - Modify tool output
+
+        5. **Best Practices:**
+           - Keep hooks fast (<5 seconds)
+           - Use for validation, not complex logic
+           - Test hooks thoroughly
+           - Document hook behavior
+
+      references:
+        - "docs/research/claude-code/claude-hooks-guide.md"
+        - "claude-code/patterns/claude-code-hooks.yaml"
+
+    use_cases:
+      - name: "Automatic Testing"
+        description: "Run tests after every code edit"
+        event: "PostToolUse"
+        matcher: [["tool", "Edit"], ["tool", "Write"]]
+
+      - name: "Type Checking"
+        description: "Validate types before git commit"
+        event: "PreToolUse"
+        matcher: [["tool", "Bash"], ["args", "git", "commit"]]
+
+      - name: "Code Formatting"
+        description: "Auto-format code after edit"
+        event: "PostToolUse"
+        matcher: [["tool", "Edit"]]
+
+      - name: "Security Blocking"
+        description: "Block dangerous commands"
+        event: "PreToolUse"
+        matcher: [["tool", "Bash"], ["args", "rm", "-rf", "/"]]
+
+    anti_patterns:
+      - pattern: "Slow hooks (>5 sec)"
+        problem: "Blocks workflow, frustrates users"
+        solution: "Use background jobs, caching"
+
+      - pattern: "Complex decision logic in command hooks"
+        problem: "Hard to debug, limited expressiveness"
+        solution: "Use prompt-based hooks for complex logic"
+
+      - pattern: "Blocking without clear error messages"
+        problem: "Users don't know why operation failed"
+        solution: "Always provide clear BLOCK reasons"
+
+    verification_steps: |
+      1. Test hook triggers at expected events
+      2. Verify matchers work correctly
+      3. Measure hook execution time
+      4. Test error handling
+      5. Document hook behavior in CLAUDE.md
+
+    metadata:
+      difficulty: intermediate
+      frequency: high_impact
+      quality_score: 90/100
+      related_patterns:
+        - HOOK-PATTERNS-001

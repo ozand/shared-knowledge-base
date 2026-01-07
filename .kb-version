@@ -3,10 +3,10 @@
 # This file tracks the current version of Shared KB.
 # Used for version comparison and update notifications.
 
-version: 4.0
-commit: "v4.0.0"
-commit_date: "2026-01-07"
-commit_message: "Major release: Complete v3.1 implementation + structure optimization"
+version: 4.0.1
+commit: "v4.0.1"
+commit_date: "2026-01-08"
+commit_message: "Hotfix: kb_domains.py compatibility + agent instructions"
 
 statistics:
   total_commits: 100+

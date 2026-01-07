@@ -1,0 +1,125 @@
+version: "1.0"
+category: claude-code
+last_updated: "2026-01-08"
+
+errors:
+  - id: "AGENTS-GUIDE-004"
+    title: "Claude Code Agents: Complete Design Guide"
+    severity: "medium"
+    scope: claude-code
+    tags:
+      - claude-code
+      - agents
+      - specialization
+      - task-delegation
+
+    problem: |
+      Complex projects need specialized agents for different tasks.
+      Without proper agent design, teams face unclear responsibilities,
+      poor handoffs, and difficulty scaling.
+
+    impact: |
+      - **Clarity:** Unclear which agent handles what
+      - **Efficiency:** Generic agents less effective
+      - **Scalability:** Difficult to coordinate multiple agents
+      - **Quality:** Tasks not matched to agent strengths
+
+    solution:
+      code: |
+        # .claude/agents/my-specialist.md
+
+        # My Specialist Agent
+
+        Expert agent for specific domain with deep knowledge
+        and specialized tools.
+
+        ## When to Use This Agent
+
+        **Call this agent when:**
+        - User mentions specific domain keywords
+        - Need specialized knowledge
+        - Task requires domain expertise
+
+        **Trigger patterns:**
+        - "design [domain] system"
+        - "troubleshoot [domain] issue"
+        - "review [domain] code"
+
+        ## What This Agent Can Do
+
+        ### 1. Specialized Task
+        Description of specialized capability
+
+        ### 2. Domain Analysis
+        - Specific analysis methods
+        - Domain-specific tools
+
+        ### 3. Best Practices
+        - Domain conventions
+        - Industry standards
+
+      explanation: |
+        **Core Concepts:**
+
+        1. **Agent Specialization:**
+           - Each agent has clear domain expertise
+           - Specific triggers for activation
+           - Focused capabilities
+
+        2. **Agent Types:**
+           - **Domain Experts** (Backend, Frontend, Database)
+           - **Task Specialists** (Code Review, Security, Performance)
+           - **Workflow Agents** (Testing, Deployment, Documentation)
+
+        3. **Agent Handoffs:**
+           - Clear handoff criteria
+           - Context preservation
+           - Seamless collaboration
+
+        4. **Best Practices:**
+           - One clear specialty per agent
+           - Document trigger patterns
+           - Define handoff criteria
+           - Test agent coordination
+
+      references:
+        - "docs/research/claude-code/claude-agents-guide.md"
+        - "claude-code/agent-instructions/claude-code-expert.yaml"
+
+    agent_types:
+      - name: "Backend Engineer"
+        triggers: ["API", "database", "server"]
+        capabilities: ["API design", "database optimization", "server logic"]
+
+      - name: "Frontend Engineer"
+        triggers: ["UI", "component", "styling"]
+        capabilities: ["component design", "state management", "UX"]
+
+      - name: "Code Reviewer"
+        triggers: ["review", "audit", "quality"]
+        capabilities: ["code analysis", "best practices", "security"]
+
+    handoff_criteria:
+      - trigger: "Domain change detected"
+        action: "Delegate to domain specialist"
+      - trigger: "Security review needed"
+        action: "Handoff to security agent"
+      - trigger: "Performance optimization"
+        action: "Engage performance specialist"
+
+    anti_patterns:
+      - pattern: "Overly general agents"
+        problem: "No clear specialty, difficult to use"
+        solution: "Focus on specific domain or task"
+
+      - pattern: "Unclear handoff criteria"
+        problem: "Agents don't know when to collaborate"
+        solution: "Document clear handoff triggers"
+
+    metadata:
+      difficulty: advanced
+      frequency: medium_impact
+      quality_score: 88/100
+      related_patterns:
+        - SPECIALIZED-AGENTS-001
+        - AGENT-HANDOFF-001

@@ -1,0 +1,125 @@
+version: "1.0"
+category: claude-code
+last_updated: "2026-01-08"
+
+errors:
+  - id: "CLAUDE-MD-001"
+    title: "CLAUDE.md Project Memory Guide"
+    severity: "medium"
+    scope: claude-code
+    tags:
+      - claude-code
+      - project-memory
+      - configuration
+      - best-practices
+      - token-optimization
+
+    problem: |
+      Claude Code projects need persistent project memory to avoid
+      re-explaining context in every session. Without proper CLAUDE.md
+      organization, projects face:
+
+      - Token waste from re-explanation
+      - Inconsistent behavior across sessions
+      - Poor discoverability of project-specific knowledge
+      - Difficulty maintaining context as project grows
+      - No clear hierarchy for enterprise/team/project levels
+
+    impact: |
+      - **Efficiency:** Every session wastes tokens on basic context
+      - **Consistency:** Claude forgets project-specific conventions
+      - **Scalability:** Large projects become unmanageable
+      - **Collaboration:** Team members can't share knowledge effectively
+
+    solution:
+      code: |
+        # CLAUDE.md Structure (Keep lean ~300 lines)
+
+        ## Project Overview
+        - **Name:** Project Name
+        - **Type:** Web App / CLI / Library
+        - **Tech Stack:** Python, FastAPI, PostgreSQL
+        - **Quick Start:** `npm install && npm start`
+
+        ## Architecture
+        ### Directory Structure
+        ```
+        src/
+        ├── api/          # API endpoints
+        ├── core/         # Business logic
+        └── db/           # Database models
+        ```
+
+        ### Key Files
+        - `src/main.py` - Entry point
+        - `src/config.py` - Configuration
+
+        ## Conventions
+        - **Naming:** snake_case for functions
+        - **Testing:** pytest with `tests/test_*.py`
+        - **Commits:** Conventional commits
+
+        ## Progressive Disclosure
+        📘 Complete Guide: `@docs/PROJECT-GUIDE.md`
+        📘 API Docs: `@docs/api/README.md`
+
+      explanation: |
+        **Core Principles:**
+
+        1. **Keep CLAUDE.md Lean** (~300 lines max)
+           - Navigation and quick reference only
+           - Progressive disclosure for deep dives
+           - Single source of truth
+
+        2. **Hierarchy Priority** (bottom to top):
+           ```
+           Enterprise: /etc/claude-code/CLAUDE.md
+           Team:      ~/.claude/CLAUDE.md
+           Project:   ./CLAUDE.md (overrides above)
+           ```
+
+        3. **Progressive Disclosure Pattern:**
+           - CLAUDE.md = Quick reference
+           - Link to detailed docs with `@filename.md`
+           - Load details on-demand only
+
+        4. **WHAT, WHY, HOW Framework:**
+           - WHAT: Quick overview
+           - WHY: Rationale for decisions
+           - HOW: Implementation details
+
+        5. **Anti-Patterns to Avoid:**
+           - ❌ Monolithic 1000+ line CLAUDE.md
+           - ❌ Duplicating info in multiple files
+           - ❌ Including outdated information
+           - ❌ No clear hierarchy
+
+      references:
+        - "docs/research/claude-code/CLAUDE-CLAUDE-MD-GUIDE.md"
+        - "universal/patterns/progressive-disclosure.yaml"
+        - "claude-code/patterns/claude-code-files-organization-001.yaml"
+
+    verification_steps: |
+      1. Check CLAUDE.md line count (should be < 300 lines)
+      2. Verify progressive disclosure links work
+      3. Test hierarchy (enterprise/team/project)
+      4. Measure token usage before/after
+      5. Confirm all info is up-to-date
+
+    examples:
+      - name: "Well-organized CLAUDE.md"
+        description: "Lean, progressive disclosure pattern"
+        reference: ".claude/CLAUDE.md (this project)"
+
+      - name: "Monolithic anti-pattern"
+        description: "1000+ lines, no progressive disclosure"
+        anti_pattern: true
+
+    metadata:
+      difficulty: intermediate
+      frequency: high_impact
+      token_savings: ~30-50% per session
+      quality_score: 95/100
+      related_patterns:
+        - PROGRESSIVE-DISCLOSURE-001
+        - claude-code-files-organization-001

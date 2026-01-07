@@ -39,7 +39,7 @@ Found: 45 YAML files
 ```
 Parsing entries...
   ✓ python/errors/imports.yaml (3 entries)
-  ✓ universal/patterns/claude-code-hooks.yaml (1 entry)
+  ✓ claude-code/patterns/claude-code-hooks.yaml (1 entry)
   ... (43 more files)
 Total: 127 entries
 ```

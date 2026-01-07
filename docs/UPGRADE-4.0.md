@@ -372,6 +372,45 @@ ls tools/kb_submit.py
 
 ---
 
+## 🤖 For Agents: Critical Instructions
+
+### ⚠️ READ THIS BEFORE UPDATING
+
+**If you are an AI agent updating Shared KB:**
+
+1. **READ FIRST:**
+   - `for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md` (full instructions)
+   - `for-claude-code/KB-UPDATE-QUICK-REFERENCE.md` (quick reference)
+
+2. **3 GOLDEN RULES:**
+   - ⛔ **NEVER** modify files in `.kb/shared/` (submodule is READ-ONLY)
+   - ✅ **DATA** is source of truth (if tool breaks → tool has bug)
+   - ❓ **When unsure** → ASK, don't fix
+
+3. **COMMON MISTAKES TO AVOID:**
+   - ❌ Don't edit `_domain_index.yaml` to "fix" format
+   - ❌ Don't add fields not in v4.0.0 specification
+   - ❌ Don't modify tool code in `.kb/shared/tools/`
+   - ✅ Do check upstream if tool fails
+   - ✅ Do report tool bugs to Shared KB repository
+
+4. **IF TOOL FAILS:**
+   ```
+   Check: T:\Code\shared-knowledge-base\_domain_index.yaml
+   Compare: Is format the same?
+
+   If YES → Tool has bug, report it
+   If NO → Incomplete update, retry checkout
+   ```
+
+**Example from real case (tmp/tmp1.txt):**
+- ❌ Agent: "Error in _domain_index.yaml format" → Edited file
+- ✅ Correct: "Error in kb_domains.py line 415" → Tool incompatible with data
+
+**Full documentation:** `@for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md`
+
+---
+
 ## 🎓 Next Steps
 
 ### Learn Progressive Loading

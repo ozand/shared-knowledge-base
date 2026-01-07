@@ -5,6 +5,95 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-01-08
+
+### Fixed
+
+#### kb_domains.py Compatibility Issue
+- **Fixed:** TypeError in `kb_domains.py list` when processing flat domain format
+- **Root cause:** Tool expected nested dict format, but v4.0.0 uses flat int format
+- **Solution:** Added support for both flat (int) and nested (dict) formats
+- **Impact:** `kb_domains.py list` now works correctly with v4.0.0 `_domain_index.yaml`
+- **Lines changed:** tools/kb_domains.py:415-437
+
+#### Agent Instructions Documentation
+- **Added:** `for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md` (600+ lines)
+  - Complete instructions for agents updating Shared KB
+  - 3 Golden Rules: NEVER modify .kb/shared/, DATA is truth, ASK when unsure
+  - Decision matrix, troubleshooting guide, examples
+- **Added:** `for-claude-code/KB-UPDATE-QUICK-REFERENCE.md` (200+ lines)
+  - Quick reference card for agents
+  - 5 tests, Yes/NO decision tree, 30-second diagnosis
+- **Added:** `docs/validation/DOMAIN-INDEX-SCHEMA.md` (300+ lines)
+  - Official v4.0.0 format specification
+  - Validation rules, common bugs, migration notes
+- **Added:** `docs/analysis/PROJECT-UPDATE-ISSUES.md`
+  - Analysis of real-world issue from tmp/tmp1.txt
+  - What went wrong and how to prevent it
+- **Added:** `tests/test_domain_index_validation.py`
+  - Comprehensive test suite for domain index validation
+  - Tests for flat format, tool compatibility, common mistakes
+
+#### Documentation Updates
+- **Updated:** `.claude/CLAUDE.md`
+  - Added Shared KB Updates section with critical rules
+  - Links to agent instructions and quick reference
+- **Updated:** `docs/UPGRADE-4.0.md`
+  - Added "For Agents: Critical Instructions" section
+  - Real-world example of common mistake
+  - Diagnostic flowchart
+
+### Changed
+
+- **Improved:** `kb_domains.py` now handles backward compatibility
+- **Enhanced:** Agent behavior guidance with strict constraints
+- **Clarified:** v4.0.0 domain index format specification
+
+### Improved
+
+- **Agent safety:** Clear rules prevent incorrect modifications to Shared KB
+- **Update reliability:** Agents now follow strict update procedures
+- **Error diagnosis:** Better distinction between tool bugs vs data issues
+- **Future conflict prevention:** Agents know NEVER to modify submodule files
+
+### Testing
+
+- **New tests:** 15 test cases for domain index validation
+- **Test coverage:** Domain format, tool compatibility, common mistakes
+- **Validation:** All tests pass with v4.0.0 flat format
+
+### Documentation
+
+- **Implementation:** `docs/analysis/AGENT-INSTRUCTIONS-IMPLEMENTATION-PLAN.md`
+- **Migration reports:** `docs/analysis/MIGRATION-COMPLETE-REPORT.md`
+- **Validation:** `docs/validation/DOMAIN-INDEX-SCHEMA.md`
+
+### Security
+
+- **No security issues:** This release only contains bug fixes and documentation
+
+### Migration
+
+**From v4.0.0 to v4.0.1:**
+
+**Recommended:** Upgrade immediately (bug fix)
+
+**Steps:**
+1. Fetch latest: `git fetch origin`
+2. Checkout v4.0.1: `git checkout v4.0.1`
+3. Update submodule: `git submodule update --remote .kb/shared`
+4. Test: `python tools/kb_domains.py list` (should work now)
+
+**Rollback:** Fully backward compatible - can revert to v4.0.0 if needed
+
+### Contributors
+
+- **Implementation:** Claude Code Agent (Sonnet 4.5)
+- **Issue analysis:** Based on real-world issue from project chat log
+- **Documentation:** Comprehensive agent instructions and validation
+
+---
+
 ## [4.0.0] - 2026-01-07
 
 ### Major Release - Complete v3.1 Implementation + Structure Optimization

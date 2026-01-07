@@ -412,10 +412,28 @@ class DomainManager:
         print(f"   Total tokens: ~{index.get('total_tokens_estimate', 0)}")
         print()
 
-        for domain_name, data in sorted(index.get('domains', {}).items(), key=lambda x: x[1]['entries'], reverse=True):
-            print(f"  {domain_name:20} {data['entries']:3} entries, ~{data['token_estimate']:4} tokens")
-            if data['tags']:
-                print(f"  {'':20} Tags: {', '.join(data['tags'][:5])}")
+        for domain_name, data in sorted(index.get('domains', {}).items(),
+                                       key=lambda x: x[1] if isinstance(x[1], int) else x[1].get('entries', 0),
+                                       reverse=True):
+            # Support both flat format (int) and nested format (dict) for compatibility
+            if isinstance(data, int):
+                # Flat format (v4.0.0 standard)
+                entry_count = data
+                token_count = 0  # Not available in flat format
+                tags = []
+            else:
+                # Nested format (future compatibility)
+                entry_count = data.get('entries', 0)
+                token_count = data.get('token_estimate', 0)
+                tags = data.get('tags', [])
+
+            print(f"  {domain_name:20} {entry_count:3} entries", end='')
+            if token_count > 0:
+                print(f", ~{token_count:4} tokens", end='')
+            print()
+
+            if tags:
+                print(f"  {'':20} Tags: {', '.join(tags[:5])}")
             print()
 
     def load_domain(self, domain_name: str):
