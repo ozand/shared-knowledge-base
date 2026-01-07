@@ -1493,3 +1493,22 @@ Invest в setup сейчас = экономия времени + улучшен�
 **Дата:** 2025-01-06  
 **Автор:** AI Research  
 **Статус:** Production-ready
+
+---
+
+## Related Guides
+
+### CLAUDE.md System
+- [CLAUDE.md Guide](CLAUDE-CLAUDE-MD-GUIDE.md) - Complete project memory guide (English)
+- [Complete Practices](CLAUDE-COMPLETE-PRACTICES.md) - All practices overview (Russian)
+
+### Features
+- [Permission Modes](CLAUDE-PERMISSION-MODES-GUIDE.md) - Detailed modes guide (Russian)
+- [Hooks Guide](claude-hooks-guide.md) - Automation patterns
+- [Skills Guide](claude-skills-guide.md) - Custom capabilities
+- [Agents Guide](claude-agents-guide.md) - Agent system
+
+### Integration
+- [@ Referencing](CLAUDE-REFERENCING-CONTEXT-GUIDE.md) - Context management (Russian)
+- [Projects](CLAUDE-PROJECTS-COLLABORATION-GUIDE.md) - Team workflows (Russian)
+

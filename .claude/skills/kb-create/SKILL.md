@@ -1,3 +1,11 @@
+---
+name: "kb-create"
+description: "Create new knowledge base entries from scratch following Shared KB standards. Validates, categorizes, and ensures quality before adding to repository"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["create", "new-entry", "document", "yaml"]
+---
+
 # Skill: KB Create
 
 ## What this Skill does

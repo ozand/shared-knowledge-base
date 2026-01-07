@@ -1,3 +1,11 @@
+---
+name: "audit-quality"
+description: "Perform comprehensive quality audit on knowledge base entries. Analyzes completeness, accuracy, documentation quality, and adherence to best practices"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["audit", "quality", "review", "analyze"]
+---
+
 # Skill: Audit Quality
 
 ## What this Skill does

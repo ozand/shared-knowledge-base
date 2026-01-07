@@ -1,202 +1,175 @@
 # KB Create
 
-Create new knowledge base entries from scratch following Shared KB standards.
+Create new knowledge base entries following Shared KB standards.
 
 ## Usage
 ```
 /kb-create [options]
 ```
 
-## Examples
+## Quick Examples
 
 ### Interactive Creation
 ```
 /kb-create
 ```
-Prompts for all required fields interactively
+Guides through all required fields.
 
-### Create with Pre-filled Template
+### Quick Entry
 ```
-/kb-create --scope python --category testing
+/kb-create --scope python --category async --title "Timeout in await"
 ```
-Generates template with Python testing defaults
+Generates template with pre-filled fields.
 
-### Create from Error Message
+### From Error Message
 ```
 /kb-create --error "TypeError: 'NoneType' object is not subscriptable"
 ```
-Creates entry from error message
+Creates entry from error message.
 
-## What happens
+## What This Command Does
 
-### Step 1: Check for Duplicates
+1. **Checks for duplicates** using KB search
+2. **Generates YAML template** with proper structure
+3. **Validates entry** (quality score ≥75/100)
+4. **Initializes metadata** if needed
+5. **Suggests location** based on scope
+
+**📘 YAML Standards:** `@standards/yaml-standards.md` - Complete format requirements
+
+## Options
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--scope <scope>` | Set scope | `--scope python` |
+| `--category <cat>` | Set category | `--category async` |
+| `--title <title>` | Set entry title | `--title "Timeout error"` |
+| `--error <msg>` | Parse error message | `--error "TypeError"` |
+| `--severity <sev>` | Set severity | `--severity high` |
+
+## Workflow
+
+### Step 1: Check Duplicates
 ```bash
-python tools/kb.py search "<keywords from title>"
+python tools/kb.py search "<keywords>"
 ```
-Ensures entry doesn't already exist
+If exists → update existing entry
 
-### Step 2: Generate Template
+### Step 2: Create Entry
+Generate YAML with required fields:
+- ID (auto-generated: CATEGORY-NNN)
+- Title
+- Severity
+- Scope
+- Problem
+- Solution
+
+### Step 3: Validate
+```bash
+python tools/kb.py validate <entry>.yaml
+```
+Requires quality score ≥75/100
+
+### Step 4: Determine Scope
+**Universal scopes** (shared repo):
+- docker, universal, python, postgresql, javascript
+
+**Project-specific** (local only):
+- framework, domain, project
+
+### Step 5: Save & Index
+- Save to appropriate location
+- Rebuild index: `python tools/kb.py index -v`
+
+## Entry Template
+
+**Minimal required:**
 ```yaml
 version: "1.0"
 category: "<category>"
 last_updated: "2026-01-07"
 
 errors:
-  - id: "CATEGORY-NNN"  # Auto-generated
+  - id: "CATEGORY-NNN"
     title: "<Title>"
     severity: "high"
     scope: "python"
-
-    problem: |
-      <Describe the issue>
-
-    symptoms:
-      - "<Error message or symptom>"
-
-    root_cause: |
-      <Explain why this happens>
-
-    solution:
+    problem: |  # Required
+      What went wrong
+    solution:   # Required
       code: |
-        # Working solution
-        pass
-
+        # Solution
       explanation: |
-        <How the solution works>
-
-    prevention:
-      - "<How to avoid this error>"
-
-    tags: ["<tag1>", "<tag2>"]
+        How it works
 ```
 
-### Step 3: Validate Entry
-```bash
-python tools/kb.py validate <new-entry>.yaml
+**📘 Complete Standards:** `@standards/yaml-standards.md` - All fields, ID format, quality requirements
+
+## Quality Checklist
+
+Before saving:
+- [ ] ID format correct (CATEGORY-NNN)
+- [ ] All required fields present
+- [ ] Code examples tested
+- [ ] Quality score ≥75/100
+- [ ] Scope correctly identified
+- [ ] No duplicate IDs
+
+## Claude's Role
+
+When using this command:
+
+1. **Ask for entry details** (title, scope, problem)
+2. **Check for duplicates** in KB
+3. **Generate YAML template**
+4. **Help write content** (problem, solution, code)
+5. **Validate entry** using `kb.py validate`
+6. **Determine scope** (universal vs local)
+7. **Suggest next steps** (save location, index rebuild)
+
+## Output
+
+**Success:**
 ```
-Ensures quality score ≥75/100
-
-### Step 4: Initialize Metadata
-```bash
-python tools/kb.py init-metadata <new-entry>.yaml
-```
-Creates _meta.yaml file
-
-### Step 5: Update Index
-```bash
-python tools/kb.py index
-```
-Rebuilds search index
-
-## Options
-
-- `--scope <scope>` - Set scope (universal, python, javascript, docker, postgresql, framework)
-- `--category <name>` - Set category name
-- `--error <message>` - Create entry from error message
-- `--template` - Generate template only
-- `--next-id` - Show next available ID for scope
-
-## Creation Checklist
-
-### Before Creating
-- [ ] Search for duplicates
-- [ ] Determine correct scope
-- [ ] Verify solution is unique
-- [ ] Check it's not project-specific only
-
-### While Creating
-- [ ] Use YAML format exactly
-- [ ] Include all required fields
-- [ ] Provide working code examples
-- [ ] Add prevention strategies
-- [ ] Include relevant tags
-
-### After Creating
-- [ ] Validate (score ≥75/100)
-- [ ] Initialize metadata
-- [ ] Rebuild index
-- [ ] Add cross-references
-- [ ] Commit to git
-
-## Scope Decision Tree
-
-```
-Is this error/pattern...
-├─ Universal across languages? → universal/
-├─ Specific to one language? → <language>/
-├─ Framework-specific? → framework/<name>/
-├─ Domain/business logic? → domain/
-└─ Project-specific only? → project/ (DON'T push to shared KB)
+✅ Entry created: python/errors/async-timeout.yaml
+📝 Location: python/errors/
+📊 Quality score: 82/100
+✅ Validation passed
+🔄 Next: Rebuild index with /kb-index
 ```
 
-## What NOT to Add
-
-❌ Project-specific errors (use local KB)
-❌ One-time occurrences
-❌ Incomplete solutions
-❌ Theoretical problems (never occurred)
-❌ Proprietary information
-
-## Tips
-
-- **Search first** - Always check for duplicates
-- **Be specific** - Clear problem descriptions
-- **Test solutions** - Verify code works
-- **Add context** - Real-world scenarios help
-- **Think prevention** - How to avoid this error?
-
-## Output Format
+**Duplicate found:**
 ```
-📝 Creating new KB entry...
-
-Step 1: Checking for duplicates...
-  ✓ No duplicates found for "async timeout"
-
-Step 2: Determining scope...
-  ✓ Scope: python (language-specific)
-
-Step 3: Generating ID...
-  ✓ Next ID: PYTHON-046
-
-Step 4: Creating template...
-  ✓ Created: python/errors/async-timeout.yaml
-
-Step 5: Validating...
-  ⚠️  Score: 72/100 (below 75)
-  💡 Add prevention strategies to improve
-
-Step 6: Next steps...
-  1. Edit: python/errors/async-timeout.yaml
-  2. Improve content (target: 75+ score)
-  3. Validate: /kb-validate python/errors/async-timeout.yaml
-  4. Metadata: python tools/kb.py init-metadata python/errors/async-timeout.yaml
-  5. Index: /kb-index
+⚠️  Similar entry exists: python/errors/async-timeout.yaml
+💡 Update existing entry instead?
 ```
 
-## Related Commands
-- `/kb-search` - Find duplicates before creating
-- `/kb-validate` - Validate entry quality
-- `/kb-index` - Update index after creation
+## Common Patterns
 
-## Troubleshooting
+### Async Error Entry
+```
+/kb-create --scope python --category async \
+  --title "Coroutine hangs indefinitely"
+```
+Generates async-focused template
 
-**Duplicate found?**
-- Review existing entry
-- Consider merging instead
-- Or add cross-reference
+### Docker Error Entry
+```
+/kb-create --scope docker --category permissions \
+  --error "Permission denied"
+```
+Generates permission error template
 
-**Wrong scope?**
-- Use scope decision tree
-- When in doubt, choose more specific
-- Can promote to universal later
+### Universal Pattern
+```
+/kb-create --scope universal --category patterns \
+  --title "Progressive Disclosure"
+```
+Generates pattern entry template
 
-**Score < 75?**
-- Add missing fields
-- Improve documentation
-- Add more examples
-- Include prevention strategies
+## Related
 
-## See Also
-- Skill: `kb-create` - Full creation documentation
-- Entry Format: `@universal/patterns/shared-kb-yaml-format.yaml`
-- Quality Standards: `@curator/QUALITY_STANDARDS.md`
+- `@skills/kb-create/SKILL.md` - KB create skill
+- `@standards/yaml-standards.md` - YAML format requirements
+- `@standards/quality-gates.md` - Quality requirements (75/100 min)
+- `@references/workflows.md` - Complete creation workflow

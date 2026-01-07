@@ -1,3 +1,11 @@
+---
+name: "kb-search"
+description: "Search the Shared Knowledge Base for error solutions, patterns, and best practices across multiple languages and frameworks"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["search", "kb", "query", "lookup"]
+---
+
 # Skill: KB Search
 
 ## What this Skill does

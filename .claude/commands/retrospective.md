@@ -7,7 +7,7 @@ Analyze the current Claude Code session to extract valuable knowledge and add it
 /retrospective [option]
 ```
 
-## Examples
+## Quick Examples
 
 ### Full Session Analysis
 ```
@@ -21,299 +21,149 @@ Analyzes entire conversation history for knowledge extraction.
 ```
 Analyzes conversation since the last retrospective marker.
 
-### Specific Analysis Type
+### Errors Only
 ```
 /retrospective --errors
 ```
 Focus only on errors and their solutions.
 
-### Scope Selection
+### Patterns Only
 ```
-/retrospective --scope universal
+/retrospective --patterns
 ```
-Only look for universal/shared knowledge.
+Extract best practices and patterns discovered.
 
-## What happens
+## What This Command Does
 
-### Phase 1: Conversation Analysis
-1. Scans conversation from start (or last retrospective)
-2. Identifies key moments:
-   - Errors encountered
-   - Solutions implemented
-   - Decisions made
-   - Patterns discovered
-   - Best practices used
+1. **Scans conversation history** for:
+   - Errors encountered and solved
+   - Best practices discovered
+   - New patterns identified
+   - Lessons learned
 
-### Phase 2: Knowledge Extraction
-For each key moment, extracts:
-- **Problem:** What went wrong or question asked
-- **Solution:** How it was resolved
-- **Context:** Language/framework/environment
-- **Tags:** Relevant keywords
-- **Scope:** universal, python, javascript, docker, postgresql, project, domain
+2. **Extracts knowledge:**
+   - Problem → Solution pairs
+   - Code examples with explanations
+   - Prevention strategies
+   - Related patterns
 
-### Phase 3: Categorization
-Determines where knowledge should go:
+3. **Validates and creates entries:**
+   - Checks if entry already exists in KB
+   - Validates new entry quality (≥75/100)
+   - Determines appropriate scope
+   - Creates YAML entry with proper format
 
-**Shared KB (requires GitHub issue):**
-- ✅ Universal patterns (docker, universal scope)
-- ✅ Language-specific best practices (python, javascript, postgresql)
-- ✅ Cross-cutting concerns (git, testing, architecture)
-- ✅ Framework-agnostic solutions
-
-**Project KB (direct addition):**
-- ✅ Project-specific logic
-- ✅ Domain knowledge
-- ✅ Environment-specific configurations
-- ✅ Business rules
-
-### Phase 4: Output Generation
-
-**For Shared KB entries:**
-Creates GitHub issue template:
-```markdown
-## Add to Shared KB: [Title]
-
-**Scope:** [universal/python/docker/etc]
-**Category:** [category-name]
-**Severity:** [critical/high/medium/low]
-
-### Problem
-[Description]
-
-### Solution
-```yaml
-[code solution]
-```
-
-### Tags
-[tag1, tag2, tag3]
-
-### Context
-[Additional context about when this occurred, project details, etc.]
-
-**Discovered by:** Claude Code retrospective analysis
-**Date:** [timestamp]
-```
-
-**For Project KB entries:**
-Creates ready-to-use YAML entry:
-```yaml
-version: "1.0"
-category: "[category]"
-last_updated: "[date]"
-
-errors:
-  - id: "PROJECT-[NNN]"
-    title: "[Title]"
-    severity: "medium"
-    scope: "project"
-
-    problem: |
-      [Description]
-
-    solution:
-      code: |
-        [Solution code]
-
-    tags: ["tag1", "tag2"]
-```
+4. **Suggests next steps:**
+   - Review created entries
+   - Sync to shared repository (if universal scope)
+   - Update related entries
 
 ## Options
 
-- `--last` - Analyze only since last retrospective (not implemented yet)
-- `--errors` - Focus on errors only (not implemented yet)
-- `--scope <scope>` - Filter by scope (universal, python, docker, etc.)
-- `--project` - Target project KB instead of shared KB
-- `--dry-run` - Show what would be extracted without creating issues/entries
+| Option | Description |
+|--------|-------------|
+| None | Full session analysis |
+| `--last` | Analyze since last retrospective |
+| `--errors` | Focus on errors only |
+| `--patterns` | Extract patterns only |
+| `--scope <scope>` | Set scope for new entries |
 
-## Output Examples
+## Workflow
 
-### Example 1: Error Discovered
+### Step 1: Analyze Conversation
+Extract:
+- Error messages and stack traces
+- Solutions implemented
+- Code snippets
+- Decision rationale
+- Lessons learned
+
+### Step 2: Check for Duplicates
+```bash
+python tools/kb.py search "<potential error>"
 ```
-🔍 RETROSPECTIVE ANALYSIS
+If exists → update existing entry
+If not → create new entry
 
-Session Duration: 45 minutes
-Key Moments Found: 3
+### Step 3: Determine Scope
+Ask:
+- Is this error universal? (docker, universal, python, postgresql, javascript)
+- Or project-specific? (project, domain, framework)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+### Step 4: Create Entry
+Use `/kb-create` to create validated entry.
 
-KEY MOMENT #1: Docker Volume Permission Error
-
-Problem: Docker container failed with permission denied on volume mount
-Context: Docker Compose, Linux host, development environment
-Solution: Changed volume mount from relative to absolute path, added user UID
-Scope: docker
-Severity: medium
-Tags: [docker, volumes, permissions, linux]
-
-🎯 RECOMMENDATION: Add to Shared KB
-
-✅ GitHub issue created: https://github.com/ozand/shared-knowledge-base/issues/[number]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### Example 2: Pattern Discovered
-```
-🔍 RETROSPECTIVE ANALYSIS
-
-Session Duration: 1 hour 20 minutes
-Key Moments Found: 5
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-KEY MOMENT #3: Async Context Manager Pattern
-
-Pattern: Using async with TaskGroup for error handling in Python 3.11+
-Context: FastAPI application, async endpoints
-Benefit: Automatic exception gathering, cleaner code
-Scope: python
-Severity: low (optimization)
-Tags: [async, python-3.11, taskgroup, fastapi]
-
-🎯 RECOMMENDATION: Add to Shared KB (as pattern)
-
-✅ GitHub issue created: https://github.com/ozand/shared-knowledge-base/issues/[number]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### Example 3: Project-Specific Knowledge
-```
-🔍 RETROSPECTIVE ANALYSIS
-
-Session Duration: 30 minutes
-Key Moments Found: 2
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-KEY MOMENT #2: Authentication Flow Decision
-
-Decision: Chose JWT over session-based auth
-Reasoning: Better for microservices, stateless, scalable
-Context: User service architecture
-Project-specific: YES
-
-🎯 RECOMMENDATION: Add to Project KB
-
-✅ YAML entry created: docs/knowledge-base/project/auth-flow.yaml
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-## When to Use
-
-Run `/retrospective`:
-- ✅ After solving a complex problem
-- ✅ At end of work session (to capture knowledge)
-- ✅ Before completing a feature (to ensure nothing was missed)
-- ✅ After debugging session (to document solutions)
-- ✅ Periodically (every 1-2 hours of work)
+### Step 5: Review and Sync
+- Review created entries
+- Edit if needed
+- Sync to shared repository if universal scope
 
 ## Best Practices
 
-### For Teams
-- Run retrospective at least once per feature
-- Review and triage GitHub issues weekly
-- Add valuable discoveries to KB
-- Document decisions and their rationale
+**✅ Do:**
+- Run retrospective after complex debugging sessions
+- Include context and error messages
+- Add code examples
+- Document prevention strategies
+- Review before syncing to shared repository
 
-### For Solo Developers
-- Run retrospective before pushing code
-- Create issues for shared knowledge immediately
-- Add project-specific patterns to local KB
-- Build up personal knowledge base over time
+**❌ Don't:**
+- Create entries for trivial issues
+- Duplicate existing entries
+- Forget to validate quality
+- Mix multiple problems in one entry
 
-### Retrospective Frequency
-- **After each bug fix:** Document the solution
-- **After each feature:** Document decisions and patterns
-- **Weekly:** Review all retrospectives, categorize and prioritize
-- **Monthly:** Triage GitHub issues, add to KB
+## Output
 
-## Integration with Workflows
-
-### Part of Development Cycle
+**Success:**
 ```
-1. Start task
-2. Work → Encounter problem → Solve problem
-3. /retrospective (analyze session)
-4. Categorize findings:
-   - Shared KB? → Create GitHub issue
-   - Project KB? → Create YAML entry
-5. Continue work or end session
+✅ Retrospective complete
+📝 Created 3 new entries:
+  - PYTHON-123: Async timeout in FastAPI
+  - DOCKER-045: Volume permission issue
+  - universal/patterns/session-management-001
+
+Next steps:
+1. Review entries: /kb-query PYTHON-123
+2. Sync to shared repo: /kb-sync
 ```
 
-### Part of Code Review
+**No new knowledge:**
 ```
-1. PR submitted
-2. /retrospective (analyze PR development)
-3. Add findings to KB
-4. Include KB entries in PR review
-5. Merge PR
+✅ Retrospective complete
+💡 No new knowledge to extract
+📝 All issues already documented in KB
 ```
 
-## Related Commands
-- `/kb-search` - Search KB before solving (avoid duplicates)
-- `/kb-create` - Create entry from retrospective output
-- `/kb-validate` - Validate entry before committing
+## Common Workflows
 
-## Troubleshooting
-
-**"No key moments found"?**
-- Session was too short or routine
-- Try broader analysis scope
-- Consider whether knowledge is worth capturing
-
-**"Too many results"?**
-- Use filters: --errors, --scope
-- Focus on most valuable/complex solutions
-- Consider running retrospective more frequently
-
-**"Can't determine scope"?**
-- Default to project scope if unsure
-- Document as universal during triage
-- Let curator decide on final scope
-
-## Advanced Features
-
-### Retrospective Markers
-You can insert markers in conversation to split analysis:
-
+### After Debugging Session
 ```
-🔄 RETROSPECTIVE COMPLETE
+# 1. Run retrospective
+/retrospective
+
+# 2. Review created entries
+/retrospective --last
+
+# 3. Sync if applicable
+/kb-sync python/errors/
 ```
 
-This allows running `/retrospective --last` to analyze only since last marker.
+### Weekly Knowledge Capture
+```
+# 1. Review week's sessions
+/retrospective --last
 
-### Automatic Triggers
-Can be configured to run automatically:
-- On session end
-- Every N messages
-- When keywords detected ("error", "fixed", "decided")
+# 2. Extract patterns
+/retrospective --patterns
 
-### Integration with GitHub
-- Automatically creates issues in shared-knowledge-base repo
-- Uses template for consistency
-- Tags issues by scope and category
+# 3. Sync best practices
+/kb-sync universal/patterns/
+```
 
-## Tips
+## Related
 
-- **Be specific** in problem descriptions for better future search
-- **Include context** - what were you trying to do?
-- **Document decisions** - why did you choose X over Y?
-- **Add examples** - code snippets, commands, configurations
-- **Think future** - what would help future-you (or others)?
-
-## See Also
-- Skill: `research-enhance` - Enhance entries with research
-- Agent: `kb-curator` - Automated KB curation
-- Guide: `@for-claude-code/README.md` - Project integration guide
-- Workflow: Retrospective-driven knowledge capture
-
----
-
-**Version:** 1.0
-**Last Updated:** 2026-01-07
-**Skill Type:** Knowledge Extraction
-**Integration:** GitHub API (for shared KB issues)
+- `@skills/kb-create/SKILL.md` - Create KB entries
+- `@skills/audit-quality/SKILL.md` - Quality audit
+- `@commands/kb-sync.md` - Sync to shared repository
+- `@references/workflows.md` - Complete workflow guide

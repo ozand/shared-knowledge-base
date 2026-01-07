@@ -1,3 +1,11 @@
+---
+name: "kb-validate"
+description: "Validate knowledge base entries for quality, completeness, and compliance with KB standards. Ensures entries meet minimum quality score of 75/100"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["validate", "quality", "check", "verify"]
+---
+
 # Skill: KB Validate
 
 ## What this Skill does

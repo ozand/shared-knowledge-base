@@ -1,3 +1,11 @@
+---
+name: "find-duplicates"
+description: "Identify semantically duplicate or near-duplicate knowledge base entries. Suggest merge strategies and help consolidate redundant content"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["duplicates", "merge", "consolidate", "cleanup"]
+---
+
 # Skill: Find Duplicates
 
 ## What this Skill does

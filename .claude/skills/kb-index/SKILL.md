@@ -1,3 +1,11 @@
+---
+name: "kb-index"
+description: "Rebuild the Knowledge Base search index to ensure fast and accurate search results. Indexes all YAML entries and metadata"
+version: "1.0"
+author: "Shared KB Curator"
+tags: ["index", "search", "rebuild", "update"]
+---
+
 # Skill: KB Index
 
 ## What this Skill does

@@ -1,16 +1,16 @@
 # Shared Knowledge Base - Claude Code Instructions
 
 **Repository:** shared-knowledge-base
-**Version:** 3.0 (with Phase 1-3 metadata features)
+**Version:** 3.0
 **Last Updated:** 2026-01-07
 
 ---
 
 ## Overview
 
-This is the **Shared Knowledge Base** repository - a centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks.
+Centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks. Managed by `kb.py` CLI tool with YAML entries.
 
-**Key characteristic:** This is a **knowledge repository**, not an executable application. The main artifact is the `kb.py` CLI tool that manages knowledge entries stored as YAML files.
+**📘 Complete Guide:** `@for-claude-code/README.md`
 
 ---
 
@@ -19,186 +19,90 @@ This is the **Shared Knowledge Base** repository - a centralized knowledge base 
 ### Essential Commands
 
 ```bash
-# Build search index (required after any changes)
+# Build index (required after changes)
 python tools/kb.py index -v
 
-# Search knowledge base
+# Search KB
 python tools/kb.py search "websocket"
 python tools/kb.py search --category python --severity high
-python tools/kb.py search --tags async pytest
 
-# Show statistics
+# Stats & validate
 python tools/kb.py stats
+python tools/kb.py validate .
 
-# Validate knowledge entries
-python tools/kb.py validate path/to/file.yaml
-python tools/kb.py validate .  # Validate all
-
-# Export for AI tools
+# Export
 python tools/kb.py export --format json --output kb.json
 ```
 
-### Dependencies
-
-```bash
-# Install Python dependency
-pip install pyyaml
-```
+**📘 Complete CLI Reference:** `@references/cli-reference.md`
 
 ---
 
-## Repository Architecture
+## Architecture
 
-### Hierarchical Knowledge Organization
+### Scope Hierarchy
 
-Knowledge is organized by scope levels (from most universal to most specific):
-
-1. **`universal/`** - Cross-language patterns (Git, testing, architecture, filesystem)
+1. **`universal/`** - Cross-language patterns
 2. **`<language>/`** - Language-specific (python, javascript, docker, postgresql)
-3. **`framework/<name>/`** - Framework-specific (django, fastapi, react, vue)
-4. **`project/`** - Project-specific (NOT shared, local only)
+3. **`framework/`** - Framework-specific
+4. **`project/`** - Local only
+
+**📘 Detailed Architecture:** `@references/architecture.md`
 
 ### Directory Structure
 
 ```
 shared-knowledge-base/
-├── python/              # Python-specific errors & patterns
-│   ├── errors/
-│   └── patterns/
-├── javascript/          # JavaScript/Node.js
-│   ├── errors/
-│   └── patterns/
-├── docker/              # Docker/container
-│   └── errors/
-├── postgresql/          # PostgreSQL
-│   ├── errors/
-│   ├── patterns/
-│   └── tools/
+├── python/              # Language-specific
 ├── universal/           # Cross-language
-│   ├── errors/
-│   ├── patterns/
-│   └── agent-instructions/  # AI agent configuration
-├── framework/           # Framework-specific
-│   ├── django/
-│   ├── fastapi/
-│   ├── react/
-│   └── vue/
-├── tools/               # Enhanced tooling (v3.0)
-│   ├── kb.py           # Main CLI tool
-│   ├── kb_meta.py      # Metadata manager
-│   ├── kb_usage.py     # Usage tracker
-│   └── ...
-├── curator/             # Knowledge Base Curator docs
+├── tools/               # kb.py CLI
+├── curator/             # Curator docs
 ├── for-claude-code/     # Claude Code integration
-├── docs/research/       # Research & best practices
-└── .claude/             # Claude Code configuration (this file)
+├── docs/research/       # Research & patterns
+└── .claude/             # This config
 ```
 
 ---
 
-## Documentation Structure
-
-### User-Facing Documentation
-
-| File | Purpose | Lines |
-|------|---------|-------|
-| **README.md** | Project overview, features, quick start | ~600 |
-| **QUICKSTART.md** | 5-minute setup guide | ~300 |
-| **GUIDE.md** | Implementation guide | ~600 |
-
-### Claude Code Integration
-
-| File | Purpose | Lines |
-|------|---------|-------|
-| **for-claude-code/README.md** | Complete Claude Code guide (v3.0) | ~550 |
-| **for-claude-code/CLAUDE.md** | Workflow instructions | ~380 |
-
-**📘 Start here:** `@for-claude-code/README.md` - Complete guide for using Shared KB with Claude Code
-
-### Research & Best Practices
-
-**Location:** `docs/research/claude-code/`
-
-**Master Index:** `@docs/research/claude-code/INDEX.md` - Complete documentation index
-**Quick Reference:** `@docs/research/claude-code/README.md` - Organized guide listing
-
-| File | Purpose | Lines | Language |
-|------|---------|-------|----------|
-| **claude-shared-architecture.md** | Shared model architecture, scope system | ~1400 | English |
-| **claude-hooks-guide.md** | Complete hooks guide (10 events, patterns) | ~1200 | English |
-| **claude-hooks-examples.md** | 10 production-ready hook examples | ~800 | English |
-| **claude-hooks-advanced.md** | Anti-patterns & advanced strategies | ~700 | English |
-| **claude-skills-guide.md** | Skills system documentation | ~1300 | English |
-| **claude-agents-guide.md** | Agents system documentation | ~1100 | English |
-| **claude-templates.md** | Template system | ~600 | English |
-| **claude-troubleshooting.md** | Troubleshooting guide | ~300 | English |
-| **CLAUDE-COMPLETE-PRACTICES.md** | Complete overview of all practices | ~1100 | Russian |
-| **CLAUDE-CLAUDE-MD-GUIDE.md** | CLAUDE.md project memory guide | ~1400 | English |
-| **CLAUDE-PERMISSION-MODES-GUIDE.md** | Permission modes (ALLOW, DITTO, AUTO, CONFIRM) | ~1300 | Russian |
-| **CLAUDE-SLASH-COMMANDS-GUIDE.md** | Custom slash commands | ~1400 | Russian |
-| **CLAUDE-MCP-GUIDE.md** | MCP (Model Context Protocol) | ~740 | Russian |
-| **CLAUDE-PLANNING-WORKFLOW-GUIDE.md** | Planning mode workflow | ~770 | Russian |
-| **CLAUDE-PROJECTS-COLLABORATION-GUIDE.md** | Projects & team collaboration | ~940 | Russian |
-| **CLAUDE-REFERENCING-CONTEXT-GUIDE.md** | @ Referencing for context | ~820 | Russian |
-
-**Total:** ~16,100 lines of Claude Code documentation (23 files)
-
-**📘 For automation:** `@docs/research/claude-code/claude-hooks-guide.md` - Hooks for deterministic workflow automation
-**📘 Start here:** `@docs/research/claude-code/INDEX.md` - Master documentation index
-
-### Knowledge Base Curator Documentation
-
-**Location:** `curator/`
+## Documentation
 
 | File | Purpose |
 |------|---------|
-| **AGENT.md** | Curator role definition and responsibilities |
-| **SKILLS.md** | Available curators skills |
-| **WORKFLOWS.md** | Standard operating procedures |
-| **QUALITY_STANDARDS.md** | Entry quality rubric (0-100) |
-| **PROMPTS.md** | Reusable AI prompt templates |
-| **metadata/** | Metadata system architecture |
+| **README.md** | Project overview |
+| **QUICKSTART.md** | 5-minute setup |
+| **for-claude-code/README.md** | Claude Code guide |
+
+**Research docs:** `@docs/research/claude-code/` (23 files, ~16K lines)
+- Master index: `INDEX.md`
+- Hooks, Skills, Agents guides
+
+**📘 All Docs:** `@references/architecture.md` - Complete documentation structure
 
 ---
 
 ## Knowledge Entry Format
 
-Each entry is a YAML file with this structure:
-
+**Minimal YAML entry:**
 ```yaml
 version: "1.0"
 category: "category-name"
 last_updated: "2026-01-07"
 
 errors:
-  - id: "ERROR-001"           # Unique ID: CATEGORY-NNN
+  - id: "ERROR-001"        # CATEGORY-NNN
     title: "Error Title"
-    severity: "high"          # critical | high | medium | low
-    scope: "python"           # universal | python | javascript | docker | postgresql | framework
-
-    problem: |
-      Description of what went wrong
-
-    symptoms:
-      - "Error message or symptom"
-
-    root_cause: |
-      Explanation of why it happens
-
-    solution:
+    severity: "high"       # critical | high | medium | low
+    scope: "python"        # universal | python | javascript | docker | postgresql
+    problem: |             # Required
+      What went wrong
+    solution:              # Required
       code: |
-        # Correct code example
-
+        # Solution
       explanation: |
-        How the solution works
-
-    prevention:
-      - "How to avoid this error"
-
-    tags: ["tag1", "tag2"]
+        How it works
 ```
 
-**Required fields:** `id`, `title`, `severity`, `scope`, `problem`, `solution`
+**📘 Complete YAML Standards:** `@standards/yaml-standards.md` - ID format, scope definitions, quality requirements
 
 ---
 
@@ -206,180 +110,90 @@ errors:
 
 ### When User Reports an Error
 
-1. **Search KB first:**
-   ```bash
-   python tools/kb.py search "error message"
-   ```
-
-2. **If found:** Return solution ✅
-
-3. **If not found:**
-   - Solve problem
-   - Document in YAML
-   - Determine scope (see below)
-
-4. **If scope is universal** (docker, universal, python, postgresql, javascript):
-   - Create in `shared-knowledge-base/<scope>/errors/`
+1. **Search KB:** `python tools/kb.py search "error"`
+2. **If not found:** Solve → Document → Determine scope
+3. **Universal scope** (docker, universal, python, postgresql, javascript):
    - Validate: `python tools/kb.py validate <file>`
-   - Initialize metadata: `python tools/kb.py init-metadata`
-   - **IMMEDIATELY commit and push:**
-     ```bash
-     git add <file> *_meta.yaml
-     git commit -m "Add ERROR-ID: Title"
-     git push origin main
-     ```
+   - IMMEDIATELY commit & push to shared repo
    - Rebuild index: `python tools/kb.py index --force -v`
+4. **Project-specific:** Keep in local KB, mark `local_only: true`
 
-5. **If scope is project-specific:**
-   - Create in local KB
-   - Mark with `local_only: true`
-   - Do NOT push to shared repository
+**📘 Detailed Workflows:** `@references/workflows.md` - Complete step-by-step guides
 
-### Scope Decision Criteria
+### Scope Decision
 
-**Add to SHARED KB if:**
-- Error is: docker, universal, python, postgresql, javascript scope
-- Solution applies to multiple projects/environments
-- Error is common across industry
-- Framework-agnostic or standard use case
-
-**Keep in LOCAL KB if:**
-- Error is: project, domain, framework scope
-- Solution depends on specific infrastructure
-- Environment-specific or one-time occurrence
-- Business logic specific
+**Shared repository** if: universal scope, multi-project solution, industry standard
+**Local KB** if: project/domain/framework scope, environment-specific, business logic
 
 ---
 
 ## Advanced Features (v3.0)
 
-### Metadata Commands
-
+**Metadata & Analytics:**
 ```bash
-# Initialize metadata for all entries
-python tools/kb.py init-metadata
-
-# Detect changes since last check
-python tools/kb.py detect-changes
-
-# Check entry freshness
-python tools/kb.py check-freshness
-
-# Analyze usage patterns
-python tools/kb.py analyze-usage
-
-# Update entry metadata
-python tools/kb.py update-metadata --entry-id ERROR-ID --quality-score 85
-
-# Reindex metadata
-python tools/kb.py reindex-metadata
+python tools/kb.py init-metadata      # Initialize metadata
+python tools/kb.py detect-changes     # Detect modifications
+python tools/kb.py check-freshness    # Check staleness
+python -m tools.kb_versions check --all  # Version monitoring
+python -m tools.kb_predictive predict-updates --days 30  # Predictions
 ```
 
-### Version Monitoring
-
-```bash
-# Check specific library version
-python -m tools.kb_versions check --library fastapi
-
-# Check all libraries
-python -m tools.kb_versions check --all
-
-# Scan KB for tested versions
-python -m tools.kb_versions scan
-```
-
-### Predictive Analytics
-
-```bash
-# Predict updates needed
-python -m tools.kb_predictive predict-updates --days 30
-
-# Suggest new entries based on search gaps
-python -m tools.kb_predictive suggest-entries
-
-# Estimate quality for entry
-python -m tools.kb_predictive estimate-quality --entry-id ERROR-001
-```
+**📘 Complete Reference:** `@references/cli-reference.md` - All advanced commands
 
 ---
 
-## Claude Code Hooks (NEW!)
+## Claude Code Hooks
 
-This repository uses **Claude Code Hooks** for deterministic workflow automation.
+**Deterministic automation at workflow points:**
+- **PreToolUse** - Before tool calls (validation, blocking)
+- **PostToolUse** - After tool calls (formatting, testing)
+- **SessionStart** - Session setup
+- **Stop** - Quality validation
 
-### What are Hooks?
+**Current hooks:** YAML validation, quality gates, auto-formatting
 
-Hooks are guaranteed shell/LLM executions at specific workflow points:
-- **PreToolUse** - Before any tool call (validation, blocking)
-- **PostToolUse** - After successful tool call (formatting, testing)
-- **SessionStart** - When session starts (setup, context loading)
-- **Stop** - When Claude finishes (quality validation)
-
-### Current Hooks Configuration
-
-See `.claude/settings.json` for active hooks:
-- **YAML Validation** - Automatic validation before commits
-- **Quality Gates** - Ensure entry quality standards
-- **Auto-formatting** - Consistent YAML formatting
-
-### Hooks Documentation
-
-**📘 Learn more:** `@docs/research/claude-code/claude-hooks-guide.md` - Complete hooks reference
-**📘 Examples:** `@docs/research/claude-code/claude-hooks-examples.md` - Production-ready scripts
-**📘 Pattern:** `@universal/patterns/claude-code-hooks.yaml` - Integration pattern
+**📘 Learn more:** `@docs/research/claude-code/claude-hooks-guide.md`
 
 ---
 
 ## Patterns & Best Practices
 
-### Available Patterns
+**Available Patterns:** `@universal/patterns/`
+- `claude-code-files-organization-001.yaml` - .claude/ organization
+- `claude-code-shared-model.yaml` - Team knowledge model
+- `PROGRESSIVE-DISCLOSURE-001` - Progressive disclosure
 
-**Location:** `universal/patterns/`
-
-| Pattern | Purpose |
-|---------|---------|
-| **claude-code-shared-model.yaml** | Shared knowledge model for teams |
-| **claude-code-hooks.yaml** | Hooks automation pattern |
-| **agent-role-separation.yaml** | Project Agent vs Curator roles |
-| **agent-handoff.yaml** | Cross-repository collaboration |
-| **yaml-syntax.yaml** | YAML best practices |
-
-### Key Best Practices
-
-1. **Keep root CLAUDE.md lean** (~300 lines) - Acts as navigation hub
-2. **Use progressive disclosure** - Load details on demand
-3. **Single source of truth** - Avoid duplication
-4. **Commit .claude/ to git** - Share configuration with team
-5. **Quality gate** - Minimum score 75/100 before committing to shared repository
+**Best Practices:**
+1. Keep CLAUDE.md lean (~300 lines) ✅
+2. Progressive disclosure - load details on demand
+3. Single source of truth - avoid duplication
+4. Commit .claude/ to git - share with team
+5. Quality gate - minimum 75/100 for shared repo
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+| Issue | Fix |
+|-------|-----|
+| Search no results | `python tools/kb.py index --force -v` |
+| Validation fails | Check syntax: `python tools/kb.py validate <file>` |
+| Hook not executing | Check `.claude/settings.json` |
+| Metadata missing | `python tools/kb.py init-metadata` |
 
-**Issue:** Search returns no results
-- **Fix:** Rebuild index: `python tools/kb.py index --force -v`
-
-**Issue:** YAML validation fails
-- **Fix:** Check syntax: `python tools/kb.py validate <file>`
-
-**Issue:** Hook not executing
-- **Fix:** Check `.claude/settings.json` syntax, test hook manually
-
-**Issue:** Metadata not initialized
-- **Fix:** Run: `python tools/kb.py init-metadata`
+**📘 Detailed Troubleshooting:** `@references/workflows.md`
 
 ---
 
 ## Related Resources
 
-### Internal Documentation
-- `for-claude-code/README.md` - Complete Claude Code guide
-- `docs/research/claude-code/` - Research & best practices
-- `curator/AGENT.md` - Curator role definition
+**Internal:**
+- `@for-claude-code/README.md` - Complete Claude Code guide
+- `@docs/research/claude-code/` - Research & best practices
+- `@references/` - CLI, architecture, workflows reference
+- `@standards/` - Git, YAML, quality standards
 
-### External Resources
+**External:**
 - [Claude Code Documentation](https://claude.com/claude-code)
 - [Shared KB Repository](https://github.com/ozand/shared-knowledge-base)
 
@@ -387,18 +201,15 @@ See `.claude/settings.json` for active hooks:
 
 ## Agent Configuration
 
-**Auto-loaded instructions:** `universal/agent-instructions/base-instructions.yaml`
-- Role-based access control (Project Agent vs Curator)
-- GitHub attribution requirements (GITHUB-ATTRIB-001)
-- Quality standards and workflows
-- Hooks configuration rules
+**Auto-loaded:** `universal/agent-instructions/base-instructions.yaml`
+- Role: Knowledge Base Curator (`.curator` marker)
+- GitHub attribution: GITHUB-ATTRIB-001
+- Quality standards: 75/100 minimum
+- Hooks configuration
 
-**Current agent type:** claude-code
-**Current role:** Knowledge Base Curator (`.curator` marker exists)
+**Current:** claude-code agent, Curator role
 
 ---
 
 **Version:** 3.0
-**Last Updated:** 2026-01-07
-**Maintained By:** Development Team & Claude Code
 **Quality Score:** 90/100

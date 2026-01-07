@@ -378,3 +378,29 @@ All 5 verification steps passed:
 **Case Study:** Real-world installation in A-Parser project
 **Agent:** Claude Code
 **Status:** ✅ Analysis Complete, Fixes Created
+
+---
+
+## Related Guides
+
+### Getting Started
+- [INDEX.md](INDEX.md) - Master documentation index
+- [Complete Practices](CLAUDE-COMPLETE-PRACTICES.md) - Overview of all features (Russian)
+
+### Core Features
+- [Shared Architecture](claude-shared-architecture.md) - System overview
+- [CLAUDE.md Guide](CLAUDE-CLAUDE-MD-GUIDE.md) - Project memory (English)
+
+### Automation
+- [Hooks Guide](claude-hooks-guide.md) - Workflow automation
+- [Hooks Examples](claude-hooks-examples.md) - Production examples
+- [Hooks Advanced](claude-hooks-advanced.md) - Advanced patterns
+
+### Custom Capabilities
+- [Skills Guide](claude-skills-guide.md) - Custom skills
+- [Agents Guide](claude-agents-guide.md) - Agent system
+- [Templates](claude-templates.md) - Template system
+
+### Reference
+- [Troubleshooting](claude-troubleshooting.md) - Common issues
+

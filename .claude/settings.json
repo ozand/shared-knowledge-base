@@ -83,7 +83,33 @@
     ]
   },
   "skills": {
-    "enabled": ["kb-search", "kb-validate", "kb-index"]
+    "paths": [
+      "./.claude/skills"
+    ],
+    "enabled": [
+      "kb-search",
+      "kb-validate",
+      "kb-index",
+      "kb-create",
+      "audit-quality",
+      "find-duplicates",
+      "research-enhance"
+    ],
+    "auto_discover": true
+  },
+  "agents": {
+    "paths": [
+      "./.claude/agents"
+    ],
+    "enabled": [
+      "kb-curator"
+    ],
+    "auto_discover": true
+  },
+  "commands": {
+    "paths": [
+      "./.claude/commands"
+    ]
   },
   "mcpServers": {}
 }
