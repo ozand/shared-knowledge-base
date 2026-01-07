@@ -357,6 +357,169 @@ errors:
 
     tags: ["postgresql", "jsonb", "batch-processing", "performance", "tuning"]
 
+  - id: "POSTGRES-006"
+    title: "CREATE INDEX CONCURRENTLY in Transaction Block"
+    severity: "medium"
+
+    problem: |
+      PostgreSQL does not allow CREATE INDEX CONCURRENTLY to run inside a transaction
+      block. This restriction exists because CONCURRENTLY requires multiple transaction
+      commits during index creation.
+
+    symptoms:
+      - "Error: CREATE INDEX CONCURRENTLY cannot run inside a transaction block"
+      - "psql script fails immediately on CREATE INDEX CONCURRENTLY"
+      - "Works fine without CONCURRENTLY keyword but locks table"
+      - "Occurs in psql, Python scripts, and DO blocks"
+
+    root_cause: |
+      CREATE INDEX CONCURRENTLY process:
+      1. Start first transaction, create index invalid
+      2. Commit transaction 1
+      3. Wait for existing transactions to finish
+      4. Start second transaction, validate index
+      5. Commit transaction 2
+      6. Mark index as valid
+
+      Running inside a transaction block prevents these commits, causing failure.
+
+    solution:
+      code: |
+        -- ❌ WRONG - Inside transaction block
+        BEGIN;
+        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+        COMMIT;
+
+        -- ✅ CORRECT - Autocommit mode
+        -- Method 1: Set autocommit in psql
+        \set AUTOCOMMIT on
+        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+
+        -- Method 2: Use separate SQL file
+        -- create_indexes.sql:
+        CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name);
+
+        -- Execute from command line
+        psql -h localhost -U postgres -d database -f create_indexes.sql
+
+        -- Method 3: Python with autocommit
+        import psycopg2
+        conn = psycopg2.connect(...)
+        conn.set_session(autocommit=True)  # Critical!
+        cur = conn.cursor()
+        cur.execute("CREATE INDEX CONCURRENTLY idx_name ON table_name (column_name)")
+
+      explanation: |
+        CREATE INDEX CONCURRENTLY is designed for production environments where you
+        cannot afford to lock the table. It requires multiple transactions, so it
+        cannot run inside a transaction block.
+
+        Key points:
+        - Set autocommit=True before executing
+        - Use separate SQL files for complex index operations
+        - Cannot be executed from functions or DO blocks
+        - Takes 2-3x longer than regular CREATE INDEX but doesn't block writes
+
+        Real-world example:
+        Attempted to create covering indexes in DO $$ block - failed immediately.
+        Solution: Created separate SQL file, executed directly with psql.
+
+    prevention:
+      - "Always test index creation syntax in development first"
+      - "Use separate .sql files for CONCURRENTLY operations"
+      - "Set autocommit=True in Python before CREATE INDEX CONCURRENTLY"
+      - "Never wrap in DO blocks or functions"
+      - "Schedule index creation during low-traffic periods"
+      - "Monitor pg_stat_progress_create_index for progress"
+
+    real_world_example: |
+      Session 2026-01-06:
+      - Attempt: Create covering indexes for 2025 partitions
+      - Error: "CREATE INDEX CONCURRENTLY cannot be executed from a function"
+      - Cause: Wrapped in DO $$ block with EXECUTE FORMAT
+      - Solution: Created /tmp/create_covering_indexes.sql
+      - Result: Discovered indexes not needed (existing PK sufficient)
+
+    tags: ["postgresql", "indexes", "concurrent", "transaction", "ddl"]
+
+  - id: "POSTGRES-007"
+    title: "Type Mismatch: UUID vs Integer Comparison"
+    severity: "low"
+
+    problem: |
+      PostgreSQL UUID columns cannot be compared with integer values. Attempting to
+      filter UUID columns with integer literals causes type mismatch errors.
+
+    symptoms:
+      - "Error: operator does not exist: uuid = integer"
+      - "Query fails on WHERE domain_id IN (123, 456, 789)"
+      - "Works fine with UUID strings"
+      - "Confusion because UUID looks like numbers visually"
+
+    root_cause: |
+      UUID is a 128-bit value stored as 16 bytes, not an integer. Even though UUIDs
+      may look like "550e8400-e29b-41d4-a716-446655440000", they are not numbers.
+
+      Common mistake:
+      ```sql
+      -- domain_id is UUID type
+      WHERE domain_id IN (123, 456, 789)  -- ❌ Wrong: integers
+      WHERE domain_id = 123                -- ❌ Wrong: integer
+      ```
+
+    solution:
+      code: |
+        -- ✅ CORRECT - Use UUID strings
+        WHERE domain_id IN (
+          '550e8400-e29b-41d4-a716-446655440000',
+          '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+          '6ba7b811-9dad-11d1-80b4-00c04fd430c8'
+        )
+
+        -- ✅ CORRECT - Cast to UUID if needed
+        WHERE domain_id = '550e8400-e29b-41d4-a716-446655440000'::uuid
+
+        -- ✅ CORRECT - Use subquery to get actual UUIDs
+        WHERE domain_id IN (
+          SELECT DISTINCT domain_id
+          FROM sw_raw_json_partitioned
+          WHERE data_date >= '2025-01-01' AND data_date < '2025-02-01'
+          LIMIT 5
+        )
+
+        -- ❌ WRONG - Integer literals
+        WHERE domain_id IN (123, 456, 789)
+        WHERE domain_id = 123
+
+      explanation: |
+        UUID columns require UUID values. Always use:
+        1. UUID string literals with single quotes: 'uuid-here'
+        2. Cast from string: 'uuid-here'::uuid
+        3. Subqueries that return UUID types
+        4. uuid_generate_v4() for new UUIDs
+
+        Performance note:
+        - UUID comparisons are efficient (indexed)
+        - Use IN clause with multiple UUIDs (5-10 is optimal)
+        - Partition pruning + UUID filtering = sub-millisecond queries
+
+    prevention:
+      - "Always check column data types before writing queries"
+      - "Use psql \\d table_name to see column types"
+      - "Test queries with actual data, not synthetic values"
+      - "Use UUID generator functions for test data"
+      - "Document UUID column usage in team wiki"
+
+    real_world_example: |
+      Session 2026-01-06:
+      - Test query: WHERE domain_id IN (123, 456, 789)
+      - Error: operator does not exist: uuid = integer
+      - Discovery: domain_id column is UUID type
+      - Solution: Used subquery to get actual UUID values
+      - Result: Query executed successfully in 1.139 ms
+
+    tags: ["postgresql", "uuid", "data-types", "query-syntax"]
+
 patterns:
   - id: "POSTGRES-P001"
     title: "Large-Scale Table Optimization Workflow"
@@ -665,3 +828,76 @@ patterns:
         solution: "Check network stability, add retry logic"
 
     tags: ["postgresql", "jsonb", "data-loading", "batch-processing", "performance"]
+
+  - id: "POSTGRES-P003"
+    title: "PostgreSQL Performance Testing Workflow"
+    category: "performance-testing"
+
+    description: |
+      Comprehensive approach to testing PostgreSQL performance for partitioned tables.
+      Includes realistic workload testing, partition pruning validation, and index
+      effectiveness verification.
+
+    when_to_use:
+      - "After major table migrations or optimizations"
+      - "Before deploying partitioned tables to production"
+      - "When diagnosing query performance issues"
+      - "After index changes or statistics updates"
+      - "For performance regression testing"
+
+    real_world_results: |
+      **sw_raw_json_partitioned Performance Test (2026-01-06):**
+
+      Initial Test (Plain COUNT(*)):
+      - Single month: 31,600 ms (poor)
+      - Execution plan: Parallel Seq Scan
+      - Buffers: 230,000+ reads
+
+      Realistic Workload Test (COUNT with domain_id):
+      - Single domain, single month: 0.258 ms (122,000x faster!)
+      - Execution plan: Index Only Scan
+      - Buffers: 13-62 hits (all cache)
+
+      Key Discovery: Plain COUNT(*) is misleading. Realistic queries achieve
+      sub-millisecond performance.
+
+    best_practices:
+      - "Always test with REALISTIC queries, not synthetic benchmarks"
+      - "Include application-specific filters (domain_id, user_id, etc.)"
+      - "Verify partition pruning effectiveness with EXPLAIN"
+      - "Check for Index Only Scan capability"
+      - "Monitor buffer usage (cache hits vs disk reads)"
+      - "Document before/after metrics for comparison"
+      - "Run tests after ANALYZE for accurate plans"
+
+    tags: ["postgresql", "performance", "testing", "benchmarking", "partitioning"]
+
+  - id: "POSTGRES-P004"
+    title: "Misleading Performance Baselines"
+    category: "performance-analysis"
+
+    description: |
+      Critical pattern for avoiding false performance conclusions. Testing with
+      synthetic queries (plain COUNT(*)) can lead to incorrect optimization
+      decisions, as these don't represent real application workload.
+
+    the_problem: |
+      Plain COUNT(*) queries on partitioned tables often show poor performance
+      (30+ seconds) because PostgreSQL cannot use indexes effectively for full
+      table scans. This leads to false conclusions about table optimization needs.
+
+    real_world_example: |
+      **sw_raw_json_partitioned Performance Test (2026-01-06):**
+
+      Initial Baseline (Plain COUNT(*)): 31,600 ms
+      Realistic Baseline (COUNT with domain_id): 0.258 ms
+      Difference: 122,000x performance difference based on query pattern!
+
+    lessons_learned:
+      - "Plain COUNT(*) is rarely representative of real workload"
+      - "100,000x performance difference between realistic and synthetic queries"
+      - "Existing indexes may already be optimal (no covering indexes needed)"
+      - "Partition pruning effectiveness depends on query filters"
+      - "Always test with domain-specific filters if application uses them"
+
+    tags: ["postgresql", "performance", "testing", "benchmarking", "anti-pattern"]
