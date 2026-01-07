@@ -49,7 +49,7 @@ python tools/kb_domains.py list
 
 ### 📖 Full Documentation:
 
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 ### 🆘 Troubleshooting:
 

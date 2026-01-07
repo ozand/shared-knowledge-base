@@ -4,7 +4,7 @@
 
 **Give agent this URL:**
 ```
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 ```
 
 Agent will use WebFetch to read it and get all instructions.
@@ -17,7 +17,7 @@ Agent will use WebFetch to read it and get all instructions.
 
 ```
 "Your project uses Shared Knowledge Base. Read this:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 1: New Project Setup. Let me know if you need help."
 ```
@@ -28,7 +28,7 @@ Follow Step 1: New Project Setup. Let me know if you need help."
 
 ```
 "Update Shared KB to latest version. Read:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 2: Update Existing Project."
 ```
@@ -54,10 +54,10 @@ Critical rule: NEVER modify files in .kb/shared/"
 
 | Purpose | URL |
 |---------|-----|
-| **Main Start Guide** | https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md |
-| **Agent Instructions** | https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/AGENT-INSTRUCTIONS.md |
-| **Update Guide** | https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/UPDATE-SHARED-KB.md |
-| **How to Give Instructions** | https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/HOW-TO-GIVE-INSTRUCTIONS.md |
+| **Main Start Guide** | https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md |
+| **Agent Instructions** | https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/AGENT-INSTRUCTIONS.md |
+| **Update Guide** | https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/UPDATE-SHARED-KB.md |
+| **How to Give Instructions** | https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/HOW-TO-GIVE-INSTRUCTIONS.md |
 
 ---
 
@@ -66,7 +66,7 @@ Critical rule: NEVER modify files in .kb/shared/"
 ### For New Project
 ```markdown
 "Set up Shared KB. Read:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 1. NEVER modify .kb/shared/ files."
 ```
@@ -74,7 +74,7 @@ Follow Step 1. NEVER modify .kb/shared/ files."
 ### For Update
 ```markdown
 "Update Shared KB. Read:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 2."
 ```
@@ -90,7 +90,7 @@ cp .kb/shared/tools/kb_domains.py tools/
 python tools/kb.py index --force -v
 
 Critical: NEVER modify .kb/shared/ files. Read more:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md"
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md"
 ```
 
 ---
@@ -135,7 +135,7 @@ for-projects/
 Before giving instructions to agent:
 
 - [ ] Decide: New project or Update?
-- [ ] Copy the URL: https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+- [ ] Copy the URL: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 - [ ] Add prompt: "Follow Step 1" or "Follow Step 2"
 - [ ] Add critical rule: "NEVER modify .kb/shared/"
 - [ ] Offer help: "Let me know if you need help"
@@ -156,7 +156,7 @@ Before giving instructions to agent:
    → Copy tools from .kb/shared/: `cp .kb/shared/tools/kb_domains.py tools/`
 
 4. **"Where do I get more info?"**
-   → Point to: https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/AGENT-INSTRUCTIONS.md
+   → Point to: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/AGENT-INSTRUCTIONS.md
 
 ---
 

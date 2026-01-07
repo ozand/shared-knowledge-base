@@ -2,7 +2,7 @@
 
 **You are here because:** You're working in a project that uses Shared Knowledge Base
 
-**📍 GitHub URL:** https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+**📍 GitHub URL:** https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 **📖 How to access:**
 - If you see `@for-projects/START-HERE.md` → Read local file in `.kb/shared/`

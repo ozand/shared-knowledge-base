@@ -35,7 +35,7 @@ Agent: Reads and executes commands → Done!
 
 **URL to give:**
 ```
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 ```
 
 **Agent can:**
@@ -46,7 +46,7 @@ https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE
 **Example prompt to agent:**
 ```
 "Your project uses Shared Knowledge Base. Read this:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Then follow Step 1 (New Project) or Step 2 (Update Project) depending on your situation."
 ```
@@ -102,7 +102,7 @@ Here's what to do:
 Critical rules:
 - NEVER modify files in .kb/shared/
 - If tool breaks, tool has bug (not data)
-- Read docs: https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+- Read docs: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 That's it! Let me know if you need help."
 ```
@@ -129,7 +129,7 @@ That's it! Let me know if you need help."
 **You:**
 ```
 "Set up Shared KB for this project. Read:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 1: New Project Setup"
 ```
@@ -147,7 +147,7 @@ Follow Step 1: New Project Setup"
 **You:**
 ```
 "Update Shared KB to latest version. Read:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 2: Update Existing Project"
 ```
@@ -196,13 +196,13 @@ Follow Step 2"
 ## Key URLs for Agents
 
 **Main Entry Point:**
-- https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+- https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 **Agent Instructions:**
-- https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/AGENT-INSTRUCTIONS.md
+- https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/AGENT-INSTRUCTIONS.md
 
 **Update Guide:**
-- https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/UPDATE-SHARED-KB.md
+- https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/UPDATE-SHARED-KB.md
 
 **Repository:**
 - https://github.com/ozand/shared-knowledge-base
@@ -228,7 +228,7 @@ cp .kb/shared/tools/kb.py tools/
 cp .kb/shared/tools/kb_domains.py tools/
 python tools/kb.py index --force -v
 
-Docs: https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+Docs: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 NEVER modify .kb/shared/"
 ```
 
@@ -237,13 +237,13 @@ NEVER modify .kb/shared/"
 "Update Shared KB:
 cd .kb/shared && git pull origin main && cd ../..
 python tools/kb.py index --force -v
-Docs: https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+Docs: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 ```
 
 **Full Context (1min):**
 ```markdown
 "Your project uses Shared KB. Read this:
-https://github.com/ozand/shared-knowledge-base/blob/main/for-projects/START-HERE.md
+https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 
 Follow Step 1 (new) or Step 2 (update). NEVER modify .kb/shared/ files.
 "
