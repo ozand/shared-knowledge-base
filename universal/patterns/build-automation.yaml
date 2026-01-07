@@ -1,0 +1,318 @@
+# Build Automation Patterns
+# Automated code transformation and build tools
+
+version: "1.0"
+category: "build-automation-patterns"
+last_updated: "2026-01-08"
+
+code_section_reordering:
+  description: "Automating code reordering by extracting sections based on comment markers"
+
+  use_case: |
+    When you need to generate different code organization patterns:
+    - Moving sections to different positions (e.g., sources at end)
+    - Generating debug vs production versions
+    - Customizing output order for different consumers
+    - Maintaining multiple versions with same logic
+
+  pattern: |
+    const fs = require('fs');
+
+    // 1. Read source file
+    const source = fs.readFileSync('source.js', 'utf8');
+    const lines = source.split('\n');
+
+    // 2. Find section boundaries by comment markers
+    const sections = {
+        part1End: null,
+        answerStart: null,
+        answerEnd: null,
+        sourcesStart: null,
+        sourcesEnd: null,
+        functionEnd: null
+    };
+
+    // Scan for markers
+    lines.forEach((line, index) => {
+        if (line.includes('// ANSWER')) sections.answerStart = index;
+        if (line.includes('// All Sources')) sections.sourcesStart = index;
+        if (line.includes('}')) sections.functionEnd = index;
+        // ... more markers
+    });
+
+    // 3. Extract sections
+    const part1 = lines.slice(0, sections.answerStart);
+    const answerSection = lines.slice(sections.answerStart, sections.sourcesStart);
+    const sourcesSection = lines.slice(sections.sourcesStart, sections.functionEnd);
+    const functionClose = lines.slice(sections.functionEnd);
+
+    // 4. Reorder
+    const reordered = [
+        ...part1,
+        ...answerSection,
+        ...sourcesSection,
+        ...functionClose
+    ];
+
+    // 5. Write output
+    fs.writeFileSync('output.js', reordered.join('\n'));
+
+  real_world_example: |
+    # Perplexity bookmarklet v18.6: Moving "Per-Message Sources" section to the end
+
+    ## Original order:
+    1. Metadata
+    2. Prompt
+    3. Reasoning
+    4. Answer
+    5. Per-Message Sources ← In the middle
+    6. All Sources
+    7. Images
+
+    ## Desired order:
+    1. Metadata
+    2. Prompt
+    3. Reasoning
+    4. Answer
+    5. All Sources ← Moved up
+    6. Images
+    7. Per-Message Sources ← Moved to end (but still inside function!)
+
+    ## Challenge:
+    Per-Message Sources must stay INSIDE function `x()` to access variable `o`
+
+    ## Solution:
+    ```javascript
+    // tools/reorder_sections_v18.6.js
+
+    const fs = require('fs');
+
+    function reorderSections(inputPath, outputPath) {
+        const source = fs.readFileSync(inputPath, 'utf8');
+        const lines = source.split('\n');
+
+        // Find boundaries
+        const sections = {
+            reasoningEnd: null,
+            answer: null,
+            perMessageSources: null,
+            sidebarSources: null,
+            images: null,
+            xCall: null
+        };
+
+        // Locate sections by comment markers
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.includes('// PER-MESSAGE REASONING')) sections.reasoningEnd = i;
+            if (line.includes('// ANSWER')) sections.answer = i;
+            if (line.includes('// PER-MESSAGE SOURCES')) sections.perMessageSources = i;
+            if (line.includes('// SIDEBAR SOURCES')) sections.sidebarSources = i;
+            if (line.includes('// IMAGES')) sections.images = i;
+            if (line.trim() === 'x();') sections.xCall = i;
+        }
+
+        // Extract sections
+        const part1 = lines.slice(0, sections.answer);
+        const answerSection = lines.slice(sections.answer, sections.sidebarSources);
+        const perMessageSources = lines.slice(sections.perMessageSources, sections.sidebarSources);
+        const sidebarSources = lines.slice(sections.sidebarSources, sections.images);
+        const imagesSection = lines.slice(sections.images, sections.xCall);
+        const xCallAndIife = lines.slice(sections.xCall);
+
+        // Reorder: Per-Message Sources at end (before closing brace)
+        const reordered = [
+            ...part1,
+            ...answerSection,
+            ...sidebarSources,      // All Sources
+            ...imagesSection,       // Images, Related Questions, Download
+            ...perMessageSources,   // Per-Message Sources BEFORE closing brace
+            '}',                    // Closing brace of function x()
+            ...xCallAndIife         // x(); })();
+        ];
+
+        fs.writeFileSync(outputPath, reordered.join('\n'));
+        console.log('✅ Sections reordered successfully');
+    }
+
+    reorderSections(
+        'perplexity_v18.5_readable.js',
+        'perplexity_v18.6_readable.js'
+    );
+    ```
+
+best_practices:
+  dos:
+    - "Use comment markers as section boundaries (e.g., `// SECTION NAME`)"
+    - "Preserve indentation and formatting"
+    - "Validate output has matching braces/parentheses"
+    - "Test generated code before using"
+    - "Keep source of truth separate from generated versions"
+
+  donts:
+    - "Don't rely on line numbers (fragile)"
+    - "Don't break code structure (unmatched braces)"
+    - "Don't reorder without tracking dependencies (variable scope)"
+
+validation: |
+  After reordering, validate:
+  ```javascript
+  function validateJavaScript(code) {
+      const openBraces = (code.match(/{/g) || []).length;
+      const closeBraces = (code.match(/}/g) || []).length;
+      const openParens = (code.match(/\(/g) || []).length;
+      const closeParens = (code.match(/\)/g) || []).length;
+
+      if (openBraces !== closeBraces) {
+          throw new Error(`Unmatched braces: ${openBraces} open, ${closeBraces} close`);
+      }
+      if (openParens !== closeParens) {
+          throw new Error(`Unmatched parentheses: ${openParens} open, ${closeParens} close`);
+      }
+
+      console.log('✅ JavaScript validation passed');
+  }
+  ```
+
+alternatives:
+  ast_parsing:
+    description: "More robust but complex"
+    pros: ["Handles all edge cases", "Understands code structure"]
+    cons: ["Requires AST parser", "More complex setup", "Slower"]
+
+  manual_editing:
+    description: "Simple but error-prone"
+    pros: ["Simple", "No tooling needed"]
+    cons: ["Error-prone", "Not reproducible", "Tedious for large files"]
+
+  preprocessor_directives:
+    description: "Like C preprocessor"
+    pros: ["Familiar pattern", "Well-defined"]
+    cons: ["Requires custom preprocessor", "Non-standard"]
+
+  template_based:
+    description: "Fill in sections"
+    pros: ["Clear separation", "Easy to understand"]
+    cons: ["Requires template engine", "May need code duplication"]
+
+caveats:
+  - "Comment-based boundaries can break if comments change"
+  - "Must respect code structure (functions, blocks)"
+  - "Variable scope must be maintained"
+  - "Generated code should be version-controlled separately"
+
+bookmarklet_minification:
+  description: "Convert readable JavaScript to production bookmarklet"
+
+  process: |
+    1. Write clean, readable code in _readable.js
+    2. Remove comments and extra whitespace
+    3. Convert template literals to string concatenation
+    4. URL-encode with encodeURIComponent()
+    5. Add 'javascript:' prefix
+
+  example: |
+    ```javascript
+    const fs = require('fs');
+
+    function buildBookmarklet(inputPath, outputPath) {
+        const code = fs.readFileSync(inputPath, 'utf8');
+
+        // Remove single-line comments
+        let minified = code.replace(/\/\/.*$/gm, '');
+
+        // Remove extra whitespace
+        minified = minified.replace(/\s+/g, ' ');
+        minified = minified.trim();
+
+        // Convert template literals to concatenation
+        minified = minified
+            .replace(/`/g, '"')
+            .replace(/\$\{/g, '" + ')
+            .replace(/\}/g, ' + "');
+
+        // URL-encode
+        const encoded = encodeURIComponent(minified);
+
+        // Add javascript: prefix
+        const bookmarklet = 'javascript:' + encoded;
+
+        fs.writeFileSync(outputPath, bookmarklet);
+        console.log(`✅ Built ${outputPath}`);
+    }
+
+    buildBookmarklet(
+        'perplexity_v18.6_readable.js',
+        'perplexity_v18.6.js'
+    );
+    ```
+
+  validation: |
+    # Test bookmarklet in browser
+    1. Open browser console
+    2. Paste bookmarklet code
+    3. Check for syntax errors
+    4. Test functionality
+
+related_patterns:
+  - "JS-IIFE-001: Variable Undefined Outside Function Scope"
+  - "bookmarklet-patterns: String Concatenation & Async DOM Manipulation"
+
+usage_examples:
+  multi_format_generation:
+    description: "Generate multiple output formats from single source"
+    example: |
+      # Single source: myscript_readable.js
+      # Generate:
+      - myscript_production.js (minified)
+      - myscript_debug.js (with logging)
+      - myscript_bookmarklet.js (URL-encoded)
+
+  version_variants:
+    description: "Maintain multiple versions with same logic"
+    example: |
+      # Reorder sections to create v1, v2, v3
+      # All use same core logic, just organized differently
+
+  customization:
+    description: "Generate custom output for different users"
+    example: |
+      # User A: prefers sources at end
+      # User B: prefers sources after answer
+      # User C: wants only main content
+      # All from same source file!
+
+best_practices:
+  automation:
+    - "Automate build process with npm scripts"
+    - "Use version control for generated files"
+    - "Document build process in README"
+    - "Provide build instructions"
+
+  quality:
+    - "Validate generated code before committing"
+    - "Test all output formats"
+    - "Keep build scripts simple"
+    - "Use descriptive variable names"
+
+  maintainability:
+    - "Document section markers clearly"
+    - "Comment complex transformations"
+    - "Keep transformation logic separate"
+    - "Provide example transformations"
+
+common_tools:
+  nodejs:
+    - "fs: File I/O"
+    - "path: Path manipulation"
+    - "Standard library only (no dependencies needed)"
+
+  validation:
+    - "Syntax checking with node --check"
+    - "Brace/parentheses counting"
+    - "Automated testing"
+
+  version_control:
+    - "Commit generated files"
+    - "Tag releases"
+    - "Document changes in CHANGELOG"

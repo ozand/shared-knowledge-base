@@ -1,0 +1,41 @@
+version: '1.0'
+category: javascript-iife
+scope: javascript
+last_updated: '2026-01-08'
+errors:
+- id: JS-IIFE-001
+  title: Variable Undefined Outside Function Scope
+  severity: high
+  scope: javascript
+  problem: When working with IIFE (Immediately Invoked Function Expression) pattern,
+    accessing variables outside the function scope results in "undefined" errors.
+    This commonly occurs when reordering code sections without respecting function
+    boundaries, or placing code after function closing brace.
+  symptoms:
+  - ReferenceError: variable is not defined
+  - SyntaxError: Unexpected token ')'
+  wrong_code: "javascript: (function () {\n    async function x() {\n        let o =\
+    \ \"content\";  // Variable declared here\n        // ... other code ...\n    }  // Function\
+    \ closes HERE\n\n    // WRONG: Code placed after function closes\n    try {\n  \
+    \      let sourceButtons = document.querySelectorAll(\"button\");\n        o += \"\
+    more content\";  // ERROR: 'o' is not defined!\n    } catch (e) {\n        console.log(e);\n\
+    \    }\n\n    x();\n})();\n"
+  correct_code: "javascript: (function () {\n    async function x() {\n        let\
+    \ o = \"content\";  // Variable declared here\n\n        // ... other sections ...\n\
+    \n        // CORRECT: Per-message sources INSIDE function x()\n        try {\n \
+    \           let sourceButtons = document.querySelectorAll(\"button\");\n       \
+    \     o += \"more content\";  // Works! 'o' is accessible\n        } catch (e) {\n\
+    \            console.log(e);\n        }\n\n    }  // Function closes HERE\n\n   \
+    \ x();\n})();\n"
+  solution: Keep all code that accesses variables INSIDE the function where they are
+    declared. When reordering sections, respect function boundaries and track opening/closing
+    braces.
+  tags:
+  - javascript
+  - iife
+  - scope
+  - function
+  - bookmarklet
+  domains:
+    primary: javascript
+    secondary: []

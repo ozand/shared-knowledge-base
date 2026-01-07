@@ -1,0 +1,207 @@
+# Bookmarklet Development Patterns
+# Best practices for JavaScript bookmarklets (browser-executed code)
+
+version: "1.0"
+category: "bookmarklet-patterns"
+last_updated: "2026-01-08"
+
+string_concatenation:
+  description: "Use string concatenation instead of template literals for bookmarklet compatibility"
+
+  problem: |
+    Template literals (backticks) may not work reliably across all browsers or
+    bookmarklet execution contexts. They can cause:
+    - Syntax errors in older browsers
+    - Encoding issues when URL-encoded
+    - Inconsistent behavior across bookmark managers
+
+  solution: |
+    Use string concatenation (+ operator) instead of template literals in production
+    bookmarklets. Write clean code with template literals in source files, then
+    convert during build step.
+
+  wrong_example: |
+    // Using template literals (may fail)
+    javascript: (function () {
+        const name = "World";
+        const message = `Hello, ${name}!`;
+        alert(message);
+    })();
+
+  correct_example: |
+    // Using string concatenation (works everywhere)
+    javascript: (function () {
+        const name = "World";
+        const message = "Hello, " + name + "!";
+        alert(message);
+    })();
+
+  build_process: |
+    # Convert template literals to concatenation during build
+    const code = fs.readFileSync('source.js', 'utf8');
+
+    const minified = code
+        .replace(/`/g, '"')
+        .replace(/\$\{/g, '" + ')
+        .replace(/\}/g, ' + "');
+
+    const bookmarklet = 'javascript:' + encodeURIComponent(minified);
+
+  trade_offs:
+    concatenation:
+      - "Universal compatibility"
+      - "Predictable URL encoding"
+      - "Works in all browsers"
+      - "Less readable"
+      - "Harder to maintain"
+
+    template_literals:
+      - "More readable"
+      - "Easier to maintain"
+      - "Supports multiline strings"
+      - "May fail in bookmarklets"
+      - "Encoding issues"
+
+async_dom_manipulation:
+  description: "Pattern for extracting dynamically-loaded content from web pages"
+
+  use_case: |
+    Web scraping with bookmarklets when:
+    - Content loads after button clicks
+    - Modals contain data
+    - Images use lazy loading
+    - API requests populate the DOM
+
+  problem: |
+    Attempting to extract content immediately after clicking a button results in
+    empty or incomplete data because the DOM hasn't updated yet.
+
+  solution: |
+    Use setTimeout to wait for content to load after triggering actions.
+    Create a helper function for consistent timing.
+
+  helper_function: |
+    const w = ms => new Promise(r => setTimeout(r, ms));
+
+  basic_pattern: |
+    async function extractModal() {
+        button.click();
+        await w(2000);  // Wait 2 seconds for content to load
+
+        const content = document.querySelector('.modal-content');
+        return content.textContent;
+    }
+
+  advanced_pattern: |
+    // Poll for content availability
+    async function waitForContent(selector, maxAttempts = 20, interval = 500) {
+        for (let i = 0; i < maxAttempts; i++) {
+            const element = document.querySelector(selector);
+
+            if (element && element.textContent.trim().length > 0) {
+                return element;
+            }
+
+            await w(interval);
+        }
+
+        throw new Error(`Content not found after ${maxAttempts} attempts`);
+    }
+
+    // Usage
+    button.click();
+    const content = await waitForContent('.modal-content');
+
+  timing_guidelines:
+    button_click_to_modal: "2000ms (2 seconds)"
+    tab_switch: "2500ms (2.5 seconds)"
+    reasoning_expansion: "3000ms (3 seconds)"
+    image_loading: "Poll with 500ms intervals, max 20 attempts"
+    general_fallback: "1000-2000ms"
+
+  specific_cases:
+    modal_content: |
+      // Click sources button
+      sourcesButton.click();
+      await w(2000);  // Wait for modal to open
+
+      // Extract from modal
+      const links = document.querySelectorAll('div.h-full a');
+
+    lazy_loaded_images: |
+      imageTab.click();
+      await w(2500);  // Wait for tab to switch
+
+      // Wait for images to actually load
+      let attempts = 0;
+      while (attempts < 20) {
+          const loadedCount = Array.from(document.querySelectorAll("img"))
+              .filter(img => img.complete && img.naturalWidth > 0)
+              .length;
+
+          if (loadedCount > 0) break;
+          await w(500);
+          attempts++;
+      }
+
+    multi_step_reasoning: |
+      const reasoningButtons = Array.from(document.querySelectorAll("button"))
+          .filter(x => /\d+\s+steps/i.test(x.innerText));
+
+      for (let i = 0; i < reasoningButtons.length; i++) {
+          const btn = reasoningButtons[i];
+
+          // Click to expand reasoning
+          btn.click();
+          await w(3000);  // Wait 3 seconds for content
+
+          // Extract reasoning steps
+          const steps = extractSteps(btn);
+      }
+
+  error_handling: |
+    try {
+        button.click();
+        await w(2000);
+        const content = document.querySelector('.content');
+
+        if (!content) {
+            console.log('Content not loaded after timeout');
+            return '';
+        }
+
+        return content.textContent;
+    } catch (e) {
+        console.log('Error extracting content:', e);
+        return '';
+    }
+
+best_practices:
+  code_organization:
+    - "Write clean code in _readable.js files"
+    - "Use modern JavaScript (template literals, async/await)"
+    - "Minify and convert during build step"
+    - "Test bookmarklets in multiple browsers"
+
+  bookmarklet_constraints:
+    - "Avoid template literals in production"
+    - "Use string concatenation for compatibility"
+    - "Wait for dynamic content to load"
+    - "Handle errors gracefully"
+    - "Keep code under URL length limits (~64KB)"
+
+  timing_considerations:
+    - "Use reasonable default timeouts (2-3 seconds)"
+    - "Poll for content when possible"
+    - "Add comments explaining why wait is needed"
+    - "Consider user experience (don't wait too long)"
+
+  testing:
+    - "Test in Chrome/Edge (Chromium)"
+    - "Test in Firefox"
+    - "Test in Safari"
+    - "Test with different bookmark manager extensions"
+
+related_patterns:
+  - "BUILD-001: Automated Code Section Reordering"
+  - "JS-IIFE-001: Variable Undefined Outside Function Scope"
