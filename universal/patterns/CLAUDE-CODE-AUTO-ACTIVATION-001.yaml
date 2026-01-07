@@ -1,0 +1,160 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "CLAUDE-CODE-AUTO-ACTIVATION-001"
+    title: "Claude Code Auto-Activation System"
+    severity: "critical"
+    scope: "universal"
+
+    problem: |
+      Claude Code skills exist but users must manually remember and activate them.
+      This leads to:
+      - Skills being underutilized
+      - Users forgetting available skills
+      - Context switching overhead
+      - Reduced productivity
+
+      Need a way for skills to suggest themselves based on user intent and context.
+
+    symptoms:
+      - Users unaware of available skills
+      - Skills not being used in relevant contexts
+      - Manual skill selection overhead
+      - Inconsistent skill usage across team
+
+    root_cause: |
+      Claude Code has no built-in mechanism for skills to suggest themselves.
+      Skills are passive and require users to explicitly activate them,
+      even when they're clearly relevant to the current task.
+
+    solution:
+      code: |
+        # Auto-activation system with 3 components:
+        # 1. skill-rules.json - Define trigger patterns
+        # 2. UserPromptSubmit hook - Analyze and suggest
+        # 3. Priority system - Rank suggestions
+
+        # .claude/skill-rules.json
+        {
+          "skill-name": {
+            "type": "domain|technical|workflow|utility",
+            "priority": "critical|high|medium|low",
+            "description": "Brief description",
+            "promptTriggers": {
+              "keywords": ["keyword1", "keyword2"],
+              "intentPatterns": ["(create|add).*?pattern"],
+              "fileTriggers": {
+                "pathPatterns": ["**/*.py"],
+                "contentPatterns": ["import asyncio"]
+              }
+            }
+          }
+        }
+
+        # .claude/hooks/UserPromptSubmit/skill-activation.ts
+        export async function skillActivationPrompt(prompt: string): Promise<string> {
+          const skills = await loadSkillRules();
+          const matches = findMatchingSkills(prompt, skills);
+
+          if (matches.length > 0) {
+            const suggestions = matches
+              .slice(0, 3)
+              .map(m => `• ${m.name}: ${m.description}`)
+              .join("\n");
+
+            return `Based on your request, consider using:\n${suggestions}`;
+          }
+
+          return "";
+        }
+
+        # .claude/settings.json
+        {
+          "hooks": {
+            "UserPromptSubmit": [
+              {
+                "type": "llm",
+                "path": ".claude/hooks/UserPromptSubmit/skill-activation.ts"
+              }
+            ]
+          }
+        }
+
+      explanation: |
+        The auto-activation system works in three steps:
+
+        1. **Define triggers** in skill-rules.json:
+           - keywords: Simple word matching
+           - intentPatterns: Regex for complex patterns
+           - fileTriggers: File path and content matching
+
+        2. **Analyze prompt** in UserPromptSubmit hook:
+           - Load skill rules
+           - Match against triggers
+           - Calculate scores (base + matches)
+           - Rank by priority
+
+        3. **Suggest skills** to user:
+           - Top 3 matching skills
+           - Format: "Based on your request, consider using:"
+           - User accepts/rejects
+
+        **Priority system:**
+        - critical = 100, high = 75, medium = 50, low = 25
+        - Keywords: +10 each
+        - Intent patterns: +20 each
+        - File triggers: +15 each
+
+        **Result:** Skills proactively suggest themselves when relevant
+        without manual user intervention.
+
+    examples:
+      - name: "Python async skill auto-activation"
+        before: |
+          User: "Create async function in python"
+          # No skill suggested, user must manually activate
+        after: |
+          User: "Create async function in python"
+          Claude: Based on your request, consider using:
+                  • python-async: Async/await patterns and coroutines
+          User: [Accepts suggestion]
+          Claude: [Loads python-async skill]
+        result: "Skill automatically suggested and activated"
+
+      - name: "Docker skill file-based activation"
+        before: |
+          # User has Dockerfile open
+          User: "Optimize this file"
+          # No suggestion even though context is clearly Docker
+        after: |
+          # User has Dockerfile open
+          User: "Optimize this file"
+          Claude: Based on your file, consider using:
+                  • docker-optimization: Docker optimization patterns
+          User: [Accepts suggestion]
+        result: "Skill suggested based on file context"
+
+    benefits:
+      - Skills become context-aware
+      - Reduced cognitive load
+      - Improved skill utilization
+      - Consistent usage patterns
+      - Better user experience
+
+    prevention:
+      - "Always test trigger patterns with real prompts"
+      - "Use specific keywords, avoid generic terms"
+      - "Set appropriate priority levels (not everything high/critical)"
+      - "Test file triggers with actual project files"
+      - "Validate JSON syntax in skill-rules.json"
+      - "Restart Claude Code after modifying skill-rules.json"
+
+    tags: ["claude-code", "skills", "auto-activation", "skill-rules", "hooks"]
+
+    related_patterns:
+      - "SKILL-RULES-JSON-001"
+      - "HOOK-PATTERNS-001"
+      - "MODULAR-SKILLS-001"
+      - "PROGRESSIVE-DISCLOSURE-001"

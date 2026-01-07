@@ -1,0 +1,338 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "SCRIPTS-IN-SKILLS-001"
+    title: "Utility Scripts in Claude Code Skills"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      Claude Code skills often need associated utility scripts for:
+      - Running tests specific to the skill domain
+      - Seeding data for development/testing
+      - Setting up environment dependencies
+      - Executing domain-specific operations
+
+      Without a standardized pattern, scripts become:
+      - Disorganized (scattered across project)
+      - Hard to discover (no clear association with skills)
+      - Difficult to maintain (no clear ownership)
+      - Lost over time (no documentation)
+
+    symptoms:
+      - Scripts in root directory with unclear purpose
+      - Duplication of similar scripts across projects
+      - Scripts not associated with relevant skills
+      - Difficulty finding scripts for specific domains
+      - No clear way to execute skill-specific scripts
+
+    root_cause: |
+      No established pattern for organizing and associating utility
+      scripts with Claude Code skills.
+
+    solution:
+      code: |
+        # Scripts in Skills Pattern
+        # Attach utility scripts to skills in scripts/ subdirectory
+
+        # Directory structure:
+        # .claude/skills/<skill-name>/
+        # ├── SKILL.md              # Main skill file
+        # ├── resources/            # Detailed documentation
+        # ├── scripts/              # Utility scripts (NEW!)
+        # │   ├── test.sh
+        # │   ├── seed.sh
+        # │   └── setup.sh
+        # └── examples/             # Code examples
+
+        # Example 1: Docker skill with scripts
+        # .claude/skills/docker/
+        # ├── SKILL.md
+        # ├── resources/
+        # │   └── docker-optimization.md
+        # └── scripts/
+        #     ├── test.sh           # Test Docker configuration
+        #     ├── build.sh          # Build Docker image
+        #     └── cleanup.sh        # Remove dangling images
+
+        # .claude/skills/docker/scripts/test.sh
+        #!/bin/bash
+        # Test Docker configuration validity
+        set -e
+        echo "🔍 Testing Docker configuration..."
+        docker-compose config
+        echo "✅ Configuration valid"
+        docker-compose build
+        echo "✅ Build successful"
+        docker-compose up -d
+        echo "✅ Containers started"
+        docker-compose ps
+        echo "✅ All containers running"
+
+        # .claude/skills/docker/scripts/cleanup.sh
+        #!/bin/bash
+        # Clean up Docker resources
+        echo "🧹 Cleaning up Docker resources..."
+        docker container prune -f
+        docker image prune -a -f
+        docker volume prune -f
+        echo "✅ Cleanup complete"
+
+        # Example 2: Database skill with seed scripts
+        # .claude/skills/database/
+        # ├── SKILL.md
+        # ├── resources/
+        # │   └── migration-patterns.md
+        # └── scripts/
+        #     ├── seed-test-data.sh
+        #     ├── reset-database.sh
+        #     └── backup.sh
+
+        # .claude/skills/database/scripts/seed-test-data.sh
+        #!/bin/bash
+        # Seed test data for development
+        set -e
+        DB_NAME="${1:-test_db}"
+        echo "🌱 Seeding test data for $DB_NAME..."
+        psql -h localhost -U postgres -d "$DB_NAME" <<EOF
+        INSERT INTO users (name, email) VALUES
+          ('Alice', 'alice@example.com'),
+          ('Bob', 'bob@example.com'),
+          ('Charlie', 'charlie@example.com');
+        INSERT INTO posts (title, content, user_id) VALUES
+          ('First Post', 'Hello World', 1),
+          ('Second Post', 'Testing', 2);
+        EOF
+        echo "✅ Test data seeded"
+
+        # .claude/skills/database/scripts/reset-database.sh
+        #!/bin/bash
+        # Reset database to clean state
+        set -e
+        DB_NAME="${1:-test_db}"
+        echo "🔄 Resetting database $DB_NAME..."
+        dropdb -h localhost -U postgres "$DB_NAME" 2>/dev/null || true
+        createdb -h localhost -U postgres "$DB_NAME"
+        python manage.py migrate
+        echo "✅ Database reset complete"
+
+        # Example 3: Testing skill with test scripts
+        # .claude/skills/testing/
+        # ├── SKILL.md
+        # ├── resources/
+        # │   └── pytest-patterns.md
+        # └── scripts/
+        #     ├── run-unit-tests.sh
+        #     ├── run-integration-tests.sh
+        #     └── coverage-report.sh
+
+        # .claude/skills/testing/scripts/run-unit-tests.sh
+        #!/bin/bash
+        # Run unit tests with coverage
+        set -e
+        echo "🧪 Running unit tests..."
+        pytest tests/unit/ \
+          --verbose \
+          --cov=src \
+          --cov-report=html \
+          --cov-report=term
+        echo "✅ Unit tests passed"
+
+        # Integration with skill activation:
+        #
+        # When skill is activated, Claude knows about associated scripts:
+        #
+        # User: "I need to test the Docker setup"
+        # Claude: [Activates docker skill]
+        #         I can help test Docker. I have these scripts available:
+        #         • test.sh - Test Docker configuration
+        #         • build.sh - Build Docker image
+        #         • cleanup.sh - Clean up resources
+        #
+        #         Run test.sh?
+        # User: Yes
+        # Claude: [Executes .claude/skills/docker/scripts/test.sh]
+        #         ✅ Configuration valid
+        #         ✅ Build successful
+        #         ✅ Containers started
+
+        # Document scripts in SKILL.md:
+        #
+        # ## Available Scripts
+        #
+        # **📘 Scripts Location:** `@skills/docker/scripts/`
+        #
+        # ### test.sh
+        # **Purpose:** Test Docker configuration validity
+        # **Usage:** `bash .claude/skills/docker/scripts/test.sh`
+        # **What it does:**
+        # - Validates docker-compose.yml
+        # - Builds all images
+        # - Starts containers
+        # - Checks container status
+        #
+        # ### build.sh
+        # **Purpose:** Build Docker images
+        # **Usage:** `bash .claude/skills/docker/scripts/build.sh`
+        # **What it does:**
+        # - Builds all services
+        # - Shows build progress
+        # - Reports build time
+        #
+        # ### cleanup.sh
+        # **Purpose:** Remove unused Docker resources
+        # **Usage:** `bash .claude/skills/docker/scripts/cleanup.sh`
+        # **What it does:**
+        # - Removes stopped containers
+        # - Removes dangling images
+        # - Removes unused volumes
+
+      explanation: |
+        The Scripts in Skills pattern provides a standardized way to organize
+        utility scripts and associate them with relevant Claude Code skills.
+
+        **Key principles:**
+
+        1. **Colocation** - Scripts live with the skill
+           - Create `scripts/` subdirectory in skill directory
+           - Scripts are contextually associated with skill domain
+           - Easy to discover when skill is activated
+
+        2. **Documentation** - Scripts are documented in SKILL.md
+           - List all available scripts
+           - Document purpose, usage, and behavior
+           - Provide examples of script execution
+
+        3. **Discoverability** - Claude knows about scripts
+           - Scripts are referenced in SKILL.md
+           - Claude can suggest scripts based on context
+           - Scripts are part of skill activation
+
+        4. **Maintainability** - Clear ownership and organization
+           - Each skill owns its scripts
+           - No duplicate scripts across skills
+           - Easy to update and maintain
+
+        **Types of scripts:**
+
+        1. **Test scripts** - Validate configuration and setup
+           - `test.sh` - General testing
+           - `validate.sh` - Configuration validation
+           - `health-check.sh` - Service health checks
+
+        2. **Setup scripts** - Initialize environment
+           - `setup.sh` - Install dependencies
+           - `init.sh` - Initialize project
+           - `configure.sh` - Configure services
+
+        3. **Seed scripts** - Populate test data
+           - `seed.sh` - Seed test data
+           - `reset.sh` - Reset to clean state
+           - `populate.sh` - Populate with sample data
+
+        4. **Utility scripts** - Common operations
+           - `build.sh` - Build project
+           - `deploy.sh` - Deploy application
+           - `cleanup.sh` - Clean up resources
+           - `backup.sh` - Backup data
+           - `restore.sh` - Restore data
+
+        **Best practices:**
+        - Always make scripts executable: `chmod +x scripts/*.sh`
+        - Include `set -e` for error handling
+        - Use `#!/bin/bash` shebang
+        - Add comments explaining script purpose
+        - Use emoji for visual clarity (🔍, ✅, ❌, 🧹)
+        - Document scripts in SKILL.md
+        - Reference scripts using `@skills/<name>/scripts/` syntax
+
+    examples:
+      - name: "Docker skill with test scripts"
+        description: "Docker skill includes scripts for testing and cleanup"
+        before: |
+          # Scripts scattered in project root
+          root/
+          ├── test-docker.sh
+          ├── build.sh
+          ├── cleanup.sh
+          # Unclear which scripts are for Docker
+          # No documentation
+          # Not associated with Docker skill
+        after: |
+          .claude/skills/docker/
+          ├── SKILL.md (with script documentation)
+          ├── resources/
+          │   └── docker-optimization.md
+          └── scripts/
+              ├── test.sh (well-documented)
+              ├── build.sh
+              └── cleanup.sh
+          # Scripts documented in SKILL.md
+          # Easy to find when Docker skill activated
+          # Clear ownership and purpose
+        result: "Organized scripts, easy to discover and use"
+
+      - name: "Database seed script activation"
+        description: "Claude suggests seed script when database skill active"
+        before: |
+          User: "I need test data for the database"
+          Claude: [Doesn't know about seed scripts]
+                  [Manually writes INSERT statements]
+          # Time-consuming, error-prone
+        after: |
+          User: "I need test data for the database"
+          Claude: [Activates database skill]
+                  I have a seed script for this!
+                  Running seed-test-data.sh...
+                  ✅ Test data seeded
+                  Users: Alice, Bob, Charlie
+                  Posts: 2 posts created
+          # Fast, reliable, consistent
+        result: "Instant access to domain-specific scripts"
+
+      - name: "Test execution through skill"
+        description: "Running tests through testing skill scripts"
+        before: |
+          User: "Run the tests"
+          Claude: [Figures out test command]
+                  [Runs wrong test command]
+                  # Confusion about test framework
+        after: |
+          User: "Run the tests"
+          Claude: [Activates testing skill]
+                  Running run-unit-tests.sh...
+                  🧪 Running unit tests...
+                  ✅ Unit tests passed
+                  Coverage report: htmlcov/index.html
+          # Correct test command, documented in skill
+        result: "Reliable test execution, no confusion"
+
+    benefits:
+      - Scripts collocated with relevant skills
+      - Easy discovery when skill is active
+      - Clear ownership and organization
+      - Better documentation
+      - Reduced duplication
+      - Faster execution of common tasks
+      - Consistent operations across projects
+
+    prevention:
+      - "Always create scripts/ subdirectory in skill directory"
+      - "Document all scripts in SKILL.md"
+      - "Make scripts executable (chmod +x)"
+      - "Use consistent naming (test.sh, setup.sh, seed.sh)"
+      - "Include error handling (set -e)"
+      - "Add comments explaining script purpose"
+      - "Reference scripts using @skills/<name>/scripts/ syntax"
+      - "Keep scripts focused on single responsibility"
+      - "Test scripts before committing to repository"
+      - "Version control scripts along with skills"
+
+    tags: ["claude-code", "skills", "scripts", "automation", "utilities"]
+
+    related_patterns:
+      - "MODULAR-SKILLS-001"
+      - "CLAUDE-CODE-AUTO-ACTIVATION-001"
+      - "HOOK-PATTERNS-001"

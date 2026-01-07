@@ -1,0 +1,256 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "SKILL-RULES-JSON-001"
+    title: "skill-rules.json Schema and Configuration"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      Claude Code skills need a way to define auto-activation triggers,
+      but there's no standard format for configuring:
+      - When skills should activate
+      - How to match user intent
+      - Priority ranking for suggestions
+      - File-based triggers
+      - Context requirements
+
+      Without a standard schema, auto-activation is inconsistent and
+      difficult to maintain across projects.
+
+    symptoms:
+      - Skills don't activate consistently
+      - No clear way to configure triggers
+      - Priority conflicts between skills
+      - Missing file-based activation
+      - Inconsistent skill suggestions
+
+    root_cause: |
+      Claude Code has a hook system (UserPromptSubmit) for skill
+      activation but lacks a standardized schema for defining skill
+      trigger rules and priorities.
+
+    solution:
+      code: |
+        # .claude/skill-rules.json - Complete schema
+
+        {
+          "skill-name": {
+            # Required: Skill type
+            "type": "domain|technical|workflow|utility",
+
+            # Optional: Enforcement level
+            "enforcement": "suggest|require|optional",
+
+            # Required: Priority level
+            "priority": "critical|high|medium|low",
+
+            # Required: Brief description
+            "description": "Brief description (1-2 sentences)",
+
+            # Required: Trigger configuration
+            "promptTriggers": {
+              # Simple word matching (5-10 keywords)
+              "keywords": ["keyword1", "keyword2", "keyword3"],
+
+              # Optional: Regex patterns for intent (2-5 patterns)
+              "intentPatterns": [
+                "(create|add|implement).*?pattern",
+                "pattern.*?(alternative|variation)"
+              ],
+
+              # Optional: File-based triggers
+              "fileTriggers": {
+                # Glob patterns for file paths
+                "pathPatterns": ["**/*.py", "src/**/*.ts"],
+
+                # Regex patterns for file content
+                "contentPatterns": ["import asyncio", "useState"]
+              }
+            },
+
+            # Optional: Context and dependencies
+            "context": {
+              # Required skills
+              "requires": ["other-skill"],
+
+              # Conflicting skills
+              "incompatibleWith": ["conflicting-skill"],
+
+              # File types this applies to
+              "fileTypes": ["*.py", "*.ts"],
+
+              # Programming languages
+              "languages": ["python", "typescript"]
+            },
+
+            # Optional: Activation behavior
+            "activation": {
+              # Auto-load without confirmation
+              "autoLoad": false,
+
+              # Require user confirmation
+              "userConfirmation": true,
+
+              # Priority score boost
+              "priorityBoost": 0
+            }
+          }
+        }
+
+        # Priority scoring algorithm
+        Base priority:
+          critical = 100
+          high = 75
+          medium = 50
+          low = 25
+
+        + Keyword match: +10 each
+        + Intent pattern match: +20 each
+        + File path match: +15 each
+        + File content match: +15 each
+        + Priority boost: +activation.priorityBoost
+
+        = Total score
+
+        # Example: Python async skill
+        {
+          "python-async": {
+            "type": "technical",
+            "priority": "high",  # Base: 75
+            "description": "Python async/await patterns and coroutines",
+            "promptTriggers": {
+              "keywords": ["python", "async", "await", "coroutine"],  # +40 if all match
+              "intentPatterns": [
+                "(create|add).*?python.*?(async|coroutine)"  # +20 if matches
+              ],
+              "fileTriggers": {
+                "pathPatterns": ["**/*.py"],  # +15 if match
+                "contentPatterns": ["import asyncio", "async def"]  # +15 if match
+              }
+            },
+            "activation": {
+              "priorityBoost": 5  # +5
+            }
+          }
+        }
+
+        # Scenario: User asks "Create async function in python" with api.py open
+        # Score: 75 (base) + 20 (keywords) + 20 (intent) + 15 (path) + 15 (content) + 5 (boost) = 150
+        # Result: Skill suggested with high confidence
+
+      explanation: |
+        The skill-rules.json schema provides a standardized way to configure
+        auto-activation for Claude Code skills.
+
+        **Key components:**
+
+        1. **type** - Categorizes the skill
+           - domain: Language/framework skills (python, docker)
+           - technical: Specific techniques (async, testing)
+           - workflow: Process skills (git-workflow, code-review)
+           - utility: Helper skills (kb-search, formatting)
+
+        2. **priority** - Controls suggestion order
+           - critical: Always suggest (100 points)
+           - high: Strongly suggest (75 points)
+           - medium: Suggest when relevant (50 points)
+           - low: Only if highly relevant (25 points)
+
+        3. **promptTriggers** - How to match user prompts
+           - keywords: Simple case-insensitive word matching
+           - intentPatterns: Regex for complex intent matching
+           - fileTriggers: File path and content patterns
+
+        4. **scoring** - Calculate relevance
+           - Base priority + matches + boost
+           - Skills with score >50 are suggested
+           - Top 3 skills shown to user
+
+        **Benefits:**
+        - Standardized configuration format
+        - Consistent auto-activation behavior
+        - Priority-based skill ranking
+        - File-based context awareness
+        - Easy to maintain and extend
+
+    examples:
+      - name: "Domain skill with file triggers"
+        description: "Python development skill activates when working with Python files"
+        code: |
+          {
+            "python-development": {
+              "type": "domain",
+              "priority": "high",
+              "description": "Python development patterns and best practices",
+              "promptTriggers": {
+                "keywords": ["python", "py", "django", "flask"],
+                "fileTriggers": {
+                  "pathPatterns": ["**/*.py"],
+                  "contentPatterns": ["import ", "from ", "#!/usr/bin/env python"]
+                }
+              }
+            }
+          }
+
+      - name: "Technical skill with intent patterns"
+        description: "Async programming skill activates for async-related requests"
+        code: |
+          {
+            "async-programming": {
+              "type": "technical",
+              "priority": "medium",
+              "description": "Async/await patterns and coroutines",
+              "promptTriggers": {
+                "keywords": ["async", "await", "coroutine"],
+                "intentPatterns": [
+                  "(create|make).*?async.*?(function|method)",
+                  "how.*(use|implement).*?(async|await)"
+                ]
+              }
+            }
+          }
+
+      - name: "Workflow skill"
+        description: "Git workflow skill for commit and branch operations"
+        code: |
+          {
+            "git-workflow": {
+              "type": "workflow",
+              "priority": "high",
+              "description": "Git workflow conventions and best practices",
+              "promptTriggers": {
+                "keywords": ["git", "commit", "branch", "merge"],
+                "intentPatterns": [
+                  "(commit|push|merge).*?changes",
+                  "create.*?(branch|tag)"
+                ]
+              }
+            }
+          }
+
+    benefits:
+      - Standardized auto-activation configuration
+      - Priority-based skill suggestions
+      - File-based context awareness
+      - Flexible trigger patterns
+      - Easy to maintain and extend
+
+    prevention:
+      - "Always validate JSON syntax (jq . skill-rules.json)"
+      - "Match skill name exactly in skill-rules.json and YAML frontmatter"
+      - "Use 5-10 specific keywords per skill"
+      - "Test intent patterns with regex101.com before using"
+      - "Set appropriate priority (not everything high/critical)"
+      - "Test file triggers with actual project files"
+      - "Register UserPromptSubmit hook in settings.json"
+      - "Restart Claude Code after modifying skill-rules.json"
+
+    tags: ["claude-code", "skills", "skill-rules", "json", "schema", "auto-activation"]
+
+    related_patterns:
+      - "CLAUDE-CODE-AUTO-ACTIVATION-001"
+      - "HOOK-PATTERNS-001"
+      - "MODULAR-SKILLS-001"

@@ -1,0 +1,288 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "DEV-DOCS-SYSTEM-001"
+    title: "Development Documentation System (Task Tracking)"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      During long Claude Code sessions, Claude can lose context about:
+      - Current task objectives and requirements
+      - Background context and constraints
+      - Sub-tasks and progress tracking
+      - Decisions made and their rationale
+
+      This leads to:
+      - Repetitive explanations
+      - Lost context during long sessions
+      - Difficulty resuming work after interruptions
+      - No persistent task history
+
+    symptoms:
+      - Claude asks the same questions repeatedly
+      - Loses track of task requirements mid-session
+      - Cannot resume work after context limit reached
+      - No clear record of what was done and why
+      - Difficulty maintaining state across multiple sessions
+
+    root_cause: |
+      No persistent documentation system for tracking development tasks
+      and context within .claude/ directory. Claude has no dedicated place
+      to store and retrieve task-specific information.
+
+    solution:
+      code: |
+        # Development Documentation System Pattern
+        # Create task-specific directories in .claude/dev/
+
+        # Directory structure:
+        # .claude/dev/
+        # ├── task-YYYY-MM-DD-name/
+        # │   ├── plan.md      # Task requirements and approach
+        # │   ├── context.md   # Background context and constraints
+        # │   └── tasks.md     # Sub-tasks checklist
+        # └── task-YYYY-MM-DD-other/
+        #     ├── plan.md
+        #     ├── context.md
+        #     └── tasks.md
+
+        # Example: .claude/dev/task-2026-01-07-user-auth/plan.md
+        # # User Authentication System
+        #
+        # **Date:** 2026-01-07
+        # **Status:** In Progress
+        #
+        # ## Objectives
+        # - Implement JWT-based authentication
+        # - Add user registration and login endpoints
+        # - Create authentication middleware
+        #
+        # ## Requirements
+        # - Use FastAPI framework
+        # - JWT tokens with 24h expiration
+        # - Password hashing with bcrypt
+        # - Refresh token mechanism
+        #
+        # ## Technical Approach
+        # 1. Create auth module structure
+        # 2. Implement JWT token generation/validation
+        # 3. Build registration/login endpoints
+        # 4. Add authentication middleware
+        # 5. Write tests for all components
+        #
+        # ## Constraints
+        # - Must follow existing project structure
+        # - Use existing database models
+        # - Maintain API consistency
+
+        # Example: .claude/dev/task-2026-01-07-user-auth/context.md
+        # # Context: User Authentication
+        #
+        # ## Project Background
+        # - Project: E-commerce API
+        # - Stack: FastAPI, PostgreSQL, Redis
+        # - Current auth: Basic (needs upgrade)
+        #
+        # ## Previous Attempts
+        # - Tried OAuth2 (too complex for requirements)
+        # - Considered session-based (doesn't scale)
+        #
+        # ## Technical Constraints
+        # - Database: PostgreSQL 14
+        # - Cache: Redis for token blacklist
+        # - Deployment: Docker, Kubernetes
+        #
+        # ## Integration Points
+        # - Must integrate with existing user model
+        # - Should work with current API structure
+        # - Must not break existing endpoints
+        #
+        # ## Dependencies
+        # - python-jose[cryptography] for JWT
+        # - passlib[bcrypt] for password hashing
+        # - Existing user service module
+
+        # Example: .claude/dev/task-2026-01-07-user-auth/tasks.md
+        # # Tasks: User Authentication
+        #
+        # ## Phase 1: Setup
+        # - [x] Create auth module directory
+        # - [x] Install dependencies (python-jose, passlib)
+        # - [x] Set up JWT configuration
+        #
+        # ## Phase 2: Core Implementation
+        # - [x] Implement password hashing utilities
+        # - [x] Create JWT token generation
+        # - [x] Create JWT token validation
+        # - [ ] Build registration endpoint
+        # - [ ] Build login endpoint
+        # - [ ] Implement refresh token logic
+        #
+        # ## Phase 3: Integration
+        # - [ ] Create authentication middleware
+        # - [ ] Add protected route decorators
+        # - [ ] Integrate with existing user model
+        #
+        # ## Phase 4: Testing
+        # - [ ] Write unit tests for utilities
+        # - [ ] Write integration tests for endpoints
+        # - [ ] Test middleware with protected routes
+        # - [ ] Test token refresh flow
+        #
+        # ## Phase 5: Documentation
+        # - [ ] Update API documentation
+        # - [ ] Add usage examples
+        # - [ ] Document deployment steps
+
+        # Integration with Claude Code workflow:
+        #
+        # 1. Start new task:
+        #    User: "Start task: Implement user authentication"
+        #    Claude: Creates .claude/dev/task-YYYY-MM-DD-user-auth/
+        #            - Generates plan.md from requirements
+        #            - Creates context.md template
+        #            - Initializes tasks.md checklist
+        #
+        # 2. During development:
+        #    Claude: References @dev/task-YYYY-MM-DD-user-auth/plan.md
+        #            Updates @dev/task-YYYY-MM-DD-user-auth/tasks.md
+        #            Adds decisions to context.md
+        #
+        # 3. Resume work:
+        #    User: "Continue with user auth task"
+        #    Claude: Reads @dev/task-YYYY-MM-DD-user-auth/plan.md
+        #            Checks tasks.md for progress
+        #            Continues from last checkpoint
+        #
+        # 4. Complete task:
+        #    Claude: Marks all tasks complete
+        #            Creates summary in plan.md
+        #            Archives task directory
+
+      explanation: |
+        The Development Documentation System provides persistent task tracking
+        and context management for long Claude Code sessions.
+
+        **Key components:**
+
+        1. **plan.md** - Task blueprint
+           - Objectives and requirements
+           - Technical approach
+           - Constraints and considerations
+           - Updated with decisions made
+
+        2. **context.md** - Background information
+           - Project background
+           - Technical constraints
+           - Integration points
+           - Previous attempts
+
+        3. **tasks.md** - Progress tracking
+           - Checklist of sub-tasks
+           - Organized by phases
+           - Real-time progress updates
+           - Completion status
+
+        **Benefits:**
+        1. **Persistent context** - Survives context limit resets
+        2. **Quick resume** - Pick up where you left off
+        3. **Decision record** - Why certain approaches were chosen
+        4. **Progress tracking** - Clear visibility into completion status
+        5. **Reduced repetition** - No need to reexplain requirements
+
+        **Implementation pattern:**
+        - Create task directory: `.claude/dev/task-YYYY-MM-DD-name/`
+        - Initialize with templates for plan.md, context.md, tasks.md
+        - Update files during development
+        - Reference using `@dev/task-name/file.md` syntax
+        - Archive when complete
+
+        **Integration with skills:**
+        - Skills can reference task docs: `@dev/current-task/plan.md`
+        - Commands can create task templates
+        - Hooks can auto-update tasks.md on completion
+
+    examples:
+      - name: "Task initialization workflow"
+        description: "Starting a new development task"
+        before: |
+          User: "Add user authentication to the API"
+          Claude: [Asks questions about requirements]
+          Claude: [Starts implementing]
+          # 30 minutes later, context lost, asks same questions
+        after: |
+          User: "Add user authentication to the API"
+          Claude: Creates .claude/dev/task-2026-01-07-user-auth/
+                  - Generates plan.md from discussion
+                  - Creates context.md with project info
+                  - Initializes tasks.md checklist
+          Claude: [Implements with persistent context]
+          # Later: "Continue with auth task"
+          Claude: Reads @dev/task-2026-01-07-user-auth/plan.md
+                  Checks tasks.md, sees Phase 2 complete
+                  Continues with Phase 3
+        result: "Persistent context, no repetition, clear progress"
+
+      - name: "Resume after interruption"
+        description: "Resuming work after context limit reached"
+        before: |
+          User: [Long session working on feature]
+          # Context limit reached
+          Claude: I've lost context. What were we working on?
+          User: [Must reexplain everything]
+        after: |
+          User: [Long session working on feature]
+          # Context limit reached
+          Claude: I've lost context. Let me check the task docs.
+                  Reads @dev/task-2026-01-07-feature/plan.md
+                  Checks tasks.md for last completed item
+                  Claude: I see we were on Phase 3, task 4.
+                          Continue with authentication middleware?
+          User: Yes
+          Claude: [Continues from where we left off]
+        result: "Instant resume, no lost context"
+
+      - name: "Multi-session development"
+        description: "Working on task across multiple days"
+        before: |
+          Day 1: Start implementation, make progress
+          Day 2: Claude doesn't remember what was done
+          Day 3: More confusion, repeat work
+        after: |
+          Day 1: Create task, update tasks.md as we go
+          Day 2: "Continue auth task"
+                  Claude reads tasks.md, sees Phase 1-2 complete
+                  Continues with Phase 3
+          Day 3: "Continue"
+                  Claude checks tasks.md, sees Phase 3 done
+                  Moves to Phase 4
+        result: "Seamless multi-session development"
+
+    benefits:
+      - Persistent context across sessions
+      - Quick resume after interruptions
+      - Decision history and rationale
+      - Clear progress tracking
+      - Reduced repetition and explanations
+      - Better task organization
+      - Automatic documentation of work
+
+    prevention:
+      - "Create task directory before starting complex work"
+      - "Update tasks.md as you complete sub-tasks"
+      - "Record decisions in context.md or plan.md"
+      - "Use @ references to keep Claude aware of task docs"
+      - "Archive completed tasks to dev/complete/"
+      - "Keep task descriptions focused and specific"
+      - "Date task directories (task-YYYY-MM-DD-name)"
+      - "One task per directory for clarity"
+
+    tags: ["claude-code", "task-tracking", "context-management", "documentation", "workflow"]
+
+    related_patterns:
+      - "MODULAR-SKILLS-001"
+      - "PROGRESSIVE-DISCLOSURE-001"
+      - "CLAUDE-CODE-FILES-ORGANIZATION-001"

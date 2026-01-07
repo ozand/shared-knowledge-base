@@ -1,0 +1,71 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MCP-PLAYWRIGHT-001"
+    title: "Playwright MCP Server - Browser Automation"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Browser automation tasks are difficult:
+      - Testing web applications
+      - Web scraping
+      - Screenshot capture
+      - Form filling automation
+      - Cross-browser testing
+
+    solution: |
+      Playwright MCP server enables browser automation:
+      - Web page navigation
+      - Screenshot capture
+      - Form filling and submission
+      - Web scraping
+      - Cross-browser testing (Chromium, Firefox, WebKit)
+
+    features:
+      - Navigate to URLs
+      - Take screenshots
+      - Click elements
+      - Fill forms
+      - Extract text/data
+      - Execute JavaScript
+      - Device emulation (mobile)
+
+    installation:
+      official: "claude mcp add playwright -s user -- npx -y @playwright/mcp@latest"
+      enhanced: "claude mcp add playwright -s user -- npx '@executeautomation/playwright-mcp-server'"
+
+    requirements:
+      - Node.js and npx for execution
+      - Claude Code CLI for installation
+      - Playwright browsers (auto-downloaded)
+
+    usage_examples:
+      - "Open example.com and take a screenshot"
+      - "Fill out the login form with credentials"
+      - "Scrape product prices from e-commerce site"
+      - "Test the checkout flow"
+      - "Emulate mobile device (iPhone 12)"
+
+    use_cases:
+      - Automated testing
+      - Web scraping
+      - Screenshot documentation
+      - Form automation
+      - Cross-browser testing
+      - Visual regression testing
+
+    benefits:
+      - No manual browser interaction
+      - Automated testing workflows
+      - Web data extraction
+      - Visual documentation
+      - Cross-browser validation
+
+    tags: ["claude-code", "mcp", "playwright", "browser-automation", "testing", "scraping"]
+
+    related_patterns:
+      - "MCP-INTEGRATION-001"
+      - "DEV-DOCS-SYSTEM-001"

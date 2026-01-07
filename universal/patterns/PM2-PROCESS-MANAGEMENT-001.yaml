@@ -1,0 +1,289 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "PM2-PROCESS-MANAGEMENT-001"
+    title: "PM2 Process Management for Backend Development"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Backend development requires efficient process management for:
+      - Running Node.js/TypeScript services in production mode
+      - Monitoring logs in real-time during debugging
+      - Auto-restarting services on file changes
+      - Managing multiple service instances
+      - Zero-downtime deployments
+
+      Traditional approaches (npm run dev, nodemon) lack:
+      - Production-like process management
+      - Centralized log monitoring
+      - Automatic restart on crashes
+      - Cluster mode for multi-core utilization
+
+    symptoms:
+      - Services crash and require manual restart
+      - Logs scattered across multiple terminals
+      - No production-like environment for local development
+      - Difficulty debugging issues in real-time
+      - Manual process management overhead
+
+    root_cause: |
+      Using development tools (nodemon, npm run dev) instead of
+      production process managers (PM2) for local backend development.
+
+    solution:
+      code: |
+        # PM2 Process Management Pattern
+        # Use PM2 for local backend development and production
+
+        # Installation:
+        npm install -g pm2
+
+        # Basic PM2 commands:
+        pm2 start app.js              # Start application
+        pm2 start ecosystem.config.js # Start with config
+        pm2 list                      # List all processes
+        pm2 logs                      # View all logs
+        pm2 logs <app-name>           # View specific app logs
+        pm2 logs --lines 100          # View last 100 lines
+        pm2 stop <app-name|all>       # Stop process(es)
+        pm2 restart <app-name|all>    # Restart process(es)
+        pm2 delete <app-name|all>     # Delete process(es)
+        pm2 monit                     # Real-time monitoring dashboard
+
+        # ecosystem.config.js - Complete configuration
+        module.exports = {
+          apps: [
+            {
+              name: 'api-server',
+              script: './dist/server.js',
+              instances: 'max',        # Use all CPU cores
+              exec_mode: 'cluster',    # Cluster mode
+              autorestart: true,
+              watch: false,            # Disable in production
+              max_memory_restart: '1G',
+              env: {
+                NODE_ENV: 'development',
+                PORT: 3000,
+              },
+              env_production: {
+                NODE_ENV: 'production',
+                PORT: 3000,
+              },
+              error_file: './logs/pm2-error.log',
+              out_file: './logs/pm2-out.log',
+              log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+              merge_logs: true,
+            },
+            {
+              name: 'worker',
+              script: './dist/worker.js',
+              instances: 1,
+              exec_mode: 'fork',
+              autorestart: true,
+              watch: false,
+              env: {
+                NODE_ENV: 'development',
+              },
+            }
+          ]
+        };
+
+        # Development workflow with PM2:
+
+        # 1. Start services:
+        pm2 start ecosystem.config.js
+        # Output: [PM2] Starting app.js in cluster mode
+        #         [PM2] Done.
+        #         ├─── api-server (cluster: 4 instances)
+        #         └─── worker (fork: 1 instance)
+
+        # 2. Monitor in real-time:
+        pm2 monit
+        # Shows: CPU, Memory, Logs in real-time dashboard
+        #
+        # ┌─ api-server (cluster: 4) ─────────────┐
+        # │ CPU: 15%  Memory: 250MB              │
+        # │ Restart: 0  Uptime: 2h               │
+        # │ [2026-01-07 10:30:45] GET /api/users │
+        # │ [2026-01-07 10:30:46] POST /api/auth │
+        # └──────────────────────────────────────┘
+
+        # 3. Follow logs in real-time:
+        pm2 logs api-server
+        # [PM2] Tailing last 100 lines for api-server
+        # [2026-01-07 10:30:45] [INFO] Server started on port 3000
+        # [2026-01-07 10:30:46] [INFO] Database connected
+        # [2026-01-07 10:30:47] [ERROR] Failed to fetch user
+
+        # 4. Restart after changes:
+        # After building: npm run build
+        pm2 restart api-server
+        # Process restarts instantly, zero-downtime
+
+        # 5. Stop all services:
+        pm2 stop all
+
+        # Integration with Claude Code workflow:
+
+        # .claude/dev/task-YYYY-MM-DD-backend-debug/tasks.md
+        # ## Backend Debugging Task
+        #
+        # - [ ] Start PM2 services
+        # - [ ] Monitor logs: pm2 logs api-server
+        # - [ ] Reproduce issue
+        # - [ ] Check logs for errors
+        # - [ ] Fix issue
+        # - [ ] Restart: pm2 restart api-server
+        # - [ ] Verify fix
+
+        # .claude/hooks/PreToolUse/restart-pm2.sh
+        #!/bin/bash
+        # Auto-restart PM2 after TypeScript compilation
+        TOOL_NAME="$1"
+        if [ "$TOOL_NAME" = "Bash" ]; then
+          # Check if running TypeScript build
+          if grep -q "npm run build\|tsc" <<< "$2"; then
+            pm2 restart api-server
+            echo "✅ PM2 restarted after build"
+          fi
+        fi
+
+        # Log analysis pattern:
+        pm2 logs api-server --lines 1000 --nostream
+        # Export last 1000 lines for analysis
+        # Use with Claude: "Analyze these PM2 logs"
+
+      explanation: |
+        PM2 (Process Manager 2) is a production process manager for Node.js
+        applications that provides advanced features for local development
+        and production deployments.
+
+        **Key benefits:**
+
+        1. **Cluster mode** - Utilize all CPU cores
+           - Run multiple instances of your app
+           - Load balancing across instances
+           - Better performance for I/O-bound apps
+
+        2. **Auto-restart** - Zero-downtime reliability
+           - Auto-restart on crashes
+           - Auto-restart on file changes (in dev)
+           - Graceful shutdown with SIGINT
+
+        3. **Log management** - Centralized logging
+           - Real-time log monitoring
+           - Log rotation and compression
+           - Separate error and output logs
+           - Timestamp formatting
+
+        4. **Monitoring** - Real-time dashboard
+           - CPU and memory usage
+           - Request/response monitoring
+           - Uptime tracking
+           - Restart count
+
+        **Development vs Production:**
+
+        Development:
+        - Use `watch: true` for auto-restart on changes
+        - Run in fork mode (single instance)
+        - Enable detailed logging
+        - Use `env` with development variables
+
+        Production:
+        - Use `watch: false` for stability
+        - Run in cluster mode (multiple instances)
+        - Enable log rotation
+        - Use `env_production` with production variables
+
+        **Integration with Claude Code:**
+        - Claude can read PM2 logs for debugging
+        - Hooks can restart PM2 after builds
+        - Task docs can include PM2 workflows
+        - Real-time log monitoring during debugging
+
+    examples:
+      - name: "Local backend debugging"
+        description: "Using PM2 for local backend development"
+        before: |
+          Developer: npm run dev
+          # Runs in single terminal
+          # Logs mixed with other output
+          # Crash requires manual restart
+          # No production-like environment
+        after: |
+          Developer: pm2 start ecosystem.config.js
+          Developer: pm2 logs api-server --lines 50
+          # Real-time log monitoring
+          # Crash auto-restarts
+          # Production-like cluster mode
+          # Centralized log viewing
+        result: "Better debugging experience, production-ready"
+
+      - name: "Log analysis with Claude"
+        description: "Exporting PM2 logs for AI analysis"
+        before: |
+          Developer: [Manually grepping through logs]
+          # Time-consuming
+          # Easy to miss patterns
+          # Difficult to spot issues
+        after: |
+          Developer: pm2 logs api-server --lines 1000 --nostream > logs.txt
+          Developer: [Uploads to Claude]
+          Claude: I see the error - database connection timeout
+                  at line 452. Here's the fix...
+        result: "AI-assisted log analysis, faster debugging"
+
+      - name: "Zero-downtime deployment"
+        description: "Restarting without downtime"
+        before: |
+          Developer: [Stops server]
+          Developer: [Deploys new code]
+          Developer: [Starts server]
+          # 30 seconds of downtime
+          # Users see errors
+        after: |
+          Developer: npm run build
+          Developer: pm2 reload api-server
+          # Zero-downtime restart
+          # Users unaffected
+          # Cluster mode keeps serving
+        result: "Seamless deployments, no downtime"
+
+    benefits:
+      - Production-like local development
+      - Real-time log monitoring
+      - Automatic restart on crashes
+      - Zero-downtime deployments
+      - Multi-core utilization (cluster mode)
+      - Centralized process management
+      - Better debugging capabilities
+
+    prevention:
+      - "Always use ecosystem.config.js for configuration"
+      - "Enable cluster mode in production (instances: 'max')"
+      - "Use separate env and env_production configurations"
+      - "Set max_memory_restart to prevent memory leaks"
+      - "Use pm2 logs --lines N for analysis (not --tail)"
+      - "Configure log rotation for production"
+      - "Use pm2 monit for real-time monitoring"
+      - "Save PM2 config: pm2 save"
+      - "Generate startup script: pm2 startup"
+      - "Don't use watch: true in production"
+
+    tags: ["pm2", "backend", "process-management", "nodejs", "debugging", "devops"]
+
+    related_patterns:
+      - "DEV-DOCS-SYSTEM-001"
+      - "HOOK-PATTERNS-001"
+
+    additional_resources:
+      - title: "PM2 Official Documentation"
+        url: "https://pm2.keymetrics.io/docs/usage/quick-start/"
+      - title: "PM2 Ecosystem File"
+        url: "https://pm2.keymetrics.io/docs/usage/application-declaration/"
+      - title: "PM2 Cluster Mode"
+        url: "https://pm2.keymetrics.io/docs/usage/cluster-mode/"

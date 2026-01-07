@@ -1,0 +1,59 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MCP-SEQUENTIAL-THINKING-001"
+    title: "Sequential Thinking MCP Server - Advanced Reasoning"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Complex problems require structured reasoning:
+      - Breaking down complex tasks
+      - Multi-step planning
+      - Consideration of alternatives
+      - Avoiding logical fallacies
+      - Structured decision-making
+
+    solution: |
+      Sequential Thinking MCP server enables advanced reasoning:
+      - Problem decomposition
+      - Multi-step planning
+      - Structured analysis
+      - Decision support
+      - Chain-of-thought reasoning
+
+    features:
+      - Break problems into steps
+      - Explore alternatives systematically
+      - Identify dependencies
+      - Validate reasoning chains
+      - Provide explanations
+
+    installation:
+      global: "claude mcp add sequential-thinking -s user -- npx -y @modelcontextprotocol/server-sequential-thinking"
+      local: "claude mcp add sequential-thinking -s local -- npx -y @modelcontextprotocol/server-sequential-thinking"
+
+    requirements:
+      - Node.js and npx for execution
+      - Claude Code CLI for installation
+
+    usage_examples:
+      - "Plan the architecture for a microservices system"
+      - "Break down the implementation of a feature"
+      - "Analyze the pros and cons of different approaches"
+      - "Debug complex issues systematically"
+
+    benefits:
+      - Structured problem-solving
+      - Better planning and estimation
+      - Reduced oversight
+      - Clearer communication
+      - Improved decision-making
+
+    tags: ["claude-code", "mcp", "sequential-thinking", "reasoning", "planning"]
+
+    related_patterns:
+      - "MCP-INTEGRATION-001"
+      - "SPECIALIZED-AGENTS-001"

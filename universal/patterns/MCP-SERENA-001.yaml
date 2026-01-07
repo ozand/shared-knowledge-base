@@ -1,0 +1,60 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MCP-SERENA-001"
+    title: "Serena MCP Server - Semantic Code Intelligence"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Navigating and understanding large codebases is difficult:
+      - Finding specific functions or classes
+      - Understanding code dependencies
+      - Searching for usage patterns
+      - Navigating symbol hierarchies
+      - Context-aware code search
+
+    solution: |
+      Serena is an MCP server for semantic code intelligence that provides:
+      - Multi-language support (15+ programming languages)
+      - Symbol-level navigation (find definitions, references)
+      - Project indexing for fast search
+      - Context-aware editing
+      - Dependency analysis
+
+    features:
+      - Find symbol definitions (go to definition)
+      - Find symbol references (find usages)
+      - Search symbols by name
+      - Navigate class hierarchies
+      - Analyze code dependencies
+      - Index entire project
+
+    installation:
+      global: "claude mcp add serena -s user -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server"
+      local: "claude mcp add serena -s local -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server"
+
+    requirements:
+      - uv Python package manager
+      - Claude Code CLI for installation
+
+    usage_examples:
+      - "Find all references to function X"
+      - "Go to definition of class Y"
+      - "Search for symbols named 'payment'"
+      - "Analyze dependencies of module Z"
+
+    benefits:
+      - Faster code navigation
+      - Better code understanding
+      - Improved refactoring
+      - Context-aware search
+      - Multi-language support
+
+    tags: ["claude-code", "mcp", "serena", "code-intelligence", "navigation"]
+
+    related_patterns:
+      - "MCP-INTEGRATION-001"
+      - "SPECIALIZED-AGENTS-001"

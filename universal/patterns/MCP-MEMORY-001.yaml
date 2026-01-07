@@ -1,0 +1,59 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MCP-MEMORY-001"
+    title: "Memory MCP Server - Persistent Context"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Claude Code loses context between sessions:
+      - No memory of previous conversations
+      - Forgetting project preferences
+      - Repeating explanations
+      - No historical context
+      - Lost learning from past tasks
+
+    solution: |
+      Memory MCP server provides persistent context:
+      - Cross-session memory
+      - Project preferences storage
+      - Historical context retention
+      - Knowledge persistence
+      - Learning from past tasks
+
+    features:
+      - Store and retrieve memories
+      - Project-specific memory
+      - User preferences
+      - Contextual associations
+      - Semantic search
+
+    installation:
+      global: "claude mcp add memory -s user -- npx -y @modelcontextprotocol/server-memory"
+      local: "claude mcp add memory -s local -- npx -y @modelcontextprotocol/server-memory"
+
+    requirements:
+      - Node.js and npx for execution
+      - Claude Code CLI for installation
+
+    usage_examples:
+      - "Remember my preference for TypeScript over JavaScript"
+      - "Recall the decision we made about API design"
+      - "What did we learn from the last bug fix?"
+      - "Store this architectural decision for future reference"
+
+    benefits:
+      - Persistent context across sessions
+      - Reduced repetition
+      - Better continuity
+      - Project knowledge retention
+      - Improved personalization
+
+    tags: ["claude-code", "mcp", "memory", "persistence", "context"]
+
+    related_patterns:
+      - "MCP-INTEGRATION-001"
+      - "DEV-DOCS-SYSTEM-001"

@@ -1,0 +1,230 @@
+version: "1.0"
+category: "claude-code"
+last_updated: "2026-01-07"
+
+patterns:
+  - id: "MODULAR-SKILLS-001"
+    title: "Modular Skills Pattern (500-Line Rule)"
+    severity: "high"
+    scope: "universal"
+
+    problem: |
+      Claude Code skills can grow large and unwieldy, causing:
+      - High token usage at session start
+      - Slow session initialization
+      - Difficult maintenance
+      - Poor organization
+      - Mixed content (essentials + details)
+
+      Need a pattern to keep skills focused, organized, and token-efficient
+      while maintaining comprehensive content availability.
+
+    symptoms:
+      - SKILL.md files exceeding 500 lines
+      - Session start >3,000 tokens
+      - Hard to find information in large files
+      - Duplication of content
+      - No clear separation between essential and detailed content
+
+    root_cause: |
+      No established pattern for organizing skill content.
+      All content loaded at once, mixing essential information with
+      detailed explanations, examples, and reference material.
+
+    solution:
+      code: |
+        # Modular Skills Pattern: 500-Line Rule
+        # Core principle: SKILL.md <500 lines, details in resources/
+
+        # Before (monolithic):
+        # .claude/skills/python-async/SKILL.md (650 lines)
+        #
+        # ## Quick Start (50 lines)
+        # ## Core Concepts (100 lines)
+        # ## Async Patterns (400 lines) ⚠️ Too large
+        # ## Error Handling (200 lines) ⚠️ Too large
+        #
+        # Total: 650 lines (~4,900 tokens)
+        # Loaded: Always (at session start)
+
+        # After (modular):
+        # .claude/skills/python-async/SKILL.md (280 lines)
+        #
+        # ## Quick Start (50 lines)
+        # ## Core Concepts (100 lines)
+        # ## Async Patterns (50 lines)
+        #   **📘 Complete Patterns:** @resources/async-patterns.md
+        # ## Error Handling (50 lines)
+        #   **📘 Complete Guide:** @resources/error-handling.md
+        # ## Testing (30 lines)
+        #   **📘 Testing Guide:** @resources/testing.md
+        #
+        # Total: 280 lines (~2,100 tokens)
+        # Loaded: On-demand (when skill activated)
+        #
+        # resources/ (on-demand, ~3,000 tokens each):
+        # ├── async-patterns.md (400 lines)
+        # ├── error-handling.md (350 lines)
+        # └── testing.md (380 lines)
+
+        # YAML frontmatter (metadata at startup, ~50 tokens):
+        ---
+        name: "python-async"
+        description: "Python async/await patterns and coroutines"
+        version: "1.0"
+        tags: ["python", "async", "await", "coroutine"]
+        resources:
+          - "resources/async-patterns.md"
+          - "resources/error-handling.md"
+          - "resources/testing.md"
+        related:
+          - "@skills/python-development/SKILL.md"
+          - "@standards/yaml-standards.md"
+        ---
+
+        # Token efficiency calculation:
+        # Session start (metadata only): ~50 tokens
+        # On-demand (full SKILL.md): ~2,100 tokens
+        # Resources (when clicked): ~3,000 tokens each
+        #
+        # Before: Always loaded 4,900 tokens
+        # After: 50 tokens (metadata) + 2,100 (when needed)
+        # Savings: 98% at session start, 57% when activated
+
+        # Content distribution strategy:
+        # SKILL.md (300-500 lines):
+        #   - Quick start (50 lines) - Essential commands
+        #   - Core concepts (100 lines) - Main ideas
+        #   - Common tasks (100 lines) - Frequent workflows
+        #   - Essential examples (50 lines) - Key patterns
+        #   - Links to resources (10 lines) - @ references
+        #   - Related skills (40 lines) - Cross-references
+        #   - Quick troubleshooting (50 lines) - Common issues
+        #
+        # resources/ (unlimited, on-demand):
+        #   - In-depth explanations (200-400 lines each)
+        #   - Comprehensive examples (100-200 lines each)
+        #   - Edge cases and advanced topics (150-250 lines each)
+        #   - Reference documentation (100-150 lines each)
+
+        # When to create resources/:
+        # 1. Section >100 lines in SKILL.md
+        # 2. Detailed explanation not needed for 80% of use cases
+        # 3. Multiple examples for same concept
+        # 4. Reference documentation needed
+        # 5. Edge cases and advanced topics
+
+        # Linking syntax:
+        # In SKILL.md:
+        # **📘 Detailed Patterns:** `@resources/async-patterns.md`
+        # **📘 Complete Guide:** `@resources/error-handling.md`
+        # **📘 YAML Standards:** `@standards/yaml-standards.md`
+
+      explanation: |
+        The Modular Skills Pattern (500-Line Rule) provides a standardized
+        approach to organizing skill content for token efficiency and
+        maintainability.
+
+        **Core principle:**
+        - SKILL.md: 300-500 lines (core content only)
+        - resources/: Detailed content (on-demand loading)
+        - Progressive disclosure: Metadata at startup (~50 tokens)
+
+        **Benefits:**
+        1. **Token efficiency:** 70%+ savings at session start
+        2. **Better organization:** Clear separation of concerns
+        3. **Improved maintainability:** Smaller, focused files
+        4. **Enhanced UX:** Essentials first, details on-demand
+        5. **Scalability:** Works for large projects
+
+        **Implementation:**
+        1. Measure SKILL.md line count
+        2. Identify sections >100 lines
+        3. Create resources/ directory
+        4. Move large sections to resources/
+        5. Add @ links in SKILL.md
+        6. Update YAML frontmatter
+        7. Test links and loading
+
+        **Quality targets:**
+        - Session start: <500 tokens (metadata only)
+        - SKILL.md: 300-500 lines
+        - Resources: 300-500 lines each (unlimited)
+        - Progressive disclosure: 100% coverage
+
+    examples:
+      - name: "research-enhance skill split"
+        description: "Split 419-line skill into modular structure"
+        before: |
+          research-enhance/SKILL.md: 419 lines
+          - Enhancement workflow
+          - What Claude can do (detailed)
+          - Research sources (detailed)
+          - Enhancement examples (detailed)
+        after: |
+          research-enhance/SKILL.md: 259 lines (-38%)
+          - Enhancement workflow (condensed)
+          - What Claude can do (examples)
+          - **📘 Research Sources:** @resources/research-sources.md
+          - **📘 Examples:** @resources/enhancement-examples.md
+
+          resources/ (752 lines - on-demand):
+          ├── research-sources.md (339 lines)
+          └── enhancement-examples.md (413 lines)
+        result: "Session start: 98% token savings (50 vs 3,140 tokens)"
+
+      - name: "Command optimization"
+        description: "Reduce kb-query command from 391 to 115 lines"
+        before: |
+          commands/kb-query.md: 391 lines
+          - Verbose descriptions
+          - Detailed examples
+          - Complete workflow
+        after: |
+          commands/kb-query.md: 115 lines (-71%)
+          - Concise descriptions
+          - Quick examples
+          - **📘 Complete Workflow:** @references/workflows.md
+          - **📘 CLI Reference:** @references/cli-reference.md
+        result: "70% reduction, links to detailed documentation"
+
+      - name: "CLAUDE.md optimization"
+        description: "Reduce from 412 to 215 lines"
+        before: |
+          CLAUDE.md: 412 lines
+          - Large documentation sections
+          - Detailed workflows
+          - Complete CLI reference
+        after: |
+          CLAUDE.md: 215 lines (-48%)
+          - Essential quick start
+          - Condensed overview
+          - Links to references/
+          - **📘 Complete Guide:** @for-claude-code/README.md
+        result: "48% reduction, progressive disclosure applied"
+
+    benefits:
+      - Token efficiency: 70%+ savings at session start
+      - Better organization: Clear content structure
+      - Improved maintainability: Smaller files
+      - Enhanced UX: Essentials first, details on-demand
+      - Scalability: Works for large projects
+      - Single source of truth: No duplication
+
+    prevention:
+      - "Apply 500-line rule to all skills (SKILL.md <500 lines)"
+      - "Move sections >100 lines to resources/"
+      - "Add YAML frontmatter to all skills"
+      - "Use @ references for detailed content"
+      - "Keep CLAUDE.md to ~300 lines"
+      - "Measure line counts: wc -l SKILL.md"
+      - "Test that @ links work correctly"
+      - "Apply progressive disclosure consistently"
+
+    tags: ["claude-code", "skills", "modular", "token-efficiency", "progressive-disclosure"]
+
+    related_patterns:
+      - "CLAUDE-CODE-AUTO-ACTIVATION-001"
+      - "SKILL-RULES-JSON-001"
+      - "HOOK-PATTERNS-001"
+      - "PROGRESSIVE-DISCLOSURE-001"
