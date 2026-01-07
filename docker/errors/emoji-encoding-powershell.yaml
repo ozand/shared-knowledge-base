@@ -163,7 +163,7 @@ errors:
         expected: "No encoding errors"
 
       - test: "Check for emoji"
-        command: "grep -P '[\x{1F300}-\x{1F9FF}]' script.ps1"
+        command: "grep -P '[\\x{1F300}-\\x{1F9FF}]' script.ps1"
         expected: "No emoji found"
 
     related_patterns:
@@ -178,11 +178,11 @@ errors:
 
     quality_checks:
       - check: "No emoji in .ps1 files"
-        command: "! grep -P '[\x{1F300}-\x{1F9FF}]' *.ps1"
+        command: "! grep -P '[\\x{1F300}-\\x{1F9FF}]' *.ps1"
         pass_if: "No results"
 
       - check: "No emoji in .sh files"
-        command: "! grep -P '[\x{1F300}-\x{1F9FF}]' *.sh"
+        command: "! grep -P '[\\x{1F300}-\\x{1F9FF}]' *.sh"
         pass_if: "No results"
 
       - check: "Scripts use ASCII output"

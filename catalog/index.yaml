@@ -4,7 +4,7 @@
 
 version: "1.0"
 last_updated: "2026-01-07T10:00:00Z"
-catalog_sha256: "abc123...")
+catalog_sha256: "abc123"
 
 statistics:
   total_artifacts: 30
