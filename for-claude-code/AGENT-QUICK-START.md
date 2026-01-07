@@ -1,376 +1,415 @@
-# AI Agent Quick Start Guide
-## For agents working with Shared Knowledge Base
+# Agent Quick Start Guide - Shared Knowledge Base v4.0
 
-**Version:** 1.0
-**Last Updated:** 2026-01-06
-**Auto-loaded:** All agents read `universal/agent-instructions/base-instructions.yaml`
+**5-minute setup guide for Claude Code agents**
 
----
-
-## CRITICAL RULES (READ FIRST)
-
-### 1. Git Submodule Access (CRITICAL)
-
-❌ **NEVER do this:**
-```bash
-# WRONG - Direct access to submodule
-git -C docs/knowledge-base/shared fetch origin
-cd docs/knowledge-base/shared && git pull
-```
-
-✅ **ALWAYS do this:**
-```bash
-# CORRECT - Use submodule commands from project root
-git submodule status docs/knowledge-base/shared
-git submodule update --remote docs/knowledge-base/shared
-```
-
-**Why:** Direct access breaks `.gitmodules` synchronization and submodule state.
-**See:** `AGENT-DIRECT-SUBMODULE-ACCESS-001`
+**Last Updated:** 2026-01-07
+**Version:** 4.0
 
 ---
 
-### 2. Role-Based Access Control
+## ⚡ Quick Setup (5 Minutes)
 
-**Project Agents:**
-- ✅ Search KB, validate YAML, create GitHub issues
-- ❌ Commit to shared-knowledge-base, create PRs, modify KB files
+### Step 1: Add Shared KB to Your Project (2 minutes)
 
-**Curator Agent:**
-- ✅ Review issues, validate, enhance, commit to KB
-- 🎯 **ONLY** Curator commits to KB
+```bash
+# Add as submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 
-**See:** `AGENT-ROLE-SEPARATION-001`
+# Configure progressive loading (load only what you need)
+cd .kb/shared
+git sparse-checkout init
+git sparse-checkout set docker postgresql universal tools _domain_index.yaml
+git sparse-checkout reapply
+
+# Initialize search
+cd ../..
+python .kb/shared/tools/kb.py index -v
+```
+
+**Result:** Shared KB ready with ~1,730 tokens (82% savings!)
+
+### Step 2: Test Search (1 minute)
+
+```bash
+# Search for solution
+python .kb/shared/tools/kb.py search "docker build error"
+
+# List available domains
+python .kb/shared/tools/kb_domains.py list
+```
+
+### Step 3: Configure Your Agent (2 minutes)
+
+Create `.claude/settings.json`:
+```json
+{
+  "contextSearch": true,
+  "contextPaths": [
+    ".kb/shared/**/*.{md,yaml,py}",
+    ".kb/shared/_domain_index.yaml"
+  ],
+  "hooks": [
+    {
+      "name": "kb-search",
+      "events": ["SessionStart"],
+      "command": "python .kb/shared/tools/kb.py index --check"
+    }
+  ]
+}
+```
+
+**Done!** Your agent now has access to Shared KB v4.0.
 
 ---
 
-### 3. Verify Before Referencing (STALE CONTEXT)
+## 🎯 For New Projects
 
-❌ **NEVER assume state:**
-```bash
-# WRONG - Assumes Issue #11 is still open
-echo "Waiting for Issue #11"
-```
+### Option A: Progressive Loading (Recommended)
 
-✅ **ALWAYS verify first:**
-```bash
-# CORRECT - Check current state
-gh issue view 11 --json state,title
-```
-
-**Why:** Issues/PRs may close between sessions.
-**See:** `STALE-CONTEXT-001`
-
----
-
-## INSTALLATION (For NEW Projects)
-
-**For agents setting up Shared KB in a new project:**
-
-### Unified Installation (Recommended)
+**Best for:** Focused projects (e.g., only use Docker + PostgreSQL)
 
 ```bash
-# Method 1: From cloned repository
-python scripts/unified-install.py --full
+# 1. Add submodule
+git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 
-# Method 2: Remote download (one-line)
-curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
+# 2. Choose your domains
+cd .kb/shared
+git sparse-checkout init
+
+# 3. Load only what you need (example: docker + postgresql)
+git sparse-checkout set docker postgresql universal tools _domain_index.yaml
+git sparse-checkout reapply
+
+# 4. Initialize
+cd ../..
+python .kb/shared/tools/kb.py index -v
 ```
 
-**What it does:**
-- ✅ Adds submodule with sparse checkout (excludes curator/)
-- ✅ Installs agents (1 main + 4 subagents)
-- ✅ Installs skills (7 skills)
-- ✅ Installs commands (7 commands)
-- ✅ Creates configuration files
-- ✅ Builds search index
-- ✅ Verifies installation
+**Token cost:** ~1,730 tokens (vs ~9,750 for full KB)
 
-**For existing projects:**
-```bash
-# Check for updates
-python docs/knowledge-base/shared/scripts/unified-install.py --check
+### Option B: Full KB (For Multi-Domain Projects)
 
-# Update existing installation
-python docs/knowledge-base/shared/scripts/unified-install.py --update
-```
-
-**See:** `UNIFIED-INSTALL-001` pattern
-
-### Manual Installation (Fallback)
+**Best for:** Projects that need everything
 
 ```bash
 # Add submodule
-git submodule add https://github.com/ozand/shared-knowledge-base.git docs/knowledge-base/shared
+git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 
-# Install integration
-python docs/knowledge-base/shared/for-projects/scripts/install.py --full
+# Initialize
+cd .kb/shared
+python tools/kb.py index -v
+cd ..
 ```
 
-**Note:** Unified installation is preferred for cross-platform compatibility and automation.
+**Token cost:** ~9,750 tokens
 
 ---
 
-## SUBMODULE STATUS REFERENCE
+## 🔄 Updating from v3.x to v4.0
 
-When you run `git submodule status`, the first character matters:
+### Automatic Update (Recommended)
 
-| Symbol | Meaning | Action Required |
-|--------|---------|-----------------|
-| ` ` (space) | ✅ Good | None |
-| `-` | ❌ Not initialized | `git submodule init` |
-| `+` | ⚠️ Uncommitted changes | Commit or stash |
-| `U` | ❌ Merge conflict | Resolve conflict |
-| `-<num>` | ⚠️ Commits ahead | Update submodule |
+```bash
+# 1. Navigate to submodule
+cd .kb/shared
 
-**Example:**
+# 2. Pull latest changes
+git fetch origin
+git checkout origin/main
+
+# 3. Update in your project
+cd ../..
+git submodule update --remote .kb/shared
+
+# 4. Rebuild index
+python .kb/shared/tools/kb.py index --force -v
+
+# 5. Test new features
+python .kb/shared/tools/kb_domains.py list
 ```
- c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
-```
-Leading space = properly initialized ✅
 
-**See:** `SUBMODULE-STATUS-INTERPRETATION-001`
+### Manual Update to Specific Version
+
+```bash
+# 1. Navigate to submodule
+cd .kb/shared
+
+# 2. Checkout v4.0.0 tag
+git fetch origin --tags
+git checkout v4.0.0
+
+# 3. Update in parent project
+cd ../..
+git add .kb/shared
+git commit -m "Update Shared KB to v4.0.0"
+
+# 4. Push
+git push origin main
+```
 
 ---
 
-## CORRECT SUBMODULE WORKFLOW
+## 📚 Key Commands Reference
 
-**Step 1: Check status**
+### Search Commands
+
 ```bash
-git submodule status docs/knowledge-base/shared
+# Basic search
+python .kb/shared/tools/kb.py search "keyword"
+
+# Advanced search
+python .kb/shared/tools/kb.py search --scope python --tag async
+python .kb/shared/tools/kb.py search --severity high
+
+# Show statistics
+python .kb/shared/tools/kb.py stats
+
+# Validate entries
+python .kb/shared/tools/kb.py validate .
 ```
 
-**Step 2: Update if needed**
+### Progressive Loading Commands (NEW in v4.0)
+
 ```bash
-git submodule update --remote docs/knowledge-base/shared
+# List all available domains
+python .kb/shared/tools/kb_domains.py list
+
+# Load specific domain
+python .kb/shared/tools/kb_domains.py load docker
+
+# Get domain details
+python .kb/shared/tools/kb_domains.py info postgresql
+
+# Migrate entries to domains
+python .kb/shared/tools/kb_domains.py migrate --from-tags
+
+# Validate domain metadata
+python .kb/shared/tools/kb_domains.py validate
 ```
 
-**Step 3: Verify update**
-```bash
-git submodule status docs/knowledge-base/shared
-```
+### Submission Commands (NEW in v4.0)
 
-**Step 4: Use KB tools**
 ```bash
-python3 docs/knowledge-base/shared/tools/kb.py stats
-```
+# Submit entry to Shared KB (via GitHub Issue)
+python .kb/shared/tools/kb_submit.py submit --entry path/to/entry.yaml
 
-**See:** `KB-UPDATE-001`
+# Dry run (preview)
+python .kb/shared/tools/kb_submit.py submit --entry path/to/entry.yaml --dry-run
+
+# Check issue status
+python .kb/shared/tools/kb_submit.py status --issue 123
+```
 
 ---
 
-## CONTRIBUTING TO SHARED KB
+## 🎓 Common Workflows
 
-**Project Agent workflow:**
+### Workflow 1: Find Solution
 
-1. Search KB first:
-   ```bash
-   kb search '{pattern_keywords}'
-   ```
+```bash
+# When user reports error
 
-2. Create YAML locally (NOT in KB):
-   ```bash
-   # In YOUR project, not shared-knowledge-base
-   cat > my-pattern.yaml << 'EOF'
-   version: "1.0"
-   category: "pattern-category"
-   last_updated: "2026-01-06"
-   patterns: ...
-   EOF
-   ```
+# 1. Search KB
+python .kb/shared/tools/kb.py search "error message"
 
-3. Validate:
-   ```bash
-   python tools/kb.py validate my-pattern.yaml
-   ```
+# 2. If found → Return solution
+# 3. If not found → Create entry in .kb/local/
 
-4. Create GitHub issue with FULL YAML:
-   ```bash
-   gh issue create \
-     --label "agent:claude-code" \
-     --label "project:MYPROJECT" \
-     --label "kb-improvement" \
-     --body-file issue-template.md
-   ```
+# 4. If universal scope → Submit to Shared KB
+python .kb/shared/tools/kb_submit.py submit --entry .kb/local/NEW-ENTRY.yaml
+```
 
-5. Wait for Curator (24h SLA)
+### Workflow 2: Add New Domain
 
-6. Pull updates after merge:
-   ```bash
-   cd docs/knowledge-base/shared && git pull
-   ```
+```bash
+# When project needs new domain
 
-**See:** `AGENT-HANDOFF-001`
+# 1. Add domain to sparse checkout
+cd .kb/shared
+git sparse-checkout add testing
+git sparse-checkout reapply
+
+# 2. Verify
+python tools/kb_domains.py list
+```
+
+### Workflow 3: Submit Knowledge
+
+```bash
+# When you create new knowledge entry
+
+# 1. Create entry in .kb/local/
+# 2. Validate YAML
+python .kb/shared/tools/kb.py validate .kb/local/NEW-ENTRY.yaml
+
+# 3. Submit to Shared KB
+python .kb/shared/tools/kb_submit.py submit --entry .kb/local/NEW-ENTRY.yaml
+
+# 4. Wait for curator approval
+# 5. Automatic update when approved
+```
 
 ---
 
-## COMMON MISTAKES TO AVOID
+## 🔧 Configuration Files
 
-### ❌ Mistake 1: External File References
-
-**Wrong:**
-```
-The complete YAML file is located at:
-docs/knowledge-base/shared/universal/patterns/pattern.yaml
-```
-
-**Correct:**
-```markdown
-## Full YAML content:
+### .kb/.kb-config.yaml
 
 ```yaml
-version: "1.0"
-category: "pattern-category"
-# ... complete YAML content ...
-```
+version: "4.0"
+paths:
+  shared: ".kb/shared"
+  local: ".kb/local"
+
+shared_repository:
+  url: "https://github.com/ozand/shared-knowledge-base.git"
+  branch: "main"
+
+domains:
+  enabled: true
+  progressive_loading: true
+  loaded_domains:
+    - docker
+    - postgresql
+    - universal
 ```
 
-**Why:** Curator cannot access your local filesystem.
-**See:** `AGENT-HANDOFF-FAILURE-001`
+### .claude/settings.json (Claude Code)
+
+```json
+{
+  "contextSearch": true,
+  "contextPaths": [
+    ".kb/shared/**/*.{md,yaml,py}",
+    ".kb/shared/_domain_index.yaml"
+  ]
+}
+```
 
 ---
 
-### ❌ Mistake 2: Not Being Explicit
+## 📊 Domain Reference
 
-**Vague request:**
-```
-"Update Shared KB status"
-→ Agent chooses direct access (simpler but wrong)
-```
+Available domains in v4.0:
 
-**Explicit request:**
-```
-"Update Shared KB status using git submodule commands"
-→ Agent uses correct workflow
-```
+| Domain | Entries | Tokens | Description |
+|--------|---------|--------|-------------|
+| docker | 11 | ~1,650 | Docker & containers |
+| testing | 11 | ~1,650 | Testing frameworks |
+| postgresql | 8 | ~1,200 | PostgreSQL database |
+| asyncio | 6 | ~900 | Async/await patterns |
+| authentication | 6 | ~900 | Auth & security |
+| api | 4 | ~600 | API design |
+| deployment | 4 | ~600 | Deployment strategies |
+| fastapi | 3 | ~450 | FastAPI framework |
+| monitoring | 4 | ~600 | Logging & monitoring |
+| performance | 4 | ~600 | Optimization |
+| security | 2 | ~300 | Security practices |
+| websocket | 2 | ~300 | WebSocket |
 
-**Why:** Agents choose path of least resistance. Be explicit.
+**Total entries:** 149
+**Total domains:** 12
 
 ---
 
-### ❌ Mistake 3: Assuming Previous Context
+## ❓ FAQ
 
-**Wrong:**
+### Q: Should I use progressive loading?
+
+**A:** Yes, if your project focuses on specific domains. Benefits:
+- 83% token reduction
+- Faster context loading
+- Clearer knowledge boundaries
+
+### Q: How do I add more domains later?
+
+**A:** Easy:
 ```bash
-# Assume Issue #11 still pending from previous session
-gh issue view 11
+cd .kb/shared
+git sparse-checkout add testing
+git sparse-checkout reapply
 ```
 
-**Correct:**
+### Q: What if I need all domains?
+
+**A:** Use full clone:
 ```bash
-# Verify current state first
-gh issue view 11 --json state
-# Output: "state": "closed" → Don't reference it
+git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 ```
 
-**Why:** Sessions don't share state. Always verify.
-**See:** `STALE-CONTEXT-001`
+### Q: How do I submit new knowledge?
+
+**A:** Use kb-submit tool:
+```bash
+python .kb/shared/tools/kb_submit.py submit --entry .kb/local/NEW-ENTRY.yaml
+```
+
+### Q: What happens after I submit?
+
+**A:**
+1. GitHub Issue created automatically
+2. Curator reviews
+3. Curator uses `/approve` or `/request-changes`
+4. You're notified via GitHub Actions
+5. If approved, local KB updates automatically
+
+### Q: Is v4.0 backward compatible?
+
+**A:** Yes! All v3.x tools work unchanged.
 
 ---
 
-## VERIFICATION CHECKLIST
+## 🆘 Troubleshooting
 
-Before acting, verify:
+### Problem: Submodule not updating
 
-- [ ] Checked `git submodule status` before submodule operations
-- [ ] Using `git submodule` commands (not `git -C` or `cd`)
-- [ ] Verified issue/PR state before referencing
-- [ ] Searched KB for existing patterns before creating new ones
-- [ ] Validated YAML before creating GitHub issue
-- [ ] Using relative paths from project root
-- [ ] Never committing to shared-knowledge-base (unless Curator)
-
----
-
-## QUICK REFERENCE COMMANDS
-
-### Submodule Operations
+**Solution:**
 ```bash
-# Check status
-git submodule status docs/knowledge-base/shared
-
-# Update submodule
-git submodule update --remote docs/knowledge-base/shared
-
-# Initialize if needed
-git submodule update --init --recursive docs/knowledge-base/shared
+cd .kb/shared
+git fetch origin
+git checkout origin/main
+cd ../..
+git submodule update --remote .kb/shared
 ```
 
-### GitHub Operations
+### Problem: Index not found
+
+**Solution:**
 ```bash
-# Check issue state
-gh issue view NUMBER --json state,title
-
-# Create issue with attribution
-gh issue create \
-  --label "agent:claude-code" \
-  --label "project:MYPROJECT" \
-  --label "kb-improvement" \
-  --title "Add PATTERN-XXX: Pattern Name" \
-  --body-file issue-template.md
-
-# Check PR state
-gh pr view NUMBER --json state,merged
+python .kb/shared/tools/kb.py index --force -v
 ```
 
-### KB Operations
+### Problem: Progressive loading not working
+
+**Solution:**
 ```bash
-# Search KB
-kb search '{query}'
-
-# Validate YAML
-python tools/kb.py validate pattern.yaml
-
-# KB statistics
-python tools/kb.py stats
+cd .kb/shared
+git sparse-checkout disable
+git sparse-checkout init
+git sparse-checkout set docker postgresql universal tools _domain_index.yaml
+git sparse-checkout reapply
 ```
 
 ---
 
-## RELATED PATTERNS
+## 📖 Next Steps
 
-| Pattern ID | Title | Priority |
-|------------|-------|----------|
-| AGENT-DIRECT-SUBMODULE-ACCESS-001 | Direct Submodule Access Anti-Pattern | CRITICAL |
-| AGENT-ROLE-SEPARATION-001 | Project Agent vs Curator Roles | CRITICAL |
-| STALE-CONTEXT-001 | Verify Before Referencing | HIGH |
-| SUBMODULE-STATUS-INTERPRETATION-001 | Understanding Status Output | MEDIUM |
-| KB-UPDATE-001 | Shared KB Update Process | HIGH |
-| AGENT-HANDOFF-001 | Contribution Workflow | HIGH |
-| AGENT-HANDOFF-FAILURE-001 | Common Submission Failures | HIGH |
-| CURATOR-ISSUE-TRIAGE-001 | Issue Triage Workflow | HIGH |
+- **Full Guide:** [../README.md](../README.md)
+- **Progressive Loading:** [../QUICKSTART-DOMAINS.md](../QUICKSTART-DOMAINS.md)
+- **Implementation:** [../docs/implementation/](../docs/implementation/)
+- **Change Log:** [../CHANGELOG.md](../CHANGELOG.md)
 
 ---
 
-## TROUBLESHOOTING
+## 🎉 You're Ready!
 
-### Problem: Agent uses direct git commands
-**Solution:** Re-read user request, add "using git submodule commands"
+Your agent now has access to:
+- ✅ Shared Knowledge Base v4.0
+- ✅ Progressive domain loading
+- ✅ GitHub-native contribution
+- ✅ Automated feedback loop
 
-### Problem: "Waiting for Issue #XXX" but issue already closed
-**Solution:** Run `gh issue view NUMBER --json state` to verify
+**Token cost:** ~1,730 tokens (with progressive loading)
+**Savings:** 82% compared to full KB
 
-### Problem: Submodule always shows `-` prefix
-**Solution:** Run `git submodule init` then `git submodule update`
-
-### Problem: Can't tell if submodule update succeeded
-**Solution:** Compare hashes before/after:
-```bash
-BEFORE=$(git submodule status | awk '{print $1}')
-git submodule update --remote docs/knowledge-base/shared
-AFTER=$(git submodule status | awk '{print $1}')
-[ "$BEFORE" = "$AFTER" ] && echo "No change" || echo "Updated"
-```
-
-### Problem: Issue closed as "incomplete"
-**Solution:** Resubmit with FULL YAML embedded in issue body (not file path)
-
----
-
-## ATTRIBUTION
-
-**Created By:** Shared KB Curator
-**Pattern Source:** Analysis of agent workflows (2026-01-06)
-**Related Issues:** #11-16
-
-**For full details, see patterns in `universal/patterns/`**
+Happy coding! 🚀
