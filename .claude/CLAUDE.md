@@ -119,20 +119,32 @@ shared-knowledge-base/
 
 **Location:** `docs/research/claude-code/`
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| **claude-shared-architecture.md** | Shared model architecture, scope system | ~1400 |
-| **claude-hooks-guide.md** | Complete hooks guide (10 events, patterns) | ~1200 |
-| **claude-hooks-examples.md** | 10 production-ready hook examples | ~800 |
-| **claude-hooks-advanced.md** | Anti-patterns & advanced strategies | ~700 |
-| **claude-skills-guide.md** | Skills system documentation | ~1300 |
-| **claude-agents-guide.md** | Agents system documentation | ~1100 |
-| **claude-templates.md** | Template system | ~600 |
-| **claude-troubleshooting.md** | Troubleshooting guide | ~300 |
+**Master Index:** `@docs/research/claude-code/INDEX.md` - Complete documentation index
+**Quick Reference:** `@docs/research/claude-code/README.md` - Organized guide listing
 
-**Total:** ~10,900 lines of Claude Code documentation
+| File | Purpose | Lines | Language |
+|------|---------|-------|----------|
+| **claude-shared-architecture.md** | Shared model architecture, scope system | ~1400 | English |
+| **claude-hooks-guide.md** | Complete hooks guide (10 events, patterns) | ~1200 | English |
+| **claude-hooks-examples.md** | 10 production-ready hook examples | ~800 | English |
+| **claude-hooks-advanced.md** | Anti-patterns & advanced strategies | ~700 | English |
+| **claude-skills-guide.md** | Skills system documentation | ~1300 | English |
+| **claude-agents-guide.md** | Agents system documentation | ~1100 | English |
+| **claude-templates.md** | Template system | ~600 | English |
+| **claude-troubleshooting.md** | Troubleshooting guide | ~300 | English |
+| **CLAUDE-COMPLETE-PRACTICES.md** | Complete overview of all practices | ~1100 | Russian |
+| **CLAUDE-CLAUDE-MD-GUIDE.md** | CLAUDE.md project memory guide | ~1400 | English |
+| **CLAUDE-PERMISSION-MODES-GUIDE.md** | Permission modes (ALLOW, DITTO, AUTO, CONFIRM) | ~1300 | Russian |
+| **CLAUDE-SLASH-COMMANDS-GUIDE.md** | Custom slash commands | ~1400 | Russian |
+| **CLAUDE-MCP-GUIDE.md** | MCP (Model Context Protocol) | ~740 | Russian |
+| **CLAUDE-PLANNING-WORKFLOW-GUIDE.md** | Planning mode workflow | ~770 | Russian |
+| **CLAUDE-PROJECTS-COLLABORATION-GUIDE.md** | Projects & team collaboration | ~940 | Russian |
+| **CLAUDE-REFERENCING-CONTEXT-GUIDE.md** | @ Referencing for context | ~820 | Russian |
+
+**Total:** ~16,100 lines of Claude Code documentation (23 files)
 
 **📘 For automation:** `@docs/research/claude-code/claude-hooks-guide.md` - Hooks for deterministic workflow automation
+**📘 Start here:** `@docs/research/claude-code/INDEX.md` - Master documentation index
 
 ### Knowledge Base Curator Documentation
 
