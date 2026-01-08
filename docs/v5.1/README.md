@@ -42,32 +42,43 @@
 
 ## 🚀 Quick Start
 
-### For New Projects
+### For New Projects (Automated)
+
+```bash
+# Run the initialization script (if Shared KB is already a submodule)
+bash .kb/shared/tools/v5.1/init-kb.sh
+
+# Or if adding Shared KB for the first time:
+git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
+bash .kb/shared/tools/v5.1/init-kb.sh
+
+# Edit .kb/context/PROJECT.yaml with your project details
+# Create .env file with GITHUB_TOKEN
+# Commit to git
+```
+
+### For New Projects (Manual)
 
 ```bash
 # 1. Create project structure
-mkdir -p .kb/{context,project/{integrations,endpoints,decisions,lessons,pending}}
+mkdir -p .kb/{context,project/{knowledge,integrations,endpoints,decisions,lessons,pending}}
 
 # 2. Clone examples
-cp examples/v5.1/PROJECT.yaml.example .kb/context/PROJECT.yaml
-cp examples/v5.1/MEMORY.md.example .kb/context/MEMORY.md
+cp .kb/shared/examples/v5.1/PROJECT.yaml.example .kb/context/PROJECT.yaml
+cp .kb/shared/examples/v5.1/MEMORY.md.example .kb/context/MEMORY.md
 
 # 3. Edit PROJECT.yaml
 # Set your project name, ID, and sharing_criteria
 
-# 4. Add Shared KB as submodule
-git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
-git submodule update --init --recursive
-
-# 5. Install session-start hook
+# 4. Install session-start hook
 cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
 chmod +x .claude/hooks/session-start.sh
 
-# 6. Configure environment
-cp examples/v5.1/.env.example .env
+# 5. Configure environment
+cp .kb/shared/examples/v5.1/.env.example .env
 # Edit .env and add your GITHUB_TOKEN
 
-# 7. Done! Next agent session will auto-load context
+# 6. Done! Next agent session will auto-load context
 ```
 
 ### For Existing Projects (Upgrade from v4.0)
@@ -78,19 +89,19 @@ cd .kb/shared
 git pull origin main
 cd ../..
 
-# 2. Create new directories
-mkdir -p .kb/context .kb/project/knowledge
+# 2. Run initialization script
+bash .kb/shared/tools/v5.1/init-kb.sh
 
-# 3. Install new tools (no conflicts with v4.0)
-# Tools are in tools/v5.1/ subdirectory
+# 3. Edit .kb/context/PROJECT.yaml
+# Add your project-specific sharing_criteria
 
-# 4. Install new hook
-cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
-chmod +x .claude/hooks/session-start.sh
+# 4. Create .env file
+cp .kb/shared/examples/v5.1/.env.example .env
+# Edit and add GITHUB_TOKEN
 
-# 5. Create PROJECT.yaml
-cp examples/v5.1/PROJECT.yaml.example .kb/context/
-# Edit it with your project details
+# 5. Commit to git
+git add .kb/ .claude/hooks/ .env.example
+git commit -m "feat: Upgrade to v5.1 two-tier KB architecture"
 
 # 6. Upgrade complete!
 # v4.0 tools still work, v5.1 tools available for new workflows

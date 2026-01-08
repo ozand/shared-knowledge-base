@@ -24,8 +24,65 @@ except ImportError:
 
 # --- Configuration ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# Use knowledge/ subdirectory for entries, but also create other standard dirs
 PROJECT_KB_DIR = PROJECT_ROOT / ".kb" / "project" / "knowledge"
 CONTEXT_FILE = PROJECT_ROOT / ".kb" / "context" / "PROJECT.yaml"
+
+
+def ensure_project_kb_structure():
+    """
+    Ensure .kb/project/ directory structure exists.
+    Creates standard subdirectories if missing.
+    """
+    project_kb_base = PROJECT_ROOT / ".kb" / "project"
+
+    # Standard subdirectories
+    subdirs = [
+        project_kb_base / "knowledge",      # Main KB entries
+        project_kb_base / "integrations",   # Integration configs
+        project_kb_base / "endpoints",      # API endpoints
+        project_kb_base / "decisions",      # Architectural decisions
+        project_kb_base / "lessons",        # Lessons learned
+        project_kb_base / "pending",        # Pending submissions
+    ]
+
+    for subdir in subdirs:
+        subdir.mkdir(parents=True, exist_ok=True)
+
+    # Create README if not exists
+    readme_path = project_kb_base / "README.md"
+    if not readme_path.exists():
+        readme_content = """# Project Knowledge Base
+
+This directory contains project-specific knowledge that should NOT be shared with the Shared KB.
+
+## Directory Structure
+
+### `knowledge/`
+Knowledge entries submitted with `--target local`
+
+### `integrations/`
+Integration configurations and documentation
+
+### `endpoints/`
+API endpoints documentation
+
+### `decisions/`
+Architectural decisions (ADR)
+
+### `lessons/`
+Lessons learned from bugs and fixes
+
+### `pending/`
+Temporary storage for draft entries
+
+## Important
+
+⚠️ **Never commit secrets!** Use templates instead.
+⚠️ **Never share business logic!** Keep project-specific knowledge here.
+"""
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(readme_content)
 
 
 def load_project_context():
@@ -151,21 +208,44 @@ def submit_local(file_path):
     Args:
         file_path: Path to YAML file to save
     """
-    target_path = PROJECT_KB_DIR / file_path.name
+    # Ensure structure exists first
+    ensure_project_kb_structure()
+
+    # Determine target path based on category or default to knowledge/
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        data = yaml.safe_load(content) if content else {}
+
+    # Extract category to determine subdirectory
+    category = data.get('category', 'general')
+
+    # Map categories to subdirectories
+    category_map = {
+        'integration': 'integrations',
+        'integrations': 'integrations',
+        'endpoint': 'endpoints',
+        'api': 'endpoints',
+        'decision': 'decisions',
+        'adr': 'decisions',
+        'lesson': 'lessons',
+        'lesson-learned': 'lessons',
+    }
+
+    subdir = category_map.get(category.lower(), 'knowledge')
+    target_dir = PROJECT_ROOT / ".kb" / "project" / subdir
+    target_path = target_dir / file_path.name
 
     # Create directory if it doesn't exist
-    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy file content
-    with open(file_path, 'r', encoding='utf-8') as src:
-        content = src.read()
-
+    # Write file
     with open(target_path, 'w', encoding='utf-8') as dst:
         dst.write(content)
 
-    print(f"✅ [Local] File saved: .kb/project/knowledge/{file_path.name}")
+    rel_path = target_path.relative_to(PROJECT_ROOT)
+    print(f"✅ [Local] File saved: {rel_path}")
     print("   Don't forget to commit to your project repository:")
-    print("   git add .kb/project/knowledge/{} && git commit -m 'Add KB entry'".format(file_path.name))
+    print(f"   git add {rel_path} && git commit -m 'Add KB entry: {file_path.name}'")
 
 
 def submit_shared(file_path, title, description, domain):
