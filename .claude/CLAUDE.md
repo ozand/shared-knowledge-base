@@ -1,16 +1,17 @@
 # Shared Knowledge Base - Claude Code Instructions
 
 **Repository:** shared-knowledge-base
-**Version:** 3.0
-**Last Updated:** 2026-01-07
+**Version:** 5.1.0
+**Last Updated:** 2026-01-08
 
 ---
 
 ## Overview
 
-Centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks. Managed by `kb.py` CLI tool with YAML entries.
+Centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks. **v5.1 implements a two-tier architecture** with Project KB (local) and Shared KB (global) tiers, enabling secure knowledge sharing via GitHub Issues workflow.
 
 **📘 Complete Guide:** `@for-claude-code/README.md`
+**📘 v5.1 Documentation:** `@docs/v5.1/README.md`
 
 ---
 
@@ -58,6 +59,18 @@ python tools/kb.py export --format json --output kb.json
 
 ---
 
+## Project Integration
+
+For instructions on integrating Shared KB into your project, see **[docs/integration/BOOTSTRAP.md](docs/integration/BOOTSTRAP.md)**.
+
+This guide covers:
+- Git submodule setup
+- Project context configuration (PROJECT.yaml)
+- Claude Code hooks installation
+- Verification and troubleshooting
+
+---
+
 ## Architecture
 
 ### Scope Hierarchy
@@ -73,12 +86,23 @@ python tools/kb.py export --format json --output kb.json
 
 ```
 shared-knowledge-base/
-├── python/              # Language-specific
-├── universal/           # Cross-language
-├── tools/               # kb.py CLI
-├── curator/             # Curator docs
-├── for-claude-code/     # Claude Code integration
-├── docs/research/       # Research & patterns
+├── domains/             # Knowledge entries by domain
+│   ├── python/          # Python-specific errors/patterns
+│   ├── javascript/      # JavaScript/Node.js
+│   ├── docker/          # Docker/container
+│   ├── postgresql/      # PostgreSQL
+│   ├── universal/       # Cross-language patterns
+│   ├── vps/             # VPS administration
+│   └── catalog/         # Category catalog
+├── tools/               # CLI tools
+│   ├── kb.py            # v4.0 main CLI (index, search, stats)
+│   ├── v5.1/            # v5.1 tools (kb_submit, kb_search, kb_curate)
+│   └── skb-cli/         # Enterprise CLI (sku command)
+├── tests/               # pytest test suite
+├── docs/                # Documentation
+│   ├── v5.1/            # v5.1 architecture & workflows
+│   └── research/        # Research & patterns
+├── agents/              # Agent configurations
 └── .claude/             # This config
 ```
 
@@ -97,6 +121,107 @@ shared-knowledge-base/
 - Hooks, Skills, Agents guides
 
 **📘 All Docs:** `@references/architecture.md` - Complete documentation structure
+
+---
+
+## v5.1 Two-Tier Architecture
+
+**New in v5.1:** Separate Project KB and Shared KB with controlled submission workflow.
+
+### Tiers
+
+| Tier | Scope | Storage | Access | Purpose |
+|------|-------|---------|--------|---------|
+| **Project KB** | Private | `.kb/project/` | RW (Direct) | Business logic, secrets, project architecture |
+| **Shared KB** | Public/Org | `.kb/shared/` | RO (Submodule) | Universal patterns, languages, tooling |
+| **Submission** | Transitional | GitHub Issues | Write-Only | Buffer for Shared KB proposals |
+
+### Key Benefits
+
+- ✅ **Safe Submission:** Project agents submit via GitHub Issues (no direct commits)
+- ✅ **Auto Context:** SessionStart hook injects PROJECT.yaml context
+- ✅ **Decision Criteria:** `sharing_criteria` guides local vs shared decisions
+- ✅ **PyGithub Integration:** No `gh` CLI dependency
+
+**📘 Complete Architecture:** `@docs/v5.1/ARD.md`
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test file
+python -m pytest tests/test_domain_index_validation.py
+
+# Run with verbose output
+python -m pytest -v tests/
+
+# Run with coverage
+python -m pytest --cov=tools tests/
+```
+
+**Test requirements:** `pytest` (installed globally or via venv)
+
+---
+
+## v5.1 Tools
+
+**New v5.1 tools** for two-tier KB management (in `tools/`):
+
+### kb_submit.py
+Submit knowledge entries to Project KB or Shared KB.
+
+```bash
+# Save to local Project KB (direct commit)
+python tools/kb_submit.py --target local --file solution.yaml
+
+# Submit to Shared KB via GitHub Issue
+python tools/kb_submit.py \
+    --target shared \
+    --file solution.yaml \
+    --title "Docker compose healthcheck fix" \
+    --desc "Container becomes healthy before DB is ready" \
+    --domain docker
+```
+
+### kb_search.py
+Search knowledge entries across Project and Shared KB.
+
+```bash
+# Search all KBs
+python tools/kb_search.py "docker compose"
+
+# Search only Shared KB
+python tools/kb_search.py "fastapi cors" --scope shared
+
+# Search only Project KB
+python tools/kb_search.py "stripe webhook" --scope project
+
+# Show statistics
+python tools/kb_search.py --stats
+```
+
+### kb_curate.py
+Curator tool for processing GitHub Issue submissions.
+
+```bash
+# List pending submissions
+python tools/kb_curate.py --mode list
+
+# Validate specific submission
+python tools/kb_curate.py --mode validate --issue 123
+
+# Approve submission
+python tools/kb_curate.py --mode approve --issue 123
+
+# Reject submission
+python tools/kb_curate.py --mode reject --issue 123 --reason "Duplicate"
+```
+
+**📘 Complete v5.1 Tools Reference:** `@docs/v5.1/README.md#tools`
 
 ---
 
@@ -147,7 +272,7 @@ errors:
 
 ---
 
-## Advanced Features (v3.0)
+## Advanced Features
 
 **Metadata & Analytics:**
 ```bash
@@ -231,5 +356,5 @@ python -m tools.kb_predictive predict-updates --days 30  # Predictions
 
 ---
 
-**Version:** 3.0
+**Version:** 5.1.0
 **Quality Score:** 90/100

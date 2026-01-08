@@ -53,11 +53,11 @@
 
 ```bash
 # Run the initialization script (if Shared KB is already a submodule)
-bash .kb/shared/tools/v5.1/init-kb.sh
+bash .kb/shared/tools/init-kb.sh
 
 # Or if adding Shared KB for the first time:
 git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
-bash .kb/shared/tools/v5.1/init-kb.sh
+bash .kb/shared/tools/init-kb.sh
 
 # Edit .kb/context/PROJECT.yaml with your project details
 # Create .env file with GITHUB_TOKEN
@@ -78,7 +78,7 @@ cp .kb/shared/examples/v5.1/MEMORY.md.example .kb/context/MEMORY.md
 # Set your project name, ID, and sharing_criteria
 
 # 4. Install session-start hook
-cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
+cp .kb/shared/tools/hooks/session-start.sh .claude/hooks/
 chmod +x .claude/hooks/session-start.sh
 
 # 5. Configure environment
@@ -97,7 +97,7 @@ git pull origin main
 cd ../..
 
 # 2. Run initialization script
-bash .kb/shared/tools/v5.1/init-kb.sh
+bash .kb/shared/tools/init-kb.sh
 
 # 3. Edit .kb/context/PROJECT.yaml
 # Add your project-specific sharing_criteria
@@ -124,12 +124,12 @@ Submit knowledge entries to Project KB or Shared KB.
 
 ```bash
 # Save to local Project KB (direct commit)
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target local \
     --file solution.yaml
 
 # Submit to Shared KB via GitHub Issue
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target shared \
     --file solution.yaml \
     --title "Docker compose healthcheck fix" \
@@ -143,16 +143,16 @@ Search knowledge entries across Project and Shared KB.
 
 ```bash
 # Search all KBs
-python .kb/shared/tools/v5.1/kb_search.py "docker compose"
+python .kb/shared/tools/kb_search.py "docker compose"
 
 # Search only Shared KB
-python .kb/shared/tools/v5.1/kb_search.py "fastapi cors" --scope shared
+python .kb/shared/tools/kb_search.py "fastapi cors" --scope shared
 
 # Search only Project KB
-python .kb/shared/tools/v5.1/kb_search.py "stripe webhook" --scope project
+python .kb/shared/tools/kb_search.py "stripe webhook" --scope project
 
 # Show statistics
-python .kb/shared/tools/v5.1/kb_search.py --stats
+python .kb/shared/tools/kb_search.py --stats
 ```
 
 ### kb_curate.py
@@ -161,16 +161,16 @@ Curator tool for processing GitHub Issue submissions.
 
 ```bash
 # List pending submissions
-python .kb/shared/tools/v5.1/kb_curate.py --mode list
+python .kb/shared/tools/kb_curate.py --mode list
 
 # Validate specific submission
-python .kb/shared/tools/v5.1/kb_curate.py --mode validate --issue 123
+python .kb/shared/tools/kb_curate.py --mode validate --issue 123
 
 # Approve submission
-python .kb/shared/tools/v5.1/kb_curate.py --mode approve --issue 123
+python .kb/shared/tools/kb_curate.py --mode approve --issue 123
 
 # Reject submission
-python .kb/shared/tools/v5.1/kb_curate.py \
+python .kb/shared/tools/kb_curate.py \
     --mode reject \
     --issue 123 \
     --reason "Duplicate of existing entry"

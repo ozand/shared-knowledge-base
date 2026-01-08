@@ -95,7 +95,7 @@ Agent decision: Use PostgreSQL 12 (Project KB wins)
 
 ### Tool: kb_search.py
 
-Located at `.kb/shared/tools/v5.1/kb_search.py`
+Located at `.kb/shared/tools/kb_search.py`
 
 #### Step A: Query Formulation
 
@@ -122,16 +122,16 @@ Agent runs search tool:
 
 ```bash
 # Search everywhere (recommended)
-python .kb/shared/tools/v5.1/kb_search.py --scope all "fastapi cors"
+python .kb/shared/tools/kb_search.py --scope all "fastapi cors"
 
 # Search only Project KB
-python .kb/shared/tools/v5.1/kb_search.py --scope project "redis"
+python .kb/shared/tools/kb_search.py --scope project "redis"
 
 # Search only Shared KB
-python .kb/shared/tools/v5.1/kb_search.py --scope shared "pytest"
+python .kb/shared/tools/kb_search.py --scope shared "pytest"
 
 # Search with preview
-python .kb/shared/tools/v5.1/kb_search.py "docker" --preview
+python .kb/shared/tools/kb_search.py "docker" --preview
 ```
 
 **What happens:**
@@ -247,7 +247,7 @@ Agent needs to configure Redis connection for a FastAPI application.
 ### Step 1: Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py "redis connection pool"
+python .kb/shared/tools/kb_search.py "redis connection pool"
 ```
 
 ### Step 2: Results
@@ -458,7 +458,7 @@ Add to `.claude/agents/<agent-name>.md` or `CLAUDE.md`:
 
 1. **Search Local Knowledge Bases:**
    ```bash
-   python .kb/shared/tools/v5.1/kb_search.py --scope all "<query>"
+   python .kb/shared/tools/kb_search.py --scope all "<query>"
    ```
 
 2. **Prioritize Results:**
@@ -593,4 +593,4 @@ python kb_search.py --stats
 **Related Documentation:**
 - [FEEDBACK-LOOP.md](FEEDBACK-LOOP.md) - Learning from search results
 - [WORKFLOWS.md](WORKFLOWS.md) - Agent workflows
-- [kb_search.py source](../../tools/v5.1/kb_search.py) - Search tool
+- [kb_search.py source](../../tools/kb_search.py) - Search tool

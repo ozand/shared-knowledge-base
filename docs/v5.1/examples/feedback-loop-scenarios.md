@@ -64,7 +64,7 @@ errors:
 
 ### Stage 5: Submission
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file docker-healthcheck.yaml \
   --title "Fix: Docker Compose PostgreSQL healthcheck timeout" \
@@ -132,7 +132,7 @@ errors:
 
 ### Stage 5: Submission
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target local \
   --file discount-validation.yaml
 ```
@@ -214,7 +214,7 @@ errors:
 
 ### Stage 5: Submission
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file stripe-webhook.yaml \
   --title "Fix: Stripe webhook signature verification" \
@@ -285,7 +285,7 @@ errors:
 
 ### Stage 5: Submission
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file sqlalchemy-pool.yaml \
   --title "Fix: SQLAlchemy connection pool exhaustion" \
@@ -346,7 +346,7 @@ errors:
 
 ### Stage 5: Submission
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target local \
   --file debug-mode.yaml
 ```

@@ -13,7 +13,7 @@ Agent needs to configure Redis connection for a FastAPI application.
 ### Step 1: Initial Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py --scope all "redis connection"
+python .kb/shared/tools/kb_search.py --scope all "redis connection"
 ```
 
 ### Step 2: Results (Prioritized)
@@ -84,7 +84,7 @@ Agent needs to configure CORS for FastAPI.
 ### Step 1: Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py --scope all "fastapi cors"
+python .kb/shared/tools/kb_search.py --scope all "fastapi cors"
 ```
 
 ### Step 2: Results
@@ -151,7 +151,7 @@ Agent needs to create database migration.
 ### Step 1: Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py --scope all "alembic migration"
+python .kb/shared/tools/kb_search.py --scope all "alembic migration"
 ```
 
 ### Step 2: Results
@@ -194,7 +194,7 @@ Agent needs to add healthcheck to Docker Compose.
 ### Step 1: Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py --scope all "docker compose healthcheck"
+python .kb/shared/tools/kb_search.py --scope all "docker compose healthcheck"
 ```
 
 ### Step 2: Results
@@ -251,7 +251,7 @@ Agent fixing Pydantic validation error.
 ### Step 1: Search
 
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py --scope all "pydantic validation"
+python .kb/shared/tools/kb_search.py --scope all "pydantic validation"
 ```
 
 ### Step 2: Results

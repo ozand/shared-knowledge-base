@@ -260,7 +260,7 @@ Execute the submission using `kb_submit.py`.
 
 **Command:**
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target local \
   --file fastapi-cors-fix.yaml
 ```
@@ -285,7 +285,7 @@ python .kb/shared/tools/v5.1/kb_submit.py \
 
 **Command:**
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file fastapi-cors-fix.yaml \
   --title "Fix: FastAPI CORS 405 Error on OPTIONS" \
@@ -381,7 +381,7 @@ Decision: SHARED KB
 
 **5. Commit (Submission):**
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file pytest-module-not-found.yaml \
   --title "Fix: pytest ModuleNotFoundError" \
@@ -420,7 +420,7 @@ Add to `.claude/agents/<agent-name>.md` or `CLAUDE.md`:
 
 3. **Submit Entry:**
    ```bash
-   python .kb/shared/tools/v5.1/kb_submit.py \
+   python .kb/shared/tools/kb_submit.py \
      --target <local|shared> \
      --file <entry.yaml> \
      --title "Descriptive title"

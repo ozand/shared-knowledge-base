@@ -149,7 +149,7 @@ The Shared Knowledge Base v5.1 implements a **two-tier knowledge management mode
 1. TRIGGER
    Tech lead runs: claude -p curator
    or
-   Human runs: python tools/v5.1/kb_curate.py --mode list
+   Human runs: python tools/kb_curate.py --mode list
 
 2. FETCH
    Curator downloads Issues with 'kb-submission' label via GitHub API
@@ -456,7 +456,7 @@ fi
 
 4. **Install SessionStart Hook:**
    ```bash
-   cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
+   cp .kb/shared/tools/hooks/session-start.sh .claude/hooks/
    chmod +x .claude/hooks/session-start.sh
    ```
 

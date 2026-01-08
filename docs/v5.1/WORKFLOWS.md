@@ -95,13 +95,13 @@ Agents use Python scripts from the Shared KB submodule:
 
 ```bash
 # Search both Project and Shared KB
-python .kb/shared/tools/v5.1/kb_search.py "fastapi cors error"
+python .kb/shared/tools/kb_search.py "fastapi cors error"
 
 # Search only Shared KB
-python .kb/shared/tools/v5.1/kb_search.py "docker compose" --scope shared
+python .kb/shared/tools/kb_search.py "docker compose" --scope shared
 
 # Search only Project KB
-python .kb/shared/tools/v5.1/kb_search.py "stripe webhook" --scope project
+python .kb/shared/tools/kb_search.py "stripe webhook" --scope project
 ```
 
 **Output:**
@@ -119,7 +119,7 @@ python .kb/shared/tools/v5.1/kb_search.py "stripe webhook" --scope project
 
 ```bash
 # Save to project KB (direct commit)
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target local \
     --file solution.yaml
 
@@ -140,7 +140,7 @@ python .kb/shared/tools/v5.1/kb_submit.py \
 
 ```bash
 # Submit to Shared KB via GitHub Issue
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target shared \
     --file solution.yaml \
     --title "Docker compose healthcheck for PostgreSQL" \
@@ -254,16 +254,16 @@ The Curator is a **role**, not a service. It can be:
 **Option 1: Human Command**
 ```bash
 # List pending submissions
-python .kb/shared/tools/v5.1/kb_curate.py --mode list
+python .kb/shared/tools/kb_curate.py --mode list
 
 # Validate specific submission
-python .kb/shared/tools/v5.1/kb_curate.py --mode validate --issue 123
+python .kb/shared/tools/kb_curate.py --mode validate --issue 123
 
 # Approve submission
-python .kb/shared/tools/v5.1/kb_curate.py --mode approve --issue 123
+python .kb/shared/tools/kb_curate.py --mode approve --issue 123
 
 # Reject submission
-python .kb/shared/tools/v5.1/kb_curate.py --mode reject \
+python .kb/shared/tools/kb_curate.py --mode reject \
     --issue 123 \
     --reason "Duplicate of existing entry DC-HEALTH-001"
 ```
@@ -363,7 +363,7 @@ def calculate_quality_score(entry):
 
 ```bash
 # 1. Search for existing solution
-python .kb/shared/tools/v5.1/kb_search.py "fastapi cors error"
+python .kb/shared/tools/kb_search.py "fastapi cors error"
 
 # 2. If found in Shared KB, apply solution
 # → Done!
@@ -375,12 +375,12 @@ python .kb/shared/tools/v5.1/kb_search.py "fastapi cors error"
 # → Check PROJECT.yaml sharing_criteria
 
 # 5a. If project-specific
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target local \
     --file fastapi-cors-fix.yaml
 
 # 5b. If universal
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target shared \
     --file fastapi-cors-fix.yaml \
     --title "FastAPI CORS error with OPTIONS preflight" \
@@ -401,11 +401,11 @@ python .kb/shared/tools/v5.1/kb_submit.py \
 # → MEMORY.md loaded into memory
 
 # 3. Agent searches before working
-python .kb/shared/tools/v5.1/kb_search.py "authentication"
-python .kb/shared/tools/v5.1/kb_search.py "database"
+python .kb/shared/tools/kb_search.py "authentication"
+python .kb/shared/tools/kb_search.py "database"
 
 # 4. Agent checks project structure
-python .kb/shared/tools/v5.1/kb_search.py "architecture" --scope project
+python .kb/shared/tools/kb_search.py "architecture" --scope project
 
 # 5. Agent understands context and starts working
 # → Ready!
@@ -415,7 +415,7 @@ python .kb/shared/tools/v5.1/kb_search.py "architecture" --scope project
 
 ```bash
 # 1. Morning: Check for new submissions
-python .kb/shared/tools/v5.1/kb_curate.py --mode list
+python .kb/shared/tools/kb_curate.py --mode list
 
 # Output:
 # Issue #123: Docker compose healthcheck
@@ -424,12 +424,12 @@ python .kb/shared/tools/v5.1/kb_curate.py --mode list
 
 # 2. Process each submission
 for issue in 123 124 125; do
-    python .kb/shared/tools/v5.1/kb_curate.py \
+    python .kb/shared/tools/kb_curate.py \
         --mode validate \
         --issue $issue
 
     # Review output, then decide
-    # python .kb/shared/tools/v5.1/kb_curate.py \
+    # python .kb/shared/tools/kb_curate.py \
     #     --mode approve --issue $issue
 done
 
@@ -472,7 +472,7 @@ cat > .kb/context/MEMORY.md << 'EOF'
 EOF
 
 # 5. Install session-start hook
-cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
+cp .kb/shared/tools/hooks/session-start.sh .claude/hooks/
 chmod +x .claude/hooks/session-start.sh
 
 # 6. Configure GitHub token

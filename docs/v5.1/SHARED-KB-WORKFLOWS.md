@@ -58,7 +58,7 @@ When an agent needs a solution, it searches the Shared KB as a local library.
 
 1. **Agent triggers search:**
    ```bash
-   python .kb/shared/tools/v5.1/kb_search.py --scope shared "docker compose healthcheck"
+   python .kb/shared/tools/kb_search.py --scope shared "docker compose healthcheck"
    ```
 
 2. **Search mechanism:**
@@ -75,13 +75,13 @@ When an agent needs a solution, it searches the Shared KB as a local library.
 
 ```bash
 # Search Shared KB only
-python .kb/shared/tools/v5.1/kb_search.py "fastapi cors" --scope shared
+python .kb/shared/tools/kb_search.py "fastapi cors" --scope shared
 
 # Search with preview
-python .kb/shared/tools/v5.1/kb_search.py "postgresql" --scope shared --preview
+python .kb/shared/tools/kb_search.py "postgresql" --scope shared --preview
 
 # Show Shared KB statistics
-python .kb/shared/tools/v5.1/kb_search.py --stats
+python .kb/shared/tools/kb_search.py --stats
 ```
 
 ---
@@ -99,7 +99,7 @@ The most complex part: how can an agent add knowledge to a Read-Only repository?
 
 2. **Agent creates submission:**
    ```bash
-   python .kb/shared/tools/v5.1/kb_submit.py \
+   python .kb/shared/tools/kb_submit.py \
      --target shared \
      --file solution.yaml \
      --title "Fix for Pydantic v2 validation error"
@@ -167,7 +167,7 @@ errors:
 
 **Command:**
 ```bash
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
   --target shared \
   --file solution.yaml \
   --title "Pydantic v2 model validation fix" \
@@ -213,7 +213,7 @@ The **Curator** role (human or special agent) maintains Shared KB quality.
 1. **Trigger curation:**
    ```bash
    # List pending submissions
-   python tools/v5.1/kb_curate.py --mode list
+   python tools/kb_curate.py --mode list
    ```
 
 2. **Fetch submissions:**
@@ -232,7 +232,7 @@ The **Curator** role (human or special agent) maintains Shared KB quality.
 
    **Option A: Approve**
    ```bash
-   python tools/v5.1/kb_curate.py --mode approve --issue 123
+   python tools/kb_curate.py --mode approve --issue 123
    ```
 
    **Actions:**
@@ -253,7 +253,7 @@ The **Curator** role (human or special agent) maintains Shared KB quality.
 
    **Option B: Reject**
    ```bash
-   python tools/v5.1/kb_curate.py --mode reject --issue 456 --reason "Duplicate of #123"
+   python tools/kb_curate.py --mode reject --issue 456 --reason "Duplicate of #123"
    ```
 
    **Actions:**

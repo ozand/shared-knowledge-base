@@ -293,7 +293,7 @@ Feedback Loop transforms agents from reactive executors to proactive learners th
 - **Decision making** - Explicit criteria instead of agent guessing
 
 #### Directory Structure
-- **tools/v5.1/** - New tools in separate subdirectory
+- **tools/** - New tools in separate subdirectory
 - **docs/v5.1/** - New documentation in separate subdirectory
 - **examples/v5.1/** - New examples in separate subdirectory
 - **.kb/** - New project-level KB structure
@@ -330,7 +330,7 @@ Feedback Loop transforms agents from reactive executors to proactive learners th
 
 **For existing projects:**
 - See [docs/v5.1/MIGRATION-PLAN.md](docs/v5.1/MIGRATION-PLAN.md)
-- Run migration script: `tools/v5.1/migrate-to-v5.1.sh`
+- Run migration script: `tools/migrate-to-v5.1.sh`
 
 **Key changes:**
 1. Create `.kb/context/PROJECT.yaml` with sharing criteria

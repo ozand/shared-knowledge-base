@@ -95,7 +95,7 @@ shared-knowledge-base/
 **Status:** ✅ COMPLETED
 
 1. ✅ Created `docs/v5.1/` with new documentation
-2. ✅ Created `tools/v5.1/` with new tools
+2. ✅ Created `tools/` with new tools
 3. ✅ Created `examples/v5.1/` with templates
 
 **Remaining:**
@@ -202,7 +202,7 @@ Need to create:
 
 ### C. Create Migration Script
 
-**File:** `tools/v5.1/migrate-to-v5.1.sh`
+**File:** `tools/migrate-to-v5.1.sh`
 
 **Features:**
 - Backup existing `.kb/` directory
@@ -219,7 +219,7 @@ Need to create:
 |---------|------|------|----------------|
 | **KB Storage** | Single-tier | Two-tier | Optional upgrade |
 | **Submission** | Direct/Issues | Issues only | Recommended |
-| **Tools** | tools/*.py | tools/v5.1/*.py | Both work |
+| **Tools** | tools/*.py | tools/*.py | Both work |
 | **Documentation** | docs/* | docs/v5.1/* | Both valid |
 | **Context Loading** | Manual | Automatic | Optional |
 | **Dependency** | gh CLI | PyGithub | Recommended |
@@ -257,7 +257,7 @@ Need to create:
 ### Repository Level (shared-knowledge-base)
 
 - [x] Create docs/v5.1/ directory
-- [x] Create tools/v5.1/ directory
+- [x] Create tools/ directory
 - [x] Create examples/v5.1/ directory
 - [x] Write ARD.md
 - [x] Write WORKFLOWS.md

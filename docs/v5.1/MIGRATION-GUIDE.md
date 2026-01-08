@@ -30,7 +30,7 @@ v5.1 introduces a **two-tier knowledge management system**:
 | **Submission** | Direct commit (dangerous) | GitHub Issues (safe) |
 | **Context Loading** | Manual | Automatic via hook |
 | **Decision Making** | Agent guesses | Explicit criteria |
-| **Tools** | tools/*.py | tools/v5.1/*.py (v4.0 still works) |
+| **Tools** | tools/*.py | tools/*.py (v4.0 still works) |
 
 ### Why Migrate?
 
@@ -115,7 +115,7 @@ You'll need:
 ```bash
 # Run migration script
 cd /path/to/your/project
-python .kb/shared/tools/v5.1/migrate-to-v5.1.sh
+python .kb/shared/tools/migrate-to-v5.1.sh
 
 # Follow prompts
 # Script will:
@@ -156,7 +156,7 @@ git pull origin main
 cd ../..
 
 # Verify v5.1 tools exist
-ls -la .kb/shared/tools/v5.1/
+ls -la .kb/shared/tools/
 ```
 
 **Expected output:**
@@ -233,7 +233,7 @@ nano .kb/context/MEMORY.md
 mkdir -p .claude/hooks
 
 # Copy session-start.sh
-cp .kb/shared/tools/v5.1/hooks/session-start.sh .claude/hooks/
+cp .kb/shared/tools/hooks/session-start.sh .claude/hooks/
 
 # Make executable
 chmod +x .claude/hooks/session-start.sh
@@ -271,7 +271,7 @@ echo ".env" >> .gitignore
 
 ```bash
 # Test v5.1 search
-python .kb/shared/tools/v5.1/kb_search.py --stats
+python .kb/shared/tools/kb_search.py --stats
 
 # Expected output:
 # 📊 Knowledge Base Statistics
@@ -345,7 +345,7 @@ ls -l .claude/hooks/session-start.sh | grep -q "rwxr-xr-x"
 
 **Test search:**
 ```bash
-python .kb/shared/tools/v5.1/kb_search.py "docker"
+python .kb/shared/tools/kb_search.py "docker"
 
 # Expected: Shows results from Shared KB
 ```
@@ -370,7 +370,7 @@ errors:
 EOF
 
 # Submit to local
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target local \
     --file /tmp/test.yaml
 
@@ -380,7 +380,7 @@ python .kb/shared/tools/v5.1/kb_submit.py \
 **Test submit (shared - dry run):**
 ```bash
 # Don't actually submit, just test validation
-python .kb/shared/tools/v5.1/kb_submit.py \
+python .kb/shared/tools/kb_submit.py \
     --target shared \
     --file /tmp/test.yaml \
     --title "Test submission" \
