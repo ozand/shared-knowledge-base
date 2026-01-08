@@ -1,0 +1,108 @@
+# === Project Identity ===
+meta:
+  name: "Shared Knowledge Base"
+  id: "shared-knowledge-base"
+  description: "Centralized knowledge base for software development with two-tier architecture"
+  type: "knowledge-base"
+  started: "2025-01-05"
+  repository: "https://github.com/ozand/shared-knowledge-base"
+  version: "5.1.0"
+
+# === Sharing Criteria ===
+# For Shared KB itself, most knowledge is universal by default
+sharing_criteria:
+  # Agents will submit to Shared KB if ANY of these conditions match
+  universal_if:
+    - "Solution applicable to any software project"
+    - "Language or framework pattern"
+    - "DevOps or infrastructure configuration"
+    - "Best practice or architectural decision"
+    - "Error resolution or debugging technique"
+
+  # Agents will save to Project KB if ANY of these conditions match
+  project_specific_if:
+    - "Internal build scripts"
+    - "Repository-specific maintenance scripts"
+    - "Curator-only internal processes"
+    - "Temporary testing configurations"
+
+# === Technology Stack ===
+stack:
+  language: "Python"
+  version: "3.11+"
+  framework: "None (CLI tools)"
+  database: "None (YAML files)"
+  testing: "pytest"
+  deployment: "GitHub Actions"
+
+  tools:
+    - name: "PyYAML"
+      version: "6.0"
+      purpose: "YAML parsing"
+    - name: "PyGithub"
+      version: "1.59+"
+      purpose: "GitHub Issues integration"
+    - name: "Git"
+      version: "2.40+"
+      purpose: "Version control"
+
+# === Integration References ===
+integrations:
+  - name: "GitHub"
+    type: "platform"
+    docs: ".kb/project/integrations/github-workflows.yaml"
+    url: "https://docs.github.com/"
+
+  - name: "Claude Code"
+    type: "ai-platform"
+    docs: "for-claude-code/"
+    url: "https://claude.com/claude-code"
+
+# === Project Goals ===
+goals:
+  current: "v5.1 rollout and stabilization"
+  priorities:
+    - "Complete v5.1 documentation"
+    - "Test migration script"
+    - "Gather user feedback"
+    - "Monitor GitHub Issues submissions"
+
+  upcoming:
+    - "v5.2 planning"
+    - "Automated quality scoring"
+    - "Enhanced curator tools"
+
+# === Team Information ===
+team:
+  tech_lead: "Ozand"
+  curators:
+    - name: "Ozand"
+      role: "Maintainer"
+  kb_curator: "tech-lead"
+
+# === Development Workflow ===
+workflow:
+  git_branches:
+    main: "main"
+    develop: "main"
+
+  testing:
+    framework: "pytest"
+    coverage_threshold: 70
+
+  code_review:
+    required: true
+    reviewers: 1
+
+# === Important Paths ===
+paths:
+  tests: "tests/"
+  docs: "docs/"
+  tools: "tools/"
+  examples: "examples/"
+
+# === Known Issues ===
+known_issues:
+  - description: "v5.1 tools need more real-world testing"
+    workaround: "Use v4.0 tools as fallback"
+    status: "monitoring"

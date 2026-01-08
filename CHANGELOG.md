@@ -5,6 +5,98 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-01-08
+
+### 🎉 Major Release - Two-Tier Knowledge Management Architecture
+
+### Added
+
+#### Two-Tier Architecture
+- **Project KB** (`.kb/project/`) - Private knowledge with direct commits
+- **Shared KB** (`.kb/shared/`) - Universal patterns via GitHub Issues workflow
+- **Decision Criteria** - `sharing_criteria` in PROJECT.yaml guides agent decisions
+- **Context Loading** - Automatic via session-start.sh hook
+
+#### New Tools (v5.1)
+- **kb_submit.py** - Submit to Project KB or Shared KB via GitHub Issues
+- **kb_search.py** - Search across Project and Shared KB
+- **kb_curate.py** - Curator tool for processing GitHub Issues
+- **session-start.sh** - Hook for automatic context loading
+
+#### New Documentation
+- **docs/v5.1/ARD.md** - Complete architecture reference (650+ lines)
+- **docs/v5.1/WORKFLOWS.md** - Agent and curator workflows (550+ lines)
+- **docs/v5.1/CONTEXT_SCHEMA.md** - PROJECT.yaml and MEMORY.md schemas (650+ lines)
+- **docs/v5.1/README.md** - v5.1 overview and quick start (400+ lines)
+- **docs/v5.1/MIGRATION-PLAN.md** - Migration strategy and plan
+
+#### New Templates
+- **examples/v5.1/.env.example** - Environment variables template
+- **examples/v5.1/PROJECT.yaml.example** - Complete project configuration
+- **examples/v5.1/MEMORY.md.example** - Project memory template
+- **examples/v5.1/kb-entry-example.yaml** - Proper YAML entry format
+
+### Changed
+
+#### Integration
+- **PyGithub** - Replaced gh CLI dependency with PyGithub library
+- **Submission workflow** - Agents create Issues instead of direct commits to Shared KB
+- **Decision making** - Explicit criteria instead of agent guessing
+
+#### Directory Structure
+- **tools/v5.1/** - New tools in separate subdirectory
+- **docs/v5.1/** - New documentation in separate subdirectory
+- **examples/v5.1/** - New examples in separate subdirectory
+- **.kb/** - New project-level KB structure
+
+### Fixed
+
+#### kb_submit.py
+- **Fixed:** Incomplete `submit_local()` function code block
+- **Fixed:** Malformed Issue body YAML formatting
+- **Added:** YAML validation before submission
+- **Added:** Quality score calculation (>= 75 threshold)
+- **Added:** Proper error handling and user feedback
+
+### Deprecated
+
+- **gh CLI** - Use PyGithub library instead (still works but deprecated)
+
+### Backward Compatibility
+
+✅ **Fully backward compatible with v4.0:**
+- All v4.0 tools still work
+- All v4.0 documentation still valid
+- Existing projects can migrate at their own pace
+- No breaking changes to core functionality
+
+### Migration
+
+**From v4.0 to v5.1:**
+
+**Optional:** Migrate when ready (not forced)
+
+**For new projects:**
+- Follow [docs/v5.1/README.md](docs/v5.1/README.md)
+
+**For existing projects:**
+- See [docs/v5.1/MIGRATION-PLAN.md](docs/v5.1/MIGRATION-PLAN.md)
+- Run migration script: `tools/v5.1/migrate-to-v5.1.sh`
+
+**Key changes:**
+1. Create `.kb/context/PROJECT.yaml` with sharing criteria
+2. Install session-start.sh hook
+3. Configure GITHUB_TOKEN for submissions
+4. Use new v5.1 tools (optional, v4.0 still works)
+
+### Contributors
+
+- **Architecture:** Claude Code Agent (Sonnet 4.5)
+- **Implementation:** Based on two-tier architecture analysis
+- **Documentation:** Comprehensive v5.1 documentation suite
+
+---
+
 ## [4.0.1] - 2026-01-08
 
 ### Fixed

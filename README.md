@@ -1,10 +1,31 @@
 # Shared Knowledge Base
 
-**Version 4.0** - Centralized knowledge base for software development with progressive domain loading
+**Version 5.1** - Two-tier knowledge management for AI agents
+
+🆕 **NEW: v5.1 with Two-Tier Architecture** - Separate Project KB and Shared KB with GitHub Issues workflow
 
 Centрализованная база знаний для разработки ПО с системой метаданных, предиктивной аналитикой и распознаванием паттернов.
 
 [English](#english) | [Русский](#russian)
+
+---
+
+## 🆕 What's New in v5.1?
+
+**Two-Tier Architecture** (2026-01-08)
+
+- ✅ **Project KB** (`.kb/project/`) - Private knowledge, direct commits
+- ✅ **Shared KB** (`.kb/shared/`) - Universal patterns, GitHub Issues workflow
+- ✅ **Automatic Context Loading** - SessionStart hook injects project context
+- ✅ **PyGithub Integration** - No more `gh` CLI dependency
+- ✅ **Decision Criteria** - Agent knows what to share via `sharing_criteria`
+
+**Quick Links:**
+- 📖 [v5.1 Documentation](docs/v5.1/README.md)
+- 🚀 [v5.1 Quick Start](docs/v5.1/README.md#quick-start)
+- 🔄 [Migration Guide](docs/v5.1/MIGRATION-PLAN.md)
+
+**Backward Compatible:** ✅ v4.0 tools still work! Migrate at your own pace.
 
 ---
 

@@ -1,0 +1,194 @@
+# Project Memory
+
+_Last updated: 2026-01-08_
+
+---
+
+## Architecture Decisions
+
+### Database Choice (2025-01-15)
+**Decision:** Use PostgreSQL instead of MySQL
+**Reason:** Required JSON field support for flexible product attributes
+**Impact:** Positive - JSONB queries perform well
+**KB Entry:** `.kb/project/decisions/postgresql-vs-mysql.yaml`
+
+### Authentication Strategy (2025-02-01)
+**Decision:** JWT tokens with refresh token rotation
+**Reason:** Better UX than session-based auth, more secure than long-lived tokens
+**Implementation:** See `.kb/project/integrations/jwt-setup.yaml`
+**Notes:** Rotate secrets every 90 days
+
+### Payment Provider (2025-03-10)
+**Decision:** Stripe instead of PayPal
+**Reason:** Better API documentation, webhook support
+**Lessons:** Always verify webhook signatures (see lessons/stripe-webhook-security.yaml)
+
+---
+
+## Lessons Learned
+
+### Performance
+- **Don't use `ujson` with SQLAlchemy** (causes segfaults on Python 3.11)
+- **Use connection pooling for PostgreSQL** (min 5, max 20 connections)
+- **Cache static responses with Redis** (reduces DB load by 60%)
+- **Add database indexes** for frequently queried fields (email, product_id)
+
+### Security
+- **Always validate webhook signatures** (Stripe, SendGrid, etc.)
+- **Never commit `.env` files** (use `.env.example` template)
+- **Rotate JWT secrets every 90 days** (document in `.kb/project/pending/`)
+- **Use environment-specific configs** (dev, staging, prod)
+
+### Testing
+- **Integration tests need test database** (don't use production)
+- **Mock external APIs in tests** (Stripe, email, etc.)
+- **Test coverage should stay above 80%** (CI blocks if lower)
+- **Use pytest fixtures** for common test setup
+
+### Development Workflow
+- **Always run tests before committing** (`pytest -v`)
+- **Use feature branches** (`feature/ticket-name`)
+- **Update CHANGELOG.md** for any user-facing changes
+- **Write docstrings** for all public functions
+
+---
+
+## Known Issues
+
+### Current Issues
+- **Rate limiting on Stripe API** (2025-06-01)
+  - **Status:** Monitoring
+  - **Workaround:** Implement exponential backoff
+  - **Related Issue:** #123
+  - **KB Entry:** `.kb/project/lessons/stripe-rate-limit.yaml`
+
+- **WebSocket connections drop after 30s** (2025-06-05)
+  - **Status:** Investigating
+  - **Workaround:** Client reconnects automatically
+  - **Related Issue:** #127
+
+### Resolved Issues
+- **Memory leak in background worker** (2025-05-15)
+  - **Status:** ✅ Resolved
+  - **Solution:** Upgraded to Celery 5.3
+  - **KB Entry:** `.kb/project/lessons/celery-memory-leak.yaml`
+
+---
+
+## Onboarding Tips
+
+### For New Developers
+1. **Set up environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your values
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   poetry install
+   poetry shell
+   ```
+
+3. **Run tests:**
+   ```bash
+   pytest -v
+   ```
+
+4. **Read architecture:**
+   - Check `.kb/project/knowledge/architecture/` first
+   - Read `.kb/context/PROJECT.yaml` for overview
+   - Review `.kb/context/MEMORY.md` for lessons
+
+5. **Join Slack:** `#dev-team` channel for questions
+
+### For New Agents
+1. **Search KB first:** Always run `kb_search.py` before solving problems
+2. **Check sharing criteria:** Read `.kb/context/PROJECT.yaml` before saving
+3. **Verify solutions:** Test your fix before creating KB entry
+4. **Provide context:** Include error messages, stack traces, environment info
+5. **Use correct target:**
+   - `--target local` for project-specific knowledge
+   - `--target shared` for universal patterns
+
+---
+
+## Project Conventions
+
+### Code Style
+- **Python:** Follow PEP 8, use `black` for formatting
+- **Type hints:** Required for all public functions
+- **Docstrings:** Google style docstrings
+
+### File Organization
+- **Models:** `src/models/` (database models)
+- **API:** `src/api/` (FastAPI endpoints)
+- **Services:** `src/services/` (business logic)
+- **Utils:** `src/utils/` (helper functions)
+
+### Naming Conventions
+- **Files:** `kebab-case.yaml` (KB entries), `snake_case.py` (code)
+- **Variables:** `snake_case` (Python), `camelCase` (JavaScript)
+- **Constants:** `UPPER_SNAKE_CASE`
+- **Classes:** `PascalCase`
+
+### Git Conventions
+- **Commits:** Conventional Commits format
+  - `feat:` - New feature
+  - `fix:` - Bug fix
+  - `docs:` - Documentation only
+  - `refactor:` - Code refactoring
+  - `test:` - Test changes
+- **Branches:** `feature/ticket-name`, `fix/ticket-name`
+- **PRs:** Must pass CI, require 1 approval
+
+---
+
+## Integration References
+
+### Quick Links
+- **Stripe Integration:** `.kb/project/integrations/stripe.yaml`
+- **PostgreSQL Setup:** `.kb/project/integrations/postgresql.yaml`
+- **Docker Deployment:** `.kb/project/integrations/docker-compose.yaml`
+- **JWT Authentication:** `.kb/project/integrations/jwt-setup.yaml`
+
+### External Docs
+- **FastAPI Docs:** https://fastapi.tiangolo.com/
+- **Stripe API:** https://stripe.com/docs/api
+- **PostgreSQL:** https://www.postgresql.org/docs/
+- **SQLAlchemy:** https://docs.sqlalchemy.org/
+
+---
+
+## Environment Variables
+
+### Required
+```bash
+DATABASE_URL=postgresql://user:pass@localhost/db
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+JWT_SECRET=your-jwt-secret
+```
+
+### Optional
+```bash
+REDIS_URL=redis://localhost:6379/0
+SENTRY_DSN=https://xxx@sentry.io/xxx
+LOG_LEVEL=INFO
+```
+
+---
+
+## Glossary
+
+- **Shared KB:** Universal knowledge base (`.kb/shared/` submodule)
+- **Project KB:** Project-specific knowledge (`.kb/project/`)
+- **Curator:** Role that reviews submissions to Shared KB
+- **Agent:** Claude Code AI assistant
+- **Submission:** GitHub Issue created to propose Shared KB entry
+- **Sharing Criteria:** Rules in PROJECT.yaml for deciding local vs shared
+
+---
+
+_Last updated by: Agent claude-code-session-abc123_
+_Update frequency: After major architectural decisions or lessons learned_

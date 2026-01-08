@@ -1,0 +1,105 @@
+# === Project Identity ===
+meta:
+  name: "E-Commerce Backend"
+  id: "ecom-backend-v2"
+  description: "FastAPI-based e-commerce platform"
+  type: "api-service"
+  started: "2025-01-15"
+  repository: "https://github.com/company/ecom-backend"
+
+# === Sharing Criteria (MOST IMPORTANT!) ===
+# This section controls agent behavior for knowledge submission
+sharing_criteria:
+  # Agents will submit to Shared KB if ANY of these conditions match
+  universal_if:
+    - "Solution applies to any FastAPI/Python project"
+    - "Docker, PostgreSQL, or Redis patterns"
+    - "Open-source library integrations"
+    - "Generic error handling or logging"
+
+  # Agents will save to Project KB if ANY of these conditions match
+  project_specific_if:
+    - "Contains Stripe payment logic"
+    - "Product catalog business rules"
+    - "Internal microservice names"
+    - "Discount/coupon logic"
+    - "Client-specific workarounds"
+
+# === Technology Stack ===
+stack:
+  language: "Python"
+  version: "3.11"
+  framework: "FastAPI"
+  database: "PostgreSQL 15"
+  orm: "SQLAlchemy 2.0"
+  testing: "pytest"
+  deployment: "Docker Compose"
+
+  # Additional tools
+  tools:
+    - name: "Redis"
+      version: "7.0"
+      purpose: "Caching and sessions"
+    - name: "Celery"
+      version: "5.3"
+      purpose: "Background tasks"
+
+# === Integration References ===
+integrations:
+  - name: "Stripe"
+    type: "payment"
+    docs: ".kb/project/integrations/stripe.yaml"
+    url: "https://stripe.com/docs"
+
+  - name: "SendGrid"
+    type: "email"
+    docs: ".kb/project/integrations/sendgrid.yaml"
+    url: "https://sendgrid.com/docs"
+
+# === Project Goals ===
+goals:
+  current: "Implementing subscription billing"
+  priorities:
+    - "Security audit"
+    - "Performance optimization"
+    - "API v2 documentation"
+
+  upcoming:
+    - "Multi-currency support"
+    - "Advanced analytics"
+
+# === Team Information ===
+team:
+  tech_lead: "Jane Smith"
+  developers:
+    - name: "John Doe"
+      role: "Backend Developer"
+    - name: "Alice Johnson"
+      role: "DevOps Engineer"
+  kb_curator: "tech-lead"
+
+# === Development Workflow ===
+workflow:
+  git_branches:
+    main: "main"
+    develop: "develop"
+
+  testing:
+    framework: "pytest"
+    coverage_threshold: 80
+
+  code_review:
+    required: true
+    reviewers: 1
+
+# === Important Paths ===
+paths:
+  tests: "tests/"
+  docs: "docs/"
+  configs: "config/"
+
+# === Known Issues ===
+known_issues:
+  - description: "Stripe rate limiting on peak hours"
+    workaround: "Implement exponential backoff"
+    status: "monitoring"

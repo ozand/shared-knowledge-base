@@ -1,0 +1,88 @@
+version: "1.0"
+category: "docker-compose"
+last_updated: "2026-01-08"
+
+errors:
+  - id: "DC-HEALTH-001"
+    title: "Docker Compose healthcheck race condition with PostgreSQL"
+    severity: "high"
+    scope: "docker"
+
+    domains:
+      primary: "docker"
+      secondary:
+        - "postgresql"
+        - "devops"
+
+    problem: |
+      Docker Compose healthcheck passes immediately, but application fails
+      because PostgreSQL database is still initializing and accepting connections.
+      This causes the application to crash on startup with "connection refused" errors.
+
+    solution:
+      code: |
+        services:
+          postgres:
+            image: postgres:15
+            environment:
+              POSTGRES_DB: myapp
+              POSTGRES_USER: user
+              POSTGRES_PASSWORD: password
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U postgres"]
+              interval: 5s
+              timeout: 5s
+              retries: 5
+              start_period: 10s
+
+          app:
+            build: .
+            depends_on:
+              postgres:
+                condition: service_healthy
+            environment:
+              DATABASE_URL: postgres://user:password@postgres:5432/myapp
+
+      explanation: |
+        The solution involves two key changes:
+
+        1. **Add `start_period` to healthcheck**: This gives PostgreSQL time to
+           initialize before the healthcheck starts counting failures. The
+           `start_period: 10s` means failures in the first 10 seconds don't count
+           towards the retry limit.
+
+        2. **Use `condition: service_healthy`**: Instead of just depending on the
+           service to start, we wait for the healthcheck to pass. This ensures
+           PostgreSQL is actually ready to accept connections before the app starts.
+
+        The healthcheck uses `pg_isready` which is a PostgreSQL utility that
+        checks if the server is ready to accept connections. Combined with
+        `retries: 5` and `interval: 5s`, it will wait up to 35 seconds (5s x 5
+        retries + 10s start period) for PostgreSQL to be ready.
+
+    references:
+      - "Docker Compose docs: https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck"
+      - "PostgreSQL in Docker: https://hub.docker.com/_/postgres"
+
+    tags:
+      - "docker-compose"
+      - "healthcheck"
+      - "postgresql"
+      - "race-condition"
+      - "startup-order"
+
+    verified: true
+    reproducible: true
+
+    # Optional: GitHub submission metadata
+    github:
+      issue_number: 123
+      issue_url: "https://github.com/org/shared-knowledge-base/issues/123"
+      issue_status: "pending"
+      contribution_date: "2026-01-08T15:30:00Z"
+
+      agent_attribution:
+        agent_type: "claude-code"
+        agent_version: "4.5"
+        source_repository: "https://github.com/company/my-project"
+        local_kb_path: ".kb/project/knowledge/dc-health-001.yaml"
