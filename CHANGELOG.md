@@ -5,6 +5,56 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.2] - 2026-01-08
+
+### Added
+
+#### Complete Shared KB Workflow Implementation
+- **SHARED-KB-WORKFLOWS.md** - Comprehensive documentation (550+ lines)
+  - Read Flow: Local search mechanism
+  - Submission Flow: GitHub Issues API workflow
+  - Curation Flow: Quality gates and approval process
+  - Sync Flow: Automatic distribution via submodules
+  - Access control matrix and diagrams
+
+#### Full kb_curate.py Implementation
+- **Complete approve_submission()** function
+  - Creates YAML files in correct domain directories
+  - Formats filename: `{CATEGORY}-{ID}.yaml`
+  - Stages files in git automatically
+  - Provides clear next steps for curator
+  - Removed TODO placeholder
+
+### Fixed
+
+#### kb_search.py Path Detection
+- **Fixed:** Search now works with v5.1 domains/ structure
+- Auto-detects running context:
+  - Shared KB repository: searches in `domains/`
+  - Consumer project: searches in `.kb/shared/domains/`
+- Properly handles new repository structure
+
+#### session-start.sh Statistics
+- **Fixed:** Shared KB entry count now searches in `domains/` subdirectory
+- Correctly reports entries from `.kb/shared/domains/`
+- Maintains automatic submodule sync functionality
+
+### Implementation Complete
+
+**All Four Workflows Operational:**
+
+✅ **Read Flow** - Agents search Shared KB locally (instant, offline)
+✅ **Submission Flow** - Agents create Issues via PyGithub API
+✅ **Curation Flow** - Curator validates, approves, auto-creates files
+✅ **Sync Flow** - SessionStart hook auto-updates all projects
+
+**Key Features:**
+- Quality score validation (>= 75 threshold)
+- Automatic file creation and git staging
+- Domain-based routing (catalog, claude-code, docker, python, etc.)
+- No merge conflicts via Issues mechanism
+- Automatic distribution to all projects
+
 ## [5.1.1] - 2026-01-08
 
 ### Added
