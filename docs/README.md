@@ -6,6 +6,11 @@
 
 ## Quick Links
 
+### Product & Architecture 📋
+- **[PRD - Product Requirements Document](PRD.md)** - Product vision, requirements, roadmap (v4.0)
+- **[ARD - Architecture Reference Document](ARD.md)** - System architecture, components, design (v4.0)
+- **[Documentation README](README.md)** - This file
+
 ### Getting Started 🚀
 - [Quick Start](../QUICKSTART.md) - 5-minute setup guide
 - [Progressive Domain Loading](../QUICKSTART-DOMAINS.md) - Load only domains you need (v3.1)
