@@ -75,3 +75,7 @@ _domain_index.yaml
 # Local-only configuration files
 *.local
 *.local.*
+
+# User reports and analysis
+*caveat-the-messages*.txt
+*analysis*.txt
