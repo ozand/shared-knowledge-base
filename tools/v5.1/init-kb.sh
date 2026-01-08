@@ -72,6 +72,53 @@ sharing_criteria:
     - "Environment-specific configuration"
     - "Integration secrets (use templates)"
 
+# === Agent Instructions ===
+# This section defines agent behavior and protocols
+agent_instructions:
+  feedback_loop:
+    enabled: true
+    mandatory: true
+    description: "Agent must document every error solution and valuable pattern"
+    triggers:
+      - "Tool execution error (exit code != 0)"
+      - "Test failure"
+      - "Solution took > 2 attempts to discover"
+      - "Non-obvious workaround or fix"
+    output_format: "yaml"
+    submission_required: true
+
+  reflection_prompt: |
+    When you encounter an error and successfully solve it, you MUST:
+
+    1. ANALYZE: Answer these questions:
+       - What was I trying to do?
+       - What exact error occurred?
+       - Root cause: Why did this happen?
+       - How did I fix it?
+
+    2. EXTRACT: Create YAML entry with:
+       - Clear problem description
+       - Complete solution code
+       - Explanation of "why" it works
+       - Appropriate category and severity
+
+    3. ROUTE: Determine scope:
+       - Secrets/business logic? → --target local
+       - Universal pattern? → --target shared
+
+    4. SUBMIT: Use kb_submit.py
+       python .kb/shared/tools/v5.1/kb_submit.py \\
+         --target <local|shared> \\
+         --file <entry.yaml> \\
+         --title "Descriptive title"
+
+    NEVER skip this step. Every error solution is valuable knowledge.
+
+  search_first:
+    enabled: true
+    description: "Always search KB before solving problems"
+    command: "python .kb/shared/tools/v5.1/kb_search.py"
+
 # === Technology Stack ===
 stack:
   language: "Python"

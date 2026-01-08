@@ -17,6 +17,7 @@
 - ✅ **PyGithub Integration**: No more dependency on `gh` CLI
 - ✅ **Automatic Context Loading**: SessionStart hook injects project context
 - ✅ **Decision Criteria**: `sharing_criteria` in PROJECT.yaml guides agent decisions
+- ✅ **Feedback Loop**: Agents learn from mistakes and accumulate knowledge
 
 ### Key Benefits
 
@@ -37,6 +38,9 @@
 | **[ARD.md](ARD.md)** | Architecture Reference Document - Complete system architecture |
 | **[WORKFLOWS.md](WORKFLOWS.md)** | Agent workflows and curation protocols |
 | **[CONTEXT_SCHEMA.md](CONTEXT_SCHEMA.md)** | PROJECT.yaml and MEMORY.md schemas |
+| **[SHARED-KB-WORKFLOWS.md](SHARED-KB-WORKFLOWS.md)** | Shared KB lifecycle: Read → Submit → Curate → Sync |
+| **[FEEDBACK-LOOP.md](FEEDBACK-LOOP.md)** | Agent learning process and knowledge extraction |
+| **[examples/feedback-loop-scenarios.md](examples/feedback-loop-scenarios.md)** | Real-world Feedback Loop examples |
 
 ---
 
