@@ -86,10 +86,10 @@ cd ../..
 git submodule update --remote .kb/shared
 
 # 6. Rebuild index
-python .kb/shared/tools/kb.py index --force -v
+python .kb/shared/tools/kb.py index -v
 
 # 7. Test new features
-python .kb/shared/tools/kb_domains.py list
+python .kb/shared/tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 ### Method 2: Tag-Based Update
@@ -125,7 +125,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 git push origin main
 
 # 7. Rebuild index
-python .kb/shared/tools/kb.py index --force -v
+python .kb/shared/tools/kb.py index -v
 ```
 
 ### Method 3: Fresh Installation
@@ -180,7 +180,7 @@ ls -la
 
 **1. Test progressive loading:**
 ```bash
-python .kb/shared/tools/kb_domains.py list
+python .kb/shared/tools/kb_domains.py --kb-dir .kb/shared list
 python .kb/shared/tools/kb_domains.py info docker
 ```
 
@@ -270,7 +270,7 @@ ls CHANGELOG.md
 python .kb/shared/tools/kb.py search "test"
 
 # Test domain loading
-python .kb/shared/tools/kb_domains.py list
+python .kb/shared/tools/kb_domains.py --kb-dir .kb/shared list
 
 # Test submission
 python .kb/shared/tools/kb_submit.py submit --help
@@ -297,7 +297,7 @@ git submodule update --remote --merge .kb/shared
 **Solution:**
 ```bash
 # Force rebuild
-python .kb/shared/tools/kb.py index --force -v
+python .kb/shared/tools/kb.py index -v
 
 # If still fails, check dependencies
 pip install pyyaml
@@ -420,7 +420,7 @@ ls tools/kb_submit.py
 cat .kb/shared/QUICKSTART-DOMAINS.md
 
 # List available domains
-python .kb/shared/tools/kb_domains.py list
+python .kb/shared/tools/kb_domains.py --kb-dir .kb/shared list
 
 # Load specific domain
 python .kb/shared/tools/kb_domains.py load docker

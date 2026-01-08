@@ -1060,7 +1060,7 @@ shared-knowledge-base/
 
 # Workflow
 python tools/kb.py validate .
-python tools/kb.py index --force
+python tools/kb.py index
 python -m pytest tests/
 ```
 
@@ -1257,7 +1257,7 @@ echo "✅ Healthy"
 2. **Corrupted Index**
    ```bash
    # Rebuild from source
-   python tools/kb.py index --force
+   python tools/kb.py index
    ```
 
 3. **Lost Submodule**

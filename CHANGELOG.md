@@ -10,10 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### kb_domains.py Compatibility Issue
-- **Fixed:** TypeError in `kb_domains.py list` when processing flat domain format
+- **Fixed:** TypeError in `kb_domains.py --kb-dir .kb/shared list` when processing flat domain format
 - **Root cause:** Tool expected nested dict format, but v4.0.0 uses flat int format
 - **Solution:** Added support for both flat (int) and nested (dict) formats
-- **Impact:** `kb_domains.py list` now works correctly with v4.0.0 `_domain_index.yaml`
+- **Impact:** `kb_domains.py --kb-dir .kb/shared list` now works correctly with v4.0.0 `_domain_index.yaml`
 - **Lines changed:** tools/kb_domains.py:415-437
 
 #### Agent Instructions Documentation
@@ -82,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Fetch latest: `git fetch origin`
 2. Checkout v4.0.1: `git checkout v4.0.1`
 3. Update submodule: `git submodule update --remote .kb/shared`
-4. Test: `python tools/kb_domains.py list` (should work now)
+4. Test: `python tools/kb_domains.py --kb-dir .kb/shared list` (should work now)
 
 **Rollback:** Fully backward compatible - can revert to v4.0.0 if needed
 
@@ -238,12 +238,12 @@ This is a **major milestone release** representing the completion of Phases 1-3 
 2. **Rebuild index:**
    ```bash
    cd .kb/shared
-   python tools/kb.py index --force
+   python tools/kb.py index
    ```
 
 3. **Test progressive loading:**
    ```bash
-   python tools/kb_domains.py list
+   python tools/kb_domains.py --kb-dir .kb/shared list
    python tools/kb_domains.py load docker
    ```
 
@@ -381,8 +381,8 @@ None.
 1. Backup current installation
 2. Update repository: `git pull origin main`
 3. Update submodules: `git submodule update --remote .kb/shared`
-4. Rebuild index: `python tools/kb.py index --force`
-5. Test progressive loading: `python tools/kb_domains.py list`
+4. Rebuild index: `python tools/kb.py index`
+5. Test progressive loading: `python tools/kb_domains.py --kb-dir .kb/shared list`
 
 **Rollback:** Fully backward compatible - can revert to previous version if needed
 

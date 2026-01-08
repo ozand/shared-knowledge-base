@@ -17,7 +17,7 @@ Shared Knowledge Base v3.1 introduces **progressive domain-based loading**, allo
 
 ```bash
 # See all domains with metadata
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 **Output:**
@@ -169,7 +169,7 @@ Large Project (5 domains):
 python tools/kb_domains.py index --update
 
 # 2. List available domains
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 
 # 3. Load relevant domains
 python tools/kb_domains.py load testing
@@ -259,7 +259,7 @@ python tools/kb_domains.py sync --all
 python tools/kb_domains.py pin testing v1.2.0
 
 # Check available versions
-python tools/kb_domains.py list-versions testing
+python tools/kb_domains.py --kb-dir .kb/shared list-versions testing
 
 # Use latest version
 python tools/kb_domains.py unpin testing
@@ -278,7 +278,7 @@ python tools/kb_domains.py unpin testing
 **Solution:**
 ```bash
 # List available domains
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 
 # Use correct domain name
 python tools/kb_domains.py load testing  # not 'test'
@@ -335,7 +335,7 @@ python tools/kb.py stats
 
 ```bash
 # Domain management (NEW)
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 python tools/kb_domains.py load testing
 python tools/kb_domains.py migrate --from-tags
 python tools/kb_domains.py index --update

@@ -511,7 +511,7 @@ Acceptance Criteria:
 - System shall display help with `--help` flag
 
 **FR-6.2: kb_domains.py**
-- System shall provide domain listing: `python tools/kb_domains.py list`
+- System shall provide domain listing: `python tools/kb_domains.py --kb-dir .kb/shared list`
 - System shall support flat format output
 - System shall display entry counts and token estimates
 - System shall handle both flat and nested index formats
@@ -863,7 +863,7 @@ git commit -m "Pin Shared KB to v4.0.1"
 - name: Validate KB entries
   run: |
     python .kb/shared/tools/kb.py validate .
-    python .kb/shared/tools/kb.py index --force
+    python .kb/shared/tools/kb.py index
 ```
 
 **I3.3: Documentation Generation**

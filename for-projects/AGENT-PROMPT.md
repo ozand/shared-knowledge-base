@@ -26,7 +26,7 @@ mkdir -p .claude/hooks
 cp .kb/shared/.claude/hooks/*.sh .claude/hooks/
 
 # 4. Build index
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 **B) Update Existing Project:**
@@ -35,10 +35,10 @@ python tools/kb.py index --force -v
 cd .kb/shared && git pull origin main && cd ../..
 
 # 2. Rebuild index
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 
 # 3. Verify
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 ### ⚠️ Critical Rules:

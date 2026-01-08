@@ -92,7 +92,7 @@
 ### Domain Management (v3.1)
 ```bash
 # List all domains
-python ../tools/kb_domains.py list
+python ../tools/kb_domains.py --kb-dir .kb/shared list
 
 # Load specific domain
 python ../tools/kb_domains.py load docker

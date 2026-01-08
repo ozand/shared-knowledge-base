@@ -43,7 +43,7 @@ Follow Step 2: Update Existing Project."
 git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 cp .kb/shared/tools/kb.py tools/
 cp .kb/shared/tools/kb_domains.py tools/
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 
 Critical rule: NEVER modify files in .kb/shared/"
 ```
@@ -87,7 +87,7 @@ Setup:
 git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 cp .kb/shared/tools/kb.py tools/
 cp .kb/shared/tools/kb_domains.py tools/
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 
 Critical: NEVER modify .kb/shared/ files. Read more:
 https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md"

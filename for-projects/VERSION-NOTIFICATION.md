@@ -17,7 +17,7 @@ cp .kb/shared/tools/kb.py tools/
 cp .kb/shared/tools/kb_domains.py tools/
 
 # 3. Build index
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 **Full guide:** `@for-projects/START-HERE.md` (Step 1)
@@ -31,10 +31,10 @@ python tools/kb.py index --force -v
 cd .kb/shared && git pull origin main && cd ../..
 
 # 2. Rebuild index
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 
 # 3. Verify
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 **Full guide:** `@for-projects/START-HERE.md` (Step 2)

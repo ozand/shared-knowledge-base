@@ -51,7 +51,7 @@ cp -r .kb/shared/for-projects/command-templates/* .claude/commands/
 ### 1.3. Build Index
 
 ```bash
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 ### 1.4. Test
@@ -61,7 +61,7 @@ python tools/kb.py index --force -v
 python tools/kb.py search "docker"
 
 # List domains
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 **✅ Done!** Your project now has Shared KB integrated.
@@ -99,14 +99,14 @@ git pull origin main
 cd ../..
 
 # Rebuild index
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 ### 2.3. Verify
 
 ```bash
 # Should work without errors
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 
 # Should show no errors
 python tools/kb.py validate .kb/shared/
@@ -202,7 +202,7 @@ cd .kb/shared && git describe --tags && cd ../..
 cd .kb/shared && git status --porcelain
 
 # Test tools
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 python tools/kb.py validate .
 ```
 
@@ -213,7 +213,7 @@ python tools/kb.py validate .
 1. **Auto-detection:** Every session start checks for updates automatically (via `session-setup.sh`)
 2. **Version notification:** Check `@.kb/shared/.kb-version-notification.md` for latest updates
 3. **Before updating:** Always read `.kb-version-notification.md` for critical changes
-4. **After updating:** Always rebuild index: `python tools/kb.py index --force -v`
+4. **After updating:** Always rebuild index: `python tools/kb.py index -v`
 
 ---
 
@@ -237,8 +237,8 @@ python tools/kb.py validate .
 | **Setup new project** | `git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared && git submodule update --init --recursive` |
 | **Check version** | `cd .kb/shared && git describe --tags` |
 | **Check updates** | `cd .kb/shared && git fetch && git log HEAD..origin/main --oneline` |
-| **Update** | `cd .kb/shared && git pull origin main && cd ../.. && python tools/kb.py index --force -v` |
-| **Rebuild index** | `python tools/kb.py index --force -v` |
+| **Update** | `cd .kb/shared && git pull origin main && cd ../.. && python tools/kb.py index -v` |
+| **Rebuild index** | `python tools/kb.py index -v` |
 | **Validate** | `python tools/kb.py validate .` |
 | **Search** | `python tools/kb.py search "query"` |
 

@@ -76,7 +76,7 @@ cd ../..
 ### 1. Rebuild Index
 
 ```bash
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 ### 2. Validate Entries
@@ -88,7 +88,7 @@ python tools/kb.py validate .
 ### 3. Check Domain Index
 
 ```bash
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 ```
 
 ---
@@ -161,8 +161,8 @@ git pull origin main
 
 **Action Required:**
 1. Update `.kb/shared/` to v4.0.1
-2. Run `python tools/kb.py index --force -v`
-3. Test: `python tools/kb_domains.py list`
+2. Run `python tools/kb.py index -v`
+3. Test: `python tools/kb_domains.py --kb-dir .kb/shared list`
 
 **Files Changed:**
 - `tools/kb_domains.py` - Now handles flat format (int) and nested format (dict)
@@ -174,7 +174,7 @@ git pull origin main
 **Impact:** New flat domain index format
 
 **Action Required:**
-1. Rebuild index: `python tools/kb.py index --force`
+1. Rebuild index: `python tools/kb.py index`
 2. Validate entries: `python tools/kb.py validate .`
 
 ---
@@ -194,7 +194,7 @@ CURRENT=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
 if [ "$LATEST" != "$CURRENT" ]; then
     echo "⚠️  Shared KB update available: $CURRENT → $LATEST"
     echo "   Run: cd .kb/shared && git pull origin main"
-    echo "   Then: python tools/kb.py index --force -v"
+    echo "   Then: python tools/kb.py index -v"
 fi
 
 cd ../..

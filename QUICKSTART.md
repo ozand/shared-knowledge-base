@@ -102,7 +102,7 @@ python docs/knowledge-base/shared/tools/kb.py stats
 
 ```bash
 # Rebuild index
-python docs/knowledge-base/shared/tools/kb.py index --force -v
+python docs/knowledge-base/shared/tools/kb.py index -v
 
 # Validate entry
 python docs/knowledge-base/shared/tools/kb.py validate path/to/file.yaml
@@ -184,7 +184,7 @@ kb stats
 
 **Fix:** Rebuild index
 ```bash
-python docs/knowledge-base/shared/tools/kb.py index --force -v
+python docs/knowledge-base/shared/tools/kb.py index -v
 ```
 
 ### Problem: YAML validation fails

@@ -76,7 +76,7 @@ cd ../..
 
 **Step 4: Rebuild Index**
 ```bash
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 ```
 
 **Step 5: Validate**
@@ -199,7 +199,7 @@ python -c "import yaml; import json; print(json.dumps(yaml.safe_load(open('.kb/s
 python tools/kb.py --version
 
 # kb_domains.py compatibility
-python tools/kb_domains.py list
+python tools/kb_domains.py --kb-dir .kb/shared list
 # Should work without errors
 ```
 
@@ -257,7 +257,7 @@ File "tools/kb_domains.py", line 415, in list_domains
 
 **Steps:**
 1. Updated `.kb/shared/` to v4.0.0
-2. Ran: `python tools/kb_domains.py list`
+2. Ran: `python tools/kb_domains.py --kb-dir .kb/shared list`
 3. Error occurred
 
 **Expected:** List domains with entry counts
@@ -278,9 +278,9 @@ Before completing any Shared KB update:
 - [ ] Checked current version in `.kb/shared/`
 - [ ] Checked latest version available
 - [ ] Updated via `git pull origin main` (if needed)
-- [ ] Rebuilt index: `python tools/kb.py index --force -v`
+- [ ] Rebuilt index: `python tools/kb.py index -v`
 - [ ] Validated entries: `python tools/kb.py validate .`
-- [ ] Tested tools work: `python tools/kb_domains.py list`
+- [ ] Tested tools work: `python tools/kb_domains.py --kb-dir .kb/shared list`
 - [ ] NO modifications to `.kb/shared/` files
 - [ ] NO uncommitted changes in `.kb/shared/`
 - [ ] `.kb/shared/` on `main` branch
@@ -295,7 +295,7 @@ Before completing any Shared KB update:
 | Check version | `cd .kb/shared && git describe --tags` | Shows current version |
 | Check updates | `cd .kb/shared && git fetch && git log HEAD..origin/main --oneline` | Shows available updates |
 | Update | `cd .kb/shared && git pull origin main && cd ../..` | Pulls latest changes |
-| Rebuild index | `python tools/kb.py index --force -v` | Required after update |
+| Rebuild index | `python tools/kb.py index -v` | Required after update |
 | Validate | `python tools/kb.py validate .` | Check entry quality |
 | Check status | `cd .kb/shared && git status` | Should be clean |
 

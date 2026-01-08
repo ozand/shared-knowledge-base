@@ -97,7 +97,7 @@ Here's what to do:
    cp .kb/shared/tools/kb_domains.py tools/
 
 3. Build index:
-   python tools/kb.py index --force -v
+   python tools/kb.py index -v
 
 Critical rules:
 - NEVER modify files in .kb/shared/
@@ -226,7 +226,7 @@ Follow Step 2"
 git submodule add https://github.com/ozand/shared-knowledge-base.git .kb/shared
 cp .kb/shared/tools/kb.py tools/
 cp .kb/shared/tools/kb_domains.py tools/
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 
 Docs: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 NEVER modify .kb/shared/"
@@ -236,7 +236,7 @@ NEVER modify .kb/shared/"
 ```markdown
 "Update Shared KB:
 cd .kb/shared && git pull origin main && cd ../..
-python tools/kb.py index --force -v
+python tools/kb.py index -v
 Docs: https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/for-projects/START-HERE.md
 ```
 
