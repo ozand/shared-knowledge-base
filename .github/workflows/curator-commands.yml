@@ -15,7 +15,7 @@ permissions:
 jobs:
   process-commands:
     name: Process Curator Command
-    runs-"on": ubuntu-latest
+    runs-on: ubuntu-latest
     # Only process comments from maintainers/owners
     if: |
       contains(github.event.comment.author_association, 'OWNER') ||

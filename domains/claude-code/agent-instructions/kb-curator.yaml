@@ -366,7 +366,8 @@ This agent uses these skills:
 - Duplicate Analysis: `duplicate-report.md`
 
 ---
-**Version:** 1.0
-**Last Updated:** 2026-01-07
+**Version:** 5.1
+**Category:** claude-code-agent
+**Last Updated:** 2026-01-08
 **Agent Type:** Curator
 **Status:** Production

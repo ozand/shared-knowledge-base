@@ -20,7 +20,7 @@ permissions:
 jobs:
   notify-contributors:
     name: Notify Contributors of Updates
-    runs-"on": ubuntu-latest
+    runs-on: ubuntu-latest
     # Only process issues with specific labels
     if: |
       contains(github.event.issue.labels.*.name, 'agent:claude-code') ||
@@ -171,7 +171,7 @@ jobs:
   notify-on-comment:
     name: Notify on Curator Comment
     if: github.event_name == 'issue_comment'
-    runs-"on": ubuntu-latest
+    runs-on: ubuntu-latest
     # Only notify for curator comments (not bot comments)
     if: |
       contains(github.event.issue.labels.*.name, 'agent:claude-code') &&
