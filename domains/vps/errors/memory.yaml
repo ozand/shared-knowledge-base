@@ -6,7 +6,7 @@ category: "memory-performance"
 last_updated: "2026-01-05"
 
 errors:
-  - id: "VPS-MEM-001"
+  - id: "VPS-003"
     title: "High Swap Usage Causing Performance Degradation"
     severity: "high"
     scope: "vps"
@@ -118,10 +118,10 @@ errors:
         }
 
     related_issues:
-      - "VPS-LOG-001: Large log files consuming memory"
-      - "VPS-SVC-001: Unnecessary services consuming RAM"
+      - "VPS-001: Large log files consuming memory"
+      - "VPS-004: Unnecessary services consuming RAM"
 
-  - id: "VPS-MEM-002"
+  - id: "VPS-004"
     title: "High Memory Usage by Unnecessary Services"
     severity: "medium"
     scope: "vps"
@@ -208,7 +208,7 @@ errors:
         - "Load average decreases"
         - "System remains stable"
 
-  - id: "VPS-MEM-003"
+  - id: "VPS-005"
     title: "Docker Container Memory Limits Not Configured"
     severity: "medium"
     scope: "vps"

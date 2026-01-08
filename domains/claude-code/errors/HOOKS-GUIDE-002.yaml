@@ -3,10 +3,10 @@ category: claude-code
 last_updated: "2026-01-08"
 
 errors:
-  - id: "HOOKS-GUIDE-002"
+  - id: "CC-002"
     title: "Claude Code Hooks: Complete Automation Guide"
     severity: "high"
-    scope: claude-code
+    scope: universal
     tags:
       - claude-code
       - hooks

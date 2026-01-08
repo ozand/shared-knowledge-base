@@ -3,10 +3,10 @@ category: claude-code
 last_updated: "2026-01-08"
 
 errors:
-  - id: "AGENTS-GUIDE-004"
+  - id: "CC-004"
     title: "Claude Code Agents: Complete Design Guide"
     severity: "medium"
-    scope: claude-code
+    scope: universal
     tags:
       - claude-code
       - agents

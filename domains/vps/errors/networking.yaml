@@ -6,7 +6,7 @@ category: "networking-security"
 last_updated: "2026-01-05"
 
 errors:
-  - id: "VPS-NET-001"
+  - id: "VPS-006"
     title: "Port 8080 Already in Use - Docker Container Fails to Start"
     severity: "high"
     scope: "vps"
@@ -97,9 +97,9 @@ errors:
         deploying new services.
 
     related_issues:
-      - "VPS-SVC-001: Unnecessary services consuming resources"
+      - "VPS-004: Unnecessary services consuming resources"
 
-  - id: "VPS-SEC-001"
+  - id: "VPS-007"
     title: "Malicious Scanner Making 84% of HTTP Requests"
     severity: "high"
     scope: "vps"
@@ -242,15 +242,15 @@ errors:
         - "Monitor for new scanners"
 
     related_issues:
-      - "VPS-SEC-002: Rate limiting for API endpoints"
-      - "VPS-MON-001: Nginx analytics and monitoring"
+      - "VPS-008: Rate limiting for API endpoints"
+      - "Nginx analytics and monitoring: See /home/ozand/.claude/scripts/nginx-stats"
 
     references:
       - "/etc/nginx/conf.d/security.conf"
       - "nginx-stats command"
       - "vps-admin.sh tool"
 
-  - id: "VPS-SEC-002"
+  - id: "VPS-008"
     title: "Exposing Docker Services Only to Localhost"
     severity: "medium"
     scope: "vps"

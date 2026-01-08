@@ -3,10 +3,10 @@ category: claude-code
 last_updated: "2026-01-08"
 
 errors:
-  - id: "SKILLS-GUIDE-003"
+  - id: "CC-003"
     title: "Claude Code Skills: Complete Design Guide"
     severity: "medium"
-    scope: claude-code
+    scope: universal
     tags:
       - claude-code
       - skills

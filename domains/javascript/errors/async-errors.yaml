@@ -3,7 +3,7 @@ category: javascript-async
 scope: javascript
 last_updated: '2026-01-04'
 errors:
-- id: JS-ASYNC-001
+- id: JS-002
   title: Promise Not Awaited
   severity: high
   scope: javascript
@@ -24,7 +24,7 @@ errors:
   domains:
     primary: asyncio
     secondary: []
-- id: JS-ASYNC-002
+- id: JS-003
   title: Async Function Without Try-Catch
   severity: medium
   scope: javascript
@@ -45,7 +45,7 @@ errors:
   domains:
     primary: asyncio
     secondary: []
-- id: JS-ASYNC-003
+- id: JS-004
   title: Blocking Event Loop
   severity: high
   scope: javascript

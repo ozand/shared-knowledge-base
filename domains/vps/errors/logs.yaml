@@ -6,7 +6,7 @@ category: "log-management"
 last_updated: "2026-01-05"
 
 errors:
-  - id: "VPS-LOG-001"
+  - id: "VPS-001"
     title: "Massive Log File Consuming Disk Space (48GB 3xui.log)"
     severity: "critical"
     scope: "vps"
@@ -120,14 +120,14 @@ errors:
         - "Monitor log growth: watch -n 60 'ls -lh /usr/local/x-ui/3xui.log'"
 
     related_issues:
-      - "VPS-MEM-001: High swap usage affecting performance"
-      - "VPS-LOG-002: Journal disk usage optimization"
+      - "VPS-003: High swap usage affecting performance"
+      - "VPS-002: Journal disk usage optimization"
 
     references:
       - "vps-optimize-cleanup.sh script in /home/ozand/.claude/scripts/"
       - "/etc/logrotate.d/ configuration examples"
 
-  - id: "VPS-LOG-002"
+  - id: "VPS-002"
     title: "Systemd Journal Consuming Excessive Disk Space"
     severity: "medium"
     scope: "vps"

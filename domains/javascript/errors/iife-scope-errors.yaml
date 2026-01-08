@@ -3,7 +3,7 @@ category: javascript-iife
 scope: javascript
 last_updated: '2026-01-08'
 errors:
-- id: JS-IIFE-001
+- id: JS-001
   title: Variable Undefined Outside Function Scope
   severity: high
   scope: javascript

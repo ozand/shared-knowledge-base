@@ -3,10 +3,10 @@ category: claude-code
 last_updated: "2026-01-08"
 
 errors:
-  - id: "PERMISSION-MODES-005"
+  - id: "CC-005"
     title: "Claude Code Permission Modes: Complete Guide"
     severity: "high"
-    scope: claude-code
+    scope: universal
     tags:
       - claude-code
       - permissions

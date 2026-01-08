@@ -499,6 +499,135 @@ patterns:
         - "Proper location determined"
         - "Indexed successfully"
 
+    common_submission_failures:
+      title: "Common Submission Mistakes to Avoid"
+
+      failure_modes:
+        - mode: "External File References"
+          description: "Contributor references local file path instead of embedding YAML"
+          example: |
+            ❌ WRONG:
+            "The complete YAML file is located at:
+             docs/knowledge-base/shared/universal/patterns/pattern.yaml"
+
+          problem: "File exists in contributor's local repository, NOT in shared-knowledge-base"
+          fix: "Always embed full YAML content in issue body"
+
+        - mode: "Missing Actual YAML Content"
+          description: "Issue describes pattern but doesn't include YAML entry"
+          example: |
+            ❌ WRONG:
+            - Title, ID, severity specified ✓
+            - Problem description ✓
+            - File path provided ✓
+            - ✗ Actual YAML entry MISSING
+
+          problem: "Description ≠ Complete YAML entry"
+          fix: "Include complete YAML with all required fields"
+
+        - mode: "Template Structure Without Content"
+          description: "Follows template but missing actual YAML content"
+          example: |
+            ❌ WRONG:
+            ## Proposed Entry
+            **ID:** XXX-YYY
+            **Title:** Pattern Title
+            **Category:** category-name
+
+            (Stops here, no YAML content)
+
+          problem: "Template structure ≠ Complete entry"
+          fix: "Add full YAML content after template headers"
+
+      correct_submission_checklist:
+        heading: "✅ Before Submitting - Verify All Items"
+        items:
+          - check: "Full YAML embedded in issue body (not just file path)"
+            critical: true
+
+          - check: "All required fields present"
+            fields: ["version", "category", "last_updated", "errors/patterns", "id", "title", "problem", "solution"]
+
+          - check: "YAML validated locally"
+            command: "python tools/kb.py validate your-entry.yaml"
+
+          - check: "Code examples included and tested"
+
+          - check: "Appropriate scope chosen"
+            options: ["universal", "python", "javascript", "docker", "postgresql"]
+
+          - check: "No duplicates in KB"
+            command: "kb search 'your keywords'"
+
+      quick_submission_template:
+        heading: "Complete Issue Template"
+        template: |
+          ```markdown
+          ---
+          **Created By:** 🤖 Agent Name
+          **Project:** PROJECT_NAME
+          **Date:** YYYY-MM-DD
+          **Validation:** ✅ Validated locally
+          ---
+
+          ## Proposed KB Entry
+
+          **Full YAML content:**
+
+          ```yaml
+          version: "1.0"
+          category: "category-name"
+          last_updated: "YYYY-MM-DD"
+
+          errors:  # or patterns:
+            - id: "CATEGORY-NNN"
+              title: "Descriptive Title"
+              severity: "high"
+              scope: "universal"
+              tags: ["tag1", "tag2", "tag3"]
+
+              problem: |
+                Detailed problem description
+                with multiple paragraphs
+
+              root_cause: |
+                Explanation of root cause
+
+              solution:
+                code: |
+                  # Solution code here
+                explanation: |
+                  How it works
+
+              prevention:
+                - "Prevention tip 1"
+                - "Prevention tip 2"
+          ```
+
+          ## Real-World Example
+
+          **Project:** PROJECT_NAME
+          **Scenario:** What happened
+          **Problem:** Error description
+          **Solution:** How you fixed it
+          ```
+
+      real_world_failure_examples:
+        - issue: "#13: PRE-COMMIT-001"
+          mistake: "Referenced file path instead of embedding YAML"
+          result: "Closed as incomplete, ID reserved"
+          lesson: "Always embed full YAML in issue body"
+
+        - issue: "#12: PY-IMPORT-005"
+          mistake: "Described pattern without including YAML"
+          result: "Closed as incomplete, ID reserved"
+          lesson: "Pattern description ≠ Complete YAML entry"
+
+        - issue: "#14: YAML-VALIDATION-001"
+          mistake: "Followed template but skipped actual content"
+          result: "Closed as incomplete, ID reserved"
+          lesson: "Template structure ≠ Complete entry"
+
     references:
       - title: "Agent Workflow Pattern"
         url: "https://github.com/ozand/shared-knowledge-base/blob/main/universal/patterns/agent-kb-workflow.yaml"

@@ -3,10 +3,10 @@ category: claude-code
 last_updated: "2026-01-08"
 
 errors:
-  - id: "CLAUDE-MD-001"
+  - id: "CC-001"
     title: "CLAUDE.md Project Memory Guide"
     severity: "medium"
-    scope: claude-code
+    scope: universal
     tags:
       - claude-code
       - project-memory
