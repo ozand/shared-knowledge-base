@@ -17,25 +17,35 @@ build/
 .DS_Store
 Thumbs.db
 
-# Temp files
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Temporary files
 *.tmp
 *.bak
 .~*
 
-# Knowledge Base cache (local only, not git-synced)
+# Local KB directories (project-specific, not in shared repo)
+.kb/project/
+.kb/context/
+
+# Cache directories
 .cache/
 .cache/**/*
+.uv/
+.claude-code-artifacts/
+
+# Database files
 *.db
 *.sqlite
 
-# JSON exports for AI tools (can be regenerated)
+# JSON exports (can be regenerated)
 kb-export.json
 kb-snapshot.json
 
-# Local configuration files (not git-synced)
-.kb-config-local.yaml
-
-# Agent auto-generated configuration (not git-synced)
+# Local agent configuration
 .agent-config.local
 .agent-config.local.*
 .session-*
@@ -46,23 +56,21 @@ kb-snapshot.json
 .claude/*.local.*
 .claude/.local/
 
-# Generated index files (auto-generated, not git-synced)
+# Temporary directories
+tmp/
+tmp/**/*
+.archive/
+.backup/
+
+# Generated index files (auto-generated)
 _index.yaml
 _index.yaml.bak
+_index_meta.yaml
+_domain_index.yaml
 
-# NOTE: Metadata files (*_meta.yaml) ARE committed to git
-# They contain metadata that syncs across users
-
-# NOTE: docs/ directory IS committed (user documentation)
-# Only generated subdirectories are excluded:
-docs/generated/
-
-# NOTE: .curator IS committed (marker file for curator repositories)
-
-# Temporary files in tmp/
-tmp/*.txt
-tmp/*.tmp
-tmp/NUL
+# Backup files
+*.backup
+*.backup.*
 
 # Local-only configuration files
 *.local
