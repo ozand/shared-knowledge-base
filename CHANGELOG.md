@@ -5,6 +5,71 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2026-01-08
+
+### Added
+
+#### Feedback Loop Implementation
+- **FEEDBACK-LOOP.md** (550+ lines) - Complete agent learning process documentation
+  - 5-stage learning process: Detection → Analysis → Extraction → Routing → Commit
+  - Reflection prompts for systematic error analysis
+  - YAML extraction templates with quality checklist
+  - Routing decision algorithm (Security → Business Logic → Universality)
+  - Multiple implementation methods (System Prompt, PROJECT.yaml, Hooks)
+
+#### Feedback Loop Examples
+- **examples/feedback-loop-scenarios.md** (350+ lines)
+  - 5 complete real-world scenarios
+  - Docker healthcheck timeout (Shared KB)
+  - Pydantic validation error (Project KB)
+  - Stripe webhook signature verification (Shared KB)
+  - SQLAlchemy connection pool exhaustion (Shared KB)
+  - Debug mode configuration (Project KB)
+  - Routing decision matrix and tips
+
+#### Enhanced PROJECT.yaml Template
+- **agent_instructions section** added to init-kb.sh
+  - `feedback_loop.enabled: true` - Activate learning
+  - `feedback_loop.mandatory: true` - Require documentation
+  - `reflection_prompt` - 4-step analysis protocol
+    1. ANALYZE: Context, problem, root cause, solution
+    2. EXTRACT: Create YAML with all required fields
+    3. ROUTE: Determine Project vs Shared KB
+    4. SUBMIT: Use kb_submit.py
+  - `search_first.enabled: true` - Always search KB first
+
+### Changed
+
+#### Documentation
+- Updated README.md to include Feedback Loop feature
+- Added links to FEEDBACK-LOOP.md and examples
+- Feedback Loop now listed as key v5.1 feature
+
+### Benefits
+
+**For Agents:**
+- ✅ Never make the same mistake twice
+- ✅ Build institutional memory
+- ✅ Accelerate problem-solving
+
+**For Teams:**
+- ✅ Solutions preserved across sessions
+- ✅ Faster onboarding
+- ✅ Consistent problem-solving approaches
+
+**For Organizations:**
+- ✅ Knowledge compounds over time
+- ✅ New projects benefit instantly
+- ✅ Reduces duplicate work
+
+### Key Principle
+
+Feedback Loop transforms agents from reactive executors to proactive learners through:
+- Clear instructions (PROJECT.yaml agent_instructions)
+- Convenient tools (kb_submit.py with automatic routing)
+- Automated workflows (reflection prompts)
+- Quality validation (score >= 75)
+
 ## [5.1.2] - 2026-01-08
 
 ### Added
