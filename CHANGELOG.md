@@ -5,6 +5,53 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 2026-01-08
+
+### Added
+
+#### Project KB Initialization
+- **init-kb.sh** - Automated initialization script for .kb/project/ structure
+  - Creates context/ and project/ directories with proper structure
+  - Installs session-start.sh hook automatically
+  - Generates .env.example template
+  - Updates .gitignore with .kb/ patterns
+  - Provides clear next steps for the user
+
+#### Enhanced Local Submission
+- **ensure_project_kb_structure()** - Auto-creates .kb/project/ subdirectories
+- Smart category-based directory routing in kb_submit.py:
+  - `integration` → `.kb/project/integrations/`
+  - `endpoint`/`api` → `.kb/project/endpoints/`
+  - `decision`/`adr` → `.kb/project/decisions/`
+  - `lesson` → `.kb/project/lessons/`
+  - Default → `.kb/project/knowledge/`
+
+#### Documentation Updates
+- Updated README.md Quick Start with init-kb.sh instructions
+- Added automated setup option for new projects
+- Updated migration instructions for v4.0 → v5.1
+
+### Changed
+
+#### kb_submit.py Improvements
+- Auto-creates .kb/project/ directory structure on first submit
+- Better feedback messages with relative paths
+- Generates README.md in .kb/project/ if missing
+- Improved category-to-directory mapping
+
+### Fixed
+
+- **Fixed:** Missing .kb/project/ structure initialization
+- **Fixed:** Manual directory creation required for new projects
+- **Fixed:** No clear setup instructions for v5.1 adoption
+
+### Tested
+
+- ✅ Tested init-kb.sh on three-tier-docs project
+- ✅ All directories created correctly
+- ✅ Hook installation working
+- ✅ README.md generated in .kb/project/
+
 ## [5.1.0] - 2026-01-08
 
 ### 🎉 Major Release - Two-Tier Knowledge Management Architecture
