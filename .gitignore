@@ -79,3 +79,4 @@ _domain_index.yaml
 # User reports and analysis
 *caveat-the-messages*.txt
 *analysis*.txt
+.legacy/

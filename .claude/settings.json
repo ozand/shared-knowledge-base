@@ -54,22 +54,6 @@
         ]
       }
     ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/session-setup.sh",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python .claude/hooks/check-artifact-updates.py",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
@@ -80,35 +64,6 @@
           }
         ]
       }
-    ]
-  },
-  "skills": {
-    "paths": [
-      "./.claude/skills"
-    ],
-    "enabled": [
-      "kb-search",
-      "kb-validate",
-      "kb-index",
-      "kb-create",
-      "audit-quality",
-      "find-duplicates",
-      "research-enhance"
-    ],
-    "auto_discover": true
-  },
-  "agents": {
-    "paths": [
-      "./.claude/agents"
-    ],
-    "enabled": [
-      "kb-curator"
-    ],
-    "auto_discover": true
-  },
-  "commands": {
-    "paths": [
-      "./.claude/commands"
     ]
   },
   "mcpServers": {}
