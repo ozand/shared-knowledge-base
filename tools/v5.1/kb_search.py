@@ -72,6 +72,42 @@ def search_files(root_path: Path, query: str) -> List[Path]:
     return matches
 
 
+def extract_metadata(file_path: Path) -> dict:
+    """
+    Extract metadata from YAML file for better display.
+
+    Args:
+        file_path: Path to YAML file
+
+    Returns:
+        Dictionary with title, problem, severity, etc.
+    """
+    try:
+        import yaml
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+
+        # Extract from errors or patterns
+        entries = data.get('errors', []) or data.get('patterns', [])
+        if entries:
+            entry = entries[0]
+            return {
+                'title': entry.get('title', 'No title'),
+                'severity': entry.get('severity', 'unknown'),
+                'category': data.get('category', 'general'),
+                'scope': entry.get('scope', 'universal')
+            }
+    except Exception:
+        pass
+
+    return {
+        'title': file_path.stem,
+        'severity': 'unknown',
+        'category': 'unknown',
+        'scope': 'unknown'
+    }
+
+
 def extract_preview(file_path: Path, query: str, max_lines: int = 3) -> str:
     """
     Extract lines containing query for preview.
@@ -106,7 +142,7 @@ def extract_preview(file_path: Path, query: str, max_lines: int = 3) -> str:
 
 def display_results(results: dict, query: str, show_preview: bool = False):
     """
-    Display search results in a formatted way.
+    Display search results in a formatted way with priority ordering.
 
     Args:
         results: Dictionary with source -> list of paths
@@ -121,31 +157,52 @@ def display_results(results: dict, query: str, show_preview: bool = False):
         print("   - Different search terms")
         print("   - Broader query (fewer words)")
         print("   - Check if KB directories exist")
+        print("\n💡 Tip: If no local results, consider web search")
         return
 
     print(f"🔍 Search: '{query}' | Found: {total}\n")
 
-    # Display results by source
-    for source, paths in results.items():
-        if paths:
-            print(f"--- {source} KB ({len(paths)} entries) ---")
+    # Priority order: PROJECT → SHARED
+    # Project KB always shown first as it overrides Shared KB
+    priority_order = ["PROJECT", "SHARED"]
 
-            for path in paths:
-                try:
-                    # Get relative path from project root
-                    rel_path = path.relative_to(PROJECT_ROOT)
-                    print(f"\n📄 {rel_path}")
+    # Display results in priority order
+    for source in priority_order:
+        if source not in results or not results[source]:
+            continue
 
-                    # Show preview if requested
-                    if show_preview:
-                        preview = extract_preview(path, query)
-                        print(f"\n{preview}\n")
+        paths = results[source]
+        icon = "⭐" if source == "PROJECT" else "📚"
+        priority_hint = " [HIGHEST PRIORITY - Overrides Shared KB]" if source == "PROJECT" else ""
 
-                except ValueError:
-                    # If can't get relative path, show absolute
-                    print(f"📄 {path}")
+        print(f"--- {source} KB ({len(paths)} entries){priority_hint} ---\n")
 
-            print()  # Blank line between sources
+        for path in paths:
+            try:
+                # Get relative path from project root
+                rel_path = path.relative_to(PROJECT_ROOT)
+                metadata = extract_metadata(path)
+
+                print(f"{icon} {rel_path}")
+                print(f"   Title: {metadata['title']}")
+                print(f"   Severity: {metadata['severity']} | Category: {metadata['category']} | Scope: {metadata['scope']}")
+
+                # Show preview if requested
+                if show_preview:
+                    preview = extract_preview(path, query)
+                    print(f"\n{preview}\n")
+                else:
+                    print()  # Spacing between entries
+
+            except ValueError:
+                # If can't get relative path, show absolute
+                print(f"📄 {path}\n")
+
+    # Conflict resolution hint if both sources have results
+    if "PROJECT" in results and "SHARED" in results:
+        if results["PROJECT"] and results["SHARED"]:
+            print("⚠️  NOTE: Project KB entries take precedence over Shared KB")
+            print("   Always follow project-specific patterns over general standards\n")
 
 
 def get_kb_stats() -> dict:

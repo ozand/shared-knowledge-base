@@ -18,6 +18,7 @@
 - ✅ **Automatic Context Loading**: SessionStart hook injects project context
 - ✅ **Decision Criteria**: `sharing_criteria` in PROJECT.yaml guides agent decisions
 - ✅ **Feedback Loop**: Agents learn from mistakes and accumulate knowledge
+- ✅ **Cascading Search**: Project → Shared → Web priority protocol
 
 ### Key Benefits
 
@@ -40,7 +41,9 @@
 | **[CONTEXT_SCHEMA.md](CONTEXT_SCHEMA.md)** | PROJECT.yaml and MEMORY.md schemas |
 | **[SHARED-KB-WORKFLOWS.md](SHARED-KB-WORKFLOWS.md)** | Shared KB lifecycle: Read → Submit → Curate → Sync |
 | **[FEEDBACK-LOOP.md](FEEDBACK-LOOP.md)** | Agent learning process and knowledge extraction |
+| **[INFORMATION-RETRIEVAL.md](INFORMATION-RETRIEVAL.md)** | Cascading search protocol: Project → Shared → Web |
 | **[examples/feedback-loop-scenarios.md](examples/feedback-loop-scenarios.md)** | Real-world Feedback Loop examples |
+| **[examples/information-retrieval-examples.md](examples/information-retrieval-examples.md)** | Cascading search examples and conflict resolution |
 
 ---
 
