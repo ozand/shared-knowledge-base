@@ -116,11 +116,7 @@ shared-knowledge-base/
 | **QUICKSTART.md** | 5-minute setup |
 | **for-claude-code/README.md** | Claude Code guide |
 
-**Research docs:** `@docs/research/claude-code/` (23 files, ~16K lines)
-- Master index: `INDEX.md`
-- Hooks, Skills, Agents guides
-
-**📘 All Docs:** `@references/architecture.md` - Complete documentation structure
+**📘 Complete Documentation:** `@references/architecture.md` - Complete documentation structure
 
 ---
 
@@ -297,8 +293,6 @@ python -m tools.kb_predictive predict-updates --days 30  # Predictions
 
 **Current hooks:** YAML validation, quality gates, auto-formatting
 
-**📘 Learn more:** `@docs/research/claude-code/claude-hooks-guide.md`
-
 ---
 
 ## Patterns & Best Practices
@@ -334,7 +328,6 @@ python -m tools.kb_predictive predict-updates --days 30  # Predictions
 
 **Internal:**
 - `@for-claude-code/README.md` - Complete Claude Code guide
-- `@docs/research/claude-code/` - Research & best practices
 - `@references/` - CLI, architecture, workflows reference
 - `@standards/` - Git, YAML, quality standards
 

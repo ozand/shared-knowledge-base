@@ -80,11 +80,6 @@ Shared KB provides:
 - **[docs/README.md](docs/README.md)** - Documentation hub
 - **[docs/YAML-SCHEMA-V3.1.md](docs/YAML-SCHEMA-V3.1.md)** - YAML schema reference (v3.1)
 
-**Implementation (v3.1):**
-- **[docs/implementation/IMPLEMENTATION-SUMMARY.md](docs/implementation/IMPLEMENTATION-SUMMARY.md)** - Complete implementation summary
-- **[docs/implementation/PHASE3-COMPLETION-REPORT.md](docs/implementation/PHASE3-COMPLETION-REPORT.md)** - Phase 3: Automated Feedback Loop
-- **[docs/implementation/STRUCTURE-ANALYSIS.md](docs/implementation/STRUCTURE-ANALYSIS.md)** - Repository structure analysis
-
 **Integration:**
 - **[docs/guides/integration/SUBMODULE_VS_CLONE.md](docs/guides/integration/SUBMODULE_VS_CLONE.md)** - Submodule vs Clone comparison
 - **[docs/guides/integration/AGENT_AUTOCONFIG_GUIDE.md](docs/guides/integration/AGENT_AUTOCONFIG_GUIDE.md)** - Agent configuration
@@ -92,9 +87,6 @@ Shared KB provides:
 **Workflows:**
 - **[docs/guides/workflows/GITHUB_ATTRIBUTION_GUIDE.md](docs/guides/workflows/GITHUB_ATTRIBUTION_GUIDE.md)** - GitHub contribution workflow
 - **[docs/guides/workflows/ROLE_SEPARATION_GUIDE.md](docs/guides/workflows/ROLE_SEPARATION_GUIDE.md)** - Project Agent vs Curator roles
-
-**Research & Analysis:**
-- **[docs/research/](docs/research/)** - Architecture analysis, research papers, implementation reports
 
 ### ⚠️ Role-Based Access Control
 
@@ -168,7 +160,6 @@ python docs/knowledge-base/shared/scripts/unified-install.py --check
 
 - **Issues:** [GitHub Issues](https://github.com/ozand/shared-knowledge-base/issues)
 - **Documentation:** See [Documentation](#documentation) section above
-- **Research:** [docs/research/](docs/research/)
 
 ### License
 

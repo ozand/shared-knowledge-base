@@ -501,4 +501,3 @@ See [CHANGELOG.md](../CHANGELOG.md) for complete version history.
 
 - **Documentation:** [docs/README.md](../docs/README.md)
 - **Issues:** https://github.com/ozand/shared-knowledge-base/issues
-- **Implementation:** [docs/implementation/](../docs/implementation/)

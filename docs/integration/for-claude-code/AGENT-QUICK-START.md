@@ -396,7 +396,6 @@ git sparse-checkout reapply
 
 - **Full Guide:** [../README.md](../README.md)
 - **Progressive Loading:** [../QUICKSTART-DOMAINS.md](../QUICKSTART-DOMAINS.md)
-- **Implementation:** [../docs/implementation/](../docs/implementation/)
 - **Change Log:** [../CHANGELOG.md](../CHANGELOG.md)
 
 ---

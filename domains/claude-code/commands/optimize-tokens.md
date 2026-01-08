@@ -135,8 +135,6 @@ This repository contains comprehensive documentation covering multiple aspects:
 **User docs:** README.md (overview), QUICKSTART.md (5-min setup)
 **Implementation:** GUIDE.md (complete guide)
 **Claude Code:** for-claude-code/README.md (integration guide)
-
-**📘 Documentation Index:** `@docs/research/claude-code/INDEX.md`
 ```
 
 ### 2. Skill Optimization
