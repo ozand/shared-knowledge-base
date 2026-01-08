@@ -1,0 +1,100 @@
+file_path,type,consistency_score,issues,recommendations,priority,effort,action
+domains\claude-code\agent-instructions\kb-curator.yaml,YAML,65/100,Missing version field; Missing category; Missing last_updated,STANDARDIZE,High,20 min,STANDARDIZE
+domains\postgresql\errors.yaml,YAML,83/100,Non-standard version format; ID format: POSTGRES-P001; ID format: POSTGRES-P002,UPDATE,Medium,20 min,UPDATE
+domains\vps\errors\logs_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\errors\memory_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\errors\networking_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\backup-automation_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\best-practices_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\nginx-analytics_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\service-optimization_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\tailscale-funnel_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\vps\patterns\xray-management_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\universal\errors\redis-errors_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\universal\patterns\debugging-port-conflicts_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\universal\patterns\filesystem-management.yaml,YAML,75/100,Missing version field; Missing last_updated,UPDATE,Medium,10 min,UPDATE
+domains\universal\patterns\filesystem-management_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\universal\patterns\git-workflow_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\python\errors\csrf-auth_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\python\errors\imports_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\python\errors\testing_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\python\errors\type-checking_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\postgresql\errors\disk-space-issues.yaml,YAML,75/100,Missing version field; Missing last_updated,UPDATE,Medium,10 min,UPDATE
+domains\postgresql\errors\disk-space-issues_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\javascript\errors\async-errors_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\best-practices.yaml,YAML,75/100,Missing version field; Missing last_updated,UPDATE,Medium,10 min,UPDATE
+domains\docker\errors\best-practices_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\common-errors_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\docker-best-practices_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\docker-network-errors.yaml,YAML,75/100,Missing version field; Missing last_updated,UPDATE,Medium,10 min,UPDATE
+domains\docker\errors\docker-network-errors_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\docker-security_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\docker\errors\docker-volume-mounts_meta.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\claude-code\agent-instructions\claude-code-expert.yaml,YAML,80/100,Missing category; Missing last_updated,UPDATE,Medium,10 min,UPDATE
+docs\integration\for-projects\config-templates\kb-config.yaml,YAML,75/100,Non-standard version format; Missing category; Missing last_updated,UPDATE,Medium,20 min,UPDATE
+domains\universal\agent-instructions\base-instructions.yaml,YAML,85/100,Non-standard version format; Missing category,MONITOR,Low,10 min,MONITOR
+domains\universal\errors\redis-errors.yaml,YAML,85/100,Non-standard version format; Missing last_updated,MONITOR,Low,10 min,MONITOR
+domains\universal\patterns\AGENT-BACKEND-ENGINEER-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\AGENT-CODE-REVIEWER-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\AGENT-DATABASE-ENGINEER-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\agent-handoff-failures.yaml,YAML,97/100,ID format: XXX-YYY,KEEP,Low,10 min,KEEP
+domains\universal\patterns\agent-handoff.yaml,YAML,97/100,ID format: CATEGORY-NNN,KEEP,Low,10 min,KEEP
+domains\universal\patterns\agent-role-separation.yaml,YAML,89/100,Non-standard version format; ID format: -; ID format: -,MONITOR,Low,20 min,MONITOR
+domains\universal\patterns\AGENT-SECURITY-REVIEWER-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\agent-task-tracking.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\AGENT-TECH-LEAD-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\curator-decision-framework.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\debugging-port-conflicts.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\DEV-DOCS-SYSTEM-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\documentation-reorganization.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\github-workflow.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\HOOK-PATTERNS-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\isolated-testing.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\llm-context-exhaustion.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\mcp-integration.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\MCP-MEMORY-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\MCP-PLAYWRIGHT-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\MODULAR-SKILLS-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\PM2-PROCESS-MANAGEMENT-001.yaml,YAML,97/100,ID format: PM2-PROCESS-MANAGEMENT-001,KEEP,Low,10 min,KEEP
+domains\universal\patterns\progressive-disclosure.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\project-organization.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\quality-assurance.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\SKILL-RULES-JSON-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\SPECIALIZED-AGENTS-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\universal\patterns\stale-context.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\python\errors\csrf-auth.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\python\errors\imports.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\python\errors\testing.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\python\errors\type-checking.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\javascript\errors\async-errors.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\javascript\errors\iife-scope-errors.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\docker\errors\common-errors.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\docker\errors\docker-best-practices.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\docker\errors\docker-security.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\docker\errors\docker-volume-mounts.yaml,YAML,85/100,Non-standard version format; Missing last_updated,MONITOR,Low,10 min,MONITOR
+domains\docker\errors\emoji-encoding-powershell.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+domains\claude-code\patterns\claude-code-files-organization-001.yaml,YAML,95/100,Non-standard version format,KEEP,Low,10 min,KEEP
+docs\knowledge-base\_index.yaml,YAML,85/100,Non-standard version format; Missing category,MONITOR,Low,10 min,MONITOR
+AGENT2-ANALYSIS-REPORT.md,MD,92/100,Missing TOC (>500 lines); Mixed bullet styles,UPDATE,Low,10 min,UPDATE
+ANALYSIS-AGENT4-SUMMARY.md,MD,92/100,Missing TOC (>500 lines); Mixed bullet styles,UPDATE,Low,10 min,UPDATE
+ANALYSIS-EXECUTIVE-SUMMARY.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+ANALYSIS-INDEX.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+ANALYSIS_AGENT3_CRITICAL_FINDINGS.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+ANALYSIS_AGENT3_TOOLS_REPORT.md,MD,92/100,Missing TOC (>500 lines); Mixed bullet styles,UPDATE,Low,10 min,UPDATE
+ANALYSIS_SUMMARY.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+ARCHITECTURE_ANALYSIS_REPORT.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+CHANGELOG.md,MD,92/100,Missing TOC (>500 lines); Mixed bullet styles,UPDATE,Low,10 min,UPDATE
+MIGRATION-REPORT.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+README.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+.claude\CLAUDE.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+docs\ARD.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+docs\README.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\postgresql\README.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\universal\agent-instructions\AGENT-QUICK-START.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\universal\agent-instructions\README.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\universal\agent-instructions\templates\issue-template.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\universal\agent-instructions\templates\pr-template.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\claude-code\commands\add-hook.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\claude-code\commands\create-skill.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\claude-code\commands\kb-create.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE
+domains\claude-code\commands\kb-index.md,MD,97/100,Mixed bullet styles,MONITOR,Low,10 min,UPDATE

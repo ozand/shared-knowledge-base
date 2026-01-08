@@ -1,0 +1,163 @@
+File Path,Type,Size (lines),Quality Score,Issues,Recommendations,Priority,Effort,Action
+.legacy/README.md,MD,49,80/100,"Good documentation of legacy archive","KEEP IN ARCHIVE - Well-documented legacy reference",Low,5 min,KEEP
+
+.legacy/.claude/agents/claude-code-expert.md,MD,611,30/100,"Superseded by agents/curator/","DELETE - Replaced by product definition",Low,5 min,DELETE
+.legacy/.claude/agents/kb-curator.md,MD,?,30/100,"Superseded by agents/curator/","DELETE - Replaced by product definition",Low,5 min,DELETE
+.legacy/.claude/agents/subagents/DEBUGGER.md,MD,?,20/100,"Obsolete subagent pattern","DELETE - Subagent pattern deprecated",Low,5 min,DELETE
+.legacy/.claude/agents/subagents/KNOWLEDGE-CURATOR.md,MD,709,25/100,"Superseded by agents/curator/","DELETE - Replaced by unified curator",Low,5 min,DELETE
+.legacy/.claude/agents/subagents/README.md,MD,706,20/100,"Obsolete subagent documentation","DELETE - Subagent pattern deprecated",Low,5 min,DELETE
+.legacy/.claude/agents/subagents/RESEARCHER.md,MD,568,25/100,"Superseded by skills/research-enhance","DELETE - Functionality in skills",Low,5 min,DELETE
+.legacy/.claude/agents/subagents/VALIDATOR.md,MD,601,25/100,"Superseded by skills/kb-validate","DELETE - Functionality in skills",Low,5 min,DELETE
+
+.legacy/.claude/commands/add-hook.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - No longer needed",Low,5 min,DELETE
+.legacy/.claude/commands/create-skill.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - No longer needed",Low,5 min,DELETE
+.legacy/.claude/commands/kb-create.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/kb-index.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/kb-query.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/kb-search.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/kb-sync.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/kb-validate.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - Use tools/kb.py directly",Low,5 min,DELETE
+.legacy/.claude/commands/optimize-tokens.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - No longer needed",Low,5 min,DELETE
+.legacy/.claude/commands/retrospective.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - No longer needed",Low,5 min,DELETE
+.legacy/.claude/commands/review-claude-setup.md,MD,?,15/100,"Command aliases replaced by direct tool usage","DELETE - No longer needed",Low,5 min,DELETE
+
+.legacy/.claude/hooks/check-artifact-updates.py,PY,?,10/100,"Obsolete feature - artifact updates no longer needed","DELETE - Feature deprecated",Low,5 min,DELETE
+.legacy/.claude/hooks/check-shared-kb-updates.sh,SH,?,10/100,"Obsolete feature - replaced by git submodule","DELETE - Feature deprecated",Low,5 min,DELETE
+.legacy/.claude/hooks/session-setup.sh,SH,?,10/100,"Legacy session setup - replaced by v5.1","DELETE - Superseded",Low,5 min,DELETE
+.legacy/.claude/hooks/session-start.sh,SH,?,10/100,"Legacy session start hook","DELETE - Superseded",Low,5 min,DELETE
+
+.legacy/.claude/skills/audit-quality/SKILL.md,MD,?,25/100,"Skill replaced by tools/kb.py","DELETE - Functionality in Python CLI",Low,5 min,DELETE
+.legacy/.claude/skills/claude-code-architecture/SKILL.md,MD,?,20/100,"Skill about Claude Code itself","DELETE - Meta-documentation, not needed",Low,5 min,DELETE
+.legacy/.claude/skills/claude-code-architecture/resources/agent-types.md,MD,?,20/100,"Claude Code architecture doc","DELETE - Meta-documentation",Low,5 min,DELETE
+.legacy/.claude/skills/claude-code-architecture/resources/hook-system.md,MD,996,35/100,"Detailed hooks documentation","EXTRACT & DELETE - Check for unique patterns vs claude-code domain",Medium,30 min,EXTRACT
+.legacy/.claude/skills/claude-code-architecture/resources/progressive-disclosure.md,MD,784,40/100,"Progressive disclosure pattern","EXTRACT & DELETE - Check if in claude-code domain",Medium,30 min,EXTRACT
+.legacy/.claude/skills/claude-code-architecture/resources/skill-activation.md,MD,979,35/100,"Skill activation documentation","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/claude-code-architecture/resources/system-overview.md,MD,861,30/100,"Claude Code system overview","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/find-duplicates/SKILL.md,MD,?,25/100,"Skill replaced by tools/kb.py","DELETE - Functionality in Python CLI",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/SKILL.md,MD,868,25/100,"Hook implementation guide","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/examples/error-handling.md,MD,?,20/100,"Hook examples","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/examples/post-tool-tracking.md,MD,?,20/100,"Hook examples","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/examples/skill-activation.md,MD,?,20/100,"Hook examples","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/resources/hook-events.md,MD,?,25/100,"Hook events reference","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/resources/hook-patterns.md,MD,?,25/100,"Hook patterns reference","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/hook-implementation/resources/performance.md,MD,?,20/100,"Hook performance guide","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/.claude/skills/kb-create/SKILL.md,MD,323,30/100,"KB create skill","EXTRACT & DELETE - Check for unique patterns not in tools/kb.py",Medium,30 min,EXTRACT
+.legacy/.claude/skills/kb-index/SKILL.md,MD,?,30/100,"KB index skill","DELETE - Replaced by tools/kb.py",Low,5 min,DELETE
+.legacy/.claude/skills/kb-search/SKILL.md,MD,?,30/100,"KB search skill","DELETE - Replaced by tools/kb.py",Low,5 min,DELETE
+.legacy/.claude/skills/kb-validate/SKILL.md,MD,?,30/100,"KB validate skill","DELETE - Replaced by tools/kb.py",Low,5 min,DELETE
+.legacy/.claude/skills/research-enhance/SKILL.md,MD,?,25/100,"Research enhance skill","DELETE - Replaced by tools/kb.py",Low,5 min,DELETE
+.legacy/.claude/skills/research-enhance/resources/enhancement-examples.md,MD,?,20/100,"Research examples","DELETE - Superseded",Low,5 min,DELETE
+.legacy/.claude/skills/research-enhance/resources/research-sources.md,MD,?,20/100,"Research sources","DELETE - Superseded",Low,5 min,DELETE
+.legacy/.claude/skills/skill-development/SKILL.md,MD,797,25/100,"Skill development guide","DELETE - Meta-documentation about skills",Low,5 min,DELETE
+.legacy/.claude/skills/skill-development/resources/500-line-rule.md,MD,698,30/100,"500-line rule documentation","EXTRACT & DELETE - Check if relevant to patterns/",Medium,20 min,EXTRACT
+.legacy/.claude/skills/skill-development/resources/skill-rules-schema.md,MD,657,25/100,"Skill rules schema","DELETE - Superseded by skill-rules.json",Low,5 min,DELETE
+.legacy/.claude/skills/skill-development/resources/testing-guide.md,MD,692,25/100,"Skill testing guide","DELETE - Meta-documentation",Low,5 min,DELETE
+.legacy/.claude/skills/skill-development/resources/troubleshooting.md,MD,817,25/100,"Skill troubleshooting","DELETE - Meta-documentation",Low,5 min,DELETE
+.legacy/.claude/skills/skill-development/resources/yaml-frontmatter.md,MD,?,20/100,"YAML frontmatter guide","DELETE - Superseded",Low,5 min,DELETE
+
+.legacy/.claude/CLAUDE-CODE-EXPERT-PLAN.md,MD,?,10/100,"Implementation plan - completed","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/.claude/CLAUDE-CODE-EXPERT-IMPLEMENTATION-COMPLETE.md,MD,?,10/100,"Implementation complete report - completed","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/.claude/IMPLEMENTATION-COMPLETE.md,MD,?,10/100,"Implementation complete marker","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/.claude/IMPROVEMENT-PLAN.md,MD,?,10/100,"Improvement plan - completed","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/.claude/IMPROVEMENTS-COMPLETE.md,MD,?,10/100,"Improvements complete marker","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/.claude/standards-gitkeep.bak,BAK,?,5/100,"Backup file","DELETE - Backup file",Low,5 min,DELETE
+
+.legacy/.claude/references/.gitkeep,GITKEEP,0,5/100,"Empty placeholder","DELETE - Gitkeep file",Low,5 min,DELETE
+.legacy/.claude/references/architecture.md,MD,?,30/100,"Architecture reference","DELETE - Superseded by docs/",Low,5 min,DELETE
+.legacy/.claude/references/cli-reference.md,MD,?,30/100,"CLI reference","DELETE - Superseded by docs/",Low,5 min,DELETE
+.legacy/.claude/references/kb-query-examples.md,MD,?,30/100,"KB query examples","DELETE - Superseded by docs/",Low,5 min,DELETE
+.legacy/.claude/references/workflows.md,MD,562,35/100,"Workflow documentation","EXTRACT & DELETE - Check for unique workflows vs docs/",Medium,30 min,EXTRACT
+
+.legacy/docs/analysis/AGENT-INSTRUCTIONS-IMPLEMENTATION-PLAN.md,MD,?,15/100,"Implementation plan - completed","DELETE - Historical implementation debris",Low,5 min,DELETE
+.legacy/docs/analysis/CLAUDE-CODE-DOMAIN-MIGRATION.md,MD,?,20/100,"Migration documentation","KEEP IN ARCHIVE - Good historical reference",Low,5 min,KEEP
+.legacy/docs/analysis/FILE-CLASSIFICATION.md,MD,?,20/100,"File classification analysis","KEEP IN ARCHIVE - Historical analysis",Low,5 min,KEEP
+.legacy/docs/analysis/MIGRATION-COMPLETE-REPORT.md,MD,624,40/100,"Migration complete report","KEEP IN ARCHIVE - Well-documented migration",Low,5 min,KEEP
+.legacy/docs/analysis/PROJECT-UPDATE-ISSUES.md,MD,?,20/100,"Project update issues","KEEP IN ARCHIVE - Historical issue tracking",Low,5 min,KEEP
+.legacy/docs/analysis/STRUCTURE-COMPARISON.md,MD,?,20/100,"Structure comparison","KEEP IN ARCHIVE - Historical analysis",Low,5 min,KEEP
+.legacy/docs/analysis/V4.0.1-IMPLEMENTATION-SUMMARY.md,MD,?,25/100,"v4.0.1 implementation summary","KEEP IN ARCHIVE - Version history",Low,5 min,KEEP
+
+.legacy/docs/implementation/IMPLEMENTATION-SUMMARY.md,MD,572,40/100,"Implementation summary","KEEP IN ARCHIVE - Good historical reference",Low,5 min,KEEP
+.legacy/docs/implementation/PHASE3-COMPLETION-REPORT.md,MD,?,30/100,"Phase 3 completion report","KEEP IN ARCHIVE - Phase completion marker",Low,5 min,KEEP
+.legacy/docs/implementation/STRUCTURE-ANALYSIS.md,MD,?,25/100,"Structure analysis","KEEP IN ARCHIVE - Historical analysis",Low,5 min,KEEP
+.legacy/docs/implementation/STRUCTURE-OPTIMIZATION-REPORT.md,MD,?,25/100,"Structure optimization report","KEEP IN ARCHIVE - Optimization history",Low,5 min,KEEP
+
+.legacy/docs/legacy/GUIDE.md,MD,812,30/100,"Legacy guide","EXTRACT & DELETE - Check for unique patterns",Medium,20 min,EXTRACT
+.legacy/docs/legacy/QUICKSTART-DOMAINS.md,MD,?,20/100,"Domains quickstart","DELETE - Superseded by current docs",Low,5 min,DELETE
+.legacy/docs/legacy/QUICKSTART.md,MD,?,20/100,"Quickstart guide","DELETE - Superseded by current docs",Low,5 min,DELETE
+
+.legacy/docs/migrations/UPGRADE-4.0.md,MD,?,25/100,"Upgrade to v4.0 guide","KEEP IN ARCHIVE - Version upgrade history",Low,5 min,KEEP
+
+.legacy/docs/research/AGENT-INFORMATION-FLOW-ANALYSIS.md,MD,?,25/100,"Agent info flow analysis","DELETE - Superseded by implementation",Low,5 min,DELETE
+.legacy/docs/research/AGENT-INFORMATION-FLOW-IMPLEMENTATION.md,MD,?,25/100,"Agent info flow implementation","DELETE - Implementation complete",Low,5 min,DELETE
+.legacy/docs/research/AGENT-INFORMATION-FLOW-PHASE2.md,MD,?,25/100,"Agent info flow phase 2","DELETE - Implementation complete",Low,5 min,DELETE
+.legacy/docs/research/ARCHITECTURE-ANALYSIS.md,MD,?,25/100,"Architecture analysis","DELETE - Superseded by current architecture",Low,5 min,DELETE
+.legacy/docs/research/CHAT_SESSION_ANALYSIS_2026-01-06.md,MD,?,20/100,"Chat session analysis","DELETE - Historical session analysis",Low,5 min,DELETE
+.legacy/docs/research/CLAUDE-CODE-AGENT-MISTAKES-ANALYSIS.md,MD,1009,45/100,"Claude Code agent mistakes analysis","EXTRACT & DELETE - Extract valuable lessons, then delete",Medium,45 min,EXTRACT
+.legacy/docs/research/COMPLETE-SESSION-ANALYSIS.md,MD,910,30/100,"Complete session analysis","DELETE - Historical session analysis",Low,5 min,DELETE
+.legacy/docs/research/FINAL-ARCHITECTURE-REPORT.md,MD,?,35/100,"Final architecture report","KEEP IN ARCHIVE - Important architecture history",Low,5 min,KEEP
+.legacy/docs/research/FINAL-HARMONIZATION-REPORT.md,MD,?,35/100,"Final harmonization report","KEEP IN ARCHIVE - Important history",Low,5 min,KEEP
+.legacy/docs/research/PLAIN_CLONE_PROJECT_ANALYSIS.md,MD,588,25/100,"Plain clone project analysis","DELETE - Historical analysis",Low,5 min,DELETE
+.legacy/docs/research/PROJECT_AGENT_ROLE_CONFUSION_ANALYSIS.md,MD,?,25/100,"Project agent role confusion","DELETE - Historical analysis",Low,5 min,DELETE
+.legacy/docs/research/REORGANIZATION-COMPLETE.md,MD,?,25/100,"Reorganization complete","DELETE - Historical marker",Low,5 min,DELETE
+.legacy/docs/research/REPOSITORY_STATE_ANALYSIS.md,MD,668,30/100,"Repository state analysis","DELETE - Historical analysis",Low,5 min,DELETE
+.legacy/docs/research/SESSION-ANALYSIS-2026-01-07.md,MD,?,25/100,"Session analysis","DELETE - Historical session analysis",Low,5 min,DELETE
+.legacy/docs/research/SESSION-COMPLETE.md,MD,?,25/100,"Session complete","DELETE - Historical marker",Low,5 min,DELETE
+.legacy/docs/research/SHARED_KB_UPDATE_MECHANISMS_ANALYSIS.md,MD,?,30/100,"Shared KB update mechanisms","EXTRACT & DELETE - Extract unique insights",Medium,30 min,EXTRACT
+.legacy/docs/research/SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md,MD,556,35/100,"Submodule context contamination","EXTRACT & DELETE - Extract lessons learned",Medium,30 min,EXTRACT
+
+.legacy/docs/research/claude-code/archive/claude-autonomous-agent-system.md,MD,650,25/100,"Autonomous agent system archive","DELETE - Superseded by current docs",Low,5 min,DELETE
+.legacy/docs/research/claude-code/archive/claude-final-implementation-report.md,MD,770,25/100,"Final implementation report","DELETE - Historical report",Low,5 min,DELETE
+.legacy/docs/research/claude-code/archive/claude-implementation-summary.md,MD,616,25/100,"Implementation summary","DELETE - Historical summary",Low,5 min,DELETE
+
+.legacy/docs/research/claude-code/claude-agents-examples.md,MD,959,35/100,"Claude agents examples","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-agents-guide.md,MD,1277,40/100,"Claude agents guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-claude-md-guide.md,MD,?,40/100,"CLAUDE.md guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/CLAUDE-COMPLETE-PRACTICES-EN.md,MD,1146,45/100,"Complete practices English","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-complete-practices.md,MD,1147,45/100,"Complete practices Russian","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/CLAUDE-COMPLETE-PRACTICES.md.backup,BACKUP,1121,5/100,"Backup file","DELETE - Backup file",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-hooks-advanced.md,MD,716,40/100,"Hooks advanced guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-hooks-examples.md,MD,839,40/100,"Hooks examples","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-hooks-guide.md,MD,1253,45/100,"Hooks guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-mcp-guide.md,MD,763,40/100,"MCP guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/CLAUDE-PERMISSION-MODES-GUIDE-EN.md,MD,1324,45/100,"Permission modes English","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-permission-modes-guide.md,MD,1323,45/100,"Permission modes Russian","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-planning-workflow-guide.md,MD,800,40/100,"Planning workflow guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-projects-collaboration-guide.md,MD,964,40/100,"Projects collaboration guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-referencing-context-guide.md,MD,841,40/100,"Referencing context guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/CLAUDE-SLASH-COMMANDS-GUIDE-EN.md,MD,1390,45/100,"Slash commands English","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-slash-commands-guide.md,MD,1392,45/100,"Slash commands Russian","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-shared-architecture.md,MD,1514,50/100,"Shared architecture","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-skills-examples.md,MD,840,40/100,"Skills examples","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-skills-guide.md,MD,1504,50/100,"Skills guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-templates.md,MD,897,40/100,"Templates guide","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/claude-troubleshooting-resume-lock-error.md,MD,?,25/100,"Troubleshooting specific error","DELETE - Specific troubleshooting, superseded",Low,5 min,DELETE
+.legacy/docs/research/claude-code/INDEX.md,MD,239,50/100,"Claude Code index","DELETE - Migrated to claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/INSTALLATION-ANALYSIS.md,MD,?,30/100,"Installation analysis","EXTRACT & DELETE - Extract lessons learned",Medium,20 min,EXTRACT
+.legacy/docs/research/claude-code/INSTALLATION-LESSONS.md,MD,?,30/100,"Installation lessons","EXTRACT & DELETE - Extract best practices",Medium,20 min,EXTRACT
+.legacy/docs/research/claude-code/issues/issue-pr4.md,MD,?,20/100,"PR4 issue tracking","DELETE - Historical issue",Low,5 min,DELETE
+.legacy/docs/research/claude-code/issues/issue-pr7.md,MD,?,20/100,"PR7 issue tracking","DELETE - Historical issue",Low,5 min,DELETE
+.legacy/docs/research/claude-code/README.md,MD,?,35/100,"Claude Code README","DELETE - Superseded by claude-code domain",Low,5 min,DELETE
+.legacy/docs/research/claude-code/REUSABLE-SETUP-GUIDE.md,MD,716,45/100,"Reusable setup guide","EXTRACT & DELETE - Extract to claude-code domain if unique",Medium,30 min,EXTRACT
+
+.legacy/docs/schemas/YAML-SCHEMA-V3.1.md,MD,?,20/100,"YAML schema v3.1","DELETE - Superseded by v4.0.0 schema",Low,5 min,DELETE
+
+.legacy/examples/mcp-youtube/mcp/metadata.yaml,YAML,?,15/100,"Example MCP metadata","DELETE - Example project, not needed",Low,5 min,DELETE
+.legacy/examples/mcp-youtube/mcp/README.md,MD,?,15/100,"Example MCP README","DELETE - Example project, not needed",Low,5 min,DELETE
+
+.legacy/tools/init-kb.sh,SH,?,10/100,"KB initialization script","DELETE - One-time setup script, complete",Low,5 min,DELETE
+.legacy/tools/migrations/migrate-to-v5.1.sh,SH,?,15/100,"Migration script to v5.1","DELETE - Migration complete, script no longer needed",Low,5 min,DELETE
+
+agents/curator/.curator-only,FILE,24,100/100,"Curator marker file","KEEP - Active production marker",Low,5 min,KEEP
+agents/curator/AGENT.md,MD,353,85/100,"Agent role definition","KEEP - Active production agent",Low,5 min,KEEP
+agents/curator/DEPLOYMENT.md,MD,375,80/100,"Deployment documentation","KEEP - Active deployment guide",Low,5 min,KEEP
+agents/curator/INDEX.md,MD,300,85/100,"Curator index","KEEP - Active navigation",Low,5 min,KEEP
+agents/curator/PROMPTS.md,MD,774,75/100,"Prompt templates","SPLIT - Large file, consider topic-based organization",Medium,60 min,SPLIT
+agents/curator/QUALITY_STANDARDS.md,MD,522,85/100,"Quality standards","KEEP - Active quality rubric",Low,5 min,KEEP
+agents/curator/README.md,MD,434,90/100,"Curator README","KEEP - Excellent documentation",Low,5 min,KEEP
+agents/curator/SKILLS.md,MD,657,85/100,"Skills reference","KEEP - Active skills documentation",Low,5 min,KEEP
+agents/curator/WORKFLOWS.md,MD,909,85/100,"Workflow documentation","KEEP - Active workflows",Low,5 min,KEEP
+agents/curator/metadata/ARCHITECTURE.md,MD,640,80/100,"Architecture metadata","KEEP - Active architecture docs",Low,5 min,KEEP
+agents/curator/metadata/IMPLEMENTATION.md,MD,1026,80/100,"Implementation metadata","SPLIT - Large file, consider modularizing",Medium,60 min,SPLIT
+agents/curator/metadata/PHASE3.md,MD,474,75/100,"Phase 3 metadata","KEEP - Phase completion marker",Low,5 min,KEEP
+agents/curator/metadata/SKILLS.md,MD,932,80/100,"Skills metadata","SPLIT - Large file, consider topic-based organization",Medium,60 min,SPLIT
+agents/curator/metadata/SUMMARY.md,MD,650,80/100,"Summary metadata","KEEP - Active summary",Low,5 min,KEEP
