@@ -1,5 +1,20 @@
 # IMPLEMENTATION_GUIDE.md - Metadata System Implementation
 
+## Table of Contents
+
+- [Technical Implementation Guide](#technical-implementation-guide)
+- [Part 1: Metadata File Operations](#part-1-metadata-file-operations)
+- [Part 2: Usage Tracking](#part-2-usage-tracking)
+- [Part 3: Change Detection](#part-3-change-detection)
+- [Part 4: Freshness Checker](#part-4-freshness-checker)
+- [Part 5: CLI Integration](#part-5-cli-integration)
+- [Part 6: Git Integration](#part-6-git-integration)
+- [Part 7: Automated Workflows](#part-7-automated-workflows)
+- [Part 8: Git Hooks](#part-8-git-hooks)
+- [Summary](#summary)
+
+---
+
 ## Technical Implementation Guide
 
 This document provides concrete implementation examples for the metadata system described in METADATA_ARCHITECTURE.md.

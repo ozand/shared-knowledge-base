@@ -5,6 +5,25 @@ All notable changes to the Shared Knowledge Base will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Table of Contents
+
+- [[5.1.4] - 2026-01-08](#514---2026-01-08)
+- [[5.1.3] - 2026-01-08](#513---2026-01-08)
+- [[5.1.2] - 2026-01-08](#512---2026-01-08)
+- [[5.1.1] - 2026-01-08](#511---2026-01-08)
+- [[5.1.0] - 2026-01-08](#510---2026-01-08)
+- [[4.0.1] - 2026-01-08](#401---2026-01-08)
+- [[4.0.0] - 2026-01-07](#400---2026-01-07)
+- [[3.1.0] - 2026-01-06](#310---2026-01-06)
+- [[3.0.0] - 2026-01-05](#300---2026-01-05)
+- [[2.0.0] - 2026-01-04](#200---2026-01-04)
+- [[1.0.0] - 2026-01-03](#100---2026-01-03)
+- [Version Summary](#version-summary)
+- [Upgrade Path](#upgrade-path)
+- [Future Plans](#future-plans)
+
+---
+
 ## [5.1.4] - 2026-01-08
 
 ### Added

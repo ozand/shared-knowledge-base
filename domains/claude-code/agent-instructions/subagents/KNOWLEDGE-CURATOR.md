@@ -6,6 +6,29 @@
 
 ---
 
+## Table of Contents
+
+- [Purpose](#purpose)
+- [Use Cases](#use-cases)
+- [Triggers](#triggers)
+- [Capabilities](#capabilities)
+- [Input Format](#input-format)
+- [Knowledge Capture Request](#knowledge-capture-request)
+- [Output Format](#output-format)
+- [Add to Shared KB: [Title]](#add-to-shared-kb-title)
+- [Workflow](#workflow)
+- [Communication Protocol](#communication-protocol)
+- [Integration Examples](#integration-examples)
+- [Quality Standards](#quality-standards)
+- [Best Practices](#best-practices)
+- [Error Handling](#error-handling)
+- [Configuration](#configuration)
+- [Integration with Other Subagents](#integration-with-other-subagents)
+- [Related Agents](#related-agents)
+- [Version History](#version-history)
+
+---
+
 ## Purpose
 
 Autonomously capture, document, and synchronize knowledge from agent activities. Analyzes what happened during task execution and creates appropriate KB entries (Project KB or Shared KB).

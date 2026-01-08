@@ -1,12 +1,29 @@
 # WORKFLOWS.md - Knowledge Base Curator Workflows
 
+## Table of Contents
+
+- [Workflow 1: Review New Contribution](#workflow-1-review-new-contribution)
+- [Workflow 2: Comprehensive Quality Audit](#workflow-2-comprehensive-quality-audit)
+- [Workflow 3: Deep Research Enhancement](#workflow-3-deep-research-enhancement)
+- [Workflow 4: Duplicate Detection & Merge](#workflow-4-duplicate-detection--merge)
+- [Workflow 5: Knowledge Gap Analysis](#workflow-5-knowledge-gap-analysis)
+- [Workflow 6: Currency Update Cycle](#workflow-6-currency-update-cycle)
+- [Workflow 7: Pull Request Review](#workflow-7-pull-request-review)
+- [PR Review Template](#pr-review-number--pr-title)
+- [Interactive Decision Tree](#workflow-interactive-decision-tree)
+- [Best Practices](#best-practices)
+
+---
+
 ## Detailed Standard Operating Procedures
 
 This document provides step-by-step workflows for common Knowledge Base Curator tasks.
 
+**Quick Access:** Use the TOC above or search for specific workflow topics.
+
 ---
 
-## Workflow 1: Review New Contribution
+## Workflow 1: Review New Contribution {#workflow-1-review}
 
 **Trigger:** User submits new entry or PR
 
@@ -105,7 +122,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 2: Comprehensive Quality Audit
+## Workflow 2: Comprehensive Quality Audit {#workflow-2-audit}
 
 **Trigger:** Scheduled maintenance (quarterly/monthly) or after major updates
 
@@ -211,7 +228,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 3: Deep Research Enhancement
+## Workflow 3: Deep Research Enhancement {#workflow-3-research}
 
 **Trigger:** Important entry needs comprehensive enhancement
 
@@ -356,7 +373,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 4: Duplicate Detection & Merge
+## Workflow 4: Duplicate Detection & Merge {#workflow-4-duplicates}
 
 **Trigger:** Routine maintenance or suspicion of duplicates
 
@@ -447,7 +464,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 5: Knowledge Gap Analysis
+## Workflow 5: Knowledge Gap Analysis {#workflow-5-gaps}
 
 **Trigger:** Strategic planning or after completing audit
 
@@ -534,7 +551,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 6: Currency Update Cycle
+## Workflow 6: Currency Update Cycle {#workflow-6-updates}
 
 **Trigger:** Scheduled (monthly) or after major dependency updates
 
@@ -606,7 +623,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow 7: Pull Request Review
+## Workflow 7: Pull Request Review {#workflow-7-pr-review}
 
 **Trigger:** New PR opened in Shared Knowledge Base repository
 
@@ -718,7 +735,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 **Review Template:**
 ```markdown
-## PR Review: #[number] - [PR Title]
+## PR Review: #[number] - [PR Title] {#pr-review-template}
 
 **Date:** YYYY-MM-DD
 **Reviewer:** Shared KB Curator Agent
@@ -840,7 +857,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 ---
 
-## Workflow: Interactive Decision Tree
+## Workflow: Interactive Decision Tree {#decision-tree}
 
 Use this flow when unsure which workflow to apply:
 
@@ -895,7 +912,7 @@ Use this flow when unsure which workflow to apply:
 └──────────────┘ └──────────┘ └──────┘ └──────────┘ └──────────┘
 ```
 
-## Best Practices
+## Best Practices {#best-practices}
 
 - **Always validate** before making changes
 - **Research thoroughly** before enhancing

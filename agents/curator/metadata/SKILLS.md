@@ -1,5 +1,21 @@
 # METADATA_SKILLS.md - Metadata Management Skills
 
+## Table of Contents
+
+- [Enhanced Skills for Metadata-Driven Knowledge Curation](#enhanced-skills-for-metadata-driven-knowledge-curation)
+- [Skill: `check-freshness`](#skill-check-freshness)
+- [Skill: `track-usage`](#skill-track-usage)
+- [Skill: `detect-changes`](#skill-detect-changes)
+- [Skill: `analyze-usage`](#skill-analyze-usage)
+- [Skill: `update-metadata`](#skill-update-metadata)
+- [Skill: `assess-quality`](#skill-assess-quality)
+- [Skill: `reindex-metadata`](#skill-reindex-metadata)
+- [Skill: `export-analytics`](#skill-export-analytics)
+- [Workflow Integration](#workflow-integration)
+- [Skills Summary](#skills-summary)
+
+---
+
 ## Enhanced Skills for Metadata-Driven Knowledge Curation
 
 These skills extend the base SKILLS.md with metadata-aware capabilities.

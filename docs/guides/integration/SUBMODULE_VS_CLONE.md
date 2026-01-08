@@ -1,5 +1,20 @@
 # Shared Knowledge Base: Clone vs Submodule
 
+## Table of Contents
+
+- [🚀 Unified Installation (NEW!)](#-unified-installation-new)
+- [🎯 Рекомендация (Short Answer)](#-рекомендация-short-answer)
+- [📊 Детальное сравнение](#-детальное-сравнение)
+- [🎯 Рекомендации по сценариям](#-рекомендации-по-сценариям)
+- [📋 Checklist выбора](#-checklist-выбора)
+- [🚀 Best Practice Workflow](#-best-practice-workflow)
+- [🔍 Monitoring KB Version](#-monitoring-kb-version)
+- [📚 Сравнительная таблица](#-сравнительная-таблица)
+- [🎯 Final Recommendation](#-final-recommendation)
+- [📖 References](#-references)
+
+---
+
 ## 🚀 Unified Installation (NEW!)
 
 **Версия 3.2: Унифицированный установщик**

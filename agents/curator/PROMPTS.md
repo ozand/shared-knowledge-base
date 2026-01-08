@@ -1,5 +1,20 @@
 # PROMPTS.md - Curator Prompt Templates
 
+## Table of Contents
+
+- [Reusable Prompt Templates for Common Tasks](#reusable-prompt-templates-for-common-tasks)
+- [Category 1: Entry Analysis Prompts](#category-1-entry-analysis-prompts)
+- [Category 2: Research & Enhancement Prompts](#category-2-research--enhancement-prompts)
+- [Category 3: Content Creation Prompts](#category-3-content-creation-prompts)
+- [Category 4: Review & Validation Prompts](#category-4-review--validation-prompts)
+- [Category 5: Maintenance Prompts](#category-5-maintenance-prompts)
+- [Category 6: External Research Prompts](#category-6-external-research-prompts)
+- [Category 7: Specialized Prompts](#category-7-specialized-prompts)
+- [Using These Templates](#using-these-templates)
+- [Prompt Engineering Tips](#prompt-engineering-tips)
+
+---
+
 ## Reusable Prompt Templates for Common Tasks
 
 This document provides tested prompt templates for interacting with AI assistants (Claude, GPT, etc.) when performing Knowledge Base Curator tasks.
