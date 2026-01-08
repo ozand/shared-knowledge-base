@@ -1,0 +1,304 @@
+# Documentation Organization Patterns
+# Complete guide for organizing and reorganizing project documentation
+
+version: "1.0"
+category: "documentation"
+last_updated: "2026-01-09"
+
+patterns:
+  - id: "DOC-ORGANIZATION-001"
+    title: "Documentation Organization: Progressive Disclosure Structure"
+    severity: "medium"
+    scope: "universal"
+
+    problem: |
+      Documentation sprawl causes confusion:
+      - Too many files in root directory
+      - Massive duplication across files
+      - Unclear navigation
+      - Mixed content (overview + details + analysis)
+
+      Example: 38 markdown files in root, users don't know where to start
+
+    target_structure:
+      for_new_projects: |
+        # Root directory (maximum 5 files)
+        project-root/
+        ├── README.md           # Brief overview (< 250 lines)
+        ├── QUICKSTART.md       # Quick start (< 250 lines)
+        ├── GUIDE.md            # Implementation guide (optional)
+        └── docs/
+            ├── research/       # Analysis & reports
+            ├── archive/        # Deprecated/obsolete
+            └── guides/         # Detailed guides
+                ├── installation/
+                ├── integration/
+                └── workflows/
+
+      explanation: |
+        **Progressive Disclosure:**
+        1. README.md - Overview → Links to details
+        2. QUICKSTART.md - Quick start → Links to advanced
+        3. docs/guides/ - Detailed guides by category
+
+        **Key Principles:**
+        - Maximum 5 files in root
+        - Brief overview upfront (not everything)
+        - Link to detailed content (don't duplicate)
+        - Clear categorization (research/archive/guides)
+
+        **README.md Structure (< 250 lines):**
+        - Overview (2-3 sentences)
+        - Quick start (1 command + link)
+        - Key features (bulleted list)
+        - Documentation links (not duplication)
+        - Contributing (brief)
+
+    reorganization_workflow:
+      title: "Multi-Phase Reorganization for Existing Projects"
+      when_to_use: "When existing documentation has become unwieldy or difficult to navigate"
+
+      phase_1_archive_legacy:
+        duration: "30 minutes"
+        steps: |
+          1. Create archive directory structure:
+             ```bash
+             mkdir -p docs/archive/legacy
+             ```
+
+          2. Move problematic files:
+             - Files with very long names (>100 chars)
+             - Outdated documentation
+             - Files with encoding issues
+             - Duplicate content
+
+          3. Create archive index:
+             ```markdown
+             # Archive Documentation Index
+             Maps old files to new equivalents
+             ```
+
+      phase_2_create_hierarchy:
+        duration: "2 hours"
+        steps: |
+          1. Organize by type and purpose:
+             ```
+             docs/
+             ├── api/              # API documentation (5-10 files)
+             ├── reference/        # Reference docs (10-15 files)
+             ├── guides/           # Guides and tutorials (5-10 files)
+             └── archive/          # Legacy docs
+             ```
+
+          2. Create index files for each section:
+             - `api/00-INDEX.md` - Overview and navigation
+             - `reference/00-INDEX.md` - Overview and navigation
+             - `guides/README.md` or similar
+
+      phase_3_entry_points:
+        duration: "30 minutes"
+        steps: |
+          1. Main documentation README:
+             ```markdown
+             # Documentation
+
+             ## Quick Start Paths
+             - For Beginners: Quick Start → Basics → Configuration
+             - For Developers: Pattern Library → Reference
+             - For Integrators: API Overview → Methods
+             ```
+
+          2. Navigation by role:
+             - Beginner-friendly path
+             - Developer-focused path
+             - Integrator-focused path
+
+      phase_4_cleanup:
+        duration: "20 minutes"
+        steps: |
+          1. Remove backup files:
+             ```bash
+             find examples/ -name "*.backup" -delete
+             find examples/ -name "*_old.*" -delete
+             find examples/ -name "*.bak" -delete
+             ```
+
+          2. Update .gitignore:
+             ```gitignore
+             # Backup files
+             *.backup
+             *.bak
+             *_old.*
+             ```
+
+      phase_5_readmes:
+        duration: "1 hour"
+        steps: |
+          1. examples/README.md with:
+             - Parsers by difficulty
+             - Categories (Search, E-commerce, Social, etc.)
+             - Usage instructions
+             - Learning paths
+
+          2. scripts/README.md with:
+             - Available scripts
+             - Usage examples
+             - Configuration
+
+          3. lib/README.md with:
+             - Available libraries
+             - Usage documentation
+
+      phase_6_update_references:
+        duration: "30 minutes"
+        steps: |
+          1. Update PROJECT.md with new structure
+          2. Update AGENTS.md with documentation links
+          3. Update SKILLS.md with new resources
+          4. Add cross-references (40+ new links)
+
+    examples:
+      - scenario: "New user wants to get started"
+        workflow: |
+          User reads: README.md (overview)
+          User clicks: QUICKSTART.md link
+          User follows: Installation steps
+          User clicks: Advanced topics links
+          Result: Progressive discovery, not overwhelmed
+
+      - scenario: "Experienced user needs details"
+        workflow: |
+          User skips: README.md overview
+          User goes directly to: docs/guides/integration/
+          User finds: Detailed technical guide
+          Result: Clear path to detailed content
+
+      - scenario: "Before reorganization"
+        workflow: |
+          User sees: 38 files in root
+          User confused: Which file to read?
+          User frustrated: Can't find quick start
+          Result: Abandoned, poor UX
+
+      - scenario: "After reorganization"
+        workflow: |
+          User sees: 4 files in root
+          User starts: README.md (clear overview)
+          User continues: QUICKSTART.md (link from README)
+          User satisfied: Found what they needed quickly
+          Result: Successful onboarding
+
+      - scenario: "Reorganization case study"
+        before: |
+          docs/
+          ├── _info_app/           # 13 problematic files
+          ├── _info_parsers/       # Archive candidate
+          ├── guide1.md
+          ├── guide2.md
+          └── ...                  # Mixed organization
+
+        after: |
+          docs/
+          ├── README.md             # Main navigation
+          ├── api/                  # API docs (5 files)
+          │   ├── 00-INDEX.md
+          │   ├── 01-overview.md
+          │   └── ...
+          ├── reference/            # Reference (12 files)
+          │   ├── 00-INDEX.md
+          │   ├── http-requests.md
+          │   └── ...
+          ├── guides/               # Guides (7 files)
+          │   ├── QUICK_START.md
+          │   ├── PATTERN_LIBRARY.md
+          │   └── ...
+          └── archive/legacy/       # Archived (100+ files)
+              ├── INDEX.md          # Maps old → new
+              └── ...
+
+    best_practices:
+      for_new_projects:
+        - "Maximum 5 .md files in root"
+        - "README.md < 250 lines (overview only)"
+        - "Link to details, don't duplicate"
+        - "Move temporary files to docs/archive/"
+        - "Create docs/ structure from project start"
+        - "Review file count monthly"
+
+      for_reorganization:
+        - "Plan before executing"
+        - "Use TodoWrite tool for tracking phases"
+        - "Keep legacy docs (archive, don't delete)"
+        - "Create README files (one per major directory)"
+        - "Update all references (cross-links, TOC, quick start paths)"
+        - "Archive, don't delete (preserve history, allow rollback)"
+
+    prevention:
+      - "Plan documentation structure before project starts"
+      - "Create docs/ hierarchy early (research/archive/guides)"
+      - "Move temporary files to archive immediately"
+      - "Review file count weekly in early stages"
+      - "Set up file count monitoring (alert if >5 in root)"
+
+    anti_patterns:
+      - pattern: "Everything in root"
+        problem: "38 files, confusing"
+        solution: "Organize into docs/ subdirectories"
+
+      - pattern: "Massive README"
+        problem: "600+ lines, overwhelming"
+        solution: "Brief overview (< 250 lines), link to details"
+
+      - pattern: "Duplication everywhere"
+        problem: "Same content in 5 files"
+        solution: "Write once, link to it"
+
+      - pattern: "No clear structure"
+        problem: "Mixed analysis, guides, obsolete"
+        solution: "Clear categories: research/archive/guides"
+
+      - pattern: "Deleting legacy docs"
+        problem: "Lost history, can't rollback"
+        solution: "Archive to docs/archive/legacy/ with INDEX.md"
+
+    lessons_learned: |
+      1. **Archive, don't delete**
+         - Legacy docs may have value
+         - Preserve history
+         - Allow rollback if needed
+
+      2. **Create multiple entry points**
+         - Different users need different paths
+         - Beginner vs Developer vs Integrator
+         - Quick reference vs deep dive
+
+      3. **README files are crucial**
+         - Every major directory needs one
+         - Include navigation, examples, links
+         - Make it self-explanatory
+
+      4. **Cross-reference everything**
+         - 40+ new links added
+         - Connect related concepts
+         - Aid discoverability
+
+      5. **Track progress with TodoWrite**
+         - 6 phases tracked
+         - Clear status (pending/in_progress/completed)
+         - Easy to resume
+
+    time_estimates:
+      new_project: "1-2 hours (setup initial structure)"
+      reorganization: "4-5 hours (6 phases total)"
+      ongoing_maintenance: "15 min/week (review file count)"
+
+    tags: ["documentation", "organization", "progressive-disclosure", "ux", "reorganization"]
+
+    related_patterns:
+      - "PROGRESSIVE-DISCLOSURE-001 - Progressive disclosure for information"
+      - "YAML-001 - YAML syntax best practices"
+      - "UNIFIED-INSTALL-001 - Unified installation pattern"
+
+    references:
+      - "docs/research/REORGANIZATION-COMPLETE.md - Case study"
+      - "docs/research/SESSION-ANALYSIS-2026-01-07.md - Implementation"
