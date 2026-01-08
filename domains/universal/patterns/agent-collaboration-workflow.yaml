@@ -268,8 +268,8 @@ patterns:
       required_files:
         - ".claude/agents/subagents/RESEARCHER.md"
         - ".claude/agents/subagents/KNOWLEDGE-CURATOR.md"
-        - ".claude/agents/subagents/DEBUGGER.md" (optional)
-        - ".claude/agents/subagents/VALIDATOR.md" (optional)
+        - ".claude/agents/subagents/DEBUGGER.md" # optional
+        - ".claude/agents/subagents/VALIDATOR.md" # optional
 
       configuration:
         file: ".claude/settings.json"
@@ -295,10 +295,10 @@ patterns:
           }
 
       tools_required:
-        - "Task" (for launching subagents)
-        - "TaskOutput" (for getting subagent results)
-        - "WebSearch" (for researcher)
-        - "Grep/Read/Write" (for all subagents)
+        - "Task" # for launching subagents
+        - "TaskOutput" # for getting subagent results
+        - "WebSearch" # for researcher
+        - "Grep/Read/Write" # for all subagents
 
     quality_metrics:
       autonomy: "high"  # Subagents work autonomously

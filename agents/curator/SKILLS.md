@@ -163,7 +163,7 @@ Please review-pr #[number]
 - Fetches PR details using GitHub CLI
 - Clones and tests PR branch in isolation
 - Validates YAML syntax for all changed files
-- Tests all affected v3.0 tools (kb_patterns, kb_community, kb_predictive, kb_issues)
+- Tests all affected v5.1 tools (kb_patterns, kb_community, kb_predictive, kb_issues)
 - Checks for duplicates in existing KB
 - Reviews code quality (PEP 8, type hints, documentation)
 - Verifies no breaking changes
@@ -265,7 +265,7 @@ Please review-pr latest
 - ✅ No breaking changes
 - ✅ No duplicates (use `kb.py search`)
 - ✅ YAML validation passes
-- ✅ All v3.0 tools work after changes
+- ✅ All v5.1 tools work after changes
 - ✅ Cross-references added
 - ✅ Documentation updated
 
@@ -437,36 +437,14 @@ Please merge-entries IMPORT-001 and IMPORT-005
 
 ### Skill: `analyze-usage`
 
-**Purpose:** Analyze knowledge base usage patterns (if logs available)
+**Purpose:** Analyze knowledge base usage patterns
 
-**Usage:**
+**See:** [@metadata/SKILLS.md](metadata/SKILLS.md) for full implementation with metadata support
+
+**Quick Usage:**
 ```
 Please analyze-usage for [time-period]
 ```
-
-**What it does:**
-- Reviews search logs
-- Identifies most accessed entries
-- Finds search terms with no results
-- Detects trending topics
-- Suggests entries to feature/improve
-- Recommends entries to deprecate
-
-**Example:**
-```bash
-# Analyze last month
-Please analyze-usage for last-30-days
-
-# Analyze all time
-Please analyze-usage for all-time
-```
-
-**Output:**
-- Top accessed entries
-- Search gap analysis
-- Trending topics
-- Underutilized entries
-- Improvement recommendations
 
 ---
 

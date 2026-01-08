@@ -78,11 +78,11 @@ python docs/knowledge-base/shared/scripts/unified-install.py --update
 ```bash
 # Вы всегда знаете какую версию используете
 git submodule status
-# d3e5f7e... docs/knowledge-base/shared (v3.0)
+# d3e5f7e... docs/knowledge-base/shared (v5.1)
 
 # Можно зафиксировать конкретную версию
 git submodule update --remote docs/knowledge-base/shared  # Update to latest
-git commit -m "Update KB to v3.1"  # Pin version in project
+git commit -m "Update KB to v5.1"  # Pin version in project
 ```
 
 **Чистая история проекта:**
@@ -142,14 +142,14 @@ git log HEAD..origin/main --oneline  # See changes
 git pull origin main
 cd ../..
 git add docs/knowledge-base/shared
-git commit -m "Update KB to v3.1"
+git commit -m "Update KB to v5.1"
 
 # Вариант C: Зафиксировать на конкретной версии
 cd docs/knowledge-base/shared
-git checkout v3.0  # Pin to specific version
+git checkout v5.1  # Pin to specific version
 cd ../..
 git add docs/knowledge-base/shared
-git commit -m "Pin KB to v3.0"
+git commit -m "Pin KB to v5.1"
 ```
 
 #### Клонирование проекта с submodule:
@@ -178,7 +178,7 @@ git submodule update --init --recursive
 
 ### ⚡ GIT SUBMODULE + SPARSE CHECKOUT (ОПТИМАЛЬНО 🌟)
 
-**Новое в v3.1: Sparse Checkout для Project Agents**
+**Новое в v5.1: Sparse Checkout для Project Agents**
 
 #### Проблема: Context Contamination
 
@@ -430,14 +430,14 @@ git pull origin main
 **Используйте:** Submodule
 
 ```
-company-frontend/ (uses KB v3.0)
-  └── docs/knowledge-base/shared -> submodule@v3.0
+company-frontend/ (uses KB v5.1)
+  └── docs/knowledge-base/shared -> submodule@v5.1
 
-company-backend/ (uses KB v3.1)
-  └── docs/knowledge-base/shared -> submodule@v3.1
+company-backend/ (uses KB v5.1)
+  └── docs/knowledge-base/shared -> submodule@v5.1
 
-company-shared-libs/ (uses KB v3.0)
-  └── docs/knowledge-base/shared -> submodule@v3.0
+company-shared-libs/ (uses KB v5.1)
+  └── docs/knowledge-base/shared -> submodule@v5.1
 ```
 
 **Преимущества:**
@@ -522,7 +522,7 @@ python docs/knowledge-base/tools/kb.py index -v
 
 # 6. Commit everything
 git add .
-git commit -m "Add Shared Knowledge Base v3.0 as submodule"
+git commit -m "Add Shared Knowledge Base v5.1 as submodule"
 ```
 
 ### Team Member Onboarding
@@ -564,7 +564,7 @@ git commit -m "Update KB to latest version"
 git submodule status
 
 # Output:
-# d3e5f7e123456789... docs/knowledge-base/shared (v3.0-5-gd3e5f7e)
+# d3e5f7e123456789... docs/knowledge-base/shared (v5.1-5-gd3e5f7e)
 #                          ^commit hash        ^tag/version ^commits ahead
 ```
 
@@ -605,7 +605,7 @@ git pull origin main
 | **Rollback capability** | ✅ Easy | ✅ Easy | ⚠️ Manual |
 
 **Legend:**
-- 🌟 **Sparse Checkout** - Рекомендуется для Project Agents (v3.1+)
+- 🌟 **Sparse Checkout** - Рекомендуется для Project Agents (v5.1+)
 - ✅ **Submodule** - Стандартный подход для всех проектов
 - ❌ **Clone** - Только для тестов/обучения
 
@@ -613,7 +613,7 @@ git pull origin main
 
 ## 🎯 Final Recommendation
 
-### Для Production / Team Projects (с v3.1):
+### Для Production / Team Projects (с v5.1):
 **Используйте SUBMODULE + SPARSE CHECKOUT** 🌟
 
 **Почему это лучший выбор:**
@@ -687,7 +687,7 @@ git commit -m "Migrate KB to submodule with sparse checkout"
 
 ---
 
-**Summary (v3.1):**
+**Summary (v5.1):**
 - **🌟 Submodule + Sparse Checkout** - Оптимальный выбор для Project Agents (чистый контекст, автоматический setup)
 - **✅ Submodule** - Стандартный профессиональный выбор для всех проектов
 - **❌ Clone** - Приемлем только для быстрых тестов и обучения

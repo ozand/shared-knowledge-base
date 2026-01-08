@@ -24,7 +24,7 @@ patterns:
     - Hard to maintain as project grows
 
 
-    **Real example:** Shared Knowledge Base v3.0 had 21 .md files in root before cleanup.
+    **Real example:** Shared Knowledge Base v5.1 had 21 .md files in root before cleanup.
 
     '
   root_cause: '1. No documentation placement strategy
@@ -133,7 +133,7 @@ patterns:
       - Test all documentation links
       - Update README.md references
     real_world_example:
-      project: Shared Knowledge Base v3.0
+      project: Shared Knowledge Base v5.1
       before:
         root_files: 21
         structure: All docs in root, no separation

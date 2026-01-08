@@ -16,14 +16,14 @@ patterns:
       Pull Requests to Shared Knowledge Base require thorough review before merge to:
       - Prevent duplicate entries from being added
       - Ensure code quality standards are maintained
-      - Verify no breaking changes to v3.0 tools
+      - Verify no breaking changes to v5.1 tools
       - Validate YAML syntax and structure
       - Test all affected functionality
 
       **Risks of inadequate review:**
       - Duplicates pollute the knowledge base
       - Low-quality entries reduce searchability
-      - Breaking changes block all v3.0 features
+      - Breaking changes block all v5.1 features
       - Invalid YAML prevents indexing
       - Poor solutions mislead users
 
@@ -102,7 +102,7 @@ patterns:
 
       **For Tool Updates:**
       ```bash
-      # Test all v3.0 tools
+      # Test all v5.1 tools
       python tools/kb_patterns.py find-universal
       python tools/kb_community.py report
       python tools/kb_predictive.py suggest-entries
@@ -223,7 +223,7 @@ patterns:
           critical: true
           command: "python tools/kb.py search <keywords>"
 
-        - item: "Test all affected v3.0 tools"
+        - item: "Test all affected v5.1 tools"
           critical: true
           tools:
             - "kb_patterns.py"
@@ -258,7 +258,7 @@ patterns:
           - "Assess universality claim"
 
         tool_updates:
-          - "Test all v3.0 tools"
+          - "Test all v5.1 tools"
           - "Check import statements"
           - "Verify backward compatibility"
           - "Update documentation"
@@ -320,7 +320,7 @@ patterns:
         decision: "APPROVE ⭐⭐⭐⭐½"
         review: "PR6_REVIEW.md"
         highlights:
-          - "Critical blocker for all v3.0 tools"
+          - "Critical blocker for all v5.1 tools"
           - "Well-tested (all tools working)"
           - "Code quality excellent"
           - "Minor: Code duplication acceptable"
@@ -343,7 +343,7 @@ patterns:
       - "Be exhaustive with duplicate checking (use multiple keywords)"
       - "Create detailed review documents (PR#_REVIEW.md)"
       - "Focus on critical issues over minor style"
-      - "Test all v3.0 tools for any code changes"
+      - "Test all v5.1 tools for any code changes"
       - "Document testing procedures thoroughly"
       - "Be constructive and specific in feedback"
       - "Approve when good enough (don't block for minor issues)"
@@ -351,7 +351,7 @@ patterns:
     anti_patterns:
       - ❌ "Reviewing PR in main repository (not isolated)"
       - ❌ "Skipping duplicate check for new patterns"
-      - ❌ "Not testing v3.0 tools after code changes"
+      - ❌ "Not testing v5.1 tools after code changes"
       - ❌ "Approving without creating review document"
       - ❌ "Focusing on style over substance"
       - ❌ "Requesting changes for minor issues"
@@ -379,7 +379,7 @@ patterns:
       - ✅ "No duplicates introduced"
       - ✅ "Code quality meets standards"
       - ✅ "No breaking changes"
-      - ✅ "All v3.0 tools work correctly"
+      - ✅ "All v5.1 tools work correctly"
       - ✅ "Review document created (PR#_REVIEW.md)"
       - ✅ "GitHub comment posted on PR"
 

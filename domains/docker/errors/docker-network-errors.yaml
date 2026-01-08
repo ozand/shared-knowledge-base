@@ -2,6 +2,7 @@ title: Docker Network and Container Management Errors
 scope: docker
 severity: medium
 category: docker-errors
+last_updated: "2026-01-08"
 tags:
   - docker
   - networking

@@ -114,7 +114,7 @@ rm -rf tmp-sk
 ✅ Unified Installation Complete!
 
 What's installed:
-- [OK] Submodule: docs/knowledge-base/shared (v3.1-14-g5ab26e2)
+- [OK] Submodule: docs/knowledge-base/shared (v5.1-14-g5ab26e2)
 - [OK] Sparse checkout: Curator excluded, 41 patterns loaded
 - [OK] Agents: 1 main + 4 subagents
 - [OK] Skills: 7 skills
@@ -143,7 +143,7 @@ cd /path/to/existing-project
 
 # Проверить текущую версию
 git submodule status docs/knowledge-base/shared
-# Output: 5ab26e2... docs/knowledge-base/shared (v3.1-14-g5ab26e2)
+# Output: 5ab26e2... docs/knowledge-base/shared (v5.1-14-g5ab26e2)
 
 # Запустить унифицированный скрипт обновления
 python docs/knowledge-base/shared/scripts/unified-install.py --update
@@ -169,7 +169,7 @@ python docs/knowledge-base/shared/scripts/unified-install.py --update
 
 Shared KB changes:
   Behind by: 14 commits
-  Latest: v3.2 (current: v3.1-14-g5ab26e2)
+  Latest: v5.1 (current: v5.1-14-g5ab26e2)
 
 New features:
   [+] for-projects/ (new integration system)
@@ -183,7 +183,7 @@ Modified files:
 
 Update shared KB? [Y/n]: Y
 
-[OK] Shared KB updated to v3.2
+[OK] Shared KB updated to v5.1
 
 Agent templates updated:
   [~] .claude/agents/kb-agent.md (modified)
@@ -203,7 +203,7 @@ Commands updated:
 [OK] Indexed 110 entries (was 101)
 
 Summary:
-  Shared KB: v3.1-14 → v3.2
+  Shared KB: v5.1-14 → v5.1
   Agents: 1 updated
   Skills: 2 added, 5 updated
   Commands: 3 added, 4 updated
@@ -351,8 +351,8 @@ python unified-install.py --help
 [!] Shared KB Updates Available
 ======================================================================
 
-Current: v3.1-14-g5ab26e2
-Latest:  v3.2
+Current: v5.1-14-g5ab26e2
+Latest:  v5.1
 
 Changes:
   [+] 10 new KB entries

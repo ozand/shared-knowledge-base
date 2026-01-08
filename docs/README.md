@@ -7,13 +7,13 @@
 ## Quick Links
 
 ### Product & Architecture 📋
-- **[PRD - Product Requirements Document](PRD.md)** - Product vision, requirements, roadmap (v4.0)
-- **[ARD - Architecture Reference Document](ARD.md)** - System architecture, components, design (v4.0)
+- **[PRD - Product Requirements Document](PRD.md)** - Product vision, requirements, roadmap (v5.1)
+- **[ARD - Architecture Reference Document](ARD.md)** - System architecture, components, design (v5.1)
 - **[Documentation README](README.md)** - This file
 
 ### Getting Started 🚀
 - [Quick Start](../QUICKSTART.md) - 5-minute setup guide
-- [Progressive Domain Loading](../QUICKSTART-DOMAINS.md) - Load only domains you need (v3.1)
+- [Progressive Domain Loading](../QUICKSTART-DOMAINS.md) - Load only domains you need (v5.1)
 - [Complete User Guide](../GUIDE.md) - Full documentation
 
 ### For Claude Code Users 🤖
@@ -21,12 +21,12 @@
 - [Agent Quick Start](../for-claude-code/AGENT-QUICK-START.md) - AI agent setup
 
 ### Reference Documentation 📚
-- [YAML Schema v3.1](YAML-SCHEMA-V3.1.md) - Entry structure and metadata
+- [YAML Schema v5.1](YAML-SCHEMA-V3.1.md) - Entry structure and metadata
 - [Domain Management](../QUICKSTART-DOMAINS.md) - Progressive loading guide
 
 ---
 
-## Implementation Documentation (v3.1)
+## Implementation Documentation (v5.1)
 
 ### Phase 1: Progressive Domain Loading
 - **[Implementation Summary](implementation/IMPLEMENTATION-SUMMARY.md)** - All phases overview
@@ -89,7 +89,7 @@
 
 ## Tools & Utilities
 
-### Domain Management (v3.1)
+### Domain Management (v5.1)
 ```bash
 # List all domains
 python ../tools/kb_domains.py --kb-dir .kb/shared list
@@ -101,7 +101,7 @@ python ../tools/kb_domains.py load docker
 python ../tools/kb_domains.py info postgresql
 ```
 
-### Submission Tool (v3.1)
+### Submission Tool (v5.1)
 ```bash
 # Submit entry to Shared KB
 python ../tools/kb_submit.py submit --entry path/to/entry.yaml
@@ -196,8 +196,8 @@ git sparse-checkout set docker postgresql universal tools _domain_index.yaml
 **Status:** Production Ready ✅
 
 ### Features by Version
-- **v3.1:** Progressive loading, GitHub-native contribution, automated feedback loop
-- **v3.0:** Metadata system, usage tracking, predictive analytics
+- **v5.1:** Progressive loading, GitHub-native contribution, automated feedback loop
+- **v5.1:** Metadata system, usage tracking, predictive analytics
 - **v2.0:** SQLite search, FTS5 indexing
 - **v1.0:** Initial YAML-based knowledge base
 

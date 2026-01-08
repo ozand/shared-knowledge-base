@@ -41,12 +41,12 @@ python tools/kb_domains.py --kb-dir .kb/shared list
 
 ---
 
-## 🆕 What's New in v4.0.1
+## 🆕 What's New in v5.1.1
 
 **Hotfix:** Fixed `kb_domains.py` compatibility + agent instructions
 
 ### Fixed
-- ✅ `kb_domains.py` now handles flat domain format (v4.0.0 standard)
+- ✅ `kb_domains.py` now handles flat domain format (v5.1.0 standard)
 - ✅ Compatible with both flat (int) and nested (dict) formats
 - ✅ Windows compatibility: removed `$CLAUDE_PROJECT_DIR` from hooks
 
@@ -59,7 +59,7 @@ python tools/kb_domains.py --kb-dir .kb/shared list
 
 ---
 
-## ⚠️ Critical Rules (Updated for v4.0.1)
+## ⚠️ Critical Rules (Updated for v5.1.1)
 
 **🚨 3 Golden Rules:**
 
@@ -69,7 +69,7 @@ python tools/kb_domains.py --kb-dir .kb/shared list
 
 **🚨 Common Mistake (DON'T DO THIS):**
 - ❌ Modifying `_domain_index.yaml` to add `token_estimate`, `tags`, `description`
-- ✅ v4.0.0 format is `{domain: 11}` (flat, int)
+- ✅ v5.1.0 format is `{domain: 11}` (flat, int)
 - ✅ If tool fails → update tool, NOT data
 
 ---
@@ -85,7 +85,7 @@ python -c "import yaml; print(yaml.safe_load(open('.kb/shared/_domain_index.yaml
 ```
 
 **If output is `{"domains": {"docker": 11}}`:**
-- ✅ Data is CORRECT (v4.0.0 flat format)
+- ✅ Data is CORRECT (v5.1.0 flat format)
 - ❌ Tool is buggy (expects nested format)
 - ✅ Fix: `cp .kb/shared/tools/kb_domains.py tools/kb_domains.py`
 
@@ -110,7 +110,7 @@ python -c "import yaml; print(yaml.safe_load(open('.kb/shared/_domain_index.yaml
 ## 🔗 Links
 
 - **Repository:** https://github.com/ozand/shared-knowledge-base
-- **This version:** https://github.com/ozand/shared-knowledge-base/releases/tag/v4.0.1
+- **This version:** https://github.com/ozand/shared-knowledge-base/releases/tag/v5.1.1
 - **Issues:** https://github.com/ozand/shared-knowledge-base/issues
 - **Full Changelog:** `@.kb/shared/CHANGELOG.md`
 

@@ -662,7 +662,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 
 6. **Test Affected Tools**
    ```bash
-   # Test all v3.0 tools if code changes
+   # Test all v5.1 tools if code changes
    python tools/kb_patterns.py find-universal --kb-root /tmp/pr-test
    python tools/kb_community.py report --kb-root /tmp/pr-test
    python tools/kb_predictive.py suggest-entries --kb-root /tmp/pr-test
@@ -795,7 +795,7 @@ This document provides step-by-step workflows for common Knowledge Base Curator 
 - ✅ No duplicates introduced
 - ✅ Code quality meets standards
 - ✅ No breaking changes
-- ✅ All v3.0 tools work correctly
+- ✅ All v5.1 tools work correctly
 - ✅ Review document created
 - ✅ GitHub comment posted
 

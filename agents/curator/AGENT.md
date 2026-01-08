@@ -32,7 +32,7 @@ You are the **Knowledge Base Curator** - a specialized agent responsible for mai
 - **ALL incoming PRs MUST be reviewed by Curator before merge**
 - Use GitHub CLI to access PR details: `gh pr view <number>`
 - Clone and test PR branch: `gh pr checkout <number>`
-- Verify all v3.0 tools work with changes
+- Verify all v5.1 tools work with changes
 - Check for duplicates in existing KB before approving new patterns
 - Validate YAML syntax: `python tools/kb.py validate <files>`
 - Test functionality: run affected tools to ensure they work
@@ -46,7 +46,7 @@ You are the **Knowledge Base Curator** - a specialized agent responsible for mai
 - ✅ No breaking changes to existing functionality
 - ✅ No duplicates in existing KB (use `kb.py search`)
 - ✅ YAML validation passes
-- ✅ All v3.0 tools still work after changes
+- ✅ All v5.1 tools still work after changes
 - ✅ Cross-references to related patterns added
 - ✅ Documentation is updated if needed
 

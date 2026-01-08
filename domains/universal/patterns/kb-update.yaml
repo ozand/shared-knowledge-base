@@ -364,11 +364,11 @@ patterns:
           project: "CompanyBase"
           situation: |
             git submodule update --remote --merge docs/knowledge-base/shared
-            # Shows: * [new branch] fix/add-kb-config-v3.1
+            # Shows: * [new branch] fix/add-kb-config-v5.1
             # But: No merge, submodule stays on main
 
           analysis: |
-            Feature branch fix/add-kb-config-v3.1 adds kb_config.py
+            Feature branch fix/add-kb-config-v5.1 adds kb_config.py
             BUT: Main already has commit 347ecea that adds kb_config.py
 
           root_cause: |
@@ -381,7 +381,7 @@ patterns:
             3. No need to merge feature branch
 
           result: |
-            ✅ v3.1 features working via main branch
+            ✅ v5.1 features working via main branch
             ✅ No divergence from upstream
             ✅ Standard update workflow maintained
 
@@ -720,7 +720,7 @@ patterns:
 
         what_happened:
           - event: "Ran: git submodule update --remote --merge"
-            output: "* [new branch] fix/add-kb-config-v3.1"
+            output: "* [new branch] fix/add-kb-config-v5.1"
 
           - event: "Expected: Merge feature branch"
             actual: "No merge - submodule stayed on main"
@@ -752,7 +752,7 @@ patterns:
 
       example_3_migration_v2_to_v3:
         project: "VPS Knowledge Base (personal project)"
-        scenario: "Migration from plain clone v2.0 to git submodule v3.0"
+        scenario: "Migration from plain clone v2.0 to git submodule v5.1"
         date: "2026-01-06"
 
         before_migration:
@@ -763,7 +763,7 @@ patterns:
           problems:
             - "Shared and VPS content mixed together"
             - "Manual updates required (file copying)"
-            - "Doesn't follow v3.0 best practices"
+            - "Doesn't follow v5.1 best practices"
             - "No clear separation of concerns"
 
         migration_steps:
@@ -771,7 +771,7 @@ patterns:
             command: "mv /home/ozand/knowledge-base /home/ozand/knowledge-base-v2-backup"
             result: "Safe backup created"
 
-          - step: "Create new v3.0 structure"
+          - step: "Create new v5.1 structure"
             command: |
               mkdir -p /home/ozand/vps-knowledge/docs/knowledge-base/{project/{errors,patterns},tools}
               cd /home/ozand/vps-knowledge && git init
@@ -781,7 +781,7 @@ patterns:
             command: |
               git submodule add git@github.com:ozand/shared-knowledge-base.git \
                 docs/knowledge-base/shared
-            result: "Latest v3.0 obtained (v3.0-10-gc023036)"
+            result: "Latest v5.1 obtained (v5.1-10-gc023036)"
 
           - step: "Migrate VPS-specific content"
             command: |
@@ -818,12 +818,12 @@ patterns:
             result: "Comprehensive documentation"
 
           - step: "Commit to git"
-            command: "git add . && git commit -m 'Initial VPS KB setup with Shared KB v3.0'"
+            command: "git add . && git commit -m 'Initial VPS KB setup with Shared KB v5.1'"
             result: "18 files committed, clean state"
 
         after_migration:
           location: "/home/ozand/vps-knowledge"
-          version: "v3.0-10-gc023036"
+          version: "v5.1-10-gc023036"
           installation: "Git submodule"
           structure: |
             docs/knowledge-base/
@@ -832,7 +832,7 @@ patterns:
 
         statistics_comparison:
           before: "v2.0.0-13-g5ec545a | 55 entries (with duplicates) | Plain clone"
-          after: "v3.0-10-gc023036 | 47 entries (unique) | Git submodule"
+          after: "v5.1-10-gc023036 | 47 entries (unique) | Git submodule"
           time_investment: "~15 minutes"
           downtime: "None (seamless migration)"
 
@@ -858,7 +858,7 @@ patterns:
             result: "✅ Automated update works"
 
         outcome: |
-          ✅ Successfully migrated from v2.0 plain clone to v3.0 submodule
+          ✅ Successfully migrated from v2.0 plain clone to v5.1 submodule
           ✅ Clean separation: shared/ vs project/
           ✅ Easy updates: git submodule update --remote
           ✅ All functionality preserved
@@ -928,11 +928,11 @@ patterns:
             project_kb: "NOT affected - safe to edit"
 
         next_steps_optional:
-          - option: "Enable sparse checkout (v3.1)"
+          - option: "Enable sparse checkout (v5.1)"
             benefit: "Exclude Curator files, save ~22% space"
             command: "See SUBMODULE_CONTEXT_CONTAMINATION_ANALYSIS.md"
 
-          - option: "Add auto-update check (v3.1)"
+          - option: "Add auto-update check (v5.1)"
             benefit: "Automatic notification of updates"
             command: "python3 docs/knowledge-base/shared/tools/kb-agent-bootstrap.py"
 
@@ -961,7 +961,7 @@ patterns:
       ```bash
       # Step 1: Check submodule status (ALWAYS FIRST)
       git submodule status docs/knowledge-base/shared
-      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      # Output:  c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       #          ^ Leading space = properly initialized ✅
 
       # Step 2: Verify before referencing resources
@@ -1037,17 +1037,17 @@ patterns:
 
       # Agent responds:
       git submodule status docs/knowledge-base/shared
-      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      # Output:  c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
 
       git submodule update --remote docs/knowledge-base/shared
       # No output (already up to date)
 
       git submodule status docs/knowledge-base/shared
-      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      # Output:  c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       # Same commit = confirmed already was at latest
 
       python3 docs/knowledge-base/shared/tools/kb.py stats
-      # Output: Shared KB v3.0-10-gc023036, 95 entries indexed
+      # Output: Shared KB v5.1-10-gc023036, 95 entries indexed
       ```
 
       **Example 2: Stale context prevented**
@@ -1065,12 +1065,12 @@ patterns:
       **Example 3: Status interpretation**
       ```bash
       git submodule status docs/knowledge-base/shared
-      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      # Output:  c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
 
       # Agent interpretation:
       # - Leading space = properly initialized ✅
       # - c023036 = current commit hash
-      # - v3.0-10-gc023036 = 10 commits ahead of v3.0 tag (effectively v3.1)
+      # - v5.1-10-gc023036 = 10 commits ahead of v5.1 tag (effectively v5.1)
       # - No + symbol = no uncommitted changes ✅
       # - Status: Healthy, ready for update
       ```
@@ -1157,7 +1157,7 @@ patterns:
         description: "Sparse checkout implementation to exclude Curator files"
 
       - title: "VPS_MIGRATION_V2_TO_V3_ANALYSIS.md"
-        description: "Complete analysis of successful v2.0 to v3.0 migration"
+        description: "Complete analysis of successful v2.0 to v5.1 migration"
 
       - title: "tools/kb.py check-updates"
         description: "Command-line tool to check for updates"
@@ -1169,11 +1169,11 @@ patterns:
       - version: "1.1"
         date: "2026-01-06"
         changes:
-          - "Added example_3: VPS migration v2.0 to v3.0"
+          - "Added example_3: VPS migration v2.0 to v5.1"
           - "Documented complete migration workflow with 10 steps"
           - "Added before/after comparison and statistics"
           - "Added 5 verification tests"
-          - "Added next steps for v3.1 features (sparse checkout, auto-update)"
+          - "Added next steps for v5.1 features (sparse checkout, auto-update)"
 
       - version: "1.0"
         date: "2026-01-06"

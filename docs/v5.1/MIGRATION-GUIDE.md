@@ -1,4 +1,4 @@
-# Migration Guide: v4.0 → v5.1
+# Migration Guide: v5.1 → v5.1
 
 **Version:** 5.1.0
 **Last Updated:** 2026-01-08
@@ -24,13 +24,13 @@
 
 v5.1 introduces a **two-tier knowledge management system**:
 
-| Feature | v4.0 | v5.1 |
+| Feature | v5.1 | v5.1 |
 |---------|------|------|
 | **KB Structure** | Single Shared KB | Project KB + Shared KB |
 | **Submission** | Direct commit (dangerous) | GitHub Issues (safe) |
 | **Context Loading** | Manual | Automatic via hook |
 | **Decision Making** | Agent guesses | Explicit criteria |
-| **Tools** | tools/*.py | tools/*.py (v4.0 still works) |
+| **Tools** | tools/*.py | tools/*.py (v5.1 still works) |
 
 ### Why Migrate?
 
@@ -41,12 +41,12 @@ v5.1 introduces a **two-tier knowledge management system**:
 
 ### Backward Compatibility
 
-**IMPORTANT:** v4.0 tools **still work**. Migration is **optional**, not forced.
+**IMPORTANT:** v5.1 tools **still work**. Migration is **optional**, not forced.
 
 You can:
-- ✅ Keep using v4.0 tools
+- ✅ Keep using v5.1 tools
 - ✅ Migrate gradually
-- ✅ Use both v4.0 and v5.1 side-by-side
+- ✅ Use both v5.1 and v5.1 side-by-side
 
 ---
 
@@ -135,10 +135,10 @@ Follow [Step-by-Step Migration](#step-by-step-migration) below
 
 **Best for:** Large teams, cautious approach
 
-1. **Week 1:** Install v5.1 alongside v4.0
+1. **Week 1:** Install v5.1 alongside v5.1
 2. **Week 2:** Test v5.1 tools on one agent
 3. **Week 3:** Roll out to team
-4. **Week 4:** Deprecate v4.0 tools
+4. **Week 4:** Deprecate v5.1 tools
 
 ---
 
@@ -306,7 +306,7 @@ git commit -m "Migrate to KB v5.1
 - Install session-start.sh hook for context loading
 - Add PROJECT.yaml with sharing criteria
 - Configure environment for GitHub Issues workflow
-- Backward compatible: v4.0 tools still work"
+- Backward compatible: v5.1 tools still work"
 
 # Optional: Create backup branch first
 git checkout -b backup/before-v5.1-migration
@@ -407,10 +407,10 @@ claude
 #### 5. Backward Compatibility
 
 ```bash
-# Test v4.0 tools still work
+# Test v5.1 tools still work
 python .kb/shared/tools/kb.py search "docker"
 
-# Expected: v4.0 search works normally
+# Expected: v5.1 search works normally
 ```
 
 ---
@@ -564,7 +564,7 @@ cp .env.backup .env
 - ❌ Critical bugs in v5.1
 - ❌ Need more time to prepare
 
-**Remember:** v4.0 tools still work, so you can use both!
+**Remember:** v5.1 tools still work, so you can use both!
 
 ---
 
@@ -578,7 +578,7 @@ Migration is successful when:
 - ✅ `kb_search.py` returns results
 - ✅ `kb_submit.py --target local` works
 - ✅ GITHUB_TOKEN configured (for shared submissions)
-- ✅ v4.0 tools still work (backward compatibility)
+- ✅ v5.1 tools still work (backward compatibility)
 - ✅ Team trained on new workflow
 
 ---

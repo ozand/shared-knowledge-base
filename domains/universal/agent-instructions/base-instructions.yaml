@@ -227,7 +227,7 @@ instructions:
 
     real_world_example:
       wrong:
-        scenario: "Project Agent updates KB to v3.1 directly"
+        scenario: "Project Agent updates KB to v5.1 directly"
         what_happened:
           - "Agent committed to shared-knowledge-base"
           - "Agent fixed YAML errors"

@@ -181,7 +181,7 @@ ANALYSIS
    Code fix, no new documentation
 
 ✅ Tools Test: PASS
-   All v3.0 tools work after change
+   All v5.1 tools work after change
 
 RECOMMENDATION
 ───────────────────────────────────────────

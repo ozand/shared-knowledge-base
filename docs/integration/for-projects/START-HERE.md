@@ -141,7 +141,7 @@ python tools/kb.py validate .kb/shared/
 
 ### Problem: "TypeError: 'int' object is not subscriptable"
 
-**Cause:** Old `kb_domains.py` doesn't support v4.0.0+ flat format
+**Cause:** Old `kb_domains.py` doesn't support v5.1.0+ flat format
 
 **Fix:**
 ```bash
@@ -185,7 +185,7 @@ cd ../..
 **Reference:**
 3. **`@.kb/shared/for-claude-code/AGENT-UPDATE-INSTRUCTIONS.md`** - Full instructions (600+ lines)
 4. **`@.kb/shared/for-claude-code/KB-UPDATE-QUICK-REFERENCE.md`** - Quick reference card
-5. **`@.kb/shared/docs/validation/DOMAIN-INDEX-SCHEMA.md`** - v4.0.0 format specification
+5. **`@.kb/shared/docs/validation/DOMAIN-INDEX-SCHEMA.md`** - v5.1.0 format specification
 
 ---
 

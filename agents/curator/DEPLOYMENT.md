@@ -1,8 +1,8 @@
-# Deployment Guide: Shared Knowledge Base v3.0
+# Deployment Guide: Shared Knowledge Base v5.1
 
 ## Overview
 
-This document explains how to deploy Shared Knowledge Base v3.0 to GitHub and update existing projects.
+This document explains how to deploy Shared Knowledge Base v5.1 to GitHub and update existing projects.
 
 ---
 
@@ -105,7 +105,7 @@ git add .gitignore
 git status
 
 # Commit
-git commit -m "Release v3.0: Phase 1-3 Complete
+git commit -m "Release v5.1: Phase 1-3 Complete
 
 Phase 1: Essential Metadata
 - Metadata management (kb_meta.py)
@@ -200,7 +200,7 @@ When users update their Shared KB submodule, they should:
 Send this message to users/projects:
 
 ```
-📚 Shared Knowledge Base updated to v3.0!
+📚 Shared Knowledge Base updated to v5.1!
 
 New capabilities:
 - ✅ Metadata management (quality scores, usage tracking)

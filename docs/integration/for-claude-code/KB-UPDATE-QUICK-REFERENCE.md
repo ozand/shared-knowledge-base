@@ -32,7 +32,7 @@
 ### Update
 ```bash
 □ git fetch origin
-□ git checkout v4.0.0 (or origin/main)
+□ git checkout v5.1.0 (or origin/main)
 □ cd ../..
 □ git submodule update --remote .kb/shared
 □ python .kb/shared/tools/kb.py index --force -v
@@ -95,7 +95,7 @@
 # Test 1: Version
 cd .kb/shared
 git describe --tags
-# Expected: v4.0.0 (or target version)
+# Expected: v5.1.0 (or target version)
 
 # Test 2: Clean state
 git status
@@ -162,7 +162,7 @@ Need to update Shared KB?
 ```
 ✅ cd .kb/shared
 ✅ git fetch origin
-✅ git checkout v4.0.0
+✅ git checkout v5.1.0
 ✅ git checkout origin/main
 ✅ git status (read-only)
 ✅ git log (read-only)
@@ -178,7 +178,7 @@ Need to update Shared KB?
 
 **On Success:**
 ```
-✅ Updated to v4.0.0
+✅ Updated to v5.1.0
 ✅ All 5 tests passed
 ✅ 149 entries indexed
 ✅ Search working
@@ -202,7 +202,7 @@ Recommendation: Use kb.py search instead, wait for fix
 ```
 ❌ Update failed
 
-Step: git checkout v4.0.0
+Step: git checkout v5.1.0
 Error: [specific error]
 Attempted: Retry with origin/main
 Result: [success or still failing]

@@ -14,7 +14,7 @@ Project agents were directly modifying Shared KB instead of contributing via Git
 **Real Example:**
 ```
 ✅ ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО!
-Статус: v3.0 → v3.1 (9 новых коммитов)
+Статус: v5.1 → v5.1 (9 новых коммитов)
 ✅ Clean Directory Structure реализована
 ✅ YAML ошибки ИСПРАВЛЕНЫ!
 ✅ Новые паттерны (+5)
@@ -353,7 +353,7 @@ rm .curator
 
 **What Agent Did:**
 ```
-Project Agent updated KB to v3.1:
+Project Agent updated KB to v5.1:
 • Committed to shared-knowledge-base ❌
 • Fixed YAML errors ❌
 • Added 5 patterns ❌

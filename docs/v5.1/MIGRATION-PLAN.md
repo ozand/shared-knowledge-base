@@ -1,4 +1,4 @@
-# Migration Plan: v4.0 → v5.1
+# Migration Plan: v5.1 → v5.1
 
 **Date:** 2026-01-08
 **Status:** 🔄 In Progress
@@ -8,7 +8,7 @@
 
 ## 📊 Current State Analysis
 
-### Existing Structure (v4.0)
+### Existing Structure (v5.1)
 
 ```
 shared-knowledge-base/
@@ -20,14 +20,14 @@ shared-knowledge-base/
 ├── framework/           # Domain: Framework-specific ✅
 ├── vps/                 # Domain: VPS/DevOps ✅
 │
-├── tools/               # v4.0 CLI tools (kb.py, etc.) ✅
-├── docs/                # v4.0 documentation ✅
+├── tools/               # v5.1 CLI tools (kb.py, etc.) ✅
+├── docs/                # v5.1 documentation ✅
 ├── for-claude-code/     # Claude Code integration ✅
 ├── for-projects/        # Project templates ✅
 ├── curator/             # Curator instructions ✅
 │
-├── README.md            # v4.0 main readme ⚠️ NEEDS UPDATE
-├── QUICKSTART.md        # v4.0 quick start ⚠️ NEEDS UPDATE
+├── README.md            # v5.1 main readme ⚠️ NEEDS UPDATE
+├── QUICKSTART.md        # v5.1 quick start ⚠️ NEEDS UPDATE
 ├── CHANGELOG.md         # Version history ⚠️ NEEDS UPDATE
 │
 ├── .kb/                 # ⚠️ NEW (only has shared/ symlink)
@@ -47,7 +47,7 @@ shared-knowledge-base/
 │   │   ├── kb_curate.py
 │   │   └── hooks/
 │   │       └── session-start.sh
-│   └── [v4.0 tools]     # ✅ PRESERVED: Old tools still work
+│   └── [v5.1 tools]     # ✅ PRESERVED: Old tools still work
 │
 ├── docs/                # 🆕 NEW: v5.1 subdirectory
 │   ├── v5.1/            # ✅ CREATED: New documentation
@@ -55,7 +55,7 @@ shared-knowledge-base/
 │   │   ├── WORKFLOWS.md
 │   │   ├── CONTEXT_SCHEMA.md
 │   │   └── README.md
-│   └── [v4.0 docs]     # ✅ PRESERVED: Old docs still valid
+│   └── [v5.1 docs]     # ✅ PRESERVED: Old docs still valid
 │
 ├── examples/            # 🆕 NEW: v5.1 subdirectory
 │   ├── v5.1/            # ✅ CREATED: New examples
@@ -111,7 +111,7 @@ shared-knowledge-base/
 Need to create:
 1. **Migration script** (`migrate-to-v5.1.sh`)
 2. **Migration guide** (`MIGRATION-GUIDE.md`)
-3. **Compatibility checks** (verify v4.0 still works)
+3. **Compatibility checks** (verify v5.1 still works)
 
 ---
 
@@ -144,7 +144,7 @@ Need to create:
 # Existing projects: See docs/v5.1/MIGRATION-GUIDE.md
 ```
 
-**Backward Compatibility:** ✅ v4.0 tools still work!
+**Backward Compatibility:** ✅ v5.1 tools still work!
 ```
 
 #### 2. QUICKSTART.md
@@ -152,7 +152,7 @@ Need to create:
 **Changes needed:**
 - Add "Quick Start for v5.1" section
 - Link to `docs/v5.1/README.md`
-- Keep v4.0 quick start for legacy users
+- Keep v5.1 quick start for legacy users
 
 #### 3. CHANGELOG.md
 
@@ -183,8 +183,8 @@ Need to create:
 - Added validation to kb_submit.py
 
 ### Backward Compatibility
-- ✅ v4.0 tools still work
-- ✅ v4.0 documentation still valid
+- ✅ v5.1 tools still work
+- ✅ v5.1 documentation still valid
 - ✅ Existing projects can migrate at their own pace
 ```
 
@@ -215,7 +215,7 @@ Need to create:
 
 ## 🔍 Compatibility Matrix
 
-| Feature | v4.0 | v5.1 | Migration Path |
+| Feature | v5.1 | v5.1 | Migration Path |
 |---------|------|------|----------------|
 | **KB Storage** | Single-tier | Two-tier | Optional upgrade |
 | **Submission** | Direct/Issues | Issues only | Recommended |
@@ -245,9 +245,9 @@ Need to create:
 - 🔴 Workflow changes (Issues instead of direct commits)
 
 ### No Breaking Changes
-- ✅ All v4.0 features still work
+- ✅ All v5.1 features still work
 - ✅ Existing domains unchanged
-- ✅ v4.0 tools still functional
+- ✅ v5.1 tools still functional
 - ✅ No forced migration
 
 ---
@@ -311,7 +311,7 @@ For each user project:
 
 ### Week 4: Public Launch
 - Announce stable release
-- Mark v4.0 as legacy
+- Mark v5.1 as legacy
 - Encourage migration
 - Monitor issues
 

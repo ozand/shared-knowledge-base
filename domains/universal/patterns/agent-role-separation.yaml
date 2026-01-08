@@ -14,7 +14,7 @@ patterns:
   - permissions
   - security
   problem: "**Critical Issue: Project Agents Taking Curator Role**\n\n**Real Example\
-    \ from Chat:**\n```\n✅ ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО!\n\nСтатус: v3.0 → v3.1 (9\
+    \ from Chat:**\n```\n✅ ОБНОВЛЕНИЕ ЗАВЕРШЕНО УСПЕШНО!\n\nСтатус: v5.1 → v5.1 (9\
     \ новых коммитов)\n\n\U0001F3AF Ключевые достижения:\n1. ✅ Clean Directory Structure\
     \ реализована\n2. ✅ YAML ошибки ИСПРАВЛЕНЫ!\n3. ✅ Новая документация\n4. ✅ Новые\
     \ паттерны (+5)\n5. ✅ PR #7 создан\n```\n\n**What Happened:**\n- Project Agent\
@@ -315,9 +315,9 @@ patterns:
     consequence: Chaos, merge conflicts, quality degradation
   examples:
     example_1_wrong_role_violation:
-      scenario: Project Agent updates KB to v3.1 (REAL EXAMPLE)
+      scenario: Project Agent updates KB to v5.1 (REAL EXAMPLE)
       what_agent_did:
-      - ✅ Updated v3.0 → v3.1
+      - ✅ Updated v5.1 → v5.1
       - ✅ Fixed YAML errors
       - ✅ Added 5 new patterns
       - '✅ Created PR #7'
@@ -437,7 +437,7 @@ patterns:
     title: Agent Auto-Configuration from KB
   references:
   - title: Real example of role violation
-    description: Project Agent updated KB to v3.1 directly instead of using issues
+    description: Project Agent updated KB to v5.1 directly instead of using issues
   - title: AGENT-HANDOFF-001 workflow
     description: Correct way for Project Agents to contribute
   domains:

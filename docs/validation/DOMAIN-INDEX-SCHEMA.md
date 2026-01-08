@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Official Schema (v4.0.0)
+## 📋 Official Schema (v5.1.0)
 
 ### Current Format (CORRECT)
 
@@ -97,14 +97,14 @@ websocket            # WebSocket communication
 ```yaml
 ❌ domains:
 ❌   docker:
-❌     entries: 11              # NOT in v4.0.0 spec!
+❌     entries: 11              # NOT in v5.1.0 spec!
 ❌     token_estimate: 2000     # NOT in spec!
 ❌     tags: ["containers"]     # NOT in spec!
 ❌     description: "..."       # NOT in spec!
 ```
 
 **Why wrong:**
-- Not part of v4.0.0 specification
+- Not part of v5.1.0 specification
 - Breaks forward compatibility
 - Creates merge conflicts
 - Tools must adapt to data, not reverse
@@ -246,7 +246,7 @@ domains:
   postgresql: 8
 ```
 
-### v4.0.0 Format (CURRENT)
+### v5.1.0 Format (CURRENT)
 ```yaml
 # Still flat structure
 domains:
@@ -258,14 +258,14 @@ domains:
 ### Future Format (HYPOTHETICAL)
 ```yaml
 # May become nested in future versions
-# BUT NOT in v4.0.0!
+# BUT NOT in v5.1.0!
 domains:
   docker:
     entries: 11
     metadata: {...}
 ```
 
-**Key Point:** v4.0.0 uses FLAT structure. Tools must work with this.
+**Key Point:** v5.1.0 uses FLAT structure. Tools must work with this.
 
 ---
 
@@ -287,7 +287,7 @@ for domain, data in domains.items():
 # Agent "fixes" _domain_index.yaml to match broken tool
 ❌ domains:
 ❌   docker:
-❌     entries: 11  # Wrong! Not v4.0.0 format!
+❌     entries: 11  # Wrong! Not v5.1.0 format!
 
 # Correct action: Fix tool, not data
 ```
@@ -306,7 +306,7 @@ for domain, data in domains.items():
 
 ## 📝 Migration Notes
 
-### From v3.x to v4.0.0
+### From v3.x to v5.1.0
 
 **No changes needed!** Both use flat structure:
 
@@ -315,7 +315,7 @@ for domain, data in domains.items():
 domains:
   docker: 11
 
-# v4.0.0
+# v5.1.0
 domains:
   docker: 11
   claude-code: 4
@@ -350,4 +350,4 @@ def get_entry_count(domain_data):
 
 **Quality Score:** 100/100
 **Validator Status:** Ready
-**Backward Compatible:** Yes (v3.x → v4.0.0)
+**Backward Compatible:** Yes (v3.x → v5.1.0)

@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-# Shared Knowledge Base v4.0
+# Shared Knowledge Base v5.1
 
 **Document Version:** 1.0
 **Last Updated:** 2026-01-08
@@ -478,7 +478,7 @@ Acceptance Criteria:
 
 **FR-4.3: Update Domain Index**
 - System shall recalculate entry counts on index rebuild
-- System shall validate flat format: `domain: int` (v4.0.0 standard)
+- System shall validate flat format: `domain: int` (v5.1.0 standard)
 - System shall reject nested format: `domain: {entries: int}` (obsolete)
 - System shall provide backward compatibility for reading both formats
 
@@ -645,7 +645,7 @@ Acceptance Criteria:
 
 ## Data Model
 
-### Entry Schema (v4.0.0)
+### Entry Schema (v5.1.0)
 
 ```yaml
 # Required Fields
@@ -697,10 +697,10 @@ errors:                           # Array of error entries
     status: "active"              # active | deprecated | archived
 ```
 
-### Domain Index Schema (v4.0.0)
+### Domain Index Schema (v5.1.0)
 
 ```yaml
-# _domain_index.yaml - Flat format (v4.0.0 standard)
+# _domain_index.yaml - Flat format (v5.1.0 standard)
 
 version: "4.0.0"
 last_updated: "2026-01-08"
@@ -711,7 +711,7 @@ domains:
   postgresql: 15
   python: 25
   javascript: 12
-  claude-code: 4                  # New in v4.0.1
+  claude-code: 4                  # New in v5.1.1
 
 total_entries: 75
 coverage: 46.3                    # Percentage of documented vs. known errors
@@ -844,10 +844,10 @@ git submodule update --init --recursive
 ```bash
 # Pin to specific version
 cd .kb/shared
-git checkout v4.0.1
+git checkout v5.1.1
 cd ../..
 git add .kb/shared
-git commit -m "Pin Shared KB to v4.0.1"
+git commit -m "Pin Shared KB to v5.1.1"
 ```
 
 ### I3: External Tool Integration
@@ -875,21 +875,21 @@ git commit -m "Pin Shared KB to v4.0.1"
 
 ## Roadmap
 
-### Q1 2026 (Current - v4.0.x)
+### Q1 2026 (Current - v5.1.x)
 
-**v4.0.1 (January 2026) - ✅ Completed**
+**v5.1.1 (January 2026) - ✅ Completed**
 - Hotfix: kb_domains.py compatibility
 - Add agent instructions (1,500+ lines)
 - Add update detection hooks
 - Fix Windows compatibility
 
-**v4.0.2 (February 2026) - Planned**
+**v5.1.2 (February 2026) - Planned**
 - Add validation tests suite
 - Improve error messages
 - Add CLI progress bars
 - Document all domain patterns
 
-**v4.0.3 (March 2026) - Planned**
+**v5.1.3 (March 2026) - Planned**
 - Add kb-export command (JSON, Markdown)
 - Add kb-diff command (compare versions)
 - Add kb-merge command (merge duplicate entries)

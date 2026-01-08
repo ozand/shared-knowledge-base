@@ -268,7 +268,7 @@ patterns:
 
         3. Downloaded and tested kb_config.py module
 
-        4. All v3.0 features now working
+        4. All v5.1 features now working
 
         5. Merged immediately (commit 347ecea)
 
@@ -280,7 +280,7 @@ patterns:
 
         Action: CLOSE + RECREATE + MERGE
 
-        - Critical bug fix (unblocks v3.0 features)
+        - Critical bug fix (unblocks v5.1 features)
 
         - Well-tested (all tools working)
 
@@ -550,7 +550,7 @@ patterns:
 
         **Impact:**
 
-        - [Describe impact, e.g., "+37 entries indexed", "Unblocks v3.0 features"]
+        - [Describe impact, e.g., "+37 entries indexed", "Unblocks v5.1 features"]
 
 
         Thank you for following AGENT-HANDOFF-001 workflow!

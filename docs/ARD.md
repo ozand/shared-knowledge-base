@@ -1,5 +1,5 @@
 # Architecture Reference Document (ARD)
-# Shared Knowledge Base v4.0
+# Shared Knowledge Base v5.1
 
 **Document Version:** 1.0
 **Last Updated:** 2026-01-08
@@ -228,7 +228,7 @@ Shared Knowledge Base is a **distributed, version-controlled knowledge repositor
 │  │  └──────────────────────────────────────────┘   │            │
 │  │                                                   │            │
 │  │  ┌──────────────────────────────────────────┐   │            │
-│  │  │  Tags (v4.0.0, v4.0.1, ...)              │   │            │
+│  │  │  Tags (v5.1.0, v5.1.1, ...)              │   │            │
 │  │  └──────────────────────────────────────────┘   │            │
 │  └─────────────────────────────────────────────────┘            │
 │                           │                                      │
@@ -460,7 +460,7 @@ class EntryValidator:
 **Responsibilities:**
 - List domains with entry counts
 - Display domain statistics
-- Support flat and nested index formats (v4.0.0 compatibility)
+- Support flat and nested index formats (v5.1.0 compatibility)
 - Calculate token estimates
 
 **Architecture:**
@@ -482,7 +482,7 @@ class DomainManager:
         self.domains = data.get("domains", {})
 
         # Handle both formats:
-        # v4.0.0 flat: {docker: 11}
+        # v5.1.0 flat: {docker: 11}
         # Old nested: {docker: {entries: 11}}
         for name, value in self.domains.items():
             if isinstance(value, dict):
@@ -528,7 +528,7 @@ class DomainManager:
 
 **Key Design Decisions:**
 
-1. **Backward Compatibility:** Handles both flat (v4.0.0) and nested (old) formats
+1. **Backward Compatibility:** Handles both flat (v5.1.0) and nested (old) formats
 2. **Token Estimation:** Rough estimate for planning
 3. **Lazy File Loading:** Files loaded only when requested
 4. **Immutable Index:** Never modifies index file directly
@@ -780,7 +780,7 @@ Knowledge Base
 
 **Git-based versioning:**
 - Every commit creates version
-- Tags for releases (v4.0.0, v4.0.1)
+- Tags for releases (v5.1.0, v5.1.1)
 - Branch for experimental features
 - PRs for contributions
 
@@ -795,7 +795,7 @@ last_updated: "2026-01-08"  # Last modification date
 
 **Schema versioning:**
 - v1.0: Initial schema (2025-12-01)
-- v4.0.0: Domain index flat format (2026-01-07)
+- v5.1.0: Domain index flat format (2026-01-07)
 - Backward compatibility maintained
 - Migration scripts for breaking changes
 
@@ -940,10 +940,10 @@ git submodule update --init --recursive
 ```bash
 # Pin to specific version
 cd .kb/shared
-git checkout v4.0.1
+git checkout v5.1.1
 cd ../..
 git add .kb/shared
-git commit -m "Pin Shared KB to v4.0.1"
+git commit -m "Pin Shared KB to v5.1.1"
 ```
 
 ### I3: IDE Integration
@@ -1070,7 +1070,7 @@ python -m pytest tests/
 GitHub Repository
 ├── Main Branch (production)
 ├── Feature Branches (development)
-├── Tags (releases: v4.0.0, v4.0.1)
+├── Tags (releases: v5.1.0, v5.1.1)
 └── Pull Requests (contributions)
 
 # CI/CD Pipeline
@@ -1087,7 +1087,7 @@ GitHub Actions:
 
 ```
 Project A
-├── .kb/shared/ → (submodule) → shared-knowledge-base (v4.0.1)
+├── .kb/shared/ → (submodule) → shared-knowledge-base (v5.1.1)
 ├── tools/
 │   └── kb.py → (copy or symlink)
 └── .claude/
@@ -1264,7 +1264,7 @@ echo "✅ Healthy"
    ```bash
    # Re-add submodule
    git submodule add https://github.com/... .kb/shared
-   git checkout v4.0.1
+   git checkout v5.1.1
    ```
 
 4. **Git Conflict**

@@ -50,7 +50,7 @@ cd .kb/shared
 git tag -l
 
 # Checkout specific version
-git checkout v4.0.1
+git checkout v5.1.1
 
 cd ../..
 ```
@@ -113,14 +113,14 @@ python tools/kb_domains.py --kb-dir .kb/shared list
 
 ### Problem: "TypeError: 'int' object is not subscriptable"
 
-**Cause:** Using Shared KB v4.0.0+ with old `kb_domains.py`
+**Cause:** Using Shared KB v5.1.0+ with old `kb_domains.py`
 
 **Solution:** Update your project's tools:
 ```bash
 # Check Shared KB version
 cd .kb/shared && git describe --tags
 
-# If v4.0.0+: update tools/kb_domains.py from Shared KB
+# If v5.1.0+: update tools/kb_domains.py from Shared KB
 cp .kb/shared/../tools/kb_domains.py tools/kb_domains.py
 ```
 
@@ -155,12 +155,12 @@ git pull origin main
 
 ## Version-Specific Notes
 
-### v4.0.1 (2026-01-08)
+### v5.1.1 (2026-01-08)
 
 **Impact:** Fixed `kb_domains.py` compatibility with flat domain format
 
 **Action Required:**
-1. Update `.kb/shared/` to v4.0.1
+1. Update `.kb/shared/` to v5.1.1
 2. Run `python tools/kb.py index -v`
 3. Test: `python tools/kb_domains.py --kb-dir .kb/shared list`
 
@@ -169,7 +169,7 @@ git pull origin main
 - `.claude/CLAUDE.md` - Added agent instructions
 - `docs/UPGRADE-4.0.md` - Added "For Agents" section
 
-### v4.0.0 (2026-01-07)
+### v5.1.0 (2026-01-07)
 
 **Impact:** New flat domain index format
 

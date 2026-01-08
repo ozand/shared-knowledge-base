@@ -264,11 +264,11 @@ patterns:
         hook: ".claude/hooks/coverage-check.sh"
         trigger: PostToolWrite for *.test.ts files
 
-        workflow:
-          1. Developer edits test file
-          2. Hook runs: npm run test:coverage
-          3. Coverage: 75% → Hook warns
-          4. Coverage: 85% → Hook passes ✅
+        workflow: |
+          Developer edits test file
+          Hook runs: npm run test:coverage
+          Coverage: 75% → Hook warns
+          Coverage: 85% → Hook passes ✅
 
         results:
           - "Coverage: 60% → 85% average"

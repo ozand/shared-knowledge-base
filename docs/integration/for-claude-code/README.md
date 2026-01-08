@@ -1,4 +1,4 @@
-# For Claude Code: Shared Knowledge Base v4.0
+# For Claude Code: Shared Knowledge Base v5.1
 
 **Complete guide for Claude Code agents on the enhanced Shared Knowledge Base**
 
@@ -85,7 +85,7 @@ curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scr
 
 ---
 
-## Updating from v3.x to v4.0
+## Updating from v3.x to v5.1
 
 ### Automatic Update (Recommended)
 
@@ -117,14 +117,14 @@ cd .kb/shared
 # Stash any local changes
 git stash
 
-# Checkout v4.0.0 tag
+# Checkout v5.1.0 tag
 git fetch origin --tags
-git checkout v4.0.0
+git checkout v5.1.0
 
 # Update in parent project
 cd ../..
 git add .kb/shared
-git commit -m "Update Shared KB to v4.0.0
+git commit -m "Update Shared KB to v5.1.0
 
 Progressive loading: 83% token reduction
 GitHub-native contribution: Zero infrastructure
@@ -165,7 +165,7 @@ python .kb/shared/tools/kb.py stats
 python .kb/shared/tools/kb.py validate .
 ```
 
-### New v4.0 Commands
+### New v5.1 Commands
 
 ```bash
 # Progressive domain loading
@@ -200,7 +200,7 @@ git sparse-checkout set docker postgresql universal tools _domain_index.yaml
 
 ### Domain List
 
-Available domains in v4.0:
+Available domains in v5.1:
 - `docker` (11 entries, ~1,650 tokens)
 - `testing` (11 entries, ~1,650 tokens)
 - `postgresql` (8 entries, ~1,200 tokens)
@@ -265,7 +265,7 @@ git sparse-checkout reapply
 
 ---
 
-## Submitting Entries to Shared KB (v4.0)
+## Submitting Entries to Shared KB (v5.1)
 
 ### GitHub-Native Contribution Workflow
 

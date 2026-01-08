@@ -10,7 +10,7 @@
 
 ## 🌟 What's New in v5.1
 
-### Major Changes from v4.0
+### Major Changes from v5.1
 
 - ✅ **Two-Tier Architecture**: Separate Project KB (local) and Shared KB (global)
 - ✅ **GitHub Issues Workflow**: Agents submit via Issues, Curator reviews and approves
@@ -22,7 +22,7 @@
 
 ### Key Benefits
 
-| Feature | v4.0 | v5.1 |
+| Feature | v5.1 | v5.1 |
 |---------|------|------|
 | **Submission Safety** | Direct commits (risky) | Issues workflow (safe) |
 | **Project Context** | Manual loading | Automatic via hook |
@@ -88,7 +88,7 @@ cp .kb/shared/examples/v5.1/.env.example .env
 # 6. Done! Next agent session will auto-load context
 ```
 
-### For Existing Projects (Upgrade from v4.0)
+### For Existing Projects (Upgrade from v5.1)
 
 ```bash
 # 1. Pull latest Shared KB
@@ -111,7 +111,7 @@ git add .kb/ .claude/hooks/ .env.example
 git commit -m "feat: Upgrade to v5.1 two-tier KB architecture"
 
 # 6. Upgrade complete!
-# v4.0 tools still work, v5.1 tools available for new workflows
+# v5.1 tools still work, v5.1 tools available for new workflows
 ```
 
 ---
@@ -315,7 +315,7 @@ See the `examples/v5.1/` directory for templates:
 - **Architecture**: See [ARD.md](ARD.md) for complete architecture
 - **Workflows**: See [WORKFLOWS.md](WORKFLOWS.md) for detailed protocols
 - **Schemas**: See [CONTEXT_SCHEMA.md](CONTEXT_SCHEMA.md) for YAML schemas
-- **v4.0 Docs**: See parent directory for v4.0 documentation (still compatible)
+- **v5.1 Docs**: See parent directory for v5.1 documentation (still compatible)
 
 ---
 

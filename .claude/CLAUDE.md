@@ -51,7 +51,7 @@ python tools/kb.py export --format json --output kb.json
 
 **Common mistakes to avoid:**
 - ❌ Don't edit `_domain_index.yaml` to "fix" format
-- ❌ Don't add fields not in v4.0.0 specification
+- ❌ Don't add fields not in v5.1.0 specification
 - ✅ Do check upstream if tool fails
 - ✅ Do report tool bugs to Shared KB repository
 
@@ -95,7 +95,7 @@ shared-knowledge-base/
 │   ├── vps/             # VPS administration
 │   └── catalog/         # Category catalog
 ├── tools/               # CLI tools
-│   ├── kb.py            # v4.0 main CLI (index, search, stats)
+│   ├── kb.py            # v5.1 main CLI (index, search, stats)
 │   ├── v5.1/            # v5.1 tools (kb_submit, kb_search, kb_curate)
 │   └── skb-cli/         # Enterprise CLI (sku command)
 ├── tests/               # pytest test suite

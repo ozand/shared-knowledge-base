@@ -1,6 +1,7 @@
 id: pg-space-001
 title: PostgreSQL Disk Space Analysis and Cleanup
 category: postgresql
+last_updated: "2026-01-08"
 severity: high
 tags: [disk-space, cleanup, logs, indexes, maintenance]
 

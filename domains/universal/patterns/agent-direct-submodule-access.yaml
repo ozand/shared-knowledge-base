@@ -82,7 +82,7 @@ patterns:
       ```bash
       # From project root (parent of docs/)
       git submodule status docs/knowledge-base/shared
-      # Output: c023036... (v3.0-10-gc023036)
+      # Output: c023036... (v5.1-10-gc023036)
       ```
 
       **Step 2: Update submodule**

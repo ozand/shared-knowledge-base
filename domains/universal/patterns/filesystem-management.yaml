@@ -2,6 +2,7 @@ title: File System and Organization Management
 scope: universal
 severity: low
 category: best-practices
+last_updated: "2026-01-08"
 tags:
 - filesystem
 - organization

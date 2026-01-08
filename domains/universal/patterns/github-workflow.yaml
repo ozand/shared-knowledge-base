@@ -113,7 +113,7 @@ patterns:
 
     - Points to specific commit
 
-    - Created with: git tag v3.0
+    - Created with: git tag v5.1
 
     - Stored in git history
 
@@ -135,9 +135,9 @@ patterns:
     '
   wrong_approach:
     description: Create tag and assume Release is created
-    steps: 'git tag -a v3.0 -m "Release v3.0"
+    steps: 'git tag -a v5.1 -m "Release v5.1"
 
-      git push origin v3.0
+      git push origin v5.1
 
       # ❌ Nothing appears on GitHub Releases page!
 
@@ -145,10 +145,10 @@ patterns:
   correct_approach:
     description: Create tag AND GitHub Release
     steps: "# 1. Update documentation\nvim README.md  # Update version to 3.0\ngit\
-      \ add README.md\ngit commit -m \"Release v3.0: Update docs\"\n\n# 2. Push commits\n\
-      git push origin main\n\n# 3. Create and push tag\ngit tag -a v3.0 -m \"Release\
-      \ v3.0\"\ngit push origin v3.0\n\n# 4. Create GitHub Release\ngh release create\
-      \ v3.0 \\\n  --title \"v3.0: Release Title\" \\\n  --notes \"Release notes here...\"\
+      \ add README.md\ngit commit -m \"Release v5.1: Update docs\"\n\n# 2. Push commits\n\
+      git push origin main\n\n# 3. Create and push tag\ngit tag -a v5.1 -m \"Release\
+      \ v5.1\"\ngit push origin v5.1\n\n# 4. Create GitHub Release\ngh release create\
+      \ v5.1 \\\n  --title \"v5.1: Release Title\" \\\n  --notes \"Release notes here...\"\
       \n"
   automated_workflow:
     description: Create release with notes from file
@@ -219,7 +219,7 @@ patterns:
   - quality
   problem: 'Documentation shows incorrect version after release:
 
-    - README.md displays "Version 2.0" when releasing v3.0
+    - README.md displays "Version 2.0" when releasing v5.1
 
     - Package files show old version numbers
 
@@ -247,7 +247,7 @@ patterns:
   - item: Update CHANGELOG.md
     check: head -30 CHANGELOG.md
   - item: Verify git tag doesn't exist
-    check: git tag -l 'v3.0' | wc -l
+    check: git tag -l 'v5.1' | wc -l
   - item: Run version check script
     check: ./scripts/check-version.sh
   git_tricks:
@@ -257,11 +257,11 @@ patterns:
         .
     replace_version:
       description: Replace old version with new (use with caution!)
-      command: sed -i 's/v2.0/v3.0/g' README.md
+      command: sed -i 's/v2.0/v5.1/g' README.md
       warning: Review changes before committing!
     version_history:
       description: Show when version was last changed
-      command: git log --follow -S 'v3.0' -- README.md
+      command: git log --follow -S 'v5.1' -- README.md
   prevention:
     description: Add version check to CI/CD
     example_ci: "# .github/workflows/release-check.yml\nname: Version Consistency\

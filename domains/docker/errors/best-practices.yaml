@@ -2,6 +2,7 @@ title: Docker Best Practices and Common Issues
 scope: docker
 severity: medium
 category: docker-errors
+last_updated: "2026-01-08"
 tags:
 - docker
 - best-practices

@@ -71,14 +71,14 @@ Shared KB provides:
 
 **Getting Started:**
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[QUICKSTART-DOMAINS.md](QUICKSTART-DOMAINS.md)** - Progressive domain loading (v3.1)
+- **[QUICKSTART-DOMAINS.md](QUICKSTART-DOMAINS.md)** - Progressive domain loading (v5.1)
 - **[for-claude-code/README.md](for-claude-code/README.md)** - Complete Claude Code guide
 - **[for-claude-code/AGENT-QUICK-START.md](for-claude-code/AGENT-QUICK-START.md)** - Quick start for AI agents
 
 **Core Documentation:**
 - **[GUIDE.md](GUIDE.md)** - Complete user guide
 - **[docs/README.md](docs/README.md)** - Documentation hub
-- **[docs/YAML-SCHEMA-V3.1.md](docs/YAML-SCHEMA-V3.1.md)** - YAML schema reference (v3.1)
+- **[docs/standards/yaml-standards.md](docs/standards/yaml-standards.md)** - YAML schema reference (v5.1)
 
 **Integration:**
 - **[docs/guides/integration/SUBMODULE_VS_CLONE.md](docs/guides/integration/SUBMODULE_VS_CLONE.md)** - Submodule vs Clone comparison

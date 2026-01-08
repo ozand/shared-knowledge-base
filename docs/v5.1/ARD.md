@@ -12,9 +12,9 @@
 
 The Shared Knowledge Base v5.1 implements a **two-tier knowledge management model** that enables secure knowledge sharing between projects through a controlled gateway (Curator) while providing Claude Code agents with clear working context.
 
-### Key Architecture Changes from v4.0
+### Key Architecture Changes from v5.1
 
-| Feature | v4.0 | v5.1 |
+| Feature | v5.1 | v5.1 |
 |---------|------|------|
 | **KB Structure** | Single-tier (Shared KB only) | **Two-tier** (Project KB + Shared KB) |
 | **Submission** | Direct to Shared KB | **Project-specific or Shared via Issues** |
@@ -422,11 +422,11 @@ fi
 
 ---
 
-## 9. Migration Path from v4.0
+## 9. Migration Path from v5.1
 
 ### 9.1. Breaking Changes
 
-- ❌ v4.0 agents can't submit to Shared KB directly
+- ❌ v5.1 agents can't submit to Shared KB directly
 - ✅ v5.1 agents use Issues for submissions
 - ✅ Backward compatible for reading Shared KB
 

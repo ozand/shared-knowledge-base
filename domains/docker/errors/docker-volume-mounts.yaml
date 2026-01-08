@@ -8,6 +8,7 @@ tags:
   - mounts
   - docker-compose
   - golden-rules
+last_updated: "2026-01-08"
 errors:
   - id: "DOCKER-020"
     title: "Docker Automatically Recreates Deleted Directories"

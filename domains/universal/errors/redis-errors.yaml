@@ -7,6 +7,7 @@ tags:
   - docker
   - containers
   - configuration
+last_updated: "2026-01-08"
 errors:
   - id: "REDIS-001"
     title: "Redis Command Not Found in Container Logs"

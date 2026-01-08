@@ -18,14 +18,14 @@ patterns:
 
       **Real example:**
       ```
-      c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Questions:**
       - Is this good or bad?
       - What does leading space mean?
       - What if I see + or - prefix?
-      - What does "v3.0-10-gc023036" mean?
+      - What does "v5.1-10-gc023036" mean?
 
     symptoms:
       - Unclear if submodule is properly initialized
@@ -51,9 +51,9 @@ patterns:
 
       **Examples:**
       ```
-       c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
-      -c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
-      +c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+       c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
+      -c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
+      +c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       ## Status Symbols Reference
@@ -72,20 +72,20 @@ patterns:
 
       **Example 1: Correct (leading space)**
       ```
-       c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+       c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Analysis:**
       - Leading space = properly initialized ✅
       - Commit: c023036
       - Path: docs/knowledge-base/shared
-      - Describe: v3.0-10-gc023036 (10 commits ahead of v3.0 tag)
+      - Describe: v5.1-10-gc023036 (10 commits ahead of v5.1 tag)
 
       **Status:** ✅ Healthy, no action needed
 
       **Example 2: Not initialized (- prefix)**
       ```
-      -c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      -c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Analysis:**
@@ -100,7 +100,7 @@ patterns:
 
       **Example 3: Uncommitted changes (+ prefix)**
       ```
-      +c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      +c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Analysis:**
@@ -133,7 +133,7 @@ patterns:
 
       **Example 4: Merge conflict (-U suffix)**
       ```
-      -U c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      -U c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Analysis:**
@@ -152,7 +152,7 @@ patterns:
 
       **Example 5: Multiple commits ahead (-<number>)**
       ```
-      -3 c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      -3 c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
       ```
 
       **Analysis:**
@@ -170,7 +170,7 @@ patterns:
       The `(<describe>)` part shows relative position to tags:
 
       ```
-      v3.0-10-gc023036
+      v5.1-10-gc023036
       │    │  │
       │    │  └─ Commit hash prefix
       │    └──── 10 commits ahead of tag
@@ -178,9 +178,9 @@ patterns:
       ```
 
       **Examples:**
-      - `v3.0-10-gc023036` = 10 commits after v3.0 tag
-      - `v3.1-0-gc023036` = Exactly at v3.1 tag
-      - `v3.0-5-gabcdef` = 5 commits after v3.0
+      - `v5.1-10-gc023036` = 10 commits after v5.1 tag
+      - `v5.1-0-gc023036` = Exactly at v5.1 tag
+      - `v5.1-5-gabcdef` = 5 commits after v5.1
 
       This helps identify version without running `git describe` in submodule.
 
@@ -190,17 +190,17 @@ patterns:
 
       # 1. Check submodule status
       git submodule status
-      # Output:  c023036 docs/knowledge-base/shared (v3.0-10-gc023036)
+      # Output:  c023036 docs/knowledge-base/shared (v5.1-10-gc023036)
 
       # 2. Interpret result
       # Leading space = good ✅
       # No + symbol = no uncommitted changes ✅
-      # v3.0-10-g = 10 commits ahead (effectively v3.1)
+      # v5.1-10-g = 10 commits ahead (effectively v5.1)
 
       # 3. Verify commit details
       cd docs/knowledge-base/shared
       git log --oneline -1
-      # Output: c023036 Update to v3.1
+      # Output: c023036 Update to v5.1
 
       # 4. Compare with upstream
       git fetch origin
@@ -277,7 +277,7 @@ patterns:
         reason: "Prevents conflicts, cleaner history"
 
       - practice: "Use describe info for version identification"
-        tip: "v3.0-10-g = approximately version between v3.0 and v3.1"
+        tip: "v5.1-10-g = approximately version between v5.1 and v5.1"
 
       - practice: "Document expected commit hash"
         tip: "Note expected hash in docs, verify during updates"
