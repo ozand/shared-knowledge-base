@@ -17,9 +17,19 @@ from typing import List, Tuple
 
 # --- Configuration ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# When run from Shared KB repo (for curator), search in domains/
+# When run from consumer project (via submodule), search in .kb/shared/domains/
+if (PROJECT_ROOT / "domains").exists():
+    # Running in Shared KB repository
+    SHARED_KB_PATH = PROJECT_ROOT / "domains"
+else:
+    # Running in consumer project
+    SHARED_KB_PATH = PROJECT_ROOT / ".kb" / "shared" / "domains"
+
 PATHS = {
     "project": PROJECT_ROOT / ".kb" / "project",
-    "shared": PROJECT_ROOT / ".kb" / "shared"
+    "shared": SHARED_KB_PATH
 }
 
 

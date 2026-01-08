@@ -125,7 +125,8 @@ else
 fi
 
 if [ -d "$KB_SHARED" ]; then
-    SHARED_ENTRIES=$(find "$KB_SHARED" -name "*.yaml" -not -name "_index*" 2>/dev/null | wc -l)
+    # Search in domains/ subdirectory (v5.1 structure)
+    SHARED_ENTRIES=$(find "$KB_SHARED/domains" -name "*.yaml" -not -name "_index*" 2>/dev/null | wc -l)
     echo -e "${GREEN}   ✅ Shared KB: $SHARED_ENTRIES entries${NC}"
 fi
 

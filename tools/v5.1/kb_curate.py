@@ -16,6 +16,8 @@ import sys
 import argparse
 import yaml
 import re
+import subprocess
+from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 
 # Try to import PyGithub
@@ -319,24 +321,52 @@ def approve_submission(g, repo_name: str, issue_number: int):
             'python': 'python',
             'javascript': 'javascript',
             'postgresql': 'postgresql',
-            'universal': 'universal'
+            'universal': 'universal',
+            'catalog': 'catalog',
+            'claude-code': 'claude-code'
         }
 
         domain = metadata.get('domain', domain_dirs.get(scope, 'universal'))
 
-        # TODO: Create file in appropriate domain directory
-        # This requires write access to the repository
+        # Get entry ID for filename
+        entry_id = item.get('id', 'UNKNOWN')
+        category = entry.get('category', 'general')
+
+        # Create filename: CATEGORY-ID.yaml
+        filename = f"{category}-{entry_id}.yaml"
+
+        # Full path to domain directory
+        domain_path = Path.cwd() / "domains" / domain
+
+        # Create directory if it doesn't exist
+        domain_path.mkdir(parents=True, exist_ok=True)
+
+        # Full file path
+        file_path = domain_path / filename
+
+        # Write YAML content to file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+
         print(f"📁 Domain: {domain}")
-        print(f"📝 Would create file in: {domain}/")
-        print("\n⚠️  Note: Actual file creation not implemented")
-        print("   Curator must manually create the file in the Shared KB repository")
+        print(f"📝 Created file: {file_path}")
+
+        # Add to git
+        import subprocess
+        try:
+            subprocess.run(['git', 'add', str(file_path)], check=True, capture_output=True)
+            print(f"✅ Added to git: {filename}")
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️  Warning: Could not add to git: {e}")
 
         # Add success comment and close issue
         issue.create_comment(
             "✅ **Approved**\n\n"
-            "This submission has been validated and will be added to the Shared KB.\n\n"
+            "This submission has been validated and added to the Shared KB.\n\n"
             f"**Domain:** {domain}\n"
+            f"**File:** {filename}\n"
             f"**Issue:** #{issue_number}\n\n"
+            "The changes have been staged in git and will be committed after review.\n\n"
             "Thank you for your contribution!"
         )
 
@@ -349,6 +379,10 @@ def approve_submission(g, repo_name: str, issue_number: int):
 
         print(f"\n✅ Issue #{issue_number} closed")
         print(f"   Comment added, labels updated")
+        print(f"\n📝 Next steps:")
+        print(f"   1. Review the staged file: git status")
+        print(f"   2. Commit changes: git commit -m 'Add {filename}'")
+        print(f"   3. Push to main: git push origin main")
 
     except Exception as e:
         print(f"❌ Error approving submission: {e}")
