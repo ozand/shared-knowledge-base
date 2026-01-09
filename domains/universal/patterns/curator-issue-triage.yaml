@@ -310,6 +310,32 @@ patterns:
       - AGENT-HANDOFF-FAILURE-001 (Common submission failures)
       - AGENT-ROLE-SEPARATION-001 (Role boundaries: Project Agent vs Curator)
 
+    prevention:
+      - prevention: "Always verify file existence before spending time on review"
+        reason: "5-minute check saves 30 minutes analyzing non-existent files"
+        how: "Run: test -f domains/universal/patterns/<pattern-name>.yaml && echo 'EXISTS'"
+      - prevention: "Search by multiple keywords (name, category, problem, solution)"
+        reason: "Single keyword search misses patterns with different names but same content"
+        how: "Run 3-4 searches: pattern name, category, main error, solution keywords"
+      - prevention: "Read full pattern content, not just title/tags"
+        reason: "Tags can be misleading, full content reveals true scope and overlap"
+        how: "Open file, read problem/solution/sections, compare with submission"
+      - prevention: "Reserve pattern IDs for incomplete but promising submissions"
+        reason: "Prevents ID conflicts when contributor resubmits completed pattern"
+        how: "Comment: 'Pattern XXX-YYY reserved for [contributor] until [date]'"
+      - prevention: "Use standardized decision categories (duplicate/superseded/complementary)"
+        reason: "Consistent terminology helps contributors understand outcomes"
+        how: "Map decisions to: 'duplicate', 'superseded by', 'complementary', 'incomplete'"
+      - prevention: "Provide detailed feedback even for rejected/duplicate submissions"
+        reason: "Contributors learn why and improve future submissions"
+        how: "Comment with: 'Decision: duplicate. Existing pattern: X. Reason: Y'"
+      - prevention: "Track triage decisions in spreadsheet for future reference"
+        reason: "Builds knowledge base of Curator decisions, useful for training and consistency"
+        how: "Columns: Issue#, Pattern ID, Decision, Existing Pattern, Rationale, Date"
+      - prevention: "Close incomplete issues within 7 days if no response"
+        reason: "Prevents backlog of stale issues, keeps queue manageable"
+        how: "Comment reminder, then close if no activity after 7 days"
+
     references:
       - "Issue #11: 3 patterns superseded by existing"
       - "Issue #12: PY-IMPORT-005 (incomplete, reserved)"

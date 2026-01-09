@@ -428,6 +428,31 @@ patterns:
   - AGENT-ORCHESTRATION-001 (Multi-agent coordination)
   - SKILL-DESIGN-001 (Skill design)
   - AGENT-TASK-TRACKING-001 (Task management)
+  prevention:
+    - prevention: "Use centralized token management instead of hardcoded tokens"
+      reason: "Hardcoded tokens in server configs are security risk and maintenance nightmare"
+      how: "Create MCP_TOKEN_MANAGER skill that stores tokens securely and injects at runtime"
+    - prevention: "Validate MCP server configuration before starting"
+      reason: "Invalid configs cause silent failures or cryptic error messages"
+      how: "Check: command exists, args valid, env vars set, port not in use"
+    - prevention: "Implement retry logic with exponential backoff for MCP calls"
+      reason: "MCP servers can be temporarily unavailable, network issues happen"
+      how: "Retry 3 times with delays: 1s, 2s, 4s before failing"
+    - prevention: "Set reasonable timeouts for MCP operations (5-30 seconds)"
+      reason: "Hanging MCP calls block agent responses, poor user experience"
+      how: "Configure timeout per server based on expected operation duration"
+    - prevention: "Monitor MCP server health and response times"
+      reason: "Detects failing servers early, prevents cascading issues"
+      how: "Log response times, alert on >5s latency or >10% error rate"
+    - prevention: "Implement graceful degradation when MCP server unavailable"
+      reason: "Agent should continue with reduced functionality rather than fail completely"
+      how: "Catch MCP errors, log warning, fall back to non-MCP implementation"
+    - prevention: "Use least privilege token scope for each MCP server"
+      reason: "Compromised token limits damage to only necessary permissions"
+      how: "Create separate tokens for each server with minimal required scopes"
+    - prevention: "Document MCP server dependencies in agent configuration"
+      reason: "Future maintainers need to know which MCP servers are required"
+      how: "List in AGENT.md: MCP Servers section with name, purpose, startup command"
   references:
   - Model Context Protocol (MCP) Specification
   - Claude Code MCP Documentation

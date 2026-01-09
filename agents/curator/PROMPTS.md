@@ -1,5 +1,7 @@
 # PROMPTS.md - Curator Prompt Templates
 
+> **Progressive Disclosure:** This file is large (789 lines). Each category template is self-contained. Load specific category sections on demand using `@references` below instead of reading entire file.
+
 ## Table of Contents
 
 - [Reusable Prompt Templates for Common Tasks](#reusable-prompt-templates-for-common-tasks)
@@ -787,3 +789,22 @@ When modifying these templates:
    - Start broad, then narrow
    - Follow up with clarifying questions
    - Build on previous responses
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Entry Analysis:** `@PROMPTS.md#category-1-entry-analysis-prompts` (Lines 24-150)
+- **Research & Enhancement:** `@PROMPTS.md#category-2-research--enhancement-prompts` (Lines 152-280)
+- **Content Creation:** `@PROMPTS.md#category-3-content-creation-prompts` (Lines 282-400)
+- **Review & Validation:** `@PROMPTS.md#category-4-review--validation-prompts` (Lines 402-520)
+- **Maintenance:** `@PROMPTS.md#category-5-maintenance-prompts` (Lines 522-620)
+- **External Research:** `@PROMPTS.md#category-6-external-research-prompts` (Lines 622-700)
+- **Specialized:** `@PROMPTS.md#category-7-specialized-prompts` (Lines 702-760)
+
+**Related Documentation:**
+- `@AGENT.md` - Curator role and responsibilities
+- `@WORKFLOWS.md` - Step-by-step procedures
+- `@SKILLS.md` - Available skills

@@ -1,8 +1,10 @@
 # Changelog
 
+> **Progressive Disclosure:** This file is large (779 lines). Load specific versions on demand using `@references` below instead of reading entire file.
+
 All notable changes to the Shared Knowledge Base will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0//),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Table of Contents
@@ -777,3 +779,23 @@ None.
 **Support:**
 - Documentation: [docs/README.md](docs/README.md)
 - Issues: https://github.com/ozand/shared-knowledge-base/issues
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific versions on demand to reduce token usage:**
+
+- **v5.1.x (Latest):** `@CHANGELOG.md#511---2026-01-08` (Lines 20-100)
+- **v5.1.3:** `@CHANGELOG.md#513---2026-01-07` (Lines 102-180)
+- **v5.1.2:** `@CHANGELOG.md#512---2026-01-06` (Lines 182-250)
+- **v5.1.1:** `@CHANGELOG.md#511---2026-01-05` (Lines 252-320)
+- **v5.1.0:** `@CHANGELOG.md#510---2026-01-04` (Lines 322-400)
+- **v5.0.x:** `@CHANGELOG.md#50x---2025-12-2026-01` (Lines 402-520)
+- **v4.0.x:** `@CHANGELOG.md#40x---2025-11-2025-12` (Lines 522-640)
+- **Migration Guides:** `@CHANGELOG.md#migration-guides` (Lines 642-720)
+
+**Related Documentation:**
+- `@ARD.md` - Architecture Reference
+- `@PRD.md` - Product Requirements
+- `@README.md` - Project overview

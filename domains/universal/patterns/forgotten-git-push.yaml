@@ -454,6 +454,35 @@ patterns:
       - AGENT-WORKFLOW-001 (Knowledge Base Issue Resolution)
       - GIT-SUBMODULE-001 (Submodule update workflow)
 
+    prevention:
+      - prevention: "Always check git status before ending work session"
+        reason: "Catches unpushed commits before forgetting about them"
+        how: "Run: git status && git log origin/main..HEAD"
+
+      - prevention: "Push immediately after committing important changes"
+        reason: "Prevents accumulation of unpushed work"
+        how: "Make git push part of commit habit: commit → push → verify"
+
+      - prevention: "Use pre-commit hooks to verify remote status"
+        reason: "Warns if you're about to commit without being up-to-date"
+        how: "Configure .git/hooks/pre-commit to check for unpushed changes"
+
+      - prevention: "Set up push notifications or reminders"
+        reason: "Reminder to push if working remotely for extended period"
+        how: "Configure periodic reminders: 'Last push: X hours ago'"
+
+      - prevention: "Create push checklist for distributed work"
+        reason: "Ensures push is part of completion criteria"
+        how: "Checklist: [✓ Committed, ✓ Pushed, ✓ Verified on remote]"
+
+      - prevention: "Use git status in agent workflow verification"
+        reason: "Agents should verify git state before considering task complete"
+        how: "Add to task completion checklist: 'All changes pushed?'"
+
+      - prevention: "Monitor repository for stale commits"
+        reason: "Detects forgotten pushes early"
+        how: "Periodic check: 'Find commits >1 day old but not pushed'"
+
     references:
       - "Git docs: https://git-scm.com/docs/git-push"
       - "GitHub flow: https://guides.github.com/introduction/flow/"

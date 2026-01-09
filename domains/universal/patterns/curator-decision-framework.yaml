@@ -401,6 +401,31 @@ patterns:
       commands:
       - python tools/kb.py validate <file>
       - python tools/kb.py search '<query>'
+  prevention:
+    - prevention: "Create standardized quality rubrics before starting reviews"
+      reason: "Ensures consistent evaluation across different Curators and time periods"
+      how: "Define scoring criteria (completeness, correctness, structure) with point values"
+    - prevention: "Document all Curator decisions with rationale"
+      reason: "Future Curators understand why decisions were made, contributors learn from feedback"
+      how: "Use comment templates: 'Decision: ACCEPT because: [rationale]'"
+    - prevention: "Search for duplicates using multiple keywords before accepting"
+      reason: "Prevents duplicate patterns from entering the Shared KB"
+      how: "Search by pattern name, category, problem description, solution keywords"
+    - prevention: "Verify file existence and path before reviewing content"
+      reason: "Avoids wasting time on non-existent files or incorrect paths"
+      how: "Run: test -f <path> && echo 'EXISTS' || echo 'NOT FOUND'"
+    - prevention: "Reserve pattern IDs for incomplete submissions to prevent conflicts"
+      reason: "Contributors can resubmit with same ID, prevents identifier collisions"
+      how: "Comment: 'Pattern XXX-YYY reserved for [contributor] until [date]'"
+    - prevention: "Provide constructive feedback with specific improvement steps"
+      reason: "Generic feedback doesn't help contributors improve quality"
+      how: "List specific issues: 'Missing: code examples in solution section (line 45)'"
+    - prevention: "Set SLA for Curator reviews (24h for triage, 48h for decision)"
+      reason: "Prevents contributor frustration, maintains momentum in KB development"
+      how: "Daily review of new issues, prioritize by submission date"
+    - prevention: "Use GitHub issue templates for pattern submissions"
+      reason: "Standardizes submission format, reduces incomplete or malformed entries"
+      how: "Create .github/ISSUE_TEMPLATE/pattern-submission.md with required fields"
   references:
   - title: AGENT-HANDOFF-001 Pattern
     url: universal/patterns/agent-handoff.yaml

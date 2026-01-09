@@ -5,6 +5,7 @@ errors:
 - id: POSTGRES-001
   title: Statement Timeout on Large JSONB Batch Inserts
   severity: high
+  scope: postgresql
   problem: 'When loading large JSONB records into PostgreSQL, batch inserts fail with
 
     "canceling statement due to statement timeout" error. The default 600s (10 minutes)
@@ -75,6 +76,7 @@ errors:
 - id: POSTGRES-002
   title: Unused Indexes Wasting Massive Disk Space
   severity: high
+  scope: postgresql
   problem: 'PostgreSQL indexes consume significant disk space but provide no benefit
     if
 
@@ -145,6 +147,7 @@ errors:
 - id: POSTGRES-003
   title: DROP INDEX Blocked by Active DML Operations
   severity: medium
+  scope: postgresql
   problem: 'DROP INDEX CONCURRENTLY waits indefinitely for locks when active INSERT/UPDATE/DELETE
 
     operations are running on the table. Despite "CONCURRENTLY" keyword, DDL still
@@ -225,6 +228,7 @@ errors:
 - id: POSTGRES-004
   title: Stuck Queries Holding Locks Indefinitely
   severity: high
+  scope: postgresql
   problem: 'Certain PostgreSQL queries (particularly pg_size_pretty, pg_stat_* functions)
     can
 
@@ -321,6 +325,7 @@ errors:
 - id: POSTGRES-005
   title: Batch Size Too Large for Reliable JSONB Processing
   severity: medium
+  scope: postgresql
   problem: 'Large batch sizes (5000 records) cause intermittent failures when processing
 
     complex JSONB data, particularly with nested structures and large individual
@@ -400,6 +405,7 @@ errors:
 - id: POSTGRES-006
   title: CREATE INDEX CONCURRENTLY in Transaction Block
   severity: medium
+  scope: postgresql
   problem: 'PostgreSQL does not allow CREATE INDEX CONCURRENTLY to run inside a transaction
 
     block. This restriction exists because CONCURRENTLY requires multiple transaction
@@ -532,6 +538,7 @@ errors:
 - id: POSTGRES-007
   title: 'Type Mismatch: UUID vs Integer Comparison'
   severity: low
+  scope: postgresql
   problem: 'PostgreSQL UUID columns cannot be compared with integer values. Attempting
     to
 

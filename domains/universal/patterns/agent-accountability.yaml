@@ -312,6 +312,39 @@ patterns:
       - ✅ "Docs updated based on experience"
       - ✅ "Credibility maintained"
 
+    prevention:
+      - prevention: "Document recommendations with compliance checklists"
+        reason: "Makes it easy for agent to verify actions against docs"
+        how: "Include compliance_checklist in each recommendation"
+
+      - prevention: "Search KB before taking actions"
+        reason: "Ensures agent is aware of own recommendations"
+        how: "Run: kb search \"<task keywords>\" before implementing"
+
+      - prevention: "Mark critical recommendations clearly"
+        reason: "Agent knows which recommendations are non-negotiable"
+        how: "Add critical: true, priority: HIGH to important recommendations"
+
+      - prevention: "Implement pre-action self-check"
+        reason: "Catches violations before they happen"
+        how: "Ask: Am I following documented best practices?"
+
+      - prevention: "Document deviations with reasoning"
+        reason: "Prevents silent violations, maintains transparency"
+        how: "If not following docs, explain why in comments"
+
+      - prevention: "Post-action compliance verification"
+        reason: "Catches violations and enables learning"
+        how: "Ask: Did I follow my own recommendations?"
+
+      - prevention: "Update docs based on real-world experience"
+        reason: "Docs stay practical and accurate"
+        how: "Add lessons learned after each task"
+
+      - prevention: "Track accountability violations"
+        reason: "Identifies patterns and enables improvement"
+        how: "Log violations, review periodically, update training"
+
     related_patterns:
       - id: "GITHUB-ATTRIB-001"
         title: "GitHub Agent and Project Attribution in Issues and PRs"

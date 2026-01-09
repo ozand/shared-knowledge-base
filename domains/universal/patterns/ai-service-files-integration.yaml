@@ -215,6 +215,32 @@ patterns:
       - DOC-REORG-001 (Documentation Reorganization)
       - KB-MIGRATION-001 (Knowledge Base Integration)
 
+    prevention:
+      - prevention: "Update PROJECT.md and AGENTS.md after every structural change"
+        reason: "AI services need current project structure to provide accurate guidance"
+        how: "Add to project closure checklist: 'Update AI service documentation files'"
+      - prevention: "Use consistent file naming conventions across projects"
+        reason: "AI services can reliably reference files with predictable names"
+        how: "Standard names: PROJECT.md, AGENTS.md, SKILLS.md, README.md"
+      - prevention: "Include cross-references between related documentation"
+        reason: "AI services discover related concepts through explicit links"
+        how: "Add 'See also:' sections, reference IDs like DOC-REORG-001"
+      - prevention: "Provide quick start paths for different user types"
+        reason: "AI services can recommend appropriate paths based on user role"
+        how: "Sections: 'For Beginners', 'For Developers', 'For Integrators'"
+      - prevention: "Document new features immediately after implementation"
+        reason: "AI services learn about new capabilities from documentation"
+        how: "Update PROJECT.md → New Features section before closing task"
+      - prevention: "Use visual indicators to highlight important information"
+        reason: "AI services recognize and emphasize marked content to users"
+        how: "Use 🔥 for critical, ⚡ for quick reference, ✅ for complete"
+      - prevention: "Validate documentation structure quarterly"
+        reason: "Catches outdated references and broken links before AI services use them"
+        how: "Run link checker, review with recent changes, update as needed"
+      - prevention: "Tag documentation with metadata (created_at, difficulty, scope)"
+        reason: "AI services use metadata to determine relevance and priority"
+        how: "Add metadata section with: date, author, reusable (bool), severity, difficulty"
+
     references:
       - AGENTS.md (updated)
       - SKILLS.md (updated)

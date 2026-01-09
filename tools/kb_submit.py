@@ -13,8 +13,18 @@ import os
 import sys
 import argparse
 import yaml
+import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Tuple, Dict
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Try to import PyGithub for GitHub Issues integration
 try:
@@ -29,7 +39,7 @@ PROJECT_KB_DIR = PROJECT_ROOT / ".kb" / "project" / "knowledge"
 CONTEXT_FILE = PROJECT_ROOT / ".kb" / "context" / "PROJECT.yaml"
 
 
-def ensure_project_kb_structure():
+def ensure_project_kb_structure() -> None:
     """
     Ensure .kb/project/ directory structure exists.
     Creates standard subdirectories if missing.
@@ -85,21 +95,22 @@ Temporary storage for draft entries
             f.write(readme_content)
 
 
-def load_project_context():
+def load_project_context() -> Dict[str, Any]:
     """Load project context from PROJECT.yaml"""
     if CONTEXT_FILE.exists():
         try:
             with open(CONTEXT_FILE, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            print(f"⚠️  Warning: Could not load PROJECT.yaml: {e}")
+            logger.warning(f"Could not load PROJECT.yaml: {e}")
     return {}
 
 
-def ensure_github_token():
+def ensure_github_token() -> str:
     """Ensure GITHUB_TOKEN is available in environment"""
     token = os.getenv("GITHUB_TOKEN")
     if not token:
+        logger.error("GITHUB_TOKEN not found in environment")
         print("❌ Error: GITHUB_TOKEN not found in environment")
         print("   For submissions to Shared KB, a token is required.")
         print("   Add it to your .env file: GITHUB_TOKEN=ghp_your_token")
@@ -107,7 +118,7 @@ def ensure_github_token():
     return token
 
 
-def validate_yaml_content(yaml_content):
+def validate_yaml_content(yaml_content: str) -> Tuple[bool, str, int]:
     """
     Validate YAML content before submission.
 
@@ -164,7 +175,7 @@ def validate_yaml_content(yaml_content):
         return False, f"Validation error: {e}", 0
 
 
-def create_issue_body(meta, content, context):
+def create_issue_body(meta: Dict[str, Any], content: str, context: Dict[str, Any]) -> str:
     """
     Generate GitHub Issue body with metadata for curator.
 
@@ -201,7 +212,7 @@ submission_meta:
 """
 
 
-def submit_local(file_path):
+def submit_local(file_path: Path) -> None:
     """
     Save knowledge entry to local Project KB.
 
@@ -243,12 +254,13 @@ def submit_local(file_path):
         dst.write(content)
 
     rel_path = target_path.relative_to(PROJECT_ROOT)
+    logger.info(f"Local KB entry saved: {rel_path}")
     print(f"✅ [Local] File saved: {rel_path}")
     print("   Don't forget to commit to your project repository:")
     print(f"   git add {rel_path} && git commit -m 'Add KB entry: {file_path.name}'")
 
 
-def submit_shared(file_path, title, description, domain):
+def submit_shared(file_path: Path, title: str, description: str, domain: str) -> None:
     """
     Submit knowledge entry to Shared KB via GitHub Issue.
 
@@ -259,6 +271,7 @@ def submit_shared(file_path, title, description, domain):
         domain: Knowledge domain (docker, python, etc.)
     """
     if not Github:
+        logger.error("PyGithub library not installed")
         print("❌ Error: PyGithub library not installed")
         print("   Install it: pip install PyGithub")
         sys.exit(1)
@@ -270,16 +283,20 @@ def submit_shared(file_path, title, description, domain):
     is_valid, message, score = validate_yaml_content(content)
 
     if not is_valid:
+        logger.error(f"Validation failed: {message}")
         print(f"❌ Validation failed: {message}")
         print("   Please fix the YAML content before submitting.")
         sys.exit(1)
 
+    logger.info(f"Validation passed: {message}")
     print(f"✅ Validation passed: {message}")
 
     if score < 75:
+        logger.warning(f"Quality score ({score}) is below 75")
         print(f"⚠️  Warning: Quality score ({score}) is below 75")
         response = input("   Continue anyway? (y/N): ")
         if response.lower() != 'y':
+            logger.info("Submission cancelled by user due to low quality score")
             print("   Submission cancelled.")
             sys.exit(0)
 
@@ -295,6 +312,7 @@ def submit_shared(file_path, title, description, domain):
     try:
         repo = g.get_repo(repo_name)
     except Exception as e:
+        logger.error(f"Error accessing repository {repo_name}: {e}")
         print(f"❌ Error accessing repository {repo_name}: {e}")
         print("   Check SHARED_KB_REPO environment variable")
         sys.exit(1)
@@ -324,16 +342,18 @@ def submit_shared(file_path, title, description, domain):
             labels=labels
         )
 
+        logger.info(f"GitHub issue created: #{issue.number} - {issue.html_url}")
         print(f"✅ [Shared] Issue created: #{issue.number}")
         print(f"   URL: {issue.html_url}")
         print("   The curator will review your submission soon.")
 
     except Exception as e:
+        logger.error(f"Error creating GitHub issue: {e}")
         print(f"❌ Error creating issue: {e}")
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     """CLI interface"""
     parser = argparse.ArgumentParser(
         description="Knowledge Base Submission Tool v5.1",
@@ -394,6 +414,7 @@ Examples:
 
     # Check if file exists
     if not args.file.exists():
+        logger.error(f"File not found: {args.file}")
         print(f"❌ File not found: {args.file}")
         sys.exit(1)
 
@@ -403,6 +424,7 @@ Examples:
 
     elif args.target == "shared":
         if not args.title:
+            logger.error("--title is required for --target shared")
             print("❌ Error: --title is required for --target shared")
             print("   Example: --title 'Docker compose healthcheck fix'")
             sys.exit(1)

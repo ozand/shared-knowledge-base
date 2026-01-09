@@ -1,5 +1,7 @@
 # IMPLEMENTATION_GUIDE.md - Metadata System Implementation
 
+> **Progressive Disclosure:** This file is large (1041 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+
 ## Table of Contents
 
 - [Technical Implementation Guide](#technical-implementation-guide)
@@ -1039,3 +1041,17 @@ All components are:
 - ✅ **Merge-safe** - Handles git conflicts gracefully
 
 The metadata system enables intelligent, automated knowledge curation while maintaining the distributed architecture of the Shared Knowledge Base.
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Metadata Operations:** `@IMPLEMENTATION.md#part-1-metadata-file-operations` (Lines 7-200)
+- **Usage Tracking:** `@IMPLEMENTATION.md#part-2-usage-tracking` (Lines 202-400)
+- **Quality Assessment:** `@IMPLEMENTATION.md#part-3-quality-assessment` (Lines 402-600)
+- **Freshness Checking:** `@IMPLEMENTATION.md#part-4-freshness-checking` (Lines 602-800)
+- **Integration:** `@IMPLEMENTATION.md#part-5-integration` (Lines 802-1000)
+
+**Related Documentation:**
+- `@../AGENT.md` - Curator agent
+- `@../SKILLS.md` - Metadata skills
+- `@../../standards/quality-gates.md` - Quality standards

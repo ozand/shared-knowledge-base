@@ -380,6 +380,35 @@ patterns:
       - ❌ "Use inconsistent terminology"
       - ❌ "Don't verify consistency"
 
+    prevention:
+      - prevention: "Create dependency map before making documentation changes"
+        reason: "Know which files are related to avoid incomplete updates"
+        how: "Map which files reference which, create dependency graph"
+
+      - prevention: "Use update checklists for each change type"
+        reason: "Ensures all related files are updated consistently"
+        how: "Document: 'When changing X, also update Y, Z'"
+
+      - prevention: "Add cross-references between related documentation"
+        reason: "Makes dependencies explicit and discoverable"
+        how: "Use 'Related:' or 'See also:' sections in docs"
+
+      - prevention: "Run grep to find all references before changing content"
+        reason: "Finds all files that mention the content you're updating"
+        how: "grep -r 'keyword' docs/ to find related files"
+
+      - prevention: "Test documentation changes across all related files"
+        reason: "Verifies that changes are consistent and complete"
+        how: "Build documentation, check all references work"
+
+      - prevention: "Review all related files when updating patterns"
+        reason: "Patterns often referenced in multiple places"
+        how: "List files in pattern YAML, update all when pattern changes"
+
+      - prevention: "Use automated tools to detect inconsistencies"
+        reason: "Manual checking misses cross-file inconsistencies"
+        how: "Lint tools, link checkers, consistency validators"
+
     related_patterns:
       - id: "AGENT-ACCOUNTABILITY-001"
         title: "Agent Self-Accountability Pattern"

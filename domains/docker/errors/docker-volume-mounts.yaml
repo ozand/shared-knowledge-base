@@ -1,3 +1,4 @@
+version: "1.0"
 title: Docker Volume Mount Errors
 scope: docker
 severity: high
@@ -13,6 +14,7 @@ errors:
   - id: "DOCKER-020"
     title: "Docker Automatically Recreates Deleted Directories"
     severity: "high"
+    scope: docker
     problem: |
       Running `sudo rm -rf /path/to/dir` succeeds, but the directory reappears immediately.
       This happens when Docker containers have active volume mounts pointing to that directory.
@@ -82,6 +84,7 @@ errors:
   - id: "DOCKER-021"
     title: "Wrong Volume Mount Paths in docker-compose.yml"
     severity: "high"
+    scope: docker
     problem: |
       Docker Compose volume mounts point to root directories instead of following
       Golden Rules organization (should be /projects/ for code, /appdata/ for data).

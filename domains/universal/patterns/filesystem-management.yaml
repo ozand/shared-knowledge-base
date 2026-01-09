@@ -1,3 +1,4 @@
+version: "1.0"
 title: File System and Organization Management
 scope: universal
 severity: low
@@ -301,6 +302,31 @@ patterns:
   - Learn patterns over time
   - Fix root causes (e.g., backup scripts)
   - Peaceful night's sleep (no auto-deletion anxiety)
+  prevention:
+  - prevention: "Never implement auto-deletion scripts without safeguards"
+    reason: "Risk of catastrophic data loss is too high"
+    how: "Always require human confirmation, move to /tmp staging first"
+  - prevention: "Use notification-only scripts for automated monitoring"
+    reason: "Detects issues without risk of accidental deletion"
+    how: "Cron job sends alert, admin reviews manually"
+  - prevention: "Always move files to staging area before deletion"
+    reason: "Provides recovery window if mistake discovered"
+    how: "Move to /backups/tmp/, review after 7 days, then delete"
+  - prevention: "Log all filesystem operations with timestamps"
+    reason: "Enables audit trail and recovery if needed"
+    how: "Append to cleanup.log: [timestamp] action files destination"
+  - prevention: "Fix root causes instead of treating symptoms"
+    reason: "Prevents recurring accumulation of temp files"
+    how: "Update backup scripts to output directly to backups/ directory"
+  - prevention: "Review cleanup logs weekly to identify patterns"
+    reason: "Reveals which processes create temp files in wrong locations"
+    how: "grep cleanup.log | awk '{print $3}' | sort | uniq -c"
+  - prevention: "Test monitoring scripts with dry-run mode first"
+    reason: "Catches logic errors before they affect real files"
+    how: "Add --dry-run flag that only prints what would be done"
+  - prevention: "Set up filesystem quota alerts for critical directories"
+    reason: "Early warning before space runs out"
+    how: "df -h | grep /home/ozand | awk '{if ($5+0 > 90) print \"Alert: \"$5\" full\"}'"
   tags:
   - automation
   - monitoring

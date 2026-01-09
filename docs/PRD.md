@@ -6,6 +6,8 @@
 **Product Version:** 4.0.1
 **Status:** ✅ Production Ready
 
+> **Progressive Disclosure:** This file is large (1047 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+
 ---
 
 ## Table of Contents
@@ -1045,3 +1047,23 @@ git commit -m "Pin Shared KB to v5.1.1"
 **Document Owners:** KB Curator
 **Review Cycle:** Quarterly
 **Next Review:** 2026-04-08
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Executive Summary:** `@PRD.md#executive-summary` (Lines 13-90)
+- **Product Vision:** `@PRD.md#product-vision` (Lines 92-180)
+- **User Personas:** `@PRD.md#user-personas` (Lines 182-280)
+- **User Stories:** `@PRD.md#user-stories` (Lines 282-400)
+- **Functional Requirements:** `@PRD.md#functional-requirements` (Lines 402-580)
+- **Non-Functional Requirements:** `@PRD.md#non-functional-requirements` (Lines 582-720)
+- **Roadmap:** `@PRD.md#roadmap` (Lines 722-900)
+- **Success Metrics:** `@PRD.md#success-metrics` (Lines 902-1000)
+
+**Related Documentation:**
+- `@ARD.md` - Architecture Reference
+- `@CHANGELOG.md` - Version history
+- `@README.md` - Project overview

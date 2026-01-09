@@ -1,5 +1,7 @@
 # Shared Knowledge Base: Clone vs Submodule
 
+> **Progressive Disclosure:** This file is large (710 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+
 ## Table of Contents
 
 - [🚀 Unified Installation (NEW!)](#-unified-installation-new)
@@ -708,3 +710,16 @@ git commit -m "Migrate KB to submodule with sparse checkout"
 - **❌ Clone** - Приемлем только для быстрых тестов и обучения
 
 Sparse checkout обеспечивает фактическое разделение ролей, запрещая Project Agentам видеть Curator-специфичные файлы.
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Unified Installation:** `@SUBMODULE_VS_CLONE.md#-unified-installation-new` (Lines 7-100)
+- **Quick Recommendation:** `@SUBMODULE_VS_CLONE.md#-рекомендация-short-answer` (Lines 102-150)
+- **Detailed Comparison:** `@SUBMODULE_VS_CLONE.md#-детальное-сравнение` (Lines 152-350)
+- **Step-by-Step Guides:** `@SUBMODULE_VS_CLONE.md#step-by-step-гайды` (Lines 352-550)
+- **Troubleshooting:** `@SUBMODULE_VS_CLONE.md#troubleshooting-решение-проблем` (Lines 552-700)
+
+**Related Documentation:**
+- `@../../../universal/patterns/project-organization.yaml` - Project organization pattern
+- `@../standards/git-standards.md` - Git workflow standards

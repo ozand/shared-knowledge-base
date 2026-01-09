@@ -1,5 +1,7 @@
 # METADATA_SKILLS.md - Metadata Management Skills
 
+> **Progressive Disclosure:** This file is large (948 lines). Load specific skills on demand using `@references` below instead of reading entire file.
+
 ## Table of Contents
 
 - [Enhanced Skills for Metadata-Driven Knowledge Curation](#enhanced-skills-for-metadata-driven-knowledge-curation)
@@ -946,3 +948,24 @@ Please export-analytics for 2026-01 to analytics-2026-01.json
 | `export-analytics` | Export anonymized data | Analytics file | No |
 
 These metadata-driven skills enable systematic, trackable knowledge curation without central infrastructure.
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific skills on demand to reduce token usage:**
+
+- **Check Freshness:** `@SKILLS.md#skill-check-freshness` (Lines 25-120)
+- **Track Usage:** `@SKILLS.md#skill-track-usage` (Lines 122-220)
+- **Detect Changes:** `@SKILLS.md#skill-detect-changes` (Lines 222-340)
+- **Analyze Usage:** `@SKILLS.md#skill-analyze-usage` (Lines 342-440)
+- **Update Metadata:** `@SKILLS.md#skill-update-metadata` (Lines 442-560)
+- **Assess Quality:** `@SKILLS.md#skill-assess-quality` (Lines 562-680)
+- **Reindex Metadata:** `@SKILLS.md#skill-reindex-metadata` (Lines 682-800)
+- **Export Analytics:** `@SKILLS.md#skill-export-analytics` (Lines 802-920)
+
+**Related Documentation:**
+- `@AGENT.md` - Curator role and responsibilities
+- `@PROMPTS.md` - Reusable prompt templates
+- `@WORKFLOWS.md` - Step-by-step procedures
+- `@../AGENT.md` - Main Curator agent file

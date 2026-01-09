@@ -5,6 +5,7 @@ errors:
 - id: PY-TYPE-001
   title: Mypy Too Strict for Test Files
   severity: low
+  scope: python
   problem: 'Test files use mocking, fixtures, and dynamic patterns that are
 
     difficult to type check strictly. Mypy errors clutter test output.
@@ -57,6 +58,7 @@ errors:
 - id: PY-TYPE-002
   title: Missing Type Annotations
   severity: medium
+  scope: python
   problem: 'Functions without return type annotations fail strict mypy checks.
 
     '
@@ -80,6 +82,7 @@ errors:
 - id: PY-TYPE-003
   title: Optional vs None Type Confusion
   severity: low
+  scope: python
   problem: 'Confusion between Optional[T], T | None, and handling None values.
 
     '
@@ -104,6 +107,7 @@ errors:
 - id: PY-TYPE-004
   title: AsyncMock vs Mock for Async Functions
   severity: medium
+  scope: python
   problem: 'Using regular Mock for async functions causes runtime errors and
 
     type checking issues.

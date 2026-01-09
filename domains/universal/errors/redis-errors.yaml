@@ -1,3 +1,4 @@
+version: "1.0"
 title: Redis Configuration and Command Errors
 scope: universal
 severity: medium
@@ -12,6 +13,7 @@ errors:
   - id: "REDIS-001"
     title: "Redis Command Not Found in Container Logs"
     severity: "medium"
+    scope: universal
     problem: |
       Redis container continuously restarts with error: "exec: line 24: redis: not found"
 

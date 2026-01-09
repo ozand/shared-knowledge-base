@@ -55,6 +55,31 @@ patterns:
   - Better continuity
   - Project knowledge retention
   - Improved personalization
+  prevention:
+    - prevention: "Set memory size limits appropriate to your use case"
+      reason: "Unbounded memory grows indefinitely, consuming tokens and costs"
+      how: "Configure max_tokens in MCP server config based on expected usage (1K-10K)"
+    - prevention: "Implement memory summarization when approaching token limit"
+      reason: "Prevents losing oldest memories when token limit reached"
+      how: "Summarize older memories: 'Last 5 sessions: worked on X, achieved Y'"
+    - prevention: "Use explicit memory keys instead of generic storage"
+      reason: "Retrieval by key is faster and more reliable than semantic search"
+      how: "Store with keys: 'project-context', 'architectural-decisions', 'workarounds'"
+    - prevention: "Regularly review and prune outdated memories"
+      reason: "Old memories reduce relevance and waste tokens"
+      how: "Monthly review: delete memories >6 months old or no longer relevant"
+    - prevention: "Back up critical memories to project documentation"
+      reason: "MCP memory can be lost, project docs are more persistent"
+      how: "Copy important decisions to docs/architectural-decisions.md"
+    - prevention: "Test memory retrieval before relying on it for important tasks"
+      reason: "Memory may not be stored correctly or retrieval may fail"
+      how: "Store test memory, retrieve it, verify content before production use"
+    - prevention: "Document memory schema and usage patterns in project README"
+      reason: "Team members need to know what's stored and how to access it"
+      how: "Add MCP Memory section to README with key examples and retrieval commands"
+    - prevention: "Use memory for project-specific knowledge, not general facts"
+      reason: "Project knowledge changes often, general facts don't need storage"
+      how: "Store: project decisions, workarounds, context; Don't store: API docs, syntax"
   tags:
   - claude-code
   - mcp

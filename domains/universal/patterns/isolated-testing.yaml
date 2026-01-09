@@ -60,294 +60,7 @@ patterns:
     5. **Time Pressure:** Want to test quickly, skip isolation
 
     '
-  solution: '**Isolated Environment Testing Strategy:**
-
-
-    ## Strategy 1: Temporary Clone (RECOMMENDED) 🌟
-
-
-    **Best for:** PR review, one-off testing, quick validation
-
-
-    **Process:**
-
-    ```bash
-
-    # 1. Create temporary directory
-
-    cd /tmp
-
-    rm -rf pr-test
-
-    mkdir pr-test && cd pr-test
-
-
-    # 2. Clone repository (clean copy)
-
-    git clone git@github.com:user/repo.git .
-
-    # Note: ''.'' puts contents directly in pr-test, not pr-test/repo
-
-
-    # 3. Fetch PR branch
-
-    git fetch origin pull/<number>/head:pr-branch
-
-    git checkout pr-branch
-
-
-    # 4. Run tests
-
-    python tools/kb.py validate .
-
-    python tools/kb_patterns.py find-universal
-
-    # ... more tests
-
-
-    # 5. Delete entire directory when done
-
-    cd /tmp
-
-    rm -rf pr-test
-
-    ```
-
-
-    **Advantages:**
-
-    - ✅ Complete isolation from main repo
-
-    - ✅ Easy cleanup (delete directory)
-
-    - ✅ No git contamination
-
-    - ✅ Can test destructive operations
-
-    - ✅ Fresh clone every time
-
-    - ✅ Parallel testing (multiple /tmp/pr-test-2, etc.)
-
-
-    **Disadvantages:**
-
-    - ⚠️ Requires cloning (network time for large repos)
-
-    - ⚠️ Uses disk space (temporary)
-
-
-    **Example: PR Review**
-
-    ```bash
-
-    cd /tmp && rm -rf pr-6-test && mkdir pr-6-test && cd pr-6-test
-
-    git clone git@github.com:ozand/shared-knowledge-base.git .
-
-    git fetch origin pull/6/head:pr6-branch
-
-    git checkout pr6-branch
-
-
-    # Test changes
-
-    python tools/kb_patterns.py find-universal
-
-    python tools/kb_community.py report
-
-    python tools/kb_predictive.py suggest-entries
-
-    python tools/kb_issues.py scan
-
-
-    # All passed, can cleanup
-
-    cd /tmp && rm -rf pr-6-test
-
-    ```
-
-
-    ## Strategy 2: Git Worktree
-
-
-    **Best for:** Frequent testing, multiple branches, development
-
-
-    **Process:**
-
-    ```bash
-
-    # 1. Create worktree (linked to main repo)
-
-    git worktree add ../repo-pr-test pr-branch
-
-
-    # 2. Work in isolated directory
-
-    cd ../repo-pr-test
-
-
-    # 3. Run tests
-
-    python tools/test.py
-
-
-    # 4. When done, remove worktree
-
-    cd ../repo
-
-    git worktree remove ../repo-pr-test
-
-    ```
-
-
-    **Advantages:**
-
-    - ✅ No full clone needed (shares .git objects)
-
-    - ✅ Faster than clone for large repos
-
-    - ✅ Still isolated from main work
-
-    - ✅ Easy to remove
-
-
-    **Disadvantages:**
-
-    - ⚠️ Still shares git database
-
-    - ⚠️ More complex git commands
-
-
-    ## Strategy 3: Docker Container
-
-
-    **Best for:** Complete isolation, environment-specific testing
-
-
-    **Process:**
-
-    ```bash
-
-    # 1. Mount repo as volume
-
-    docker run -v $(pwd):/app -w /app python:3.11 bash
-
-
-    # 2. Inside container, make changes and test
-
-    git checkout pr-branch
-
-    python test.py
-
-
-    # 3. Exit container (changes discarded)
-
-    exit
-
-    ```
-
-
-    **Advantages:**
-
-    - ✅ Complete environment isolation
-
-    - ✅ No host contamination
-
-    - ✅ Reproducible environment
-
-    - ✅ Easy cleanup (docker rm)
-
-
-    **Disadvantages:**
-
-    - ⚠️ Requires Docker
-
-    - ⚠️ Heavier than just git clone
-
-
-    ## Strategy 4: Git Stash (For Small Tests)
-
-
-    **Best for:** Quick tests in current repo, minimal changes
-
-
-    **Process:**
-
-    ```bash
-
-    # 1. Stash current work
-
-    git stash push -u -m "Work before testing PR"
-
-
-    # 2. Checkout PR branch
-
-    git checkout pr-branch
-
-
-    # 3. Run tests
-
-    python test.py
-
-
-    # 4. Checkout main branch
-
-    git checkout main
-
-
-    # 5. Restore work
-
-    git stash pop
-
-
-    # OR if tests broke things, just discard:
-
-    # git checkout -f main
-
-    # git stash drop
-
-    ```
-
-
-    **Advantages:**
-
-    - ✅ Fast for small tests
-
-    - ✅ No cloning needed
-
-
-    **Disadvantages:**
-
-    - ❌ Risk of accidental commits
-
-    - ❌ Still modifies main repo git state
-
-    - ❌ Not truly isolated
-
-    - ❌ Dangerous if forget stash pop/drop
-
-
-    **Recommendation:** Only use Strategy 1 (Temporary Clone) for safety
-
-
-    ## Comparison Table
-
-
-    | Strategy | Isolation | Speed | Cleanup | Safety | Use Case |
-
-    |----------|-----------|-------|---------|--------|----------|
-
-    | **Temporary Clone** | ⭐⭐⭐⭐⭐ | Medium | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **PR Review (RECOMMENDED)**
-    |
-
-    | **Git Worktree** | ⭐⭐⭐⭐ | Fast | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Frequent testing |
-
-    | **Docker** | ⭐⭐⭐⭐⭐ | Slow | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Environment-specific |
-
-    | **Git Stash** | ⭐⭐ | Fastest | ⭐⭐ | ⭐⭐ | Quick tests only |
-
-    '
+  solution: '@references/ISOLATED-TEST-001-strategies.md'
   best_practices:
   - practice: Always use isolated environment for PR review
     reason: Complete safety, easy cleanup
@@ -538,6 +251,36 @@ patterns:
     - case: Quick validation
       strategy: Git Stash (careful!)
       reason: Fast but risky
+
+    prevention:
+      - prevention: "Always use isolated environments for testing breaking changes"
+        reason: "Prevents accidental damage to main development environment"
+        how: "Use git worktree, temporary clone, or Docker containers"
+
+      - prevention: "Clean up isolated test environments after testing"
+        reason: "Prevents disk space waste and confusion"
+        how: "Remove temporary clones, close worktrees after verification"
+
+      - prevention: "Document which isolated testing strategy was used"
+        reason: "Team members need to know how to reproduce test setup"
+        how: "Add comment: 'Tested with: git worktree <branch>'"
+
+      - prevention: "Never test breaking changes in main branch"
+        reason: "Risk of accidentally committing broken code"
+        how: "Always create test branch or use isolated environment"
+
+      - prevention: "Use git stash carefully when testing locally"
+        reason: "Easy to forget uncommitted changes"
+        how: "Document stashed changes, verify stash list before testing"
+
+      - prevention: "Verify test environment is properly isolated"
+        reason: "Tests may use wrong dependencies if not isolated"
+        how: "Check: 'git status', 'python -c import sys; print(sys.path)'"
+
+      - prevention: "Set up automated testing in isolated CI/CD environments"
+        reason: "Consistent isolation across all tests"
+        how: "GitHub Actions, GitLab CI with isolated test runners"
+
   references:
   - title: Git Worktree Documentation
     url: https://git-scm.com/docs/git-worktree

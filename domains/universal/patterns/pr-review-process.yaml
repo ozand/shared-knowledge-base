@@ -403,6 +403,32 @@ patterns:
           for WHAT decision to make (merge/close/recreate), PR-REVIEW for
           HOW to conduct the review.
 
+    prevention:
+      - prevention: "Always use isolated testing environment for PR review (Strategy 1)"
+        reason: "Prevents repository contamination, build artifacts, accidental commits"
+        how: "cd /tmp && mkdir pr-test && cd pr-test && git clone <repo> . && git checkout pr-branch"
+      - prevention: "Validate YAML entries before approving PR"
+        reason: "Invalid YAML breaks KB tools, prevents indexing, corrupts knowledge base"
+        how: "Run: python tools/kb.py validate . && python tools/kb.py index --test"
+      - prevention: "Test code examples in PR before merging"
+        reason: "Untested code examples may contain errors, mislead users"
+        how: "Copy code blocks to test file, run, verify output matches documentation"
+      - prevention: "Check for duplicate or similar patterns before accepting new entries"
+        reason: "Prevents KB bloat, maintains consistency, avoids redundancy"
+        how: "Search KB: python tools/kb.py search '<pattern keywords>'"
+      - prevention: "Verify all required fields present in YAML entries"
+        reason: "Missing fields cause validation failures, incomplete documentation"
+        how: "Check: version, category, last_updated, id, title, severity, scope, problem, solution"
+      - prevention: "Review attribution for all agent-contributed PRs"
+        reason: "Ensures proper credit, tracks agent contributions, maintains accountability"
+        how: "Check PR has agent labels, attribution section, Co-Authored-By in commits"
+      - prevention: "Set SLA for PR reviews (24h for triage, 48h for decision)"
+        reason: "Prevents contributor frustration, maintains momentum in KB development"
+        how: "Daily review of open PRs, prioritize by submission date, label with review-status"
+      - prevention: "Provide constructive feedback with specific improvement steps"
+        reason: "Generic feedback doesn't help contributors improve quality"
+        how: "Comment: 'Line 45: Add code example for solution section' instead of 'incomplete'"
+
     references:
       - title: "GitHub PR Review Documentation"
         url: "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests"

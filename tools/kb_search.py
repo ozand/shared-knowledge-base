@@ -12,8 +12,17 @@ Version: 5.1.0
 
 import os
 import argparse
+import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # --- Configuration ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -47,6 +56,7 @@ def search_files(root_path: Path, query: str) -> List[Path]:
     matches = []
 
     if not root_path.exists():
+        logger.warning(f"Search path does not exist: {root_path}")
         return matches
 
     query_lower = query.lower()
@@ -66,13 +76,15 @@ def search_files(root_path: Path, query: str) -> List[Path]:
                     matches.append(path)
 
         except Exception as e:
+            logger.debug(f"Could not read file {path}: {e}")
             # Skip files that can't be read
             continue
 
+    logger.info(f"Search completed: {len(matches)} matches found in {root_path}")
     return matches
 
 
-def extract_metadata(file_path: Path) -> dict:
+def extract_metadata(file_path: Path) -> Dict[str, Any]:
     """
     Extract metadata from YAML file for better display.
 
@@ -97,8 +109,8 @@ def extract_metadata(file_path: Path) -> dict:
                 'category': data.get('category', 'general'),
                 'scope': entry.get('scope', 'universal')
             }
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Could not extract metadata from {file_path}: {e}")
 
     return {
         'title': file_path.stem,
@@ -140,7 +152,7 @@ def extract_preview(file_path: Path, query: str, max_lines: int = 3) -> str:
         return "  (Error reading file)"
 
 
-def display_results(results: dict, query: str, show_preview: bool = False):
+def display_results(results: Dict[str, Any], query: str, show_preview: bool = False) -> None:
     """
     Display search results in a formatted way with priority ordering.
 
@@ -152,6 +164,7 @@ def display_results(results: dict, query: str, show_preview: bool = False):
     total = sum(len(paths) for paths in results.values())
 
     if total == 0:
+        logger.info(f"Search '{query}' returned 0 results")
         print(f"🔍 Search: '{query}' | Found: 0")
         print("\n❌ No matches found. Try:")
         print("   - Different search terms")
@@ -160,6 +173,7 @@ def display_results(results: dict, query: str, show_preview: bool = False):
         print("\n💡 Tip: If no local results, consider web search")
         return
 
+    logger.info(f"Search '{query}' returned {total} results")
     print(f"🔍 Search: '{query}' | Found: {total}\n")
 
     # Priority order: PROJECT → SHARED
@@ -205,7 +219,7 @@ def display_results(results: dict, query: str, show_preview: bool = False):
             print("   Always follow project-specific patterns over general standards\n")
 
 
-def get_kb_stats() -> dict:
+def get_kb_stats() -> Dict[str, Any]:
     """
     Get statistics about KB directories.
 
@@ -225,17 +239,19 @@ def get_kb_stats() -> dict:
                 "path": path,
                 "entries": len(yaml_files)
             }
+            logger.debug(f"{source} KB: {len(yaml_files)} entries at {path}")
         else:
             stats[source] = {
                 "exists": False,
                 "path": path,
                 "entries": 0
             }
+            logger.debug(f"{source} KB: path does not exist: {path}")
 
     return stats
 
 
-def main():
+def main() -> None:
     """CLI interface"""
     parser = argparse.ArgumentParser(
         description="Knowledge Base Search Tool v5.1",
@@ -290,6 +306,7 @@ Examples:
     if args.stats:
         stats = get_kb_stats()
 
+        logger.info("Displaying KB statistics")
         print("📊 Knowledge Base Statistics\n")
         for source, stat in stats.items():
             if stat["exists"]:
@@ -310,13 +327,17 @@ Examples:
 
     # Search in requested scopes
     results = {}
+    scopes = []
 
     if args.scope in ["project", "all"]:
+        scopes.append("project")
         results["PROJECT"] = search_files(PATHS["project"], args.query)
 
     if args.scope in ["shared", "all"]:
+        scopes.append("shared")
         results["SHARED"] = search_files(PATHS["shared"], args.query)
 
+    logger.info(f"Searching in scopes: {', '.join(scopes)}")
     # Display results
     display_results(results, args.query, show_preview=args.preview)
 

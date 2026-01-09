@@ -52,6 +52,32 @@ patterns:
       - Clearer communication
       - Improved decision-making
 
+    prevention:
+      - prevention: "Use sequential thinking for complex problems only (>3 steps)"
+        reason: "Simple problems don't benefit from structured approach, adds overhead"
+        how: "Direct answer for <3 steps, sequential thinking for complex planning/debugging"
+      - prevention: "Set iteration limits to prevent infinite loops"
+        reason: "Unbounded thinking can waste tokens, get stuck in circular reasoning"
+        how: "Configure: max_iterations=10, default: 5 for most tasks"
+      - prevention: "Validate thinking steps before proceeding to next iteration"
+        reason: "Invalid early steps cascade into wasted iterations"
+        how: "After each step, verify: Is this logical? Does it advance solution?"
+      - prevention: "Use sequential thinking as planning tool, not execution tool"
+        reason: "Planning requires reasoning, execution requires action"
+        how: "Sequential thinking for architecture → Execute with specific tools"
+      - prevention: "Document thinking process for future reference"
+        reason: "Reasoning lost if not saved, can't review decision process later"
+        how: "Save thinking session to docs/planning/<task>-analysis.md"
+      - prevention: "Combine with domain-specific tools for best results"
+        reason: "Sequential thinking alone lacks domain knowledge"
+        how: "Use: sequential thinking → KB search → code generation → testing"
+      - prevention: "Review and refine thinking output before executing"
+        reason: "Thinking may have gaps or overlook edge cases"
+        how: "After thinking completes, read output, check for missing steps or assumptions"
+      - prevention: "Teach sequential thinking patterns to improve quality over time"
+        reason: "Agent learns from examples, develops better reasoning habits"
+        how: "Provide good examples: 'For planning architecture, use these 5 steps...'"
+
     tags: ["claude-code", "mcp", "sequential-thinking", "reasoning", "planning"]
 
     related_patterns:

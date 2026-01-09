@@ -66,6 +66,31 @@ patterns:
   - Web data extraction
   - Visual documentation
   - Cross-browser validation
+  prevention:
+    - prevention: "Use headless mode for CI/CD pipelines, headful for local debugging"
+      reason: "Headless is faster for automation, headful shows what's happening during debug"
+      how: "Add flag: --headless in CI, omit flag when debugging locally"
+    - prevention: "Set explicit timeouts for page loads and element waits"
+      reason: "Default timeouts too short for slow networks or dynamic content"
+      how: "Configure: page.goto(url, timeout=30000) and await page.wait_for_selector(selector, timeout=10000)"
+    - prevention: "Handle dynamic content with proper wait strategies"
+      reason: "Content may load after page load, selectors need retry logic"
+      how: "Use wait_for_selector() instead of query_selector(), add explicit waits for async content"
+    - prevention: "Clean up browser resources after each test"
+      reason: "Unclosed browsers consume memory, cause test flakiness"
+      how: "Use context.close() and browser.close() in try/finally blocks"
+    - prevention: "Use selective selectors over generic XPath queries"
+      reason: "XPath breaks easily with minor DOM changes, more brittle"
+      how: "Prefer: data-testid attributes, CSS selectors, aria labels"
+    - prevention: "Implement retry logic for network-dependent tests"
+      reason: "Network failures cause false negatives, tests should be resilient"
+      how: "Retry 3 times with exponential backoff: 1s, 2s, 4s before failing"
+    - prevention: "Run browsers in isolated environments (Docker containers)"
+      reason: "Prevents browser state pollution between tests, improves reproducibility"
+      how: "Use Docker image: mcr.microsoft.com/playwright:latest"
+    - prevention: "Record videos for failed tests to aid debugging"
+      reason: "Videos show what happened during test execution, easier to debug"
+      how: "Configure: video: 'retain-on-failure' in playwright.config.js"
   tags:
   - claude-code
   - mcp

@@ -1,5 +1,7 @@
 # Knowledge Curator Subagent
 
+> **Progressive Disclosure:** This file is large (732 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+
 **Role:** Knowledge Capture and Documentation Specialist
 **Type:** Autonomous Subagent
 **Triggers:** Task completion, error resolution, retrospective request
@@ -730,3 +732,17 @@ if task_completed:
 **Maintained By:** KB Curator
 **Dependencies:** Grep, Read, Write, GitHub API
 **Status:** Production Ready
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Role Definition:** `@KNOWLEDGE-CURATOR.md#role-definition` (Lines 9-80)
+- **Trigger Conditions:** `@KNOWLEDGE-CURATOR.md#trigger-conditions` (Lines 82-140)
+- **Capture Workflow:** `@KNOWLEDGE-CURATOR.md#capture-workflow` (Lines 142-280)
+- **Documentation Standards:** `@KNOWLEDGE-CURATOR.md#documentation-standards` (Lines 282-400)
+- **Quality Assurance:** `@KNOWLEDGE-CURATOR.md#quality-assurance` (Lines 402-540)
+- **Integration Points:** `@KNOWLEDGE-CURATOR.md#integration-points` (Lines 542-660)
+
+**Related Documentation:**
+- `@../AGENT.md` - Main Curator agent
+- `@../../../../../agents/curator/AGENT.md` - Curator role

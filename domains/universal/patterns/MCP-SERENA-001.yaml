@@ -53,6 +53,32 @@ patterns:
       - Context-aware search
       - Multi-language support
 
+    prevention:
+      - prevention: "Index project before using Serena code intelligence features"
+        reason: "Unindexed project provides no results, features appear broken"
+        how: "Run: serena index <project-path> before using go-to-definition or search"
+      - prevention: "Configure language servers for project-specific frameworks"
+        reason: "Default LSPs may not support project-specific syntax or features"
+        how: "Install additional LSPs: pyright for Python, rust-analyzer for Rust, etc."
+      - prevention: "Set appropriate indexing depth based on project size"
+        reason: "Full index of large projects takes hours, may exhaust memory"
+        how: "Configure: index_depth='shallow' for large projects, 'full' for small"
+      - prevention: "Refresh index after significant code changes"
+        reason: "Stale index returns outdated references, misleads navigation"
+        how: "Run: serena reindex after refactoring, renaming, or large changes"
+      - prevention: "Use semantic search for code understanding, not for finding exact matches"
+        reason: "Semantic search slower than grep, use appropriate tool for task"
+        how: "Semantic: 'find all payment processing functions'; Grep: 'def process_payment'"
+      - prevention: "Combine code intelligence with documentation for best context"
+        reason: "Code shows implementation, docs explain intent and usage"
+        how: "After go-to-definition, also search docs: find references, examples, explanations"
+      - prevention: "Verify LSP server health if code intelligence features fail"
+        reason: "LSP servers may crash or hang, causing silent failures"
+        how: "Check: serena status, restart LSP: serena restart <language-server>"
+      - prevention: "Exclude build artifacts and dependencies from indexing"
+        reason: "Indexing node_modules/ or venv/ wastes time and memory"
+        how: "Configure .serenaignore: 'node_modules/', '.venv/', 'dist/', 'build/'"
+
     tags: ["claude-code", "mcp", "serena", "code-intelligence", "navigation"]
 
     related_patterns:

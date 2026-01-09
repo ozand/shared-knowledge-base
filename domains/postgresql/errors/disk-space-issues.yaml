@@ -1,66 +1,74 @@
+version: "1.0"
 id: pg-space-001
 title: PostgreSQL Disk Space Analysis and Cleanup
 category: postgresql
 last_updated: "2026-01-08"
 severity: high
+scope: postgresql
 tags: [disk-space, cleanup, logs, indexes, maintenance]
 
-problem: |
-  PostgreSQL data directory can grow unexpectedly large, consuming disk space
-  and causing performance issues. Common causes include excessive logging, large
-  indexes, bloated tables, and WAL accumulation.
+errors:
+  - id: pg-space-001
+    title: PostgreSQL Disk Space Analysis and Cleanup
+    category: postgresql
+    severity: high
+    scope: postgresql
+    problem: |
+      PostgreSQL data directory can grow unexpectedly large, consuming disk space
+      and causing performance issues. Common causes include excessive logging, large
+      indexes, bloated tables, and WAL accumulation.
 
-symptoms:
-  - Disk space critically low (> 90% full)
-  - Slow query performance due to disk I/O
-  - Large log files consuming space
-  - Database growing without apparent data increase
-  - Need to identify what's consuming space
+    symptoms:
+      - Disk space critically low (> 90% full)
+      - Slow query performance due to disk I/O
+      - Large log files consuming space
+      - Database growing without apparent data increase
+      - Need to identify what's consuming space
 
-context:
-  applicable_versions: "All PostgreSQL versions"
-  urgency: "Critical when disk > 90% full"
+    context:
+      applicable_versions: "All PostgreSQL versions"
+      urgency: "Critical when disk > 90% full"
 
-diagnosis: |
-  ## 1. Check Overall Database Sizes
-  ```sql
-  SELECT datname,
-         pg_size_pretty(pg_database_size(datname)) as size,
-         pg_database_size(datname) as size_bytes
-  FROM pg_database
-  WHERE datname NOT IN ('template0', 'template1')
-  ORDER BY pg_database_size(datname) DESC;
-  ```
+    diagnosis: |
+      ## 1. Check Overall Database Sizes
+      ```sql
+      SELECT datname,
+             pg_size_pretty(pg_database_size(datname)) as size,
+             pg_database_size(datname) as size_bytes
+      FROM pg_database
+      WHERE datname NOT IN ('template0', 'template1')
+      ORDER BY pg_database_size(datname) DESC;
+      ```
 
-  ## 2. Check Table Sizes
-  ```sql
-  SELECT schemaname,
+      ## 2. Check Table Sizes
+      ```sql
+      SELECT schemaname,
          tablename,
          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size,
          pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) as table_size,
          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) -
                        pg_relation_size(schemaname||'.'||tablename)) as index_size
-  FROM pg_tables
-  WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
-  LIMIT 20;
-  ```
+      FROM pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+      LIMIT 20;
+      ```
 
-  ## 3. Check Index Sizes
-  ```sql
-  SELECT schemaname,
+      ## 3. Check Index Sizes
+      ```sql
+      SELECT schemaname,
          indexname,
          tablename,
          pg_size_pretty(pg_relation_size(indexrelid)) as index_size
-  FROM pg_stat_user_indexes
-  WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-  ORDER BY pg_relation_size(indexrelid) DESC
-  LIMIT 20;
-  ```
+      FROM pg_stat_user_indexes
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY pg_relation_size(indexrelid) DESC
+      LIMIT 20;
+      ```
 
-  ## 4. Check for Unused Indexes
-  ```sql
-  SELECT schemaname,
+      ## 4. Check for Unused Indexes
+      ```sql
+      SELECT schemaname,
          tablename,
          indexname,
          pg_size_pretty(pg_relation_size(indexrelid)) as index_size,
@@ -72,292 +80,292 @@ diagnosis: |
            WHEN idx_scan < 10 THEN 'RARELY USED'
            ELSE 'ACTIVE'
          END as usage_status
-  FROM pg_stat_user_indexes
-  WHERE pg_relation_size(indexrelid) > 100 * 1024 * 1024  -- > 100MB
-  ORDER BY pg_relation_size(indexrelid) DESC;
-  ```
+      FROM pg_stat_user_indexes
+      WHERE pg_relation_size(indexrelid) > 100 * 1024 * 1024  -- > 100MB
+      ORDER BY pg_relation_size(indexrelid) DESC;
+      ```
 
-  ## 5. Check Tablespaces Location
-  ```sql
-  SELECT spcname,
+      ## 5. Check Tablespaces Location
+      ```sql
+      SELECT spcname,
          pg_size_pretty(pg_tablespace_size(spcname)) as size,
          pg_tablespace_location(oid) as location
-  FROM pg_tablespace
-  ORDER BY pg_tablespace_size(spcname) DESC;
-  ```
+      FROM pg_tablespace
+      ORDER BY pg_tablespace_size(spcname) DESC;
+      ```
 
-  ## 6. Check Disk Usage on Windows
-  ```powershell
-  # PostgreSQL data directory structure
-  cd "C:\Program Files\PostgreSQL\15\data"
-  du -sh * | sort -rh
-  ```
+      ## 6. Check Disk Usage on Windows
+      ```powershell
+      # PostgreSQL data directory structure
+      cd "C:\Program Files\PostgreSQL\15\data"
+      du -sh * | sort -rh
+      ```
 
-  Common space consumers:
-  - `base/` - Database files (largest)
-  - `pg_wal/` - WAL files
-  - `log/` - Log files (can grow VERY large!)
-  - `pg_wal.old/` - Old WAL files
+      Common space consumers:
+      - `base/` - Database files (largest)
+      - `pg_wal/` - WAL files
+      - `log/` - Log files (can grow VERY large!)
+      - `pg_wal.old/` - Old WAL files
 
 solution: |
-  ## SOLUTION 1: Clean Up Excessive Logs
+      ## SOLUTION 1: Clean Up Excessive Logs
 
-  **Problem:** Excessive log rotation creating thousands of small files
+      **Problem:** Excessive log rotation creating thousands of small files
 
-  **Example Issue:**
-  - `log_rotation_size = 10MB` (default)
-  - 6,311 log files created in 2-3 days
-  - Total: 81 GB of logs!
+      **Example Issue:**
+      - `log_rotation_size = 10MB` (default)
+      - 6,311 log files created in 2-3 days
+      - Total: 81 GB of logs!
 
-  **Fix:**
-  ```sql
-  -- Increase log rotation size
-  ALTER SYSTEM SET log_rotation_size = '1GB';
+      **Fix:**
+      ```sql
+      -- Increase log rotation size
+      ALTER SYSTEM SET log_rotation_size = '1GB';
 
-  -- Set minimum duration for statement logging (optional)
-  ALTER SYSTEM SET log_min_duration_statement = 5000;  -- Only log queries > 5s
+      -- Set minimum duration for statement logging (optional)
+      ALTER SYSTEM SET log_min_duration_statement = 5000;  -- Only log queries > 5s
 
-  -- Reload configuration
-  SELECT pg_reload_conf();
-  ```
+      -- Reload configuration
+      SELECT pg_reload_conf();
+      ```
 
-  **Clean up old logs:**
-  ```powershell
-  # Windows - Delete logs older than 7 days
-  cd "C:\Program Files\PostgreSQL\15\data\log"
-  forfiles /P . /M *.log /D -7 /C "cmd /c del @path"
-  ```
+      **Clean up old logs:**
+      ```powershell
+      # Windows - Delete logs older than 7 days
+      cd "C:\Program Files\PostgreSQL\15\data\log"
+      forfiles /P . /M *.log /D -7 /C "cmd /c del @path"
+      ```
 
-  **Expected savings:** 70-90 GB+ depending on log activity
+      **Expected savings:** 70-90 GB+ depending on log activity
 
-  ## SOLUTION 2: Remove Unused Large Indexes
+      ## SOLUTION 2: Remove Unused Large Indexes
 
-  **Problem:** Large indexes never or rarely used
+      **Problem:** Large indexes never or rarely used
 
-  **Identify candidates:**
-  See diagnosis section above.
+      **Identify candidates:**
+      See diagnosis section above.
 
-  **Drop unused indexes:**
-  ```sql
-  -- IMPORTANT: Verify index is really unused first!
-  DROP INDEX CONCURRENTLY IF EXISTS schema_name.index_name;
+      **Drop unused indexes:**
+      ```sql
+      -- IMPORTANT: Verify index is really unused first!
+      DROP INDEX CONCURRENTLY IF EXISTS schema_name.index_name;
 
-  -- Example: Large duplicate index
-  DROP INDEX CONCURRENTLY IF EXISTS links.links_id_idx;
-  -- If 'id' is already PRIMARY KEY, this index is redundant
-  ```
+      -- Example: Large duplicate index
+      DROP INDEX CONCURRENTLY IF EXISTS links.links_id_idx;
+      -- If 'id' is already PRIMARY KEY, this index is redundant
+      ```
 
-  **Check before dropping:**
-  ```sql
-  -- Confirm it's not a constraint
-  SELECT conname, contype
-  FROM pg_constraint
-  WHERE conindid = 'schema_name.index_name'::regclass;
+      **Check before dropping:**
+      ```sql
+      -- Confirm it's not a constraint
+      SELECT conname, contype
+      FROM pg_constraint
+      WHERE conindid = 'schema_name.index_name'::regclass;
 
-  -- Check index definition
-  SELECT indexdef
-  FROM pg_indexes
-  WHERE indexname = 'index_name';
-  ```
+      -- Check index definition
+      SELECT indexdef
+      FROM pg_indexes
+      WHERE indexname = 'index_name';
+      ```
 
-  **Expected savings:** Can save 100+ GB depending on indexes
+      **Expected savings:** Can save 100+ GB depending on indexes
 
-  ## SOLUTION 3: Remove Old WAL Files
+      ## SOLUTION 3: Remove Old WAL Files
 
-  **Problem:** Old WAL files not cleaned up
+      **Problem:** Old WAL files not cleaned up
 
-  **Check:**
-  ```powershell
-  # Check pg_wal.old size
-  du -sh "C:\Program Files\PostgreSQL\15\data\pg_wal.old"
-  ```
+      **Check:**
+      ```powershell
+      # Check pg_wal.old size
+      du -sh "C:\Program Files\PostgreSQL\15\data\pg_wal.old"
+      ```
 
-  **Fix:**
-  ```sql
-  -- Ensure archive_mode is off (if not using replication)
-  SHOW archive_mode;
+      **Fix:**
+      ```sql
+      -- Ensure archive_mode is off (if not using replication)
+      SHOW archive_mode;
 
-  -- If off, pg_wal.old can be safely deleted
-  -- Stop PostgreSQL first!
-  ```
+      -- If off, pg_wal.old can be safely deleted
+      -- Stop PostgreSQL first!
+      ```
 
-  ```powershell
-  # Windows - Stop service, then delete
-  net stop postgresql-x64-15
-  Remove-Item "C:\Program Files\PostgreSQL\15\data\pg_wal.old" -Recurse -Force
-  net start postgresql-x64-15
-  ```
+      ```powershell
+      # Windows - Stop service, then delete
+      net stop postgresql-x64-15
+      Remove-Item "C:\Program Files\PostgreSQL\15\data\pg_wal.old" -Recurse -Force
+      net start postgresql-x64-15
+      ```
 
-  **Expected savings:** 5-10 GB
+      **Expected savings:** 5-10 GB
 
-  ## SOLUTION 4: VACUUM and REINDEX
+      ## SOLUTION 4: VACUUM and REINDEX
 
-  **Problem:** Table and index bloat consuming space
+      **Problem:** Table and index bloat consuming space
 
-  **Check bloat:**
-  ```sql
-  -- Approximate bloat estimation
-  SELECT schemaname, tablename,
+      **Check bloat:**
+      ```sql
+      -- Approximate bloat estimation
+      SELECT schemaname, tablename,
          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
          pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) as table_size
-  FROM pg_tables
-  WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
-  LIMIT 10;
-  ```
+      FROM pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+      LIMIT 10;
+      ```
 
-  **Fix:**
-  ```sql
-  -- REINDEX large bloaty indexes
-  REINDEX INDEX CONCURRENTLY schema_name.index_name;
+      **Fix:**
+      ```sql
+      -- REINDEX large bloaty indexes
+      REINDEX INDEX CONCURRENTLY schema_name.index_name;
 
-  -- VACUUM FULL (requires exclusive lock, use carefully)
-  VACUUM FULL schema_name.table_name;
+      -- VACUUM FULL (requires exclusive lock, use carefully)
+      VACUUM FULL schema_name.table_name;
 
-  -- Or regular VACUUM (safer, can run concurrently)
-  VACUUM ANALYZE schema_name.table_name;
-  ```
+      -- Or regular VACUUM (safer, can run concurrently)
+      VACUUM ANALYZE schema_name.table_name;
+      ```
 
-  **Expected savings:** 10-30% of bloat
+      **Expected savings:** 10-30% of bloat
 
-  ## SOLUTION 5: Move Tables to Different Tablespaces
+      ## SOLUTION 5: Move Tables to Different Tablespaces
 
-  **Problem:** Large tables on system disk (C:\)
+      **Problem:** Large tables on system disk (C:\)
 
-  **Identify:**
-  ```sql
-  SELECT schemaname, tablename,
+      **Identify:**
+      ```sql
+      SELECT schemaname, tablename,
          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
          spcname
-  FROM pg_tables t
-  LEFT JOIN pg_class c ON t.tablename::name = c.relname
-  LEFT JOIN pg_tablespace s ON c.reltablespace = s.oid
-  WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-  ```
+      FROM pg_tables t
+      LEFT JOIN pg_class c ON t.tablename::name = c.relname
+      LEFT JOIN pg_tablespace s ON c.reltablespace = s.oid
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+      ```
 
-  **Fix:**
-  ```sql
-  -- Move table to different tablespace
-  ALTER TABLE schema_name.large_table SET TABLESPACE new_tablespace;
+      **Fix:**
+      ```sql
+      -- Move table to different tablespace
+      ALTER TABLE schema_name.large_table SET TABLESPACE new_tablespace;
 
-  -- Move indexes too
-  ALTER INDEX schema_name.index_name SET TABLESPACE new_tablespace;
-  ```
+      -- Move indexes too
+      ALTER INDEX schema_name.index_name SET TABLESPACE new_tablespace;
+      ```
 
-  **Create tablespace first:**
-  ```sql
-  CREATE TABLESPACE fast_storage LOCATION 'E:\pg_data';
-  ```
+      **Create tablespace first:**
+      ```sql
+      CREATE TABLESPACE fast_storage LOCATION 'E:\pg_data';
+      ```
 
-expected_improvements:
-  disk_space_reclaimed: "50-200GB+ typical"
-  performance_improvement: "Reduced disk I/O, faster queries"
-  log_overhead: "95% reduction in log file generation"
+      expected_improvements:
+        disk_space_reclaimed: "50-200GB+ typical"
+        performance_improvement: "Reduced disk I/O, faster queries"
+        log_overhead: "95% reduction in log file generation"
 
-validation: |
-  1. Check disk space before and after:
-     -- Windows
-     Get-PSDrive C | Select-Object Used, Free
+      validation: |
+        1. Check disk space before and after:
+           -- Windows
+           Get-PSDrive C | Select-Object Used, Free
 
-  2. Verify no broken dependencies after dropping indexes:
-     SELECT * FROM pg_depend WHERE objid = 'table_name'::regclass;
+        2. Verify no broken dependencies after dropping indexes:
+           SELECT * FROM pg_depend WHERE objid = 'table_name'::regclass;
 
-  3. Confirm VACUUM results:
-     SELECT pg_size_pretty(pg_total_relation_size('schema_name.table_name'))
-     BEFORE and AFTER
+        3. Confirm VACUUM results:
+           SELECT pg_size_pretty(pg_total_relation_size('schema_name.table_name'))
+           BEFORE and AFTER
 
-rollout_plan: |
-  Execution order (safest first):
-  1. Clean up old logs (safest, no database changes)
-  2. Remove old WAL files (stop service required)
-  3. Drop truly unused indexes (verify first!)
-  4. Move tables to different tablespaces (requires disk space)
-  5. REINDEX and VACUUM (maintenance window recommended)
+      rollout_plan: |
+        Execution order (safest first):
+        1. Clean up old logs (safest, no database changes)
+        2. Remove old WAL files (stop service required)
+        3. Drop truly unused indexes (verify first!)
+        4. Move tables to different tablespaces (requires disk space)
+        5. REINDEX and VACUUM (maintenance window recommended)
 
-caveats:
-  - "NEVER drop indexes without checking usage statistics"
-  - "Always run VACUUM ANALYZE after major cleanup"
-  - "Stop service before deleting pg_wal.old"
-  - "Test on staging environment first"
-  - "Have backup before dropping any objects"
+      caveats:
+        - "NEVER drop indexes without checking usage statistics"
+        - "Always run VACUUM ANALYZE after major cleanup"
+        - "Stop service before deleting pg_wal.old"
+        - "Test on staging environment first"
+        - "Have backup before dropping any objects"
 
-sources:
-  - title: "PostgreSQL Documentation - Disk Space"
-    url: "https://www.postgresql.org/docs/current/disk-space.html"
-  - title: "PostgreSQL Wiki - Database Bloat"
-    url: "https://wiki.postgresql.org/wiki/Database_Bloat"
-  - title: "Internal Disk Space Analysis Report"
-    url: "https://github.com/ozand/shared-knowledge-base/blob/master/postgresql/errors/disk-space-issues.md"
+      sources:
+        - title: "PostgreSQL Documentation - Disk Space"
+          url: "https://www.postgresql.org/docs/current/disk-space.html"
+        - title: "PostgreSQL Wiki - Database Bloat"
+          url: "https://wiki.postgresql.org/wiki/Database_Bloat"
+        - title: "Internal Disk Space Analysis Report"
+          url: "https://github.com/ozand/shared-knowledge-base/blob/master/postgresql/errors/disk-space-issues.md"
 
-examples:
-  - description: "Log Cleanup - 81GB Saved"
-    problem:
-      symptom: "Disk C:\ 96.2% full (only 35GB free)"
-      diagnosis: "log_rotation_size = 10MB, creating 6,311 files"
-      log_size: "81 GB of logs in 2-3 days"
+      examples:
+        - description: "Log Cleanup - 81GB Saved"
+          problem:
+            symptom: "Disk C:\ 96.2% full (only 35GB free)"
+            diagnosis: "log_rotation_size = 10MB, creating 6,311 files"
+            log_size: "81 GB of logs in 2-3 days"
 
-    solution:
-      action: "Changed log_rotation_size from 10MB to 1GB"
-      cleanup: "Deleted old logs, freed 75-80 GB"
-      configuration: |
-        ALTER SYSTEM SET log_rotation_size = '1GB';
-        ALTER SYSTEM SET log_min_duration_statement = 5000;
-        SELECT pg_reload_conf();
+          solution:
+            action: "Changed log_rotation_size from 10MB to 1GB"
+            cleanup: "Deleted old logs, freed 75-80 GB"
+            configuration: |
+              ALTER SYSTEM SET log_rotation_size = '1GB';
+              ALTER SYSTEM SET log_min_duration_statement = 5000;
+              SELECT pg_reload_conf();
 
-    result: |
-      Log generation reduced by ~95%
-      Disk space freed: 75-80 GB
-      Disk usage: 96.2% → 65%
-      New daily log growth: ~2-3 GB (vs 35 GB)
+          result: |
+            Log generation reduced by ~95%
+            Disk space freed: 75-80 GB
+            Disk usage: 96.2% → 65%
+            New daily log growth: ~2-3 GB (vs 35 GB)
 
-  - description: "Index Cleanup - 15GB Saved"
-    problem:
-      diagnosis: "links.links_id_idx index at 15GB"
-      analysis: "Duplicate of PRIMARY KEY on id column"
+        - description: "Index Cleanup - 15GB Saved"
+          problem:
+            diagnosis: "links.links_id_idx index at 15GB"
+            analysis: "Duplicate of PRIMARY KEY on id column"
 
-    solution:
-      verification: |
-        SELECT conname FROM pg_constraint
-        WHERE conindid = 'links.links_id_idx'::regclass;
-        -- Returns 0 rows → Not a constraint
+          solution:
+            verification: |
+              SELECT conname FROM pg_constraint
+              WHERE conindid = 'links.links_id_idx'::regclass;
+              -- Returns 0 rows → Not a constraint
 
-        SELECT indexdef FROM pg_indexes
-        WHERE indexname = 'links_id_idx';
-        -- Shows CREATE INDEX on id column
+              SELECT indexdef FROM pg_indexes
+              WHERE indexname = 'links_id_idx';
+              -- Shows CREATE INDEX on id column
 
-      action: "DROP INDEX CONCURRENTLY links.links_id_idx;"
+            action: "DROP INDEX CONCURRENTLY links.links_id_idx;"
 
-    result: "15 GB freed, no functionality lost"
+          result: "15 GB freed, no functionality lost"
 
-tested:
-  system: "Windows Server, PostgreSQL 15.11"
-  scenario: "Disk C:\ 96.2% full (35GB free of 998GB)"
-  actions_taken:
-    - "Cleaned up 81 GB of excessive logs"
-    - "Dropped 15GB duplicate index"
-    - "Removed 8.1 GB old WAL files"
-  result: |
-    Total space freed: ~105 GB
-    Disk usage: 96.2% → 83.5%
-    Performance: Improved (less disk I/O)
-    Log overhead: Reduced 95%
-  date: "2026-01-04"
-  status: "tested"
+      tested:
+        system: "Windows Server, PostgreSQL 15.11"
+        scenario: "Disk C:\ 96.2% full (35GB free of 998GB)"
+        actions_taken:
+          - "Cleaned up 81 GB of excessive logs"
+          - "Dropped 15GB duplicate index"
+          - "Removed 8.1 GB old WAL files"
+        result: |
+          Total space freed: ~105 GB
+          Disk usage: 96.2% → 83.5%
+          Performance: Improved (less disk I/O)
+          Log overhead: Reduced 95%
+        date: "2026-01-04"
+        status: "tested"
 
-caveats:
-  - "Always verify index usage before dropping (idx_scan > 0)"
-  - "Some indexes may look unused but are needed for constraints"
-  - "Stop service before deleting pg_wal.old"
-  - "Test in staging before production"
-  - "Monitor for 24-48 hours after major cleanup"
+      caveats:
+        - "Always verify index usage before dropping (idx_scan > 0)"
+        - "Some indexes may look unused but are needed for constraints"
+        - "Stop service before deleting pg_wal.old"
+        - "Test in staging before production"
+        - "Monitor for 24-48 hours after major cleanup"
 
-related_patterns:
-  - id: "pg-perf-001"
-    title: "PostgreSQL 18 Performance Configuration"
-  - id: "pg-vacuum-001"
-    title: "VACUUM and Autovacuum Tuning"
-  - id: "pg-index-001"
-    title: "Index Optimization Strategies"
+      related_patterns:
+        - id: "pg-perf-001"
+          title: "PostgreSQL 18 Performance Configuration"
+        - id: "pg-vacuum-001"
+          title: "VACUUM and Autovacuum Tuning"
+        - id: "pg-index-001"
+          title: "Index Optimization Strategies"
 
-languages: [en, ru]
+      languages: [en, ru]

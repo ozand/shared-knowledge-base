@@ -43,150 +43,7 @@ patterns:
       4. **Consolidation**: One comprehensive skill > 10 micro-skills
       5. **Error Handling**: Scripts must fail gracefully with helpful messages
 
-    implementation:
-      yaml_frontmatter:
-        required_fields: |
-          Every SKILL.md MUST start with YAML frontmatter:
-
-          ```yaml
-          ---
-          name: testing-skill
-          description: |
-            Generates unit tests matching project patterns.
-
-            Triggers when:
-            - User asks for "test", "write tests", "add coverage"
-            - Testing is part of code review workflow
-            - Part of deployment validation
-
-            Outputs complete test files with examples,
-            edge cases, and assertions following project standards.
-
-          version: 1.0.0
-          created: 2025-01-06
-          ---
-          ```
-
-        naming_rules:
-          - "name: lowercase, kebab-case, ≤64 chars, unique"
-          - "description: Plain text (not markdown), ≤1024 chars"
-          - "CRITICAL: Description must explain WHEN to use"
-          - "Use bullet points in description (helps Claude)"
-
-        description_examples:
-          bad: "description: \"Testing skill\""
-          problem: "Too vague, Claude doesn't know when to trigger"
-
-          good: |
-            description: |
-              Generates unit tests for functions using Vitest, matching
-              project coverage targets and assertion patterns.
-
-              Triggers when:
-              - User asks to "write tests" or "generate tests"
-              - Testing function or API endpoint
-              - Part of code review or deployment validation
-
-              Outputs complete test files with 80%+ coverage.
-
-      skill_structure:
-        recommended_outline: |
-          ```markdown
-          ---
-          name: skill-name
-          description: Specific description of when to use
-          ---
-
-          # Skill Title
-
-          ## When to Use This Skill
-          - User asks to "X", "Y", "Z"
-          - Part of workflow W
-          - When condition C is met
-
-          ## What This Skill Does
-          1. Step one
-          2. Step two
-          3. Step three
-
-          ## Key Instructions
-
-          ### Step 1: Action
-          - Detail 1
-          - Detail 2
-          - See @resources/patterns.md for patterns
-
-          ### Step 2: Action
-          - Detail 1
-          - Detail 2
-          - Use @resources/template.ts
-
-          ## Common Patterns
-
-          ### Pattern: Name
-          [Brief example]
-          See @resources/pattern-name.md for more
-
-          ## Tools Used
-          - **Read**: For reading source files
-          - **Write**: For creating new files
-
-          ## Important Notes
-          - Critical note 1
-          - Critical note 2
-          - Refer to project CLAUDE.md: @../../CLAUDE.md
-
-          ## Examples
-          See @resources/examples/ for complete examples
-          ```
-
-        size_guidelines:
-          - "SKILL.md: 200-500 lines max (prefer 300)"
-          - "resources/patterns.md: 100-500 lines"
-          - "resources/examples/: 1-20 files"
-          - "Full skill folder: Typically 500KB-5MB"
-          - "If >10MB: Refactor!"
-
-      progressive_disclosure:
-        architecture: |
-          Load information in layers:
-
-          ```
-          Layer 1: Metadata (ALWAYS loaded)
-          ├─ name: "testing-skill"
-          ├─ description: "Generates unit tests..."
-          └─ Size: ~30-50 tokens per skill
-
-          Layer 2: SKILL.md (loaded when TRIGGERED)
-          ├─ Main instructions (200-500 lines)
-          ├─ Brief examples (1-2 per pattern)
-          └─ Size: ~500-2000 tokens
-
-          Layer 3: Resources (loaded ON DEMAND)
-          ├─ @resources/patterns.md (detailed patterns)
-          ├─ @resources/examples/ (full examples)
-          ├─ @resources/template.ts (templates)
-          └─ Size: Depends on usage
-          ```
-
-        implementation: |
-          SKILL.md (300 lines - core only)
-          ├── When to use
-          ├── Key instructions
-          ├── Brief examples
-          └── @references to resources
-
-          resources/
-          ├── patterns.md (200 lines - complete patterns)
-          ├── examples/
-          │   ├── simple.ts (50 lines)
-          │   └── complex.ts (150 lines)
-          ├── assertions.md (100 lines)
-          └── template.ts (30 lines)
-
-          IMPORTANT: All @references are WITHIN skill directory
-          WRONG: @../../../standards/testing.md (goes up!)
-          RIGHT: @resources/patterns.md or @./resources/patterns.md
+    implementation: "@references/SKILL-DESIGN-001-implementation.md"
 
     best_practices:
       - practice: "Use evaluation-driven development"
@@ -223,253 +80,9 @@ patterns:
         guideline: "Use semantic versioning: 1.0.0 → 1.0.1 (bugs), 1.1.0 (features), 2.0.0 (breaking)"
         reason: "Track changes, enable rollbacks, communicate impact."
 
-    anti_patterns:
-      - pattern: "Vague description"
-        wrong: |
-          description: "Testing helper"
-        consequence: "Skill never triggers when needed. Claude doesn't understand when to use it."
-        correct: |
-          description: |
-            Generates unit tests with 80%+ coverage using Vitest.
+    anti_patterns: "@references/SKILL-DESIGN-001-anti-patterns.md"
 
-            Triggers when:
-            - User asks to "write tests" or "generate tests"
-            - Testing function or component
-            - Part of code review process
-
-            Outputs complete test files with edge cases and assertions.
-
-      - pattern: "Monolithic SKILL.md"
-        wrong: "SKILL.md with 2000+ lines including all patterns, examples, docs"
-        consequence: "Loads everything every time. Wastes 1500+ tokens. Slow. Hard to update."
-        correct: |
-          SKILL.md (300 lines - core instructions + @references)
-          resources/
-          ├── patterns.md (all patterns, loaded on demand)
-          ├── examples/ (full examples, loaded on demand)
-          └── template.ts (template, loaded on demand)
-
-      - pattern: "Too many micro-skills"
-        wrong: "10 skills for one domain (unit-test-skill, integration-test-skill, e2e-skill...)"
-        consequence: "Claude confused by choice. 300+ tokens metadata. Hard to manage."
-        correct: |
-          One testing-skill/
-          ├── SKILL.md (unified instructions)
-          └── resources/
-              ├── patterns-unit.md
-              ├── patterns-integration.md
-              └── patterns-e2e.md
-
-      - pattern: "Scripts without error handling"
-        wrong: |
-          def analyze_csv(path):
-              df = pd.read_csv(path)  # Crashes if file missing!
-              return df.describe()
-        consequence: "Script crashes. Claude doesn't know why. Bad user experience."
-        correct: |
-          def analyze_csv(path):
-              try:
-                  if not os.path.exists(path):
-                      print(f"ERROR: File not found: {path}")
-                      return None
-                  df = pd.read_csv(path)
-                  if df.empty:
-                      print(f"ERROR: CSV is empty: {path}")
-                      return None
-                  return df.describe()
-              except Exception as e:
-                  print(f"ERROR: Failed to analyze CSV: {e}")
-                  return None
-
-      - pattern: "Deep nested references"
-        wrong: |
-          SKILL.md
-            └─ @resources/main.md
-                └─ @../standards/testing.md
-                    └─ @../../team/guidelines.md
-        consequence: "Claude loses context. Files not found. Hard to track."
-        correct: |
-          SKILL.md
-            ├─ @resources/patterns.md (direct)
-            ├─ @resources/examples.md (direct)
-            └─ Reference: @../../CLAUDE.md (max 1 level up)
-
-    real_world_examples:
-      example_1_react_testing_skill:
-        scenario: "Skill for generating React component tests"
-
-        good_design: |
-          ---
-          name: react-testing-skill
-          description: |
-            Generates tests for React components using React Testing Library.
-            Covers user interactions, accessibility, and edge cases.
-            Achieves 80%+ coverage with RTL best practices.
-
-            Triggers when:
-            - User asks to "test this component" or "generate tests for Button"
-            - Need React Testing Library patterns
-            - Must verify accessibility in tests
-          ---
-
-          # React Testing Skill
-
-          ## When to Use
-          - User asks: "Test this component", "Generate tests for Button"
-          - Need React Testing Library patterns
-          - Must verify accessibility
-
-          ## Key Principles
-          1. Query by user-facing attributes (role, label)
-          2. NOT implementation details (class names, state)
-          3. Test BEHAVIOR not internals
-          4. Always include accessibility tests
-
-          ## Common Patterns
-          See @resources/patterns/ for:
-          - Form component testing
-          - Async interaction testing
-          - Error state testing
-          - Accessibility testing
-
-          ## Tools
-          - **Read**: Read component file
-          - **Write**: Create test file
-          - **Execute**: Run tests (optional)
-
-        key_points:
-          - Specific description explains when to trigger
-          - SKILL.md is lean (references to resources)
-          - Clear principles and patterns
-          - Tools documented
-
-      example_2_code_review_skill:
-        scenario: "Skill for reviewing pull requests"
-
-        good_design: |
-          ---
-          name: code-review-skill
-          description: |
-            Reviews pull requests against architecture, performance,
-            and security standards. Provides specific feedback with
-            references to team guidelines.
-
-            Triggers when:
-            - User asks to "review this PR" or "check #1234"
-            - Pull request needs validation
-            - Code review workflow initiated
-          ---
-
-          # Code Review Skill
-
-          ## What This Reviews
-          1. Architecture compliance (@../../.claude/standards/architecture.md)
-          2. Performance implications
-          3. Security vulnerabilities
-          4. Code clarity and maintainability
-
-          ## Review Process
-
-          ### Step 1: Check Architecture
-          ```bash
-          grep -rn "import.*from" --include="*.ts" \
-            "$FILES_CHANGED" > /tmp/imports.txt
-          ```
-          Compare against @resources/architecture-patterns.md
-
-          ### Step 2: Check Performance
-          - Unnecessary re-renders in React?
-          - N+1 query patterns?
-          - Inefficient algorithms?
-          See @resources/performance-checklist.md
-
-          ### Step 3: Check Security
-          ```bash
-          grep -rn "eval\|exec\|innerHTML" "$FILES_CHANGED"
-          ```
-          See @resources/security-checklist.md
-
-          ### Step 4: Generate Report
-          Creates markdown review with:
-          - Summary (PASS/CONCERN/FAIL)
-          - Issues grouped by severity
-          - Specific code snippets
-          - Actionable suggestions
-
-        key_points:
-          - Clear trigger conditions
-          - Step-by-step process
-          - References to team standards
-          - Scripts for automation
-          - Checklist resources
-
-      example_3_csv_analyzer_skill:
-        scenario: "Skill for analyzing CSV files"
-
-        good_design: |
-          ---
-          name: csv-analyzer-skill
-          description: |
-            Analyzes CSV files: generates statistics, identifies
-            patterns, creates visualizations. Handles large files
-            (10K+ rows) efficiently using Python pandas.
-
-            Triggers when:
-            - User asks to "analyze this CSV" or "summarize data"
-            - CSV file needs statistics or visualization
-            - Data exploration required
-          ---
-
-          # CSV Analyzer Skill
-
-          ## What This Skill Does
-          1. Reads CSV file using Python
-          2. Generates descriptive statistics
-          3. Creates summary report
-          4. Produces visualizations (if requested)
-
-          ## Step-by-Step Instructions
-
-          ### 1. Validate Input
-          ```bash
-          python scripts/validate_csv.py "$FILE_PATH"
-          ```
-          If validation fails, inform user and ask for correction.
-
-          ### 2. Generate Statistics
-          ```bash
-          python scripts/generate_stats.py "$FILE_PATH" --format json
-          ```
-
-          ### 3. Create Report
-          Parse JSON and create human-readable markdown report
-
-          ### 4. Optional: Generate Visualizations
-          If user asks for charts:
-          ```bash
-          python scripts/visualize.py \
-            --input "$FILE_PATH" \
-            --output report.png \
-            --type histogram
-          ```
-
-          ## Important Notes
-          - Max file size: 500MB (streams larger files)
-          - Script handles UTF-8 encoding issues
-          - Missing values noted but don't fail analysis
-          - Error messages in console output
-
-          ## Tools Required
-          - **Read**: For input CSV files
-          - **Execute**: Python script execution
-          - **Write**: For output report/charts
-
-        key_points:
-          - Error handling in validation script
-          - Step-by-step workflow
-          - Optional features clearly marked
-          - File size limits documented
-          - Tools listed
+    real_world_examples: "@references/SKILL-DESIGN-001-examples.md"
 
     verification:
       trigger_check:
@@ -562,6 +175,34 @@ patterns:
         - "Clearer instructions (well-structured)"
         - "Fewer errors (error handling in scripts)"
 
+    prevention:
+      - prevention: "Design skills as single-purpose tools with clear scope"
+        reason: "Multi-purpose skills confuse Claude, harder to match, less reliable"
+        how: "One skill = one responsibility. Split complex skills into multiple focused skills"
+      - prevention: "Include progressive disclosure for large skills (>300 lines)"
+        reason: "Claude loads entire skill, large skills waste tokens and slow execution"
+        how: "Add @references tag: 'Load detailed docs on demand from references/'"
+      - prevention: "Test skill invocations with various prompts before integrating"
+        reason: "Untested skills may fail in production, frustrate users"
+        how: "Test: invoke skill with 5 different prompts, verify correct execution each time"
+      - prevention: "Use skill-rules.json for auto-invocation, not manual calling"
+        reason: "Auto-invocation faster, more reliable, better user experience"
+        how: "Configure trigger conditions in skill-rules.json instead of manual /skill-name"
+      - prevention: "Consolidate similar skills instead of creating multiple variations"
+        reason: "Too many similar skills confuse matching, increase maintenance burden"
+        how: "Merge 3-5 similar skills into one with parameters or sub-commands"
+      - prevention: "Document skill inputs, outputs, and side effects explicitly"
+        reason: "Claude needs to know what skill does to use it correctly"
+        how: "Add to skill description: 'Inputs: file_path. Outputs: validation_report. Side effects: none'"
+      - prevention: "Add error handling and validation in skill scripts"
+        reason: "Unclear error messages waste time debugging, poor user experience"
+        how: "Wrap in try/except, validate inputs, provide actionable error messages"
+      - prevention: "Version skills and track breaking changes"
+        reason: "Teams need to know when skill API changes, prevents breaking workflows"
+        how: "Semantic versioning: MAJOR.MINOR.PATCH, document breaking changes in changelog"
+      - prevention: "Share reusable skills across projects via Shared KB"
+        reason: "Duplication causes drift, best practices lost in isolated projects"
+        how: "Contribute universal skills to Shared KB, import as submodules in projects"
     related_patterns:
       - PROGRESSIVE-DISCLOSURE-001 (Layered information loading)
       - AGENT-TASK-TRACKING-001 (Task management in skills)

@@ -148,191 +148,8 @@ patterns:
       └────────────────────────────────────────────────────────┘
 
       '
-  evaluation_framework:
-    quality_assessment:
-      criteria:
-      - criterion: Technical correctness
-        weight: High
-        checks:
-        - Code works as intended
-        - No bugs or errors
-        - Follows best practices
-      - criterion: Completeness
-        weight: High
-        checks:
-        - Addresses full problem
-        - Includes examples
-        - Has documentation
-      - criterion: Testing
-        weight: Medium
-        checks:
-        - Tested in real environment
-        - Includes test cases
-        - Verification provided
-      - criterion: Documentation
-        weight: Medium
-        checks:
-        - Clear problem statement
-        - Solution explained
-        - Examples provided
-      scoring:
-        excellent: ⭐⭐⭐⭐⭐ (5/5) - All criteria met, production-ready
-        good: ⭐⭐⭐⭐ (4/5) - Most criteria met, minor improvements needed
-        medium: ⭐⭐⭐ (3/5) - Some criteria met, needs work
-        low: ⭐⭐ (2/5) - Few criteria met, significant issues
-        poor: ⭐ (1/5) - Does not meet standards
-    process_assessment:
-      criteria:
-      - criterion: GitHub issue created
-        weight: Critical
-        correct: Agent creates GitHub issue first
-        incorrect: Agent creates PR directly
-      - criterion: Attribution format
-        weight: High
-        correct: Follows GITHUB-ATTRIB-001 format
-        incorrect: Missing attribution or incomplete
-      - criterion: Labels applied
-        weight: Medium
-        correct: Proper labels (agent:*, project:*, etc.)
-        incorrect: No labels or incorrect labels
-      - criterion: Role compliance
-        weight: Critical
-        correct: Project agent does not modify KB directly
-        incorrect: Project agent commits to KB or creates PR
-      decision_rules:
-        rule_1: ANY critical criterion failed → Process = Incorrect (❌)
-        rule_2: High/High/Medium criteria passed → Process = Correct (✅)
-        rule_3: When in doubt, lean toward correcting process
-  implementation_examples:
-    example_1:
-      title: 'Issue #8 - 5 Universal Patterns from PARSER'
-      scenario: 'Agent created PR #4 directly (process violation)'
-      quality_evaluation:
-        technical_correctness: ⭐⭐⭐⭐⭐ (5/5)
-        completeness: ⭐⭐⭐⭐⭐ (5/5)
-        testing: ⭐⭐⭐⭐⭐ (5/5)
-        documentation: ⭐⭐⭐⭐⭐ (5/5)
-        overall: ⭐⭐⭐⭐⭐ (5/5) - EXCELLENT
-      process_evaluation:
-        github_issue: ❌ Agent created PR directly
-        attribution: ❌ Missing in PR
-        labels: ❌ Not applicable (was PR, not issue)
-        role_compliance: ❌ Violated AGENT-ROLE-SEPARATION-001
-        overall: ❌ INCORRECT PROCESS
-      curator_action: '1. Closed PR #4 with explanation
-
-        2. Created Issue #8 with proper GITHUB-ATTRIB-001 format
-
-        3. Preserved all 5 patterns (excellent content!)
-
-        4. Requested YAML fixes (unescaped colons)
-
-        5. Will merge after fixes applied
-
-        '
-      rationale: 'Content quality: ⭐⭐⭐⭐⭐
-
-        Process quality: ❌
-
-
-        Action: CLOSE + RECREATE
-
-        - Preserve excellent patterns
-
-        - Enforce AGENT-ROLE-SEPARATION-001
-
-        - Teach correct workflow
-
-        - Add proper attribution
-
-        '
-      outcome: Patterns will be merged after YAML fixes
-    example_2:
-      title: 'Issue #9 - kb_config.py Module'
-      scenario: 'Agent created PR #7 directly (process violation)'
-      quality_evaluation:
-        technical_correctness: ⭐⭐⭐⭐⭐ (5/5)
-        completeness: ⭐⭐⭐⭐⭐ (5/5)
-        testing: ⭐⭐⭐⭐⭐ (5/5)
-        documentation: ⭐⭐⭐⭐⭐ (5/5)
-        overall: ⭐⭐⭐⭐⭐ (5/5) - EXCELLENT
-      process_evaluation:
-        github_issue: ❌ Agent created PR directly
-        attribution: ❌ Missing in PR
-        labels: ❌ Not applicable (was PR, not issue)
-        role_compliance: ❌ Violated AGENT-ROLE-SEPARATION-001
-        overall: ❌ INCORRECT PROCESS
-      curator_action: '1. Closed PR #7 with explanation
-
-        2. Created Issue #9 with proper GITHUB-ATTRIB-001 format
-
-        3. Downloaded and tested kb_config.py module
-
-        4. All v5.1 features now working
-
-        5. Merged immediately (commit 347ecea)
-
-        '
-      rationale: 'Content quality: ⭐⭐⭐⭐⭐
-
-        Process quality: ❌
-
-
-        Action: CLOSE + RECREATE + MERGE
-
-        - Critical bug fix (unblocks v5.1 features)
-
-        - Well-tested (all tools working)
-
-        - Worth curator effort to fix process
-
-        - Merged same day
-
-        '
-      outcome: Merged (commit 347ecea)
-    example_3:
-      title: 'Issue #10 - Indexing Bug Fix'
-      scenario: Proper issue created by user
-      quality_evaluation:
-        technical_correctness: ⭐⭐⭐⭐⭐ (5/5)
-        completeness: ⭐⭐⭐⭐⭐ (5/5)
-        testing: ⭐⭐⭐⭐⭐ (5/5)
-        documentation: ⭐⭐⭐⭐⭐ (5/5)
-        overall: ⭐⭐⭐⭐⭐ (5/5) - EXCELLENT
-      process_evaluation:
-        github_issue: ✅ Proper issue created
-        attribution: ✅ User contribution (not agent)
-        labels: ✅ Properly labeled
-        role_compliance: ✅ No violation
-        overall: ✅ CORRECT PROCESS
-      curator_action: '1. Investigated root cause (KBEntry.from_yaml())
-
-        2. Fixed code to support both ''errors'' and ''patterns'' keys
-
-        3. Rebuilt index (47 → 84 entries!)
-
-        4. Tested thoroughly
-
-        5. Merged (commit ea341d3)
-
-        '
-      rationale: 'Content quality: ⭐⭐⭐⭐⭐
-
-        Process quality: ✅
-
-
-        Action: MERGE
-
-        - Perfect contribution
-
-        - Critical fix (+79% entries indexed)
-
-        - Proper workflow followed
-
-        - Immediate merge
-
-        '
-      outcome: Merged (commit ea341d3)
+  evaluation_framework: "@references/QUALITY-PROCESS-001-evaluation-framework.md"
+  implementation_examples: "@references/QUALITY-PROCESS-001-examples.md"
   best_practices:
     for_curators:
     - practice_1: Evaluate quality and process separately
@@ -430,134 +247,7 @@ patterns:
 
         '
       why_wrong: Agents can't learn, confusion persists
-  communication_templates:
-    closing_pr_with_bad_process:
-      subject: '⚠️ PR Closed: Role Violation'
-      template: 'This PR has been closed per AGENT-ROLE-SEPARATION-001.
-
-
-        **Role Violation:** Project Agent created PR directly to shared-knowledge-base,
-
-        bypassing Curator review process.
-
-
-        **Content Quality:** ⭐⭐⭐⭐⭐ (Excellent!)
-
-        **Process Quality:** ❌ (Wrong Workflow)
-
-
-        The issue is with the PROCESS, not the CONTENT.
-
-
-        **Correct Workflow:**
-
-        1. Create GitHub issue with GITHUB-ATTRIB-001 format
-
-        2. Apply labels: agent:*, project:*, agent-type:*
-
-        3. Wait for Curator review (24h SLA)
-
-        4. Curator validates, enhances, commits to KB
-
-
-        **Next Steps:**
-
-        - I''ve created Issue #N with proper attribution
-
-        - Your excellent content is preserved
-
-        - After [minor fixes applied], will merge to KB
-
-
-        See AGENT-HANDOFF-001 for full workflow details.
-
-        '
-    requesting_changes:
-      subject: '⚠️ Review: Changes Requested'
-      template: 'Thank you for your contribution to Shared KB!
-
-
-        **Quality Assessment:** ⭐⭐⭐ (3/5) - Good start, needs improvements
-
-
-        **What''s Good:**
-
-        - ✅ Proper GitHub issue workflow
-
-        - ✅ Correct attribution format
-
-        - ✅ Clear problem statement
-
-
-        **What Needs Improvement:**
-
-        - ⚠️ [Specific issue 1]
-
-        - ⚠️ [Specific issue 2]
-
-        - ⚠️ [Specific issue 3]
-
-
-        **Please:**
-
-        1. Address the issues above
-
-        2. Add [missing information]
-
-        3. Test in [environment]
-
-
-        **References:**
-
-        - See SHARED-KB-FORMAT-001 for YAML structure
-
-        - See YAML-001 for common syntax errors
-
-        - Use `python tools/kb.py validate <file>` before updating
-
-        '
-    approving_and_merging:
-      subject: '✅ Merged: [Pattern Title]'
-      template: 'Excellent contribution! Merged to Shared KB.
-
-
-        **Quality:** ⭐⭐⭐⭐⭐ (5/5)
-
-        **Process:** ✅ Correct workflow
-
-
-        **What Made This Excellent:**
-
-        - ✅ Proper GitHub issue with GITHUB-ATTRIB-001 format
-
-        - ✅ Comprehensive, production-tested content
-
-        - ✅ Clear examples and anti-patterns
-
-        - ✅ Well-validated YAML
-
-
-        **Integration:**
-
-        - Commit: [commit hash]
-
-        - Files: [list of files]
-
-        - Entries added: [number]
-
-        - Categories updated: [list]
-
-
-        **Impact:**
-
-        - [Describe impact, e.g., "+37 entries indexed", "Unblocks v5.1 features"]
-
-
-        Thank you for following AGENT-HANDOFF-001 workflow!
-
-        Other agents can now learn from this contribution.
-
-        '
+  communication_templates: "@references/QUALITY-PROCESS-001-communication-templates.md"
   related_patterns:
   - id: PR-REVIEW-001
     title: Pull Request Review Process
@@ -615,6 +305,31 @@ patterns:
   - lesson: Decision matrix provides consistent, fair evaluation
     benefit: Predictable outcomes, clear rationale
     tool: 4-quadrant matrix (quality × process)
+  prevention:
+    - prevention: "Separate content quality from process quality in evaluation"
+      reason: "Excellent content can come from bad process, don't reject good content due to process issues"
+      how: "Use 4-quadrant matrix: quality (high/low) × process (good/bad)"
+    - prevention: "Recreate PRs with correct workflow instead of rejecting good content"
+      reason: "Preserves high-quality content while enforcing proper process"
+      how: "If ⭐⭐⭐⭐⭐ content but bad process: close PR, recreate with AGENT-HANDOFF-001 workflow"
+    - prevention: "Provide educational feedback instead of punitive rejection"
+      reason: "Agents learn correct workflow, feel encouraged to contribute"
+      how: "Comment: 'Great content! Next time, follow AGENT-HANDOFF-001 for proper attribution'"
+    - prevention: "Set clear quality thresholds (75/100) for Shared KB entry"
+      reason: "Prevents low-quality entries from polluting knowledge base"
+      how: "Run: python tools/kb.py validate <file> and check quality_score >= 75"
+    - prevention: "Document all Curator decisions with rationale"
+      reason: "Future contributors understand evaluation criteria, consistency maintained"
+      how: "Comment templates: 'ACCEPT because: [rationale]' or 'REQUEST CHANGES: [specific issues]'"
+    - prevention: "Search for duplicates before accepting new patterns"
+      reason: "Prevents KB bloat, maintains consistency, avoids redundancy"
+      how: "Search by pattern name, category, problem, solution keywords"
+    - prevention: "Validate YAML syntax before beginning detailed review"
+      reason: "Spends time on review only if file is structurally valid"
+      how: "Run: python tools/kb.py validate <file> as first step in review process"
+    - prevention: "Review PRs within 24-48 hours to maintain contributor momentum"
+      reason: "Fast feedback encourages contributions, prevents stale PRs"
+      how: "Daily review of new PRs, prioritize by submission date"
   references:
   - title: CURATOR_ACTION_REPORT.md - Full curator session analysis
     url: CURATOR_ACTION_REPORT.md

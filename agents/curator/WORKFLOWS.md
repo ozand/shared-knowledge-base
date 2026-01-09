@@ -1,5 +1,7 @@
 # WORKFLOWS.md - Knowledge Base Curator Workflows
 
+> **Progressive Disclosure:** This file is large (926 lines). Each workflow is self-contained. Load specific workflows on demand using `@references` below instead of reading entire file.
+
 ## Table of Contents
 
 - [Workflow 1: Review New Contribution](#workflow-1-review-new-contribution)
@@ -924,3 +926,23 @@ Use this flow when unsure which workflow to apply:
 - **Be conservative** with deprecation
 - **Iterate** rather than perfect immediately
 - **Collaborate** on major changes
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific workflows on demand to reduce token usage:**
+
+- **Review Contribution:** `@WORKFLOWS.md#workflow-1-review-new-contribution` (Lines 26-120)
+- **Quality Audit:** `@WORKFLOWS.md#workflow-2-comprehensive-quality-audit` (Lines 122-220)
+- **Research Enhancement:** `@WORKFLOWS.md#workflow-3-deep-research-enhancement` (Lines 222-340)
+- **Duplicate Detection:** `@WORKFLOWS.md#workflow-4-duplicate-detection--merge` (Lines 342-440)
+- **Gap Analysis:** `@WORKFLOWS.md#workflow-5-knowledge-gap-analysis` (Lines 442-520)
+- **Currency Update:** `@WORKFLOWS.md#workflow-6-currency-update-cycle` (Lines 522-600)
+- **PR Review:** `@WORKFLOWS.md#workflow-7-pull-request-review` (Lines 602-700)
+
+**Related Documentation:**
+- `@AGENT.md` - Curator role and responsibilities
+- `@PROMPTS.md` - Reusable prompt templates
+- `@SKILLS.md` - Available skills
+- `@universal/patterns/pr-review-process.yaml` - PR review pattern

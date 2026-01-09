@@ -471,6 +471,35 @@ patterns:
           gh issue list --state all --json agent,labels,createdAt | \
             jq -r '.[] | "\(.agent) - \(.createdAt)"' | sort | uniq -c
 
+    prevention:
+      - prevention: "Always include agent attribution in issue/PR templates"
+        reason: "Ensures attribution is added consistently"
+        how: "Use issue/PR templates with agent field pre-filled"
+
+      - prevention: "Use consistent label format across all agent contributions"
+        reason: "Makes agent contributions filterable and trackable"
+        how: "Standard labels: agent:<name>, project:<name>, type:<task>"
+
+      - prevention: "Add attribution to BOTH issue title and body"
+        reason: "Title visible in UI, body contains details"
+        how: "Title: '🤖 Agent Name - Issue Title', Body: 'Created By: Agent Name'"
+
+      - prevention: "Verify agent labels exist before creating issues"
+        reason: "Prevents creation of unattributed contributions"
+        how: "Check: gh label list | grep agent:"
+
+      - prevention: "Document attribution standards in agent instructions"
+        reason: "Agents need to know proper attribution format"
+        how: "Include attribution section in AGENT.md or agent prompts"
+
+      - prevention: "Track agent contributions for quality metrics"
+        reason: "Enables measurement of agent performance"
+        how: "Parse agent labels from issues, generate statistics"
+
+      - prevention: "Use GitHub Co-Authored-By for agent commits"
+        reason: "Maintains attribution in git history"
+        how: "Add to commit message: Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
     related_patterns:
       - id: "AGENT-HANDOFF-001"
         title: "Cross-Repository Agent Collaboration Pattern"

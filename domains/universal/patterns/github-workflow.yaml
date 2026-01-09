@@ -150,62 +150,11 @@ patterns:
       \ v5.1\"\ngit push origin v5.1\n\n# 4. Create GitHub Release\ngh release create\
       \ v5.1 \\\n  --title \"v5.1: Release Title\" \\\n  --notes \"Release notes here...\"\
       \n"
-  automated_workflow:
-    description: Create release with notes from file
-    script: "#!/bin/bash\nVERSION=$1\nNOTES_FILE=\"RELEASE_NOTES.md\"\n\n# Update\
-      \ docs\nsed -i \"s/Version .*/Version $VERSION/\" README.md\ngit add README.md\n\
-      git commit -m \"Release $VERSION: Update docs\"\ngit push\n\n# Create tag\n\
-      git tag -a $VERSION -m \"Release $VERSION\"\ngit push origin $VERSION\n\n# Create\
-      \ GitHub Release\ngh release create $VERSION \\\n  --title \"Release $VERSION\"\
-      \ \\\n  --notes-file $NOTES_FILE\n"
-  github_cli_usage:
-    installation: '# Windows
-
-      winget install --id GitHub.cli
-
-
-      # Authenticate
-
-      gh auth login
-
-      '
-    create_basic_release: "gh release create v1.0 \\\n  --title \"Version 1.0\" \\\
-      \n  --notes \"Release notes here\"\n"
-    create_from_file: "gh release create v1.0 \\\n  --title \"Version 1.0\" \\\n \
-      \ --notes-file RELEASE_NOTES.md\n"
-    create_with_assets: "gh release create v1.0 \\\n  --notes \"Release\" \\\n  ./build/app.zip\
-      \ \\\n  ./dist/installer.exe\n"
-    create_prerelease: "gh release create v1.0-beta \\\n  --prerelease \\\n  --notes\
-      \ \"Beta release\"\n"
-  best_practices:
-  - item: Always update README.md before creating release
-  - item: Use semantic versioning (v1.0.0)
-  - item: Include release notes with breaking changes
-  - item: Test release on beta channel first
-  - item: Keep CHANGELOG.md in sync with releases
-  troubleshooting:
-    issue: Need to update release
-    solution: '# Delete old release and tag
-
-      gh release delete v1.0
-
-      git tag -d v1.0
-
-      git push origin :refs/tags/v1.0
-
-
-      # Recreate
-
-      # [follow correct_approach steps]
-
-      '
-  references:
-  - title: About Git Hooks
-    url: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks
-  - title: GitHub Releases API
-    url: https://docs.github.com/en/rest/releases/releases
-  - title: GitHub CLI Manual
-    url: https://cli.github.com/manual/
+  automated_workflow: "@references/GITHUB-002-git-tag-vs-release.md#automated-workflow"
+  github_cli_usage: "@references/GITHUB-002-git-tag-vs-release.md#github-cli-usage"
+  best_practices: "@references/GITHUB-002-git-tag-vs-release.md#best-practices"
+  troubleshooting: "@references/GITHUB-002-git-tag-vs-release.md#troubleshooting"
+  references: "@references/GITHUB-002-git-tag-vs-release.md#references"
   domains:
     primary: deployment
     secondary: []
@@ -491,119 +440,10 @@ patterns:
     3. Force push was used on remote
 
     '
-  solutions:
-    rebase_workflow:
-      description: Rebase your commits on top of remote (recommended)
-      steps: '# 1. Fetch latest from remote
-
-        git fetch origin
-
-
-        # 2. Rebase your local commits onto origin/main
-
-        git rebase origin/main
-
-
-        # 3. If conflicts occur, resolve them
-
-        # Edit conflicting files
-
-        git add <resolved-files>
-
-        git rebase --continue
-
-
-        # 4. After rebase completes, push
-
-        git push origin main
-
-        '
-      advantages:
-      - Creates linear, clean history
-      - Standard practice for feature branches
-      - Easier to understand git log
-      disadvantages:
-      - Rewrites history (don't use if pushed to shared branch)
-      - Can be confusing for beginners
-    merge_workflow:
-      description: Merge remote changes into local branch
-      steps: '# 1. Pull with merge (no rebase)
-
-        git pull origin main --no-rebase
-
-
-        # 2. If conflicts occur, resolve them
-
-        # Edit conflicting files
-
-        git add <resolved-files>
-
-        git commit -m "Merge remote changes"
-
-
-        # 3. Push
-
-        git push origin main
-
-        '
-      advantages:
-      - Preserves true history
-      - Easier to understand
-      - Safer for shared branches
-      disadvantages:
-      - Creates merge commits
-      - History becomes more complex
-    force_push:
-      description: Force push your local version (DANGER!)
-      warning: '⚠️  ONLY use this if:
-
-        - You are the only one working on the branch
-
-        - You know remote commits should be discarded
-
-        - You''re fixing a mistake you just pushed
-
-
-        NEVER force push to shared main branch!
-
-        '
-      steps: 'git push --force origin main
-
-        '
-      risks:
-      - Loses other developers' work
-      - Creates inconsistent repos
-      - Hard to recover
-  recommendations:
-    personal_projects: Use rebase for cleaner history
-    team_projects: Use merge to preserve everyone's work
-    emergency_only: Force push only if absolutely necessary
-  prevention:
-    describe: Sync frequently to avoid large conflicts
-    best_practice: '# Before starting work
-
-      git pull origin main
-
-
-      # While working (every few hours)
-
-      git fetch origin
-
-      git rebase origin/main
-
-
-      # Before pushing
-
-      git pull --rebase origin main
-
-      git push
-
-      '
-  references:
-  - title: Git Branching and Merging
-    url: https://www.atlassian.com/git/tutorials/using-branches/merging
-  - title: Rebasing Safely
-    url: https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase
+  solutions: "@references/GITHUB-005-push-rejected.md#solutions"
+  recommendations: "@references/GITHUB-005-push-rejected.md#recommendations"
+  prevention: "@references/GITHUB-005-push-rejected.md#prevention"
+  references: "@references/GITHUB-005-push-rejected.md#references"
 - id: GITHUB-006
   title: GitHub API Timeout and Connectivity Handling
   severity: medium

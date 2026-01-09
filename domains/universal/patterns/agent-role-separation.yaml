@@ -440,6 +440,35 @@ patterns:
     description: Project Agent updated KB to v5.1 directly instead of using issues
   - title: AGENT-HANDOFF-001 workflow
     description: Correct way for Project Agents to contribute
+    prevention:
+      - prevention: "Document clear role boundaries in agent instructions"
+        reason: "Prevents agents from overstepping their responsibilities"
+        how: "Include 'Boundaries' section in each agent's instructions file"
+
+      - prevention: "Use GitHub issues for cross-repository contributions"
+        reason: "Project Agents should NOT directly modify Shared KB"
+        how: "Follow AGENT-HANDOFF-001 workflow (issue creation → Curator review)"
+
+      - prevention: "Educate agents on their specific role scope"
+        reason: "Agents need to understand what they SHOULD NOT do"
+        how: "Add 'What you DO NOT do' section to agent instructions"
+
+      - prevention: "Implement role validation in agent workflows"
+        reason: "Catches role violations before they happen"
+        reason: "Ask: Is this action within my role boundaries?"
+
+      - prevention: "Create clear handoff protocols"
+        reason: "Smooth transitions between roles without overlap"
+        how: "Document what triggers handoff from one agent to another"
+
+      - prevention: "Monitor for role violations and correct immediately"
+        reason: "Prevents precedent of violations"
+        how: "When agent oversteps, correct action and document why it was wrong"
+
+      - prevention: "Attribute contributions properly in GitHub"
+        reason: "Maintains clear record of who did what"
+        how: "Follow GITHUB-ATTRIB-001 pattern for all issues and PRs"
+
   domains:
     primary: security
     secondary: []

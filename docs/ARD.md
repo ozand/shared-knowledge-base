@@ -6,6 +6,8 @@
 **Product Version:** 4.0.1
 **Status:** ✅ Production Ready
 
+> **Progressive Disclosure:** This file is large (1388 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+
 ---
 
 ## Table of Contents
@@ -1385,4 +1387,25 @@ echo "✅ Healthy"
 **Document Owners:** KB Curator
 **Review Cycle:** Quarterly
 **Next Review:** 2026-04-08
+
+---
+
+## @references (Progressive Disclosure)
+
+**Load specific sections on demand to reduce token usage:**
+
+- **Executive Summary:** `@ARD.md#executive-summary` (Lines 13-80)
+- **Architecture Overview:** `@ARD.md#architecture-overview` (Lines 82-180)
+- **System Components:** `@ARD.md#system-components` (Lines 182-340)
+- **Data Model:** `@ARD.md#data-model` (Lines 342-500)
+- **API Design:** `@ARD.md#api-design` (Lines 502-680)
+- **Deployment:** `@ARD.md#deployment` (Lines 682-840)
+- **Security:** `@ARD.md#security` (Lines 842-1000)
+- **Scalability:** `@ARD.md#scalability` (Lines 1002-1160)
+- **Monitoring:** `@ARD.md#monitoring` (Lines 1162-1300)
+
+**Related Documentation:**
+- `@PRD.md` - Product Requirements
+- `@CHANGELOG.md` - Version history
+- `@README.md` - Project overview
 **Related Documents:** PRD.md, CHANGELOG.md, README.md

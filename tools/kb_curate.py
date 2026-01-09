@@ -17,14 +17,24 @@ import argparse
 import yaml
 import re
 import subprocess
+import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Try to import PyGithub
 try:
     from github import Github
 except ImportError:
     Github = None
+    logger.error("PyGithub library not installed")
     print("❌ Error: PyGithub library not installed")
     print("   Install it: pip install PyGithub")
     sys.exit(1)
@@ -36,11 +46,12 @@ SUBMISSION_LABEL = "kb-submission"
 NEEDS_REVIEW_LABEL = "needs-review"
 
 
-def get_github_client():
+def get_github_client() -> 'Github':
     """Initialize and return GitHub client"""
     token = os.getenv("GITHUB_TOKEN")
 
     if not token:
+        logger.error("GITHUB_TOKEN not found in environment")
         print("❌ Error: GITHUB_TOKEN not found in environment")
         print("   Set it: export GITHUB_TOKEN=ghp_your_token")
         sys.exit(1)
@@ -79,7 +90,7 @@ def extract_yaml_frontmatter(issue_body: str) -> Tuple[Optional[Dict], Optional[
         return metadata, yaml_content
 
     except Exception as e:
-        print(f"❌ Error parsing YAML: {e}")
+        logger.error(f"Error parsing YAML: {e}")
         return None, None
 
 
@@ -167,7 +178,7 @@ def validate_entry(entry: Dict) -> Tuple[bool, List[str]]:
     return len(issues) == 0, issues
 
 
-def list_submissions(g, repo_name: str):
+def list_submissions(g: 'Github', repo_name: str) -> None:
     """
     List all open kb-submission Issues.
 
@@ -187,6 +198,7 @@ def list_submissions(g, repo_name: str):
         issue_list = list(issues)
 
         if not issue_list:
+            logger.info(f"No pending submissions found in {repo_name}")
             print(f"✅ No pending submissions found in {repo_name}")
             return
 
@@ -209,10 +221,11 @@ def list_submissions(g, repo_name: str):
             print()
 
     except Exception as e:
+        logger.error(f"Error fetching submissions: {e}")
         print(f"❌ Error fetching submissions: {e}")
 
 
-def validate_submission(g, repo_name: str, issue_number: int):
+def validate_submission(g: 'Github', repo_name: str, issue_number: int) -> None:
     """
     Validate a specific submission Issue.
 
@@ -225,12 +238,14 @@ def validate_submission(g, repo_name: str, issue_number: int):
         repo = g.get_repo(repo_name)
         issue = repo.get_issue(issue_number)
 
+        logger.info(f"Validating Issue #{issue_number}: {issue.title}")
         print(f"🔍 Validating Issue #{issue_number}: {issue.title}\n")
 
         # Extract metadata and content
         metadata, yaml_content = extract_yaml_frontmatter(issue.body)
 
         if not metadata or not yaml_content:
+            logger.error("Could not extract YAML content from issue")
             print("❌ Validation failed: Could not extract YAML content")
             print("   Issue body may be malformed")
             return
@@ -244,28 +259,35 @@ def validate_submission(g, repo_name: str, issue_number: int):
         try:
             entry = yaml.safe_load(yaml_content)
         except yaml.YAMLError as e:
+            logger.error(f"YAML parsing error: {e}")
             print(f"\n❌ YAML parsing error: {e}")
             return
 
+        logger.info("YAML syntax validated successfully")
         print("\n✅ YAML syntax is valid")
 
         # Validate entry
         is_valid, issues = validate_entry(entry)
 
         if not is_valid:
+            logger.warning(f"Validation failed: {len(issues)} issues")
             print("\n❌ Validation failed:")
             for issue_text in issues:
                 print(f"   - {issue_text}")
         else:
+            logger.info("All required fields present")
             print("\n✅ All required fields present")
 
         # Calculate quality score
         score = calculate_quality_score(entry)
+        logger.info(f"Quality score: {score}/100")
         print(f"\n📊 Quality Score: {score}/100")
 
         if score >= 75:
+            logger.info("Meets quality threshold")
             print("   ✅ Meets quality threshold (>= 75)")
         else:
+            logger.warning(f"Below quality threshold: {score}/100")
             print("   ⚠️  Below quality threshold (>= 75)")
 
         # Check for duplicates (basic check)
@@ -274,10 +296,11 @@ def validate_submission(g, repo_name: str, issue_number: int):
         print("   Run: kb_search.py \"<keywords>\" to check for duplicates")
 
     except Exception as e:
+        logger.error(f"Error validating submission: {e}")
         print(f"❌ Error validating submission: {e}")
 
 
-def approve_submission(g, repo_name: str, issue_number: int):
+def approve_submission(g: 'Github', repo_name: str, issue_number: int) -> None:
     """
     Approve and commit submission to Shared KB.
 
@@ -290,12 +313,14 @@ def approve_submission(g, repo_name: str, issue_number: int):
         repo = g.get_repo(repo_name)
         issue = repo.get_issue(issue_number)
 
+        logger.info(f"Approving Issue #{issue_number}: {issue.title}")
         print(f"✅ Approving Issue #{issue_number}: {issue.title}\n")
 
         # Extract metadata and content
         metadata, yaml_content = extract_yaml_frontmatter(issue.body)
 
         if not yaml_content:
+            logger.error("Could not extract YAML content")
             print("❌ Error: Could not extract YAML content")
             return
 
@@ -303,12 +328,14 @@ def approve_submission(g, repo_name: str, issue_number: int):
         try:
             entry = yaml.safe_load(yaml_content)
         except yaml.YAMLError as e:
+            logger.error(f"YAML parsing error: {e}")
             print(f"❌ YAML parsing error: {e}")
             return
 
         # Determine domain from entry
         entries = entry.get('errors', []) or entry.get('patterns', [])
         if not entries:
+            logger.error("No entries found in YAML")
             print("❌ Error: No entries found in YAML")
             return
 
@@ -348,6 +375,7 @@ def approve_submission(g, repo_name: str, issue_number: int):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(yaml_content)
 
+        logger.info(f"Created file: {file_path} in domain: {domain}")
         print(f"📁 Domain: {domain}")
         print(f"📝 Created file: {file_path}")
 
@@ -355,8 +383,10 @@ def approve_submission(g, repo_name: str, issue_number: int):
         import subprocess
         try:
             subprocess.run(['git', 'add', str(file_path)], check=True, capture_output=True)
+            logger.info(f"Added to git: {filename}")
             print(f"✅ Added to git: {filename}")
         except subprocess.CalledProcessError as e:
+            logger.warning(f"Could not add to git: {e}")
             print(f"⚠️  Warning: Could not add to git: {e}")
 
         # Add success comment and close issue
@@ -377,6 +407,7 @@ def approve_submission(g, repo_name: str, issue_number: int):
         # Close issue
         issue.edit(state='closed')
 
+        logger.info(f"Issue #{issue_number} closed successfully")
         print(f"\n✅ Issue #{issue_number} closed")
         print(f"   Comment added, labels updated")
         print(f"\n📝 Next steps:")
@@ -385,10 +416,11 @@ def approve_submission(g, repo_name: str, issue_number: int):
         print(f"   3. Push to main: git push origin main")
 
     except Exception as e:
+        logger.error(f"Error approving submission: {e}")
         print(f"❌ Error approving submission: {e}")
 
 
-def reject_submission(g, repo_name: str, issue_number: int, reason: str):
+def reject_submission(g: 'Github', repo_name: str, issue_number: int, reason: str) -> None:
     """
     Reject submission with feedback.
 
@@ -402,6 +434,7 @@ def reject_submission(g, repo_name: str, issue_number: int, reason: str):
         repo = g.get_repo(repo_name)
         issue = repo.get_issue(issue_number)
 
+        logger.info(f"Rejecting Issue #{issue_number}: {issue.title} - Reason: {reason}")
         print(f"❌ Rejecting Issue #{issue_number}: {issue.title}\n")
 
         # Add rejection comment
@@ -421,14 +454,16 @@ def reject_submission(g, repo_name: str, issue_number: int, reason: str):
         # Close issue
         issue.edit(state='closed')
 
+        logger.info(f"Issue #{issue_number} rejected and closed")
         print(f"✅ Issue #{issue_number} rejected and closed")
         print(f"   Reason: {reason}")
 
     except Exception as e:
+        logger.error(f"Error rejecting submission: {e}")
         print(f"❌ Error rejecting submission: {e}")
 
 
-def main():
+def main() -> None:
     """CLI interface"""
     parser = argparse.ArgumentParser(
         description="Knowledge Base Curator Tool v5.1",
@@ -473,10 +508,12 @@ Examples:
     # Validate arguments
     if args.mode in ["validate", "approve", "reject"]:
         if not args.issue:
+            logger.error(f"--issue is required for --mode {args.mode}")
             print(f"❌ Error: --issue is required for --mode {args.mode}")
             return 1
 
     if args.mode == "reject" and not args.reason:
+        logger.error("--reason is required for --mode reject")
         print("❌ Error: --reason is required for --mode reject")
         return 1
 

@@ -317,6 +317,31 @@ patterns:
       - Learning git submodule workflow
       - Teaching teammates about submodules
 
+    prevention:
+      - prevention: "Run 'git submodule init' if status shows - prefix"
+        reason: "Uninitialized submodules won't update, appear broken"
+        how: "Check status: git submodule status. If shows '-', run: git submodule init"
+      - prevention: "Don't panic about + prefix if commit hash is correct"
+        reason: "+ prefix with new commit hash means submodule updated successfully (good!)"
+        how: "Verify: git submodule status shows +<new-hash> if you just pulled updates"
+      - prevention: "Commit .gitmodules file and submodule cloned directory together"
+        reason: "Committing only .gitmodules without submodule directory breaks checkout"
+        how: "git add .gitmodules path/to/submodule && git commit -m 'Add submodule'"
+      - prevention: "Use 'git submodule update --remote' for Shared KB updates"
+        reason: "Regular 'git submodule update' only checks registered commit, doesn't fetch latest"
+        how: "cd .kb/shared && git submodule update --remote && git add . && git commit -m 'Update KB'"
+      - prevention: "Never modify submodule directly in parent project"
+        reason: "Changes can't be pushed, cause confusion, break update workflow"
+        how: "If need to modify, create separate branch in submodule repo, PR to upstream"
+      - prevention: "Interpret no output from 'git submodule update' as success"
+        reason: "No output means already up to date, not an error!"
+        how: "After update, no output = good. Only look for error messages"
+      - prevention: "Set up sparse checkout to exclude unnecessary submodule files"
+        reason: "Full submodule checkout loads all files, wastes space and tokens"
+        how: "git config core.sparseCheckout true && echo '!curator' >> .git/modules/<submodule>/info/sparse-checkout"
+      - prevention: "Document submodule update process in project README"
+        reason: "Team members need to know how to update submodules correctly"
+        how: "Add to README: 'Updating Shared KB: cd .kb/shared && git submodule update --remote'"
     related_patterns:
       - KB-UPDATE-001 (Shared KB update process)
       - GIT-SUBMODULE-001 (Submodule integration)

@@ -5,6 +5,7 @@ errors:
 - id: TEST-001
   title: Async Test Without @pytest.mark.asyncio
   severity: high
+  scope: python
   problem: 'Async test functions fail with "coroutine was never awaited" if missing
 
     the @pytest.mark.asyncio decorator.
@@ -41,6 +42,7 @@ errors:
 - id: TEST-002
   title: Mock vs AsyncMock for Async Methods
   severity: high
+  scope: python
   problem: 'Using Mock instead of AsyncMock for async methods causes
 
     "coroutine was never awaited" warnings.
@@ -72,6 +74,7 @@ errors:
 - id: TEST-003
   title: Hardcoded File Paths in Tests
   severity: medium
+  scope: python
   problem: 'Tests using hardcoded file paths fail in CI/CD or on different machines.
 
     '
@@ -102,6 +105,7 @@ errors:
 - id: TEST-004
   title: Secrets Hardcoded in Tests
   severity: critical
+  scope: python
   problem: 'API keys, passwords, and tokens hardcoded in tests get committed to git.
 
     '
@@ -136,6 +140,7 @@ errors:
 - id: TEST-005
   title: 'Test Isolation: Shared State Between Tests'
   severity: medium
+  scope: python
   problem: 'Tests that share state can pass/fail depending on execution order.
 
     '
@@ -170,6 +175,7 @@ errors:
 - id: TEST-006
   title: Missing Test Markers Configuration
   severity: low
+  scope: python
   problem: 'Custom pytest markers (like @pytest.mark.performance) show warnings
 
     if not registered in pyproject.toml.
