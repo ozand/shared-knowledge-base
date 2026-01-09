@@ -6,6 +6,48 @@
 
 ---
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [YAML File Standards](#yaml-file-standards)
+   - [Required Fields](#required-fields-minimum)
+   - [Version Field](#version-field)
+   - [ID Format](#id-format)
+   - [Scope Field](#scope-field)
+   - [Date Format](#date-format)
+   - [Category Field](#category-field)
+   - [Complete Example](#complete-example)
+3. [Markdown File Standards](#markdown-file-standards)
+   - [Filename Conventions](#filename-conventions)
+   - [Header Hierarchy](#header-hierarchy)
+   - [Code Block Formatting](#code-block-formatting)
+   - [List Formatting](#list-formatting)
+   - [Table of Contents](#table-of-contents-1)
+   - [Cross-References](#cross-references)
+4. [Validation Commands](#validation-commands)
+   - [Check YAML Syntax](#check-yaml-syntax)
+   - [Validate with kb.py](#validate-with-kbpy)
+   - [Find Inconsistencies](#find-inconsistencies)
+5. [Migration Procedures](#migration-procedures)
+   - [When Updating Existing Files](#when-updating-existing-files)
+   - [When Creating New Files](#when-creating-new-files)
+   - [Batch Updates](#batch-updates)
+6. [Quality Scoring](#quality-scoring)
+   - [Consistency Score Rubric](#consistency-score-rubric)
+   - [Score Calculation](#score-calculation)
+7. [Automated Enforcement](#automated-enforcement)
+   - [Pre-Commit Hook](#pre-commit-hook)
+   - [GitHub Actions Workflow](#github-actions-workflow)
+   - [Markdown Linting](#markdown-linting)
+8. [Common Issues and Fixes](#common-issues-and-fixes)
+9. [Best Practices](#best-practices)
+10. [Tools and Resources](#tools-and-resources)
+11. [Maintenance](#maintenance)
+12. [Troubleshooting](#troubleshooting)
+13. [Conclusion](#conclusion)
+
+---
+
 ## Overview
 
 This guide provides the standards and procedures for maintaining consistency across the Shared Knowledge Base repository. All contributors, agents, and automated tools should follow these standards to ensure quality and maintainability.

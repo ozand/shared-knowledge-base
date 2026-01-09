@@ -3,10 +3,10 @@
 
 **Document Version:** 1.0
 **Last Updated:** 2026-01-08
-**Product Version:** 4.0.1
+**Product Version:** 5.1
 **Status:** ✅ Production Ready
 
-> **Progressive Disclosure:** This file is large (1047 lines). Load specific sections on demand using `@references` below instead of reading entire file.
+> **Progressive Disclosure:** This file is large (1069 lines). Load specific sections on demand using `@references` below instead of reading entire file.
 
 ---
 

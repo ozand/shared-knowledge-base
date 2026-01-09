@@ -7,6 +7,23 @@
 
 ---
 
+## Table of Contents
+
+1. [Sprint Overview](#sprint-overview)
+2. [Sprint 0: Critical Fixes](#sprint-0-critical-fixes-day-1)
+3. [Sprint 1: Quick Wins](#sprint-1-quick-wins-week-1)
+4. [Sprint 2: High Priority Cleanup](#sprint-2-high-priority-cleanup-week-2)
+5. [Sprint 3: Medium Priority](#sprint-3-medium-priority-weeks-3-4)
+6. [Sprint 4: Polish & Excellence](#sprint-4-polish--excellence-weeks-5-8)
+7. [Buffer Weeks](#buffer-weeks-weeks-9-10)
+8. [Weekly Status Report Template](#weekly-status-report-template)
+9. [Success Metrics Summary](#success-metrics-summary)
+10. [Git Commit Strategy](#git-commit-strategy)
+11. [Risk Management](#risk-management)
+12. [Conclusion](#conclusion)
+
+---
+
 ## Sprint Overview
 
 | Sprint | Duration | Focus | Hours | Impact |

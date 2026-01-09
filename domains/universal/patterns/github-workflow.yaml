@@ -150,11 +150,11 @@ patterns:
       \ v5.1\"\ngit push origin v5.1\n\n# 4. Create GitHub Release\ngh release create\
       \ v5.1 \\\n  --title \"v5.1: Release Title\" \\\n  --notes \"Release notes here...\"\
       \n"
-  automated_workflow: "@references/GITHUB-002-git-tag-vs-release.md#automated-workflow"
-  github_cli_usage: "@references/GITHUB-002-git-tag-vs-release.md#github-cli-usage"
-  best_practices: "@references/GITHUB-002-git-tag-vs-release.md#best-practices"
-  troubleshooting: "@references/GITHUB-002-git-tag-vs-release.md#troubleshooting"
-  references: "@references/GITHUB-002-git-tag-vs-release.md#references"
+  automated_workflow: "@references/GITHUB-002-git-tag-vs-release.md"
+  github_cli_usage: "@references/GITHUB-002-git-tag-vs-release.md"
+  best_practices: "@references/GITHUB-002-git-tag-vs-release.md"
+  troubleshooting: "@references/GITHUB-002-git-tag-vs-release.md"
+  references: "@references/GITHUB-002-git-tag-vs-release.md"
   domains:
     primary: deployment
     secondary: []
@@ -440,10 +440,10 @@ patterns:
     3. Force push was used on remote
 
     '
-  solutions: "@references/GITHUB-005-push-rejected.md#solutions"
-  recommendations: "@references/GITHUB-005-push-rejected.md#recommendations"
-  prevention: "@references/GITHUB-005-push-rejected.md#prevention"
-  references: "@references/GITHUB-005-push-rejected.md#references"
+  solutions: "@references/GITHUB-005-push-rejected.md"
+  recommendations: "@references/GITHUB-005-push-rejected.md"
+  prevention: "@references/GITHUB-005-push-rejected.md"
+  references: "@references/GITHUB-005-push-rejected.md"
 - id: GITHUB-006
   title: GitHub API Timeout and Connectivity Handling
   severity: medium
