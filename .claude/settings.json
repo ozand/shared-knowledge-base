@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/validate-yaml-before-write.py",
+            "command": "python .claude/hooks/validate-yaml-before-write.py",
             "timeout": 10
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/validate-yaml-before-edit.py",
+            "command": "python .claude/hooks/validate-yaml-before-edit.py",
             "timeout": 10
           }
         ]
@@ -28,17 +28,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/quality-gate.py",
+            "command": "python .claude/hooks/quality-gate.py",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/auto-format-yaml.py",
+            "command": "python .claude/hooks/auto-format-yaml.py",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/auto-create-metadata.py",
+            "command": "python .claude/hooks/auto-create-metadata.py",
             "timeout": 10
           }
         ]
@@ -48,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/validate-metadata.py",
+            "command": "python .claude/hooks/validate-metadata.py",
             "timeout": 5
           }
         ]
@@ -59,7 +59,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Python313\\python.exe .claude/hooks/check-index.py",
+            "command": "python .claude/hooks/check-index.py",
             "timeout": 5
           }
         ]
