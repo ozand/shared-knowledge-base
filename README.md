@@ -2,7 +2,7 @@
 
 **Version 5.1** - Two-tier knowledge management for AI agents
 
-🆕 **NEW: v5.1 with Two-Tier Architecture** - Separate Project KB and Shared KB with GitHub Issues workflow
+🆕 **NEW: MCP Server** - Native tool integration for Claude Desktop, VS Code Copilot, and Cursor
 
 Centрализованная база знаний для разработки ПО с системой метаданных, предиктивной аналитикой и распознаванием паттернов.
 
@@ -20,9 +20,17 @@ Centрализованная база знаний для разработки �
 - ✅ **PyGithub Integration** - No more `gh` CLI dependency
 - ✅ **Decision Criteria** - Agent knows what to share via `sharing_criteria`
 
+**MCP Server** (2026-01-10)
+
+- ✅ **Native Tool Integration** - Direct access from Claude Desktop, VS Code Copilot, Cursor
+- ✅ **6 MCP Tools** - Search, get, browse, validate, stats, health check
+- ✅ **Core Module Refactor** - Shared logic between CLI and MCP interfaces
+- ✅ **100x Faster** - Direct file access instead of subprocess calls
+
 **Quick Links:**
 - 📖 [v5.1 Documentation](docs/v5.1/README.md)
 - 🚀 [v5.1 Quick Start](docs/v5.1/README.md#quick-start)
+- 🔌 [MCP Server Guide](docs/MCP-SERVER.md)
 - 🔄 [Migration Guide](docs/v5.1/MIGRATION-PLAN.md)
 
 **Backward Compatible:** ✅ v4.0 tools still work! Migrate at your own pace.

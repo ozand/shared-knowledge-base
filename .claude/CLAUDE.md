@@ -1,17 +1,18 @@
 # Shared Knowledge Base - Claude Code Instructions
 
 **Repository:** shared-knowledge-base
-**Version:** 5.1.0
-**Last Updated:** 2026-01-08
+**Version:** 5.1.1
+**Last Updated:** 2026-01-10
 
 ---
 
 ## Overview
 
-Centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks. **v5.1 implements a two-tier architecture** with Project KB (local) and Shared KB (global) tiers, enabling secure knowledge sharing via GitHub Issues workflow.
+Centralized knowledge base containing verified solutions for common software development errors across multiple languages and frameworks. **v5.1 implements a two-tier architecture** with Project KB (local) and Shared KB (global) tiers, enabling secure knowledge sharing via GitHub Issues workflow. **v5.1.1 adds MCP server for native tool integration with Claude Desktop, VS Code Copilot, and Cursor.**
 
 **📘 Complete Guide:** `@for-claude-code/README.md`
 **📘 v5.1 Documentation:** `@docs/v5.1/README.md`
+**🔌 MCP Server:** `@docs/MCP-SERVER.md`
 
 ---
 
@@ -36,6 +37,44 @@ python tools/kb.py export --format json --output kb.json
 ```
 
 **📘 Complete CLI Reference:** `@references/cli-reference.md`
+
+### 🔌 MCP Server (NEW in v5.1.1)
+
+**Native tool integration** for Claude Desktop, VS Code Copilot, and Cursor.
+
+**Setup:**
+```bash
+# Install dependencies
+pip install -r tools/requirements-mcp.txt
+
+# Add to Claude Desktop config (~/.config/Claude/claude_desktop_config.json)
+{
+  "mcpServers": {
+    "shared-kb": {
+      "command": "python",
+      "args": ["-m", "tools.mcp_server"],
+      "cwd": "T:\\Code\\shared-knowledge-base"
+    }
+  }
+}
+```
+
+**Available MCP Tools:**
+- `kb_search` - Search knowledge base with filters
+- `kb_get` - Get entry by ID
+- `kb_browse` - Browse by category
+- `kb_validate` - Validate YAML files
+- `kb_stats` - Get repository statistics
+- `kb_health` - Health check
+
+**Usage in Claude Desktop:**
+```
+@shared-kb kb_search query="docker compose" scope="docker"
+@shared-kb kb_get id="PYTHON-001"
+@shared-kb kb_health
+```
+
+**📘 Complete MCP Guide:** `@docs/MCP-SERVER.md`
 
 ### ⚠️ Shared KB Updates
 
@@ -94,7 +133,13 @@ shared-knowledge-base/
 │   ├── universal/       # Cross-language patterns
 │   ├── vps/             # VPS administration
 │   └── catalog/         # Category catalog
-├── tools/               # CLI tools
+├── tools/               # CLI tools & MCP server
+│   ├── core/            # Core logic (shared between CLI & MCP)
+│   │   ├── search.py    # KnowledgeSearch class
+│   │   ├── metrics.py   # MetricsCalculator class
+│   │   ├── validation.py # KnowledgeValidator class
+│   │   └── models.py    # Pydantic data models
+│   ├── mcp_server.py    # MCP server implementation
 │   ├── kb.py            # v5.1 main CLI (index, search, stats)
 │   ├── v5.1/            # v5.1 tools (kb_submit, kb_search, kb_curate)
 │   └── skb-cli/         # Enterprise CLI (sku command)
@@ -349,5 +394,5 @@ python -m tools.kb_predictive predict-updates --days 30  # Predictions
 
 ---
 
-**Version:** 5.1.0
+**Version:** 5.1.1
 **Quality Score:** 90/100

@@ -1,0 +1,11 @@
+# MCP Server Requirements for Shared Knowledge Base
+# Install with: pip install -r tools/requirements-mcp.txt
+
+# MCP SDK (official Anthropic package)
+mcp>=1.0.0
+
+# Pydantic for data validation
+pydantic>=2.0.0
+
+# PyYAML for YAML parsing
+pyyaml>=6.0
