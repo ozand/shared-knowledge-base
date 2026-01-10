@@ -5,6 +5,47 @@
 
 ---
 
+## ⚡ Quick Alternative: Global Skill (Recommended)
+
+If you have the **`shared-kb-bootstrap`** global skill installed, you can initialize Shared KB with a single command:
+
+### One-Command Initialization
+
+```
+/kb-init
+```
+
+This automatically performs all 5 phases below:
+- Creates `.kb/` structure
+- Adds and initializes submodule
+- Creates `PROJECT.yaml` template
+- Installs session-start hook
+- Commits changes
+
+### Other Available Commands
+
+```
+/kb-update    # Update Shared KB to latest version
+/kb-status    # Check Shared KB status and updates
+```
+
+### Installing the Global Skill
+
+If you don't have the global skill:
+
+1. Create directory: `C:\Users\ozand\.claude\skills\shared-kb-bootstrap\`
+2. Copy files from Shared KB: `.claude/skills/shared-kb-bootstrap/`
+3. Restart Claude Code
+4. Skill auto-activates on KB-related keywords
+
+**Documentation:** See `@resources/skill-installation.md` (in global skill)
+
+### Manual Process (Below)
+
+If you prefer manual integration or don't have the global skill, follow the 5-phase process below:
+
+---
+
 ## 🟢 PHASE 1: File Structure
 
 1. Check if `.kb/` exists. If not, create:
@@ -133,5 +174,5 @@ Report to user: **"Integration complete. Shared KB is active."**
 
 ---
 
-**Version:** 5.1.0
-**Last Updated:** 2026-01-08
+**Version:** 5.1.7
+**Last Updated:** 2026-01-10

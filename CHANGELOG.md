@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Table of Contents
 
+- [[5.1.7] - 2026-01-10](#517---2026-01-10)
 - [[5.1.6] - 2026-01-10](#516---2026-01-10)
 - [[5.1.5] - 2026-01-09](#515---2026-01-09)
 - [[5.1.4] - 2026-01-08](#514---2026-01-08)
@@ -25,6 +26,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Version Summary](#version-summary)
 - [Upgrade Path](#upgrade-path)
 - [Future Plans](#future-plans)
+
+---
+
+## [5.1.7] - 2026-01-10
+
+### Added
+
+#### Global Skill for Universal KB Management
+- **`shared-kb-bootstrap` Global Skill**
+  - Universal skill for initializing and managing Shared KB in any Claude Code project
+  - Single-command initialization: `/kb-init`
+  - Easy updates: `/kb-update`
+  - Status checking: `/kb-status`
+  - Works across all projects automatically
+  - Auto-activation on KB-related keywords and intent patterns
+
+- **Executable Python Scripts** (`.claude/skills/shared-kb-bootstrap/scripts/`)
+  - `detect-kb.py` - Detect KB installation state and version
+  - `init-kb.py` - Initialize KB in new projects (automates all 5 phases)
+  - `update-kb.py` - Update existing KB installations
+  - `check-status.py` - Check KB status, version, and available updates
+
+- **SessionStart Hook** (`.claude/hooks/session-start-kb-check.py`)
+  - Automatically checks for KB updates at session start
+  - Shows update notification with latest commits
+  - Does NOT auto-update (user-controlled)
+  - 30-second timeout to avoid slowing session startup
+
+- **Comprehensive Documentation** (`.claude/skills/shared-kb-bootstrap/resources/`)
+  - `init-guide.md` - Detailed initialization guide
+  - `update-guide.md` - Update procedures and best practices
+  - `troubleshooting.md` - Troubleshooting for all common issues
+  - `README.md` - Installation and usage instructions
+
+### Changed
+
+- **`docs/integration/BOOTSTRAP.md`**
+  - Added "Quick Alternative: Global Skill (Recommended)" section
+  - Prominently features `/kb-init` one-command initialization
+  - Updated version to 5.1.7
+  - Manual process remains available as alternative
+
+### Architecture
+
+**Hybrid Approach:**
+- Global skill for manual commands (user-controlled)
+- SessionStart hook for automatic update checking (passive notification)
+- Universal across all projects (installed once per user)
+
+**Design Principles:**
+- User control - Updates suggested, not forced
+- Simplicity - Single command vs 5-phase manual process
+- Universality - Works in any project with git
+- Cross-platform - Python scripts work on Windows/Mac/Linux
+
+**File Structure:**
+```
+Global Skill (User Level)
+└── C:\Users\ozand\.claude\skills\shared-kb-bootstrap\
+    ├── SKILL.md                    # Skill definition
+    ├── skill-rules.json            # Auto-activation rules
+    ├── scripts/                    # Executable Python scripts
+    └── resources/                  # Documentation
+
+Project (Any Project)
+├── .claude/hooks/
+│   └── session-start-kb-check.py  # Auto-update check
+└── .kb/
+    └── shared/                     # Submodule (read-only)
+```
+
+### Installation
+
+**To install the global skill:**
+
+1. Create directory: `C:\Users\ozand\.claude\skills\shared-kb-bootstrap\`
+2. Copy files from Shared KB: `.claude/skills/shared-kb-bootstrap/`
+3. Restart Claude Code
+4. Skill auto-activates on KB-related keywords
+
+**Usage in any project:**
+```
+/kb-init    # Initialize KB
+/kb-update  # Update KB
+/kb-status  # Check status
+```
+
+### Benefits
+
+- ⚡ **One-command setup** - No more manual 5-phase process
+- 🔄 **Easy updates** - Single command to update
+- 🔔 **Auto-reminders** - Hook suggests updates when available
+- 🌍 **Universal** - Works in all projects
+- 📚 **Comprehensive docs** - Troubleshooting and guides included
+
+### Migration
+
+**No breaking changes.** All v5.1.6 features remain fully functional.
+
+**Existing projects:**
+- Manual integration still works (see "Manual Process" in BOOTSTRAP.md)
+- Can add global skill for convenience
+- SessionStart hook can be added manually or via `/kb-init`
+
+**New projects:**
+- Recommended: Use `/kb-init` for automatic setup
+- Alternative: Follow manual 5-phase process in BOOTSTRAP.md
 
 ---
 
