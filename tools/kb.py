@@ -43,7 +43,8 @@ def cmd_search(args):
 
     cmd.append(args.query)
 
-    result = subprocess.run(cmd, capture_output=False)
+    # Run from repo_root so it can find domains/ directory
+    result = subprocess.run(cmd, cwd=repo_root, capture_output=False)
     sys.exit(result.returncode)
 
 
@@ -56,7 +57,8 @@ def cmd_stats(args):
     if args.verbose:
         cmd.append("-v")
 
-    result = subprocess.run(cmd, capture_output=False)
+    # Run from repo_root so it can find domains/ directory
+    result = subprocess.run(cmd, cwd=repo_root, capture_output=False)
     sys.exit(result.returncode)
 
 
