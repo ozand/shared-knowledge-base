@@ -1,0 +1,8 @@
+{
+  "name": "shared-kb-commands",
+  "description": "Slash commands for Shared Knowledge Base management in the repository",
+  "author": {
+    "name": "Shared KB Team",
+    "email": "noreply@shared-kb.com"
+  }
+}
