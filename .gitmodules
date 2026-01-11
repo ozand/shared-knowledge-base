@@ -1,0 +1,3 @@
+[submodule ".kb/shared"]
+	path = .kb/shared
+	url = https://github.com/ozand/shared-knowledge-base.git

@@ -1,28 +1,17 @@
 meta:
-  name: "Shared Knowledge Base"
-  id: "shared-kb-repo"
-  description: "Centralized knowledge management system for AI agents and development teams"
+  name: "Project Name"
+  id: "project-slug"
 
 stack:
   language: "python"
   framework: ""
-  tools:
-    - "mcp-server"
-    - "cli-tools"
-    - "git-submodule"
 
 sharing_criteria:
   universal_if:
-    - "Universal patterns"
-    - "Cross-language solutions"
-    - "Generic algorithms"
-    - "Tooling and automation"
+    - "Generic Pattern"
+    - "Library Fix"
+    - "Tooling"
   project_specific_if:
-    - "Repository development"
-    - "Meta-documentation"
-    - "Internal build scripts"
-    - "Release management"
-
-# Special note: This repository IS the Shared Knowledge Base
-# Other projects install it as a git submodule at .kb/shared/
-# See: docs/integration/BOOTSTRAP.md
+    - "Business Logic"
+    - "Secrets"
+    - "Internal URLs"
