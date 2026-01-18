@@ -79,6 +79,42 @@ def setup_profile():
         subprocess.run([sys.executable, str(kb_py), "profile", "init"], env=env)
         print_success("Profile initialized")
 
+def configure_gitignore():
+    """Update .gitignore with KB entries."""
+    print_step("Configuring .gitignore...")
+    
+    ignore_entries = [
+        "\n# --- Shared Knowledge Base ---",
+        ".kb/shared/",
+        ".kb/cache/",
+        ".kb/project/context-archive/sources/",
+        "tmp/",
+        "# -----------------------------"
+    ]
+    
+    gitignore_path = Path(".gitignore")
+    
+    if not gitignore_path.exists():
+        with open(gitignore_path, "w") as f:
+            f.write("\n".join(ignore_entries) + "\n")
+        print_success("Created .gitignore")
+        return
+
+    with open(gitignore_path, "r") as f:
+        content = f.read()
+        
+    to_append = []
+    for entry in ignore_entries:
+        if entry.strip() and entry not in content:
+            to_append.append(entry)
+            
+    if to_append:
+        with open(gitignore_path, "a") as f:
+            f.write("\n".join(to_append) + "\n")
+        print_success("Updated .gitignore with protection rules")
+    else:
+        print_success(".gitignore already configured")
+
 def main():
     parser = argparse.ArgumentParser(description="Shared KB Installer")
     parser.add_argument("--method", choices=["submodule", "clone"], default="submodule", help="Installation method")
@@ -89,6 +125,7 @@ def main():
     print("🚀 Starting Shared KB Installation...")
     
     ensure_structure()
+    configure_gitignore()
     install_shared(args.method)
     
     if args.full:
