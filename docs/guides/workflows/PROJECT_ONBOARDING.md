@@ -27,19 +27,10 @@ Scan the project for existing scripts, prompts, or tools (check `.claude/`, `scr
   `python3 .kb/shared/tools/kb.py archive <file> --type <skills|agents|hooks> --scope project`
 
 **Step 4: Company OS Registration**
-Analyze the project metadata (README, package.json).
-Generate a YAML block for `company-os/registry/projects.yaml` in this format:
-```yaml
-- id: "<project-slug>"
-  name: "<Project Title>"
-  repo: "<owner/repo>"
-  description: "<One-line summary>"
-  stack: ["<tech1>", "<tech2>"]
-  maintainer_agent: "active-agent"
-  status: "active"
-  kb_tier: "project"
-```
-*Action:* Present this YAML to the user and ask them to add it to the Company OS registry, OR if you have access, create a PR to `company-os`.
+Initialize the project passport and sync with the registry:
+1. Run `python3 .kb/shared/tools/kb.py sync init-passport`
+2. Review/Edit the generated `.kb/project/PROJECT.yaml`
+3. Run `python3 .kb/shared/tools/kb.py sync push` (if auth available) OR present the passport content to the user for manual registration.
 
 **Step 5: Context Archiving**
 If there is existing documentation or context files, run `/context-condense` (or `python .kb/shared/tools/kb.py archive-context`) to index them.
