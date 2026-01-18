@@ -18,10 +18,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Tuple, Dict
 
+import subprocess
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
@@ -212,12 +215,13 @@ submission_meta:
 """
 
 
-def submit_local(file_path: Path) -> None:
+def submit_local(file_path: Path, auto_commit: bool = False) -> None:
     """
     Save knowledge entry to local Project KB.
 
     Args:
         file_path: Path to YAML file to save
+        auto_commit: Whether to automatically commit to git
     """
     # Ensure structure exists first
     ensure_project_kb_structure()
@@ -256,8 +260,24 @@ def submit_local(file_path: Path) -> None:
     rel_path = target_path.relative_to(PROJECT_ROOT)
     logger.info(f"Local KB entry saved: {rel_path}")
     print(f"✅ [Local] File saved: {rel_path}")
-    print("   Don't forget to commit to your project repository:")
-    print(f"   git add {rel_path} && git commit -m 'Add KB entry: {file_path.name}'")
+
+    if auto_commit:
+        try:
+            print("⏳ Auto-committing to git...")
+            subprocess.run(["git", "add", str(target_path)], check=True, cwd=PROJECT_ROOT)
+            subprocess.run(
+                ["git", "commit", "-m", f"chore(kb): Add entry {file_path.name}"],
+                check=True,
+                cwd=PROJECT_ROOT
+            )
+            print(f"✅ [Git] Committed: {file_path.name}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Git commit failed: {e}")
+            print("   Please commit manually.")
+    else:
+        print("   Don't forget to commit to your project repository:")
+        print(f"   git add {rel_path} && git commit -m 'Add KB entry: {file_path.name}'")
+
 
 
 def submit_shared(file_path: Path, title: str, description: str, domain: str) -> None:
@@ -410,6 +430,12 @@ Examples:
         help="Mark solution as verified (default: true)"
     )
 
+    parser.add_argument(
+        "--commit",
+        action="store_true",
+        help="Automatically commit to git (for --target local)"
+    )
+
     args = parser.parse_args()
 
     # Check if file exists
@@ -420,9 +446,10 @@ Examples:
 
     # Route to appropriate function
     if args.target == "local":
-        submit_local(args.file)
+        submit_local(args.file, args.commit)
 
     elif args.target == "shared":
+
         if not args.title:
             logger.error("--title is required for --target shared")
             print("❌ Error: --title is required for --target shared")
