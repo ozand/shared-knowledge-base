@@ -1,6 +1,7 @@
 # Shared Knowledge Base
 
-**Version 5.1** - Two-tier knowledge management for AI agents
+**Version 5.2** - Autonomous Agent Ecosystem
+
 
 🆕 **NEW: MCP Server** - Native tool integration for Claude Desktop, VS Code Copilot, and Cursor
 
@@ -11,6 +12,13 @@ Centрализованная база знаний для разработки �
 ---
 
 ## 🆕 What's New in v5.1?
+
+**Autonomous Ecosystem** (2026-01-18)
+
+- ✅ **Capability Store** - Centralized management for Agents, Skills, and Hooks (`kb archive/install`)
+- ✅ **Company OS Integration** - Agent Registry and Cross-Project Communication (IPC)
+- ✅ **Modular Knowledge** - Smart profile management (`kb profile scan`)
+- ✅ **Context Archive 2.0** - Fully integrated into Project KB structure
 
 **Two-Tier Architecture** (2026-01-08)
 

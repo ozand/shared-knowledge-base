@@ -29,6 +29,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.2.0] - 2026-01-18
+
+### Added
+
+#### Capability Store (The App Store for Agents)
+- **Centralized Tool Management**
+  - New `domains/claude-code/{agents,skills,hooks}` structure
+  - `kb archive` command to harvest local tools into the KB
+  - `kb install` command to deploy tools to new projects
+  - YAML wrappers for versioning and metadata
+
+#### Company OS Integration
+- **Inter-Project Communication (IPC)**
+  - Protocol for agents to create GitHub Issues on other projects
+  - Central Registry support (Company OS repository)
+- **Architectural Patterns**
+  - `COMPANY-OS-ARCHITECTURE-001`: Service discovery and IPC
+  - `MODULAR-KNOWLEDGE-SYSTEM-001`: Agent-driven knowledge loading
+
+#### Modular Knowledge System
+- **Profile Manager** (`tools/kb_profile.py`)
+  - `kb profile scan`: Auto-detects tech stack (Python, React, Docker)
+  - `kb profile init`: Activates only relevant domains
+  - Reduces context window usage by loading only what's needed
+
+#### Context Archive 2.0
+- **Full Integration**
+  - Moved from root `.context-archive` to `.kb/project/context-archive`
+  - Fully compatible with Two-Tier architecture
+  - Updated search and indexing tools
+
+### Changed
+- **Unified Installer**
+  - Restored and updated `scripts/unified-install.py`
+  - Now initializes profiles and capability store structure
+- **Documentation**
+  - Added `docs/guides/workflows/PROJECT_ONBOARDING.md` for autonomous agent setup
+
+### Migration
+- Run `python scripts/unified-install.py --full` to upgrade structure
+- Existing `.context-archive` folders should be moved to `.kb/project/context-archive`
+
+---
+
 ## [5.1.7] - 2026-01-10
 
 ### Added

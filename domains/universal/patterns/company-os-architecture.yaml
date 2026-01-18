@@ -1,0 +1,64 @@
+version: "1.0"
+category: "architecture"
+last_updated: "2026-01-18"
+scope: "universal"
+
+patterns:
+  - id: "COMPANY-OS-ARCHITECTURE-001"
+    title: "Company OS: Centralized Project Registry & Agent IPC"
+    severity: "high"
+    scope: "universal"
+    tags: ["architecture", "company-os", "ipc", "agent-collaboration", "registry"]
+
+    problem: |
+      As the number of projects and specialized agents grows, independent projects become silos.
+      Agents in Project A don't know that Project B exists or has solved a similar problem.
+      Requests between projects (e.g., "Update the API client") rely on human intermediaries.
+      There is no "Global State" awareness for the AI workforce.
+
+    solution: |
+      **Company OS Repository**
+      A centralized, private repository acting as the DNS and Service Discovery for agents.
+
+      **1. Registry Structure (`registry/`)**
+      *   `projects.yaml`: List of all active projects, their repo URLs, and tech stacks.
+      *   `agents.yaml`: Who is working where? (e.g., "Agent-007 is maintaining `auth-service`").
+      *   `apis.yaml`: Public interfaces (contracts) exposed by projects.
+
+      **2. Inter-Project Communication Protocol (IPCP)**
+      Agents use GitHub Issues as a structured message bus to request work from other project agents.
+
+      *Protocol Schema (YAML Frontmatter in Issue Body):*
+      ```yaml
+      ---
+      ipc_version: "1.0"
+      type: "feature_request" # bug_report, question, dependency_update
+      from_project: "company/frontend-app"
+      from_agent: "frontend-dev-agent"
+      to_component: "auth-module"
+      priority: "high"
+      expected_response_by: "2026-01-20"
+      ---
+      ```
+
+      **3. Workflow**
+      1.  **Discovery:** Agent A reads `company-os/registry/projects.yaml` to find the repo for "auth-module".
+      2.  **Request:** Agent A creates an Issue in that repo using the IPCP schema.
+      3.  **Triage:** Agent B (maintainer of auth-module) scans issues with label `agent-request`.
+      4.  **Execution:** Agent B performs the work.
+      5.  **Callback:** Agent B comments on the Issue with status update and closes it.
+
+    implementation_steps:
+      - Create `company-os` repository.
+      - Define `registry.yaml` schema.
+      - Create `ipc-client` tool for agents (wrapper around `gh issue create`).
+      - Configure "Watcher Agents" that run on schedule (GitHub Actions) to process inbox.
+
+    benefits:
+      - "**Decoupling:** Projects remain independent but connected."
+      - "**Autonomy:** Agents negotiate interfaces and fixes without human micromanagement."
+      - "**Visibility:** Company OS provides a dashboard of all active cross-project dependencies."
+
+    metadata:
+      author: "Antigravity Agent"
+      status: "draft"

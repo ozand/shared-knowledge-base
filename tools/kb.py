@@ -20,7 +20,8 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
-from tools import kb_search, kb_metrics
+from tools import kb_search, kb_metrics, kb_capability, kb_profile
+
 
 
 def cmd_search(args):
@@ -176,7 +177,47 @@ def cmd_check_updates(args):
         print("✅ Already up to date")
 
 
+def cmd_archive(args):
+    """Archive a capability"""
+    manager = kb_capability.CapabilityManager(repo_root)
+    manager.archive(
+        file_path=args.file,
+        cap_type=args.type,
+        scope=args.scope,
+        name=args.name,
+        description=args.description
+    )
+
+
+def cmd_install(args):
+    """Install a capability"""
+    manager = kb_capability.CapabilityManager(repo_root)
+    manager.install(
+        name=args.name,
+        cap_type=args.type
+    )
+
+
+def cmd_profile(args):
+    """Manage knowledge profile"""
+    manager = kb_profile.ProfileManager(repo_root)
+    
+    if args.action == "list":
+        print("🌍 Available domains:", manager.get_available_domains())
+        print("✅ Active domains:   ", manager.get_active_domains())
+    elif args.action == "add":
+        manager.add_domain(args.domain)
+    elif args.action == "remove":
+        manager.remove_domain(args.domain)
+    elif args.action == "scan":
+        manager.scan_and_recommend()
+    elif args.action == "init":
+        recs = manager.scan_and_recommend()
+        manager.set_active_domains(recs)
+
+
 def main():
+
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
         description="Shared Knowledge Base - Unified CLI",
@@ -218,7 +259,26 @@ Examples:
     # check-updates command
     updates_parser = subparsers.add_parser('check-updates', help='Check for updates')
 
+    # archive command
+    archive_parser = subparsers.add_parser('archive', help='Archive capability (agent/skill/hook)')
+    archive_parser.add_argument('file', help='Path to source file')
+    archive_parser.add_argument('--type', choices=['agents', 'skills', 'hooks'], required=True, help='Type of capability')
+    archive_parser.add_argument('--scope', choices=['project', 'shared'], default='project', help='Target scope')
+    archive_parser.add_argument('--name', help='Custom name for the capability')
+    archive_parser.add_argument('--description', default='Imported capability', help='Description')
+
+    # install command
+    install_parser = subparsers.add_parser('install', help='Install capability')
+    install_parser.add_argument('name', help='Name of capability to install')
+    install_parser.add_argument('--type', choices=['agents', 'skills', 'hooks'], required=True, help='Type of capability')
+
+    # profile command
+    profile_parser = subparsers.add_parser('profile', help='Manage knowledge profile')
+    profile_parser.add_argument('action', choices=['list', 'add', 'remove', 'scan', 'init'], help='Action to perform')
+    profile_parser.add_argument('--domain', help='Domain name (for add/remove)')
+
     args = parser.parse_args()
+
 
     if not args.command:
         parser.print_help()
@@ -235,8 +295,15 @@ Examples:
         cmd_validate(args)
     elif args.command == 'check-updates':
         cmd_check_updates(args)
+    elif args.command == 'archive':
+        cmd_archive(args)
+    elif args.command == 'install':
+        cmd_install(args)
+    elif args.command == 'profile':
+        cmd_profile(args)
     else:
         parser.print_help()
+
         sys.exit(1)
 
 

@@ -1,0 +1,61 @@
+version: "1.0"
+category: "architecture"
+last_updated: "2026-01-18"
+scope: "universal"
+
+patterns:
+  - id: "MODULAR-KNOWLEDGE-SYSTEM-001"
+    title: "Agent-Driven Modular Knowledge Loading"
+    severity: "medium"
+    scope: "universal"
+    tags: ["architecture", "kb", "performance", "agent-autonomy"]
+
+    problem: |
+      Installing the entire Knowledge Base (GBs of data) is inefficient for specialized projects.
+      Agents get overwhelmed with irrelevant context (e.g., Python patterns in a Go project).
+      The user has to manually run install scripts.
+
+    solution: |
+      **Modular Knowledge Manager**
+      
+      Agents actively manage their "cognitive load" by installing only necessary domains.
+
+      **1. Domain Manifest (`domains/manifest.yaml`)**
+      A catalog of available knowledge modules:
+      ```yaml
+      domains:
+        - name: "python"
+          description: "Python language patterns and errors"
+          dependencies: ["universal"]
+          size_kb: 150
+        - name: "react"
+          dependencies: ["javascript", "universal"]
+      ```
+
+      **2. The `kb_manager` Tool**
+      A tool exposed to agents (via MCP or CLI) to manage local state.
+      
+      *API:*
+      - `kb_manager.scan()`: Analyzes project files to recommend domains.
+      - `kb_manager.install(domains=["python", "docker"])`: Downloads/Symlinks specific domains.
+      - `kb_manager.update(domains=["python"])`: Syncs only selected domains.
+      - `kb_manager.prune()`: Removes unused domains.
+
+      **3. Agent Workflow**
+      1.  **Session Start:** Agent runs `kb_manager.scan()`.
+      2.  **Detection:** "I see `go.mod`, recommending `go` domain."
+      3.  **Action:** Agent runs `kb_manager.install("go")`.
+      4.  **Result:** `.kb/shared/go` is populated. Agent context now includes Go patterns.
+
+    technical_implementation:
+      - Use `git sparse-checkout` under the hood to fetch specific subdirectories without full clone.
+      - Maintain a local `.kb/active-domains.yaml` state file.
+
+    benefits:
+      - "**Speed:** Faster setup time."
+      - "**Relevance:** Higher quality RAG results (less noise)."
+      - "**Autonomy:** Agents self-optimize their environment."
+
+    metadata:
+      author: "Antigravity Agent"
+      status: "draft"

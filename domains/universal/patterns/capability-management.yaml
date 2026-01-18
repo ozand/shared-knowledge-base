@@ -1,0 +1,70 @@
+version: "1.0"
+category: "architecture"
+last_updated: "2026-01-18"
+scope: "universal"
+
+patterns:
+  - id: "CAPABILITY-MANAGEMENT-001"
+    title: "Centralized Capability Management (Agents, Skills, Hooks)"
+    severity: "medium"
+    scope: "universal"
+    tags: ["architecture", "agents", "skills", "hooks", "claude-code", "kb-integration"]
+
+    problem: |
+      Agents and skills created during sessions are isolated in the local `.claude` directory.
+      Valuable tools and persona configurations are lost when switching projects or are hard to reuse.
+      There is no version control or centralized repository for "active" knowledge (tools).
+
+    solution: |
+      **Capability Store Architecture**
+      
+      Treat Agents, Skills, and Hooks as managed assets within the Knowledge Base structure.
+      
+      **1. Directory Structure**
+      ```text
+      domains/claude-code/         # Shared Capabilities
+      ├── agents/                  # Reusable agent definitions (prompts)
+      ├── skills/                  # Reusable tool implementations (scripts)
+      └── hooks/                   # Lifecycle hooks
+      
+      .kb/project/domains/claude-code/  # Project Capabilities
+      ├── agents/
+      ├── skills/
+      └── hooks/
+      ```
+
+      **2. Asset Definition (YAML Wrapper)**
+      All capabilities must be wrapped or described in YAML to be indexable by `kb.py`.
+      
+      *Format:*
+      ```yaml
+      version: "1.0"
+      type: "skill" # or agent, hook
+      id: "SKILL-NAME-001"
+      metadata:
+        name: "my-skill"
+        description: "Description of what it does"
+        tags: ["tag1", "tag2"]
+        author: "user"
+      
+      # Implementation
+      implementation:
+        type: "file" # or inline
+        source: "src/my-skill.py" # Relative to the YAML file
+        language: "python"
+      ```
+
+      **3. Workflow**
+      - **Harvesting**: Use `kb.py archive` to move a local tool into the Project KB.
+      - **Promotion**: Move proven tools from Project KB to Shared KB via PR.
+      - **Installation**: Use `kb.py install` to copy a tool from KB to `.claude/`.
+
+    benefits:
+      - "**Portability**: Tools move with the user across projects."
+      - "**Standardization**: Enforce coding standards on tools before sharing."
+      - "**Discovery**: Find tools using semantic search (`kb.py search 'git helper'`)."
+
+    metadata:
+      created_at: "2026-01-18"
+      status: "proposed"
+      author: "Antigravity Agent"
