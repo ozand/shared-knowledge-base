@@ -201,8 +201,49 @@ class ProcessingLog:
 
 
 if __name__ == "__main__":
-    # Example usage
-    archive_root = Path(".kb/project/context-archive")
+    # CLI interface
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="Archive Index Manager")
+    parser.add_argument("--register", help="Register a condensed file manually")
+    parser.add_argument("--source", help="Original source file path (required for register)")
+    parser.add_argument("--root", default=".kb/project/context-archive", help="Archive root")
+    
+    args = parser.parse_args()
+    
+    archive_root = Path(args.root)
     index = ArchiveIndex(archive_root)
 
-    print(index.get_index_summary())
+    if args.register:
+        if not args.source:
+            print("❌ Error: --source is required when registering a file")
+            sys.exit(1)
+            
+        condensed_path = Path(args.register)
+        if not condensed_path.exists():
+            print(f"❌ Error: Condensed file not found: {condensed_path}")
+            sys.exit(1)
+            
+        # Try to read metadata from frontmatter
+        import re
+        with open(condensed_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Very basic frontmatter parsing
+        metadata = {}
+        fm_match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+        if fm_match:
+            try:
+                metadata = yaml.safe_load(fm_match.group(1))
+            except:
+                pass
+        
+        # Fallback/Override
+        metadata["source_file"] = args.source
+        
+        index.add_entry(args.source, str(condensed_path), metadata)
+        print(f"✅ Registered {condensed_path.name} in index")
+        
+    else:
+        print(index.get_index_summary())
