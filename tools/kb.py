@@ -20,7 +20,7 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root))
 
-from tools import kb_search, kb_metrics, kb_capability, kb_profile
+from tools import kb_search, kb_metrics, kb_capability, kb_profile, kb_sync, kb_template
 
 
 
@@ -216,6 +216,25 @@ def cmd_profile(args):
         manager.set_active_domains(recs)
 
 
+def cmd_sync(args):
+    """Sync with Company OS"""
+    syncer = kb_sync.RegistrySync(repo_root)
+    
+    if args.action == "init-passport":
+        syncer.init_passport()
+    elif args.action == "pull":
+        syncer.fetch_registry()
+    elif args.action == "push":
+        syncer.register_project()
+
+
+def cmd_template(args):
+    """Manage guidelines templates"""
+    manager = kb_template.TemplateManager(repo_root)
+    if args.action == "install":
+        manager.install_template(args.domain)
+
+
 def main():
 
     """Main CLI entry point"""
@@ -277,6 +296,15 @@ Examples:
     profile_parser.add_argument('action', choices=['list', 'add', 'remove', 'scan', 'init'], help='Action to perform')
     profile_parser.add_argument('--domain', help='Domain name (for add/remove)')
 
+    # sync command
+    sync_parser = subparsers.add_parser('sync', help='Sync with Company OS')
+    sync_parser.add_argument('action', choices=['init-passport', 'pull', 'push'], help='Action to perform')
+
+    # template command
+    template_parser = subparsers.add_parser('template', help='Manage project guidelines')
+    template_parser.add_argument('action', choices=['install'], help='Action to perform')
+    template_parser.add_argument('domain', help='Domain to install (e.g. python, claude-code)')
+
     args = parser.parse_args()
 
 
@@ -301,6 +329,10 @@ Examples:
         cmd_install(args)
     elif args.command == 'profile':
         cmd_profile(args)
+    elif args.command == 'sync':
+        cmd_sync(args)
+    elif args.command == 'template':
+        cmd_template(args)
     else:
         parser.print_help()
 
