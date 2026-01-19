@@ -235,11 +235,60 @@ class RegistrySync:
             if self.temp_dir.exists():
                 shutil.rmtree(self.temp_dir, onerror=on_rm_error)
 
+    def check_updates(self):
+        """Check for updates in dependencies."""
+        if not self.passport_path.exists():
+            print("❌ PROJECT.yaml not found.")
+            return
+
+        # 1. Fetch latest registry
+        self.fetch_registry()
+        
+        if not self.registry_cache.exists():
+            print("❌ Could not load registry cache.")
+            return
+
+        with open(self.passport_path, 'r') as f:
+            passport = yaml.safe_load(f)
+            
+        with open(self.registry_cache, 'r') as f:
+            registry = yaml.safe_load(f)
+            
+        dependencies = passport.get("dependencies", [])
+        projects = {p["id"]: p for p in registry.get("projects", [])}
+        
+        print("\n🔍 Checking dependencies...")
+        updates_found = False
+        
+        for dep in dependencies:
+            pid = dep.get("project_id")
+            current_version = dep.get("version", "0.0.0")
+            
+            if pid in projects:
+                remote_proj = projects[pid]
+                # Check for latest_release field (added in Release Protocol)
+                latest_release = remote_proj.get("latest_release", {})
+                remote_version = latest_release.get("version") or remote_proj.get("version")
+                
+                if remote_version and remote_version != "0.0.0" and remote_version != current_version:
+                    print(f"  👉 Update available for {pid}: {current_version} -> {remote_version}")
+                    print(f"     Title: {latest_release.get('title', 'No title')}")
+                    updates_found = True
+                else:
+                    print(f"  ✅ {pid} is up to date ({current_version})")
+            else:
+                print(f"  ⚠️  Dependency not found in registry: {pid}")
+                
+        if not updates_found:
+            print("\n✨ All dependencies are up to date.")
+        else:
+            print("\n💡 Action: Update your dependencies and run tests.")
+
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Company OS Synchronizer")
-    parser.add_argument("action", choices=["init-passport", "pull", "push"], help="Action to perform")
+    parser.add_argument("action", choices=["init-passport", "pull", "push", "check-updates"], help="Action to perform")
     
     args = parser.parse_args()
     
@@ -251,3 +300,5 @@ if __name__ == "__main__":
         sync.fetch_registry()
     elif args.action == "push":
         sync.register_project()
+    elif args.action == "check-updates":
+        sync.check_updates()
