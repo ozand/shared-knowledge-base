@@ -40,6 +40,13 @@ patterns:
         - name: "parse-url"
           type: "api"
           spec: "docs/openapi.json"
+
+      # Project Dependencies (Other Company OS projects)
+      dependencies:
+        - project_id: "auth-service"
+          version: "1.2.0" # Version currently integrated
+        - project_id: "shared-kb"
+          version: "latest"
       
       # Sync Status
       last_synced_to_registry: "2026-01-18T10:00:00Z"
