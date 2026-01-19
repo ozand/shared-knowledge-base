@@ -236,5 +236,18 @@ class RegistrySync:
                 shutil.rmtree(self.temp_dir, onerror=on_rm_error)
 
 if __name__ == "__main__":
-    # Test stub
-    pass
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Company OS Synchronizer")
+    parser.add_argument("action", choices=["init-passport", "pull", "push"], help="Action to perform")
+    
+    args = parser.parse_args()
+    
+    sync = RegistrySync(Path("."))
+    
+    if args.action == "init-passport":
+        sync.init_passport()
+    elif args.action == "pull":
+        sync.fetch_registry()
+    elif args.action == "push":
+        sync.register_project()
