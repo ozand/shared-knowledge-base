@@ -1,0 +1,48 @@
+version: "1.0"
+category: "workflow"
+last_updated: "2026-01-19"
+scope: "universal"
+
+patterns:
+  - id: "RELEASE-PROTOCOL-001"
+    title: "Project Release & Announcement Protocol"
+    severity: "medium"
+    scope: "universal"
+    tags: ["workflow", "release", "communication", "git"]
+
+    problem: |
+      Projects evolve, but stakeholders (humans and other agents) remain unaware of new features.
+      Registry synchronization only updates metadata, not the "story" of the update.
+      There is no standardized way to broadcast "I built a new parser!" across the Company OS.
+
+    solution: |
+      **The Release Triad**
+      
+      A formal release consists of three synchronized actions:
+
+      **1. Git Tag (The Artifact)**
+      - Use Semantic Versioning (`v1.2.0`).
+      - Tag the commit that passed all tests.
+      - `git tag -a v1.2.0 -m "Feat: New 2GIS Parser"`
+
+      **2. GitHub Release/Issue (The Narrative)**
+      - Create a GitHub Release (preferred) or an Issue with label `release`.
+      - **Format:**
+        - **Title:** `Release v1.2.0: <Feature Name>`
+        - **Summary:** High-level value proposition.
+        - **Changes:** Bullet points of technical changes.
+        - **Usage:** Quick start code snippet (curl/python).
+
+      **3. Registry Broadcast (The Signal)**
+      - Update `PROJECT.yaml` with the new version.
+      - `kb_sync push` sends this version to Company OS.
+      - *Result:* The central dashboard now shows "A-Parser: v1.2.0 (New!)".
+
+    benefits:
+      - "**Traceability:** Code state is locked to a version number."
+      - "**Discoverability:** Humans see 'What's New' in the release notes."
+      - "**Automation:** Other agents can subscribe to 'New Releases' in Company OS."
+
+    metadata:
+      author: "Antigravity Agent"
+      status: "active"
