@@ -1,0 +1,68 @@
+version: "1.0"
+category: "architecture"
+last_updated: "2026-01-18"
+scope: "universal"
+
+patterns:
+  - id: "PROJECT-PASSPORT-001"
+    title: "Project Passport & Registry Sync"
+    severity: "high"
+    scope: "universal"
+    tags: ["architecture", "company-os", "sync", "metadata"]
+
+    problem: |
+      Company OS needs to know the state of every project (stack, active agents, API contracts).
+      Manually updating the central registry is error-prone and lags behind reality.
+      Agents need a local "source of truth" about their own project identity.
+
+    solution: |
+      **1. The Project Passport (`.kb/project/PROJECT.yaml`)**
+      Every project maintains a detailed self-description file. This is the "Local Truth".
+
+      ```yaml
+      project_id: "super-parser"
+      name: "Super Parser Service"
+      description: "High-performance HTML/XML parser microservice"
+      repository: "ozand/super-parser"
+      
+      stack:
+        language: "python"
+        framework: "fastapi"
+        database: "redis"
+      
+      # Who is responsible?
+      maintainer_agent:
+        name: "parser-architect"
+        model: "claude-3-5-sonnet"
+      
+      # What does this project offer?
+      capabilities:
+        - name: "parse-url"
+          type: "api"
+          spec: "docs/openapi.json"
+      
+      # Sync Status
+      last_synced_to_registry: "2026-01-18T10:00:00Z"
+      ```
+
+      **2. The Sync Workflow (Push)**
+      When `PROJECT.yaml` changes, the `kb_sync` tool:
+      1. Reads the local passport.
+      2. Clones/Fetches `company-os` registry.
+      3. Updates the entry in `registry/projects.yaml`.
+      4. Commits and Pushes (Directly or via PR).
+
+      **3. The Discovery Workflow (Pull)**
+      When an agent needs to find another project:
+      1. `kb_sync` pulls the latest `company-os/registry/projects.yaml`.
+      2. Caches it locally in `.kb/cache/registry.yaml`.
+      3. Agent searches the local cache.
+
+    benefits:
+      - "**Autonomy:** Project state is managed locally by the project's agent."
+      - "**Freshness:** Registry is updated automatically on changes."
+      - "**Discovery:** Zero-latency lookup of other projects via local cache."
+
+    metadata:
+      author: "Antigravity Agent"
+      status: "active"

@@ -1,7 +1,7 @@
 ---
 title: "RooCode Agent Capabilities"
-version: "1.0.0"
-last_updated: "2025-01-01"
+version: "2.1.0"
+last_updated: "2026-01-19"
 category: "roocode_specific"
 priority: reference
 applies_to: ["roocode_users"]
@@ -31,13 +31,14 @@ This document defines:
 
 ### 🪃 Orchestrator
 
-**Role:** Strategic coordinator for complex multi-step projects
+**Role:** Strategic coordinator for complex multi-step projects (Agentic Pattern Leader)
 
 **Specializes in:**
 - Breaking down large tasks into subtasks
-- Coordinating work between specialized agents
+- Coordinating work between specialized agents (Worker swarm)
 - Managing workflow and dependencies
 - High-level project planning
+- Verifying agent outputs before final submission
 
 **Use when:**
 - Task requires multiple specialists
@@ -173,7 +174,59 @@ This document defines:
 
 ---
 
-### 🔬 Project Research
+### 🔬 Researcher
+
+**Role:** Deep-dive investigator for internal and external knowledge
+
+**Specializes in:**
+- Web research for latest standards (2026 trends)
+- Analyzing complex technical topics
+- Synthesizing information from multiple sources
+- Finding libraries, tools, and patterns
+- Validating assumptions with external data
+
+**Use when:**
+- "How do I implement X in 2026?"
+- "What are the best practices for Y?"
+- Need external documentation or examples
+- Verifying outdated internal guides
+
+**Does NOT:**
+- Modify codebase (read-only)
+- Execute code
+
+**Example tasks:**
+- "Research the latest Model Context Protocol standards"
+- "Find the best library for PDF generation in Node.js"
+- "Summarize changes in React 19"
+
+---
+
+### 🧹 Curator
+
+**Role:** Knowledge Base Guardian
+
+**Specializes in:**
+- Updating documentation to match code reality
+- Pruning obsolete files
+- Organizing "shared-knowledge-base" directories
+- Ensuring guides follow the latest templates
+- Maintaining the "Single Source of Truth"
+
+**Use when:**
+- Documentation is stale
+- "Update the guides to reflect new patterns"
+- Cleaning up temp files or old logs
+- Reorganizing directory structures
+
+**Example tasks:**
+- "Update `agent-capabilities.md` with new roles"
+- "Archive old 2024 design docs"
+- "Standardize the README format across modules"
+
+---
+
+### 🔍 Project Research
 
 **Role:** Detail-oriented codebase analyst
 
@@ -277,6 +330,12 @@ What type of task?
 │
 ├─ Something is broken?
 │  └─ Use Debug
+│
+├─ Need external info/trends?
+│  └─ Use Researcher
+│
+├─ Need to maintain docs/knowledge?
+│  └─ Use Curator
 │
 ├─ Need to understand the codebase?
 │  └─ Use Project Research

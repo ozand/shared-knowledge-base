@@ -91,6 +91,32 @@ class RegistrySync:
             if self.temp_dir.exists():
                 shutil.rmtree(self.temp_dir, onerror=on_rm_error)
 
+    def validate_passport(self, passport):
+        """Validate passport for junk data."""
+        errors = []
+        
+        # Check required fields
+        if not passport.get("project_id") or not str(passport.get("project_id")).strip():
+            errors.append("project_id is empty")
+            
+        # Check defaults
+        if passport.get("description") == "Project description...":
+            errors.append("Description is still default template")
+            
+        if str(passport.get("repository")).startswith("owner/"):
+            errors.append("Repository is still default template (owner/...)")
+            
+        if not passport.get("name"):
+            errors.append("Project name is empty")
+            
+        if errors:
+            print("❌ Passport validation failed:")
+            for e in errors:
+                print(f"  - {e}")
+            print("💡 Action: Edit .kb/project/PROJECT.yaml with real data")
+            return False
+        return True
+
     def register_project(self):
         """Register/Update this project in Company OS."""
         if not self._ensure_passport():
@@ -99,6 +125,10 @@ class RegistrySync:
         # Load local passport
         with open(self.passport_path, 'r') as f:
             passport = yaml.safe_load(f)
+
+        # Validate before pushing
+        if not self.validate_passport(passport):
+            return
 
         print(f"🚀 Registering {passport['project_id']} to Company OS...")
         

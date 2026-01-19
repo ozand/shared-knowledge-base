@@ -1,7 +1,7 @@
 ---
 title: "Project Structure & Organization"
-version: "1.0.0"
-last_updated: "2025-01-01"
+version: "2.1.0"
+last_updated: "2026-01-19"
 category: "project_setup"
 priority: critical
 applies_to: ["all_projects"]
@@ -133,13 +133,16 @@ if __name__ == "__main__":
 ### Using uv (Recommended)
 
 ```bash
-# Initialize new project
-uv init project_name
+# Initialize new project (library/package structure with src layout)
+uv init --lib project_name
+
+# Initialize application (flat layout, can be converted to src)
+# uv init --app project_name
 
 # Add runtime dependency
 uv add requests
 
-# Add development dependency
+# Add development dependency (uses dependency groups)
 uv add --dev pytest pytest-cov
 
 # Synchronize environment
@@ -152,16 +155,16 @@ uv sync
 [project]
 name = "project_name"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "requests>=2.31.0",
+    "requests>=2.32.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "pytest>=7.4.0",
+    "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
+    "ruff>=0.3.0",
 ]
 
 [build-system]
@@ -218,8 +221,8 @@ logs/
 
 When starting a new project:
 
-- [ ] Run `uv init project_name`
-- [ ] Create src/project_name/ structure
+- [ ] Run `uv init --lib project_name` (or `--app` for simple scripts)
+- [ ] Ensure src/project_name/ structure is present
 - [ ] Create tests/ with unit/integration/e2e subdirs
 - [ ] Create scripts/development/ with README.md
 - [ ] Add .gitignore

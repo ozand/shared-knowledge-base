@@ -1,7 +1,7 @@
 ---
 title: "RooCode Tool Usage Protocol"
-version: "1.0.0"
-last_updated: "2025-01-01"
+version: "2.1.0"
+last_updated: "2026-01-19"
 category: "roocode_specific"
 priority: critical
 applies_to: ["roocode_users"]
@@ -12,13 +12,13 @@ related_docs: ["roocode/agent-capabilities.md"]
 
 # RooCode Tool Usage Protocol
 
-> **MANDATE:** Always prefer specialized RooCode tools over execute_command
+> **MANDATE:** Always prefer specialized RooCode/MCP tools over execute_command
 
 ---
 
-## 1. The Golden Rule
+## 1. The Golden Rule (2026 Standard)
 
-**You MUST always prefer specialized RooCode tools** (`read_file`, `list_files`, `write_to_file`, etc.) over the general-purpose `execute_command` tool.
+**You MUST always prefer specialized RooCode tools** (`read_file`, `list_files`, `write_to_file`, etc.) and **MCP (Model Context Protocol)** connected tools over the general-purpose `execute_command`.
 
 **Use `execute_command` ONLY for:**
 - Running scripts and processes
@@ -38,11 +38,37 @@ related_docs: ["roocode/agent-capabilities.md"]
 | `touch`, `mkdir` | `write_to_file` | Auto-creates files and directories |
 | `sed`, `awk` | `search_and_replace` or `apply_diff` | Powerful regex support + interactive approval |
 | `grep`, `rg` | `search_files` or `codebase_search` | Fast, provides context, semantic search |
+| `curl`, `wget` | `browser_action` / `fetch` | **MCP Standard**: Safer, renders JS, handles auth better |
 | `mv`, `cp`, `rm` | `execute_command` + confirmation | **Exception:** No specialized tools yet. MUST request user confirmation via `ask_followup_question` before executing |
 
 ---
 
 ## 3. Detailed Tool Usage
+
+### Web Research (MCP)
+
+```python
+# ✅ Correct
+<use_mcp_tool>
+  <server_name>brave-search</server_name>
+  <tool_name>search</tool_name>
+  <arguments>
+    {"query": "latest react 19 features"}
+  </arguments>
+</use_mcp_tool>
+
+# ❌ Wrong
+<execute_command>
+  <command>curl https://google.com/search?q=...</command>
+</execute_command>
+```
+
+**Benefits:**
+- Structured results (JSON)
+- No parsing of raw HTML required
+- Respects robots.txt and usage policies
+
+---
 
 ### Reading Files
 
