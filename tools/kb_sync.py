@@ -62,6 +62,37 @@ class RegistrySync:
             yaml.dump(template, f, default_flow_style=False)
         print(f"✅ Created passport template at {self.passport_path}")
 
+    def _setup_git_auth(self, cwd: str):
+        """Configure git authentication for subprocess."""
+        # 1. Check if GITHUB_TOKEN is in environment
+        token = os.environ.get("GITHUB_TOKEN")
+        if token:
+            # Configure git credential helper to use the token
+            # This is a bit hacky for a subprocess, better to use the token in the URL
+            return
+
+    def _get_authenticated_url(self) -> str:
+        """Inject token into URL if available."""
+        token = os.environ.get("GITHUB_TOKEN")
+        if not token:
+            # Fallback: check if 'gh' CLI is authenticated
+            try:
+                subprocess.run(["gh", "auth", "status"], check=True, capture_output=True)
+                # If gh is authed, we can use the https URL directly if git-credential-manager is set up
+                # Or we can use gh to get the token
+                proc = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
+                if proc.returncode == 0:
+                    token = proc.stdout.strip()
+            except Exception:
+                pass
+
+        if token:
+            # Convert https://github.com/org/repo.git -> https://token@github.com/org/repo.git
+            if self.company_os_repo.startswith("https://"):
+                return self.company_os_repo.replace("https://", f"https://x-access-token:{token}@", 1)
+        
+        return self.company_os_repo
+
     def fetch_registry(self):
         """Download latest registry from Company OS."""
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -72,8 +103,11 @@ class RegistrySync:
             
         try:
             print("📡 Fetching Company OS Registry...")
+            # Use authenticated URL
+            repo_url = self._get_authenticated_url()
+            
             subprocess.run(
-                ["git", "clone", "--depth", "1", self.company_os_repo, str(self.temp_dir)],
+                ["git", "clone", "--depth", "1", repo_url, str(self.temp_dir)],
                 check=True, capture_output=True
             )
             
@@ -137,8 +171,9 @@ class RegistrySync:
             shutil.rmtree(self.temp_dir, onerror=on_rm_error)
             
         try:
+            repo_url = self._get_authenticated_url()
             subprocess.run(
-                ["git", "clone", self.company_os_repo, str(self.temp_dir)],
+                ["git", "clone", repo_url, str(self.temp_dir)],
                 check=True, capture_output=True
             )
             
