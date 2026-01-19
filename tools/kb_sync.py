@@ -197,6 +197,8 @@ class RegistrySync:
                 "repo": passport.get("repository"),
                 "description": passport.get("description"),
                 "stack": passport.get("stack", []),
+                "version": passport.get("version", "0.0.0"),
+                "latest_release": passport.get("latest_release", {}),
                 "last_sync": datetime.now().isoformat()
             }
             
