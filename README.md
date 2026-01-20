@@ -1,15 +1,35 @@
-# Shared Knowledge Base
+# Shared Knowledge Base (Company OS)
 
-**Version 5.2** - Autonomous Agent Ecosystem
+**Version 5.2** - Collective Intelligence & Autonomous Ecosystem
 
+> **"No mistake should be made twice."**
 
-🆕 **NEW: MCP Server** - Native tool integration for Claude Desktop, VS Code Copilot, and Cursor
-
-Centрализованная база знаний для разработки ПО с системой метаданных, предиктивной аналитикой и распознаванием паттернов.
-
-[English](#english) | [Русский](#russian)
+This repository is the **Central Nervous System** for our AI workforce. It combines:
+1.  **Universal Knowledge:** A constantly growing library of patterns, solutions, and best practices extracted from daily work.
+2.  **Agent Evolution:** A storage for Agent Personas, Roles, and Instructions to ensure consistent high-quality behavior.
+3.  **Agent Operating System:** The tooling (`kb_sync`, `kb_release`) that connects isolated projects into a Federated Network.
 
 ---
+
+## 🧠 The Three Pillars
+
+### 1. Collective Memory (The "What")
+*   **Problem:** Agents in different projects encounter the same errors.
+*   **Solution:** When an agent solves a problem, they **harvest** the solution into a reusable Pattern.
+*   **Result:** Verified solutions for Python, Docker, PostgreSQL are instantly available to everyone via `kb search`.
+
+### 2. Agent Capabilities (The "Who")
+*   **Problem:** Agents drift in behavior or forget their roles.
+*   **Solution:** Centralized storage of **Roles** (Archictect, Curator, Researcher) and **Skills**.
+*   **Result:** "Installable Personality" — `kb install role researcher` instantly upgrades an agent's cognitive capabilities.
+
+### 3. Federated OS (The "How")
+*   **Problem:** Projects are isolated silos.
+*   **Solution:** A network of tools for Discovery, Communication (IPC), and Release Management.
+*   **Result:** Autonomous synchronization between projects via **Company OS**.
+
+---
+
 
 ## 🆕 What's New in v5.1?
 
