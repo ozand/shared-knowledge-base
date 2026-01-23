@@ -25,21 +25,21 @@ def print_success(msg):
 def run_cmd(cmd, cwd=None, check=True):
     try:
         subprocess.run(cmd, cwd=cwd, check=check, shell=True)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         print(f"❌ Command failed: {cmd}")
         sys.exit(1)
 
 def ensure_structure():
     """Create the Two-Tier structure."""
     print_step("Checking directory structure...")
-    
+
     if not KB_DIR.exists():
         KB_DIR.mkdir()
-    
+
     if not PROJECT_DIR.exists():
         PROJECT_DIR.mkdir(parents=True)
         print_success("Created .kb/project/")
-    
+
     # Create project capability structure
     for cap in ["agents", "skills", "hooks"]:
         (PROJECT_DIR / "domains" / "claude-code" / cap).mkdir(parents=True, exist_ok=True)
@@ -53,18 +53,54 @@ def install_shared(method="clone"):
         return
 
     print_step(f"Installing Shared KB via {method}...")
-    
+
     if method == "submodule":
         if not Path(".git").exists():
             print("⚠️  Not a git repository. Initializing git...")
             run_cmd("git init")
-        
+
         run_cmd(f"git submodule add {REPO_URL} .kb/shared")
         run_cmd("git submodule update --init --recursive")
     else:
         run_cmd(f"git clone {REPO_URL} .kb/shared")
 
     print_success("Installed Shared KB")
+
+def cleanup_artifacts():
+    """Remove installation artifacts from shared KB.
+
+    The shared-knowledge-base repository contains its own .kb/ directory
+    which is only needed for development of SKB itself, not in consumer projects.
+    This function removes those artifacts after installation.
+    """
+    print_step("Cleaning up installation artifacts...")
+
+    # Remove .kb/shared/.kb/ if it exists (this is SKB's local KB, not needed in consumer projects)
+    artifact = SHARED_DIR / ".kb"
+    if artifact.exists():
+        try:
+            shutil.rmtree(artifact)
+            print_success("Removed .kb/shared/.kb/ artifact")
+        except Exception as e:
+            print(f"⚠️  Could not remove artifact: {e}")
+
+    # Also remove stray files that shouldn't be in consumer projects
+    stray_files = [
+        SHARED_DIR / "files_to_delete.txt",
+        SHARED_DIR / "long_files.txt",
+        SHARED_DIR / "2026-01-18-this-session-is-being-continued-from-a-previous-co.txt"
+    ]
+    removed_count = 0
+    for f in stray_files:
+        if f.exists():
+            try:
+                f.unlink()
+                removed_count += 1
+            except Exception:
+                pass
+
+    if removed_count > 0:
+        print_success(f"Removed {removed_count} stray file(s)")
 
 def setup_profile():
     """Initialize the active profile."""
@@ -75,14 +111,14 @@ def setup_profile():
         # We need to set PYTHONPATH to include .kb/shared
         env = os.environ.copy()
         env["PYTHONPATH"] = str(SHARED_DIR)
-        
+
         subprocess.run([sys.executable, str(kb_py), "profile", "init"], env=env)
         print_success("Profile initialized")
 
 def configure_gitignore():
     """Update .gitignore with KB entries."""
     print_step("Configuring .gitignore...")
-    
+
     ignore_entries = [
         "\n# --- Shared Knowledge Base ---",
         ".kb/shared/",
@@ -91,9 +127,9 @@ def configure_gitignore():
         "tmp/",
         "# -----------------------------"
     ]
-    
+
     gitignore_path = Path(".gitignore")
-    
+
     if not gitignore_path.exists():
         with open(gitignore_path, "w") as f:
             f.write("\n".join(ignore_entries) + "\n")
@@ -102,12 +138,12 @@ def configure_gitignore():
 
     with open(gitignore_path, "r") as f:
         content = f.read()
-        
+
     to_append = []
     for entry in ignore_entries:
         if entry.strip() and entry not in content:
             to_append.append(entry)
-            
+
     if to_append:
         with open(gitignore_path, "a") as f:
             f.write("\n".join(to_append) + "\n")
@@ -119,18 +155,19 @@ def main():
     parser = argparse.ArgumentParser(description="Shared KB Installer")
     parser.add_argument("--method", choices=["submodule", "clone"], default="submodule", help="Installation method")
     parser.add_argument("--full", action="store_true", help="Perform full setup (structure + install + profile)")
-    
+
     args = parser.parse_args()
-    
+
     print("🚀 Starting Shared KB Installation...")
-    
+
     ensure_structure()
     configure_gitignore()
     install_shared(args.method)
-    
+    cleanup_artifacts()  # NEW: Clean up artifacts after installation
+
     if args.full:
         setup_profile()
-        
+
     print("\n🎉 Installation Complete!")
     print("👉 Next step: python .kb/shared/tools/kb.py search 'help'")
 

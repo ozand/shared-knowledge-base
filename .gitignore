@@ -80,3 +80,14 @@ _domain_index.yaml
 *caveat-the-messages*.txt
 *analysis*.txt
 .legacy/
+
+# Session files that shouldn't be in shared repo
+*this-session-is-being-continued-from-a-previous*.txt
+files_to_delete.txt
+long_files.txt
+
+# --- Shared Knowledge Base ---
+.kb/shared/
+.kb/cache/
+.kb/project/context-archive/sources/
+# -----------------------------
