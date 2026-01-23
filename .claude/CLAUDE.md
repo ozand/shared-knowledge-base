@@ -53,7 +53,7 @@ pip install -r tools/requirements-mcp.txt
     "shared-kb": {
       "command": "python",
       "args": ["-m", "tools.mcp_server"],
-      "cwd": "T:\\Code\\shared-knowledge-base"
+      "cwd": "."
     }
   }
 }

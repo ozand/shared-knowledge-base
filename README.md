@@ -31,7 +31,7 @@ This repository is the **Central Nervous System** for our AI workforce. It combi
 ---
 
 
-## 🆕 What's New in v5.1?
+## 🆕 What's New in v5.2?
 
 **Autonomous Ecosystem** (2026-01-18)
 
@@ -81,7 +81,7 @@ Or remote download:
 curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
 ```
 
-**For detailed instructions:** [QUICKSTART.md](QUICKSTART.md) (5 minutes setup)
+**For detailed instructions:** See [Integration Guide](docs/integration/BOOTSTRAP.md) (5 minutes setup)
 
 ### What It Does
 
@@ -106,15 +106,14 @@ Shared KB provides:
 ### Documentation
 
 **Getting Started:**
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[QUICKSTART-DOMAINS.md](QUICKSTART-DOMAINS.md)** - Progressive domain loading (v5.1)
-- **[for-claude-code/README.md](for-claude-code/README.md)** - Complete Claude Code guide
-- **[for-claude-code/AGENT-QUICK-START.md](for-claude-code/AGENT-QUICK-START.md)** - Quick start for AI agents
+- **[docs/integration/BOOTSTRAP.md](docs/integration/BOOTSTRAP.md)** - 5-minute setup guide
+- **[docs/integration/for-projects/README.md](docs/integration/for-projects/README.md)** - Project integration guide
+- **[docs/integration/for-claude-code/README.md](docs/integration/for-claude-code/README.md)** - Complete Claude Code guide
 
 **Core Documentation:**
-- **[GUIDE.md](GUIDE.md)** - Complete user guide
 - **[docs/README.md](docs/README.md)** - Documentation hub
-- **[docs/standards/yaml-standards.md](docs/standards/yaml-standards.md)** - YAML schema reference (v5.1)
+- **[docs/standards/yaml-standards.md](docs/standards/yaml-standards.md)** - YAML schema reference
+- **[docs/v5.1/README.md](docs/v5.1/README.md)** - v5.1 Architecture & Workflows
 
 **Integration:**
 - **[docs/guides/integration/SUBMODULE_VS_CLONE.md](docs/guides/integration/SUBMODULE_VS_CLONE.md)** - Submodule vs Clone comparison
@@ -163,18 +162,18 @@ shared-knowledge-base/
 ### Usage
 
 ```bash
-# Search knowledge base
-python docs/knowledge-base/shared/tools/kb.py search "websocket"
-python docs/knowledge-base/shared/tools/kb.py search --category python
+# Search knowledge base (from project root with KB installed)
+python .kb/shared/tools/kb.py search "websocket"
+python .kb/shared/tools/kb.py search --category python
 
 # Statistics
-python docs/knowledge-base/shared/tools/kb.py stats
+python .kb/shared/tools/kb.py stats
 
 # Build index
-python docs/knowledge-base/shared/tools/kb.py index -v
+python .kb/shared/tools/kb.py index -v
 
 # Check for updates
-python docs/knowledge-base/shared/scripts/unified-install.py --check
+python .kb/shared/scripts/unified-install.py --check
 ```
 
 ### Contributing
@@ -219,7 +218,7 @@ python scripts/unified-install.py --full
 curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scripts/unified-install.py | python3 - --full
 ```
 
-**Подробные инструкции:** [QUICKSTART.md](QUICKSTART.md) (настройка за 5 минут)
+**Подробные инструкции:** [docs/integration/BOOTSTRAP.md](docs/integration/BOOTSTRAP.md) (настройка за 5 минут)
 
 ### Основные Возможности
 
@@ -232,17 +231,17 @@ curl -sSL https://raw.githubusercontent.com/ozand/shared-knowledge-base/main/scr
 ### Документация
 
 **Начало работы:**
-- **[QUICKSTART.md](QUICKSTART.md)** - Гайд быстрого старта (5 минут)
-- **[for-claude-code/README.md](for-claude-code/README.md)** - Полный гайд для Claude Code
+- **[docs/integration/BOOTSTRAP.md](docs/integration/BOOTSTRAP.md)** - Гайд быстрого старта (5 минут)
+- **[docs/integration/for-claude-code/README.md](docs/integration/for-claude-code/README.md)** - Полный гайд для Claude Code
 
 **Руководства:**
-- **[docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md](docs/guides/installation/HARMONIZED-INSTALLATION-GUIDE.md)** - Установка и обновление
-- **[AGENT-QUICK-START.md](AGENT-QUICK-START.md)** - Quick start для AI агентов
+- **[docs/guides/integration/AGENT_INTEGRATION_GUIDE.md](docs/guides/integration/AGENT_INTEGRATION_GUIDE.md)** - Интеграция агентов
+- **[docs/v5.1/README.md](docs/v5.1/README.md)** - v5.1 Архитектура и рабочие процессы
 
 **См. раздел [Documentation](#documentation) выше для полного списка.**
 
 ---
 
-**Version:** 3.2
-**Last Updated:** 2026-01-07
+**Version:** 5.2
+**Last Updated:** 2026-01-19
 **Repository:** https://github.com/ozand/shared-knowledge-base

@@ -18,13 +18,12 @@ vps-admin kb-search "log cleanup"
 
 ### Direct Access
 ```bash
-# Use kb.py tool directly
-cd /home/ozand/knowledge-base
+# Use kb.py tool directly (from shared-knowledge-base root)
 python3 tools/kb.py search "keyword"
 python3 tools/kb.py stats
 
 # Rebuild index
-vps-admin kb-index
+python3 tools/kb.py index -v
 ```
 
 ## VPS-Specific Content
@@ -139,18 +138,17 @@ vps-admin kb-search "scanner"
 ## Directory Structure
 
 ```
-/home/ozand/knowledge-base/
-├── vps/
-│   ├── errors/
-│   │   ├── logs.yaml         # Log management issues
-│   │   ├── networking.yaml   # Network & security issues
-│   │   └── memory.yaml       # Memory & performance issues
-│   └── patterns/
-│       └── best-practices.yaml  # VPS administration patterns
+shared-knowledge-base/
+├── domains/
+│   └── vps/
+│       ├── errors/
+│       │   ├── logs.yaml         # Log management issues
+│       │   ├── networking.yaml   # Network & security issues
+│       │   └── memory.yaml       # Memory & performance issues
+│       └── README.md             # This file
 ├── tools/
-│   └── kb.py                # Knowledge base CLI tool
-├── .kb-config.yaml          # KB configuration
-└── VPS_README.md           # This file
+│   └── kb.py                    # Knowledge base CLI tool
+└── .kb-config.yaml              # KB configuration
 ```
 
 ## Integration with VPS Tools
@@ -170,7 +168,7 @@ vps-admin kb-stats          # Show statistics
 When documenting new VPS issues:
 
 1. **Identify scope**: Should this be in VPS KB or shared KB?
-   - VPS-specific: Add to `/home/ozand/knowledge-base/vps/`
+   - VPS-specific: Add to `domains/vps/`
    - Universal: Consider contributing to shared KB
 
 2. **Follow YAML structure**:
@@ -198,18 +196,17 @@ When documenting new VPS issues:
 3. **Validate and index**:
    ```bash
    # Validate YAML syntax
-   python3 /home/ozand/knowledge-base/tools/kb.py validate vps/errors/new-file.yaml
+   python3 tools/kb.py validate domains/vps/errors/new-file.yaml
 
    # Rebuild index
-   vps-admin kb-index
+   python3 tools/kb.py index -v
    ```
 
 ## Related Documentation
 
-- **Server Documentation**: `/home/ozand/.claude/config/vps-info.md`
-- **Optimization Guide**: `/home/ozand/.claude/config/OPTIMIZATION.md`
-- **New Tools Guide**: `/home/ozand/.claude/config/NEW_TOOLS.md`
-- **Admin Script**: `/home/ozand/.claude/skills/vps-admin.sh`
+- **Server Documentation**: Check your VPS config for local documentation
+- **Optimization Guide**: See `domains/universal/patterns/` for optimization patterns
+- **Admin Tools**: See `tools/` for available CLI tools
 
 ## Maintenance
 
@@ -234,9 +231,9 @@ When documenting new VPS issues:
 ### Updating KB from Shared Repository
 
 ```bash
-cd /home/ozand/knowledge-base
+# From shared-knowledge-base root
 git pull origin main
-vps-admin kb-index
+python3 tools/kb.py index -v
 ```
 
 ## Real-World Results

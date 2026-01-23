@@ -88,8 +88,13 @@ def cleanup_artifacts():
     stray_files = [
         SHARED_DIR / "files_to_delete.txt",
         SHARED_DIR / "long_files.txt",
-        SHARED_DIR / "2026-01-18-this-session-is-being-continued-from-a-previous-co.txt"
     ]
+
+    # Remove session files matching the pattern
+    import glob as _glob
+    session_pattern = str(SHARED_DIR / "*this-session-is-being-continued*.txt")
+    stray_files.extend(Path(p) for p in _glob.glob(session_pattern))
+
     removed_count = 0
     for f in stray_files:
         if f.exists():
