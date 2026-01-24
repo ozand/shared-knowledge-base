@@ -1,0 +1,41 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: opencode
+errors: []
+patterns:
+  - id: OPENCODE_CAP-001
+    title: "Installing Opencode Architect Agent"
+    scope: project
+    pattern: |
+      Install the `opencode-architect` agent to help manage project configuration.
+    implementation: |
+      # Copy the agent definition
+      mkdir -p .opencode/agents
+      cp domains/opencode/assets/agents/opencode-architect.md .opencode/agents/
+
+  - id: OPENCODE_CAP-002
+    title: "Installing Knowledge Curator Agent"
+    scope: project
+    pattern: |
+      Install the `knowledge-curator` agent to help maintain AGENTS.md.
+    implementation: |
+      # Copy the agent definition
+      mkdir -p .opencode/agents
+      cp domains/opencode/assets/agents/knowledge-curator.md .opencode/agents/
+
+  - id: OPENCODE_CAP-003
+    title: "Bootstrapping Opencode Configuration"
+    scope: project
+    pattern: |
+      Use the secure-by-default template for `opencode.json`.
+    implementation: |
+      cp domains/opencode/assets/templates/opencode.json opencode.json
+
+  - id: OPENCODE_CAP-004
+    title: "Creating Custom Tool Skill"
+    scope: project
+    pattern: |
+      Install the `create-custom-tool` skill to teach agents how to write tools.
+    implementation: |
+      mkdir -p .opencode/skills/create-custom-tool
+      cp domains/opencode/assets/skills/create-custom-tool/SKILL.md .opencode/skills/create-custom-tool/
