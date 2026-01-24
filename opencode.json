@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/schema.json",
+  "permission": {
+    "read": {
+      "*.env": "deny",
+      "*": "allow"
+    },
+    "edit": {
+      "domains/**": "allow",
+      "_index.yaml": "allow",
+      "_domain_index.yaml": "allow",
+      "*": "ask"
+    },
+    "bash": {
+      "python tools/kb.py *": "allow",
+      "git status": "allow",
+      "ls": "allow",
+      "*": "ask"
+    }
+  },
+  "agent": {
+    "curator": {
+      "permission": {
+        "bash": {
+          "python tools/kb.py *": "allow"
+        },
+        "edit": {
+          "domains/**": "allow"
+        }
+      }
+    }
+  }
+}
