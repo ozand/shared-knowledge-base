@@ -1,0 +1,87 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: opencode
+errors:
+  - id: OPENCODE_WORKFLOW-001
+    title: "Deprecated Tools Config"
+    severity: low
+    scope: project
+    problem: "Using the old 'tools' boolean config for permissions."
+    solution:
+      explanation: |
+        The legacy `tools` boolean config is deprecated. Use the `permission` object instead.
+      code: |
+        # OLD
+        "tools": { "bash": true }
+
+        # NEW
+        "permission": {
+          "bash": "allow"
+        }
+
+  - id: OPENCODE_WORKFLOW-002
+    title: "AGENTS.md vs CLAUDE.md"
+    severity: low
+    scope: project
+    problem: "Confusion about which rule file takes precedence."
+    solution:
+      explanation: |
+        Opencode checks files in this order (first wins):
+        1. Local `AGENTS.md` (Project root)
+        2. Local `CLAUDE.md` (Legacy fallback)
+        3. Global `~/.config/opencode/AGENTS.md`
+        4. Global `~/.claude/CLAUDE.md`
+        
+        If `AGENTS.md` exists, `CLAUDE.md` is ignored.
+
+patterns:
+  - id: OPENCODE_WORKFLOW-003
+    title: "Initializing Project Rules"
+    scope: project
+    pattern: |
+      Use the `/init` command in the TUI to automatically generate an `AGENTS.md` file based on project content.
+    implementation: |
+      # In TUI
+      /init
+
+  - id: OPENCODE_WORKFLOW-004
+    title: "Granular Permissions"
+    scope: project
+    pattern: |
+      Permissions can be configured with granular rules using glob patterns.
+      The last matching rule wins. Put wildcards first, specific rules last.
+    implementation: |
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "ls -la": "allow"
+        },
+        "read": {
+          "*.env": "deny",
+          "*": "allow"
+        }
+      }
+
+  - id: OPENCODE_WORKFLOW-005
+    title: "Referencing External Instructions"
+    scope: project
+    pattern: |
+      You can include external documentation in `opencode.json` to keep `AGENTS.md` clean.
+    implementation: |
+      "instructions": [
+        "docs/api-standards.md",
+        "https://raw.githubusercontent.com/org/rules/main/style.md",
+        ".cursor/rules/*.md"
+      ]
+
+  - id: OPENCODE_WORKFLOW-006
+    title: "Lazy Loading Instructions"
+    scope: project
+    pattern: |
+      In `AGENTS.md`, you can instruct the agent to read files only when needed using `@` references.
+    implementation: |
+      # AGENTS.md content
+      
+      For database schema changes, read @docs/schema-migration.md
+      For UI component creation, read @docs/component-library.md

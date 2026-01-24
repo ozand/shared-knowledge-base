@@ -1,0 +1,87 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: opencode
+errors:
+  - id: OPENCODE_INTEL-001
+    title: "Skill Frontmatter Missing"
+    severity: medium
+    scope: project
+    problem: "SKILL.md file is ignored because of missing or invalid frontmatter."
+    solution:
+      explanation: |
+        Every `SKILL.md` MUST start with YAML frontmatter containing `name` and `description`.
+      code: |
+        ---
+        name: git-release
+        description: Helper for creating semantic releases
+        ---
+
+  - id: OPENCODE_INTEL-002
+    title: "Skill Naming Convention"
+    severity: low
+    scope: project
+    problem: "Skill name does not match directory name or contains invalid characters."
+    solution:
+      explanation: |
+        Skill name must:
+        1. Match the directory name: `.opencode/skills/<name>/SKILL.md`
+        2. Be lowercase alphanumeric with single hyphens.
+        3. Be 1-64 characters long.
+
+patterns:
+  - id: OPENCODE_INTEL-003
+    title: "Model Variants Configuration"
+    scope: global
+    pattern: |
+      You can define custom model variants (e.g., specific thinking budgets) to reuse settings without duplication.
+    implementation: |
+      "model": {
+        "anthropic": {
+          "claude-3-5-sonnet-20241022": {
+            "variants": {
+              "deep-think": {
+                "thinking": { "type": "enabled", "budget_tokens": 8096 }
+              }
+            }
+          }
+        }
+      }
+      # Usage: opencode run --model anthropic/claude-3-5-sonnet-20241022:deep-think
+
+  - id: OPENCODE_INTEL-004
+    title: "Creating Custom Tools (JS/TS)"
+    scope: project
+    pattern: |
+      Create custom tools in `.opencode/tools/` using the `tool()` helper.
+    implementation: |
+      import { tool } from "opencode";
+
+      export const myTool = tool({
+        description: "Calculate fibonacci",
+        parameters: tool.schema.object({
+          n: tool.schema.number()
+        }),
+        execute: async ({ n }) => {
+          // implementation
+          return result;
+        }
+      });
+
+  - id: OPENCODE_INTEL-005
+    title: "Wrapping Python Scripts as Tools"
+    scope: project
+    pattern: |
+      You can wrap Python scripts as Opencode tools using Bun's shell execution.
+    implementation: |
+      import { tool } from "opencode";
+      
+      export const pyTool = tool({
+        description: "Run python analysis",
+        parameters: tool.schema.object({
+          file: tool.schema.string()
+        }),
+        execute: async ({ file }) => {
+          const result = await Bun.$`python3 scripts/analyze.py ${file}`.text();
+          return result;
+        }
+      });

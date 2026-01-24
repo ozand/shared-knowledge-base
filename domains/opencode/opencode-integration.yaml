@@ -1,0 +1,75 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: opencode
+errors:
+  - id: OPENCODE_INTEG-001
+    title: "Plugin Dependency Missing"
+    severity: medium
+    scope: project
+    problem: "Plugin fails to load due to missing npm dependencies."
+    solution:
+      explanation: |
+        Local plugins (`.opencode/plugins/`) using external packages must have a `package.json` 
+        in the config directory. Opencode runs `bun install` at startup.
+      code: |
+        # In .opencode/plugins/package.json
+        {
+          "dependencies": {
+            "axios": "^1.0.0"
+          }
+        }
+
+  - id: OPENCODE_INTEG-002
+    title: "SDK Client Connection Failed"
+    severity: medium
+    scope: project
+    problem: "SDK Client cannot connect to the Opencode server."
+    solution:
+      explanation: |
+        Ensure the Opencode server is running (`opencode serve`) and the port matches (default 4096).
+        If using auth, set `OPENCODE_SERVER_PASSWORD` and `OPENCODE_SERVER_USERNAME`.
+      code: |
+        const client = createOpencodeClient({
+          baseUrl: "http://localhost:4096",
+          // Add headers if auth is enabled
+        });
+
+patterns:
+  - id: OPENCODE_INTEG-003
+    title: "Plugin Hooks for Security"
+    scope: project
+    pattern: |
+      Use `tool.execute.before` hook to intercept and validate tool usage (e.g., blocking .env access).
+    implementation: |
+      export const EnvProtection = async () => {
+        return {
+          "tool.execute.before": async (input) => {
+            if (input.tool === "read" && input.args.filePath.includes(".env")) {
+              throw new Error("Access to .env is restricted");
+            }
+          }
+        };
+      };
+
+  - id: OPENCODE_INTEG-004
+    title: "Disabling Auto-LSP"
+    scope: project
+    pattern: |
+      Disable automatic LSP downloading in environments where network or disk usage is restricted.
+    implementation: |
+      # In .env or shell profile
+      export OPENCODE_DISABLE_LSP_DOWNLOAD=true
+      
+      # In opencode.json
+      "lsp": false  # Disable globally
+
+  - id: OPENCODE_INTEG-005
+    title: "Driving TUI via Server API"
+    scope: project
+    pattern: |
+      Use the `/tui/*` endpoints to control the user interface programmatically from external scripts.
+    implementation: |
+      # Append text to user prompt
+      curl -X POST http://localhost:4096/tui/append-prompt \
+        -H "Content-Type: application/json" \
+        -d '{"body": "Check system status"}'

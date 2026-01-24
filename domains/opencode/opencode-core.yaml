@@ -1,0 +1,105 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: opencode
+errors:
+  - id: OPENCODE_CORE-001
+    title: "Configuration Precedence Confusion"
+    severity: medium
+    scope: project
+    problem: "Settings in global config are not being applied as expected."
+    solution:
+      explanation: |
+        Opencode merges configurations in a specific order. Later sources override earlier ones.
+        Order: Remote (Org) -> Global (~/.config) -> Custom (Env) -> Project (./opencode.json) -> .opencode/ dirs -> Inline (Env).
+        
+        Project config has higher priority than global. Check if your project's `opencode.json` is overriding your global settings.
+  
+  - id: OPENCODE_CORE-002
+    title: "Context Window Exhaustion with MCP"
+    severity: medium
+    scope: project
+    problem: "Session context fills up rapidly when using multiple MCP servers."
+    solution:
+      explanation: |
+        MCP servers add their tool definitions to the context window. Some servers (like GitHub) add many tokens.
+        Enable MCP servers only when needed, or scope them to specific agents rather than enabling them globally.
+      code: |
+        # In opencode.json
+        "mcp": {
+          "github": {
+            "enabled": false  # Disable globally
+          }
+        },
+        "agent": {
+          "code-reviewer": {
+            "tools": {
+              "github-*": true  # Enable only for this agent
+            }
+          }
+        }
+
+patterns:
+  - id: OPENCODE_CORE-003
+    title: "Headless Execution via CLI"
+    scope: universal
+    pattern: |
+      You can run Opencode in headless mode for scripting or quick queries without the TUI.
+    implementation: |
+      # Quick one-off query
+      opencode run "Explain this file"
+
+      # Pipe input
+      cat file.py | opencode run "Find bugs"
+
+      # Attach to running server to avoid cold boot
+      opencode run --attach http://localhost:4096 "Query"
+
+  - id: OPENCODE_CORE-004
+    title: "Defining Custom Agents via Markdown"
+    scope: project
+    pattern: |
+      Agents can be defined using simple Markdown files in `.opencode/agents/`.
+      The filename becomes the agent name (e.g., `reviewer.md` -> `@reviewer`).
+    implementation: |
+      ---
+      description: Reviews code for security vulnerabilities
+      temperature: 0.2
+      model: anthropic/claude-3-opus
+      ---
+
+      You are a security expert. Analyze the code for:
+      1. Injection vulnerabilities
+      2. Auth bypass issues
+      3. Data exposure
+
+  - id: OPENCODE_CORE-005
+    title: "Configuring Local MCP Servers"
+    scope: project
+    pattern: |
+      Add local MCP servers (like the everything server or custom scripts) in `opencode.json`.
+    implementation: |
+      {
+        "mcp": {
+          "sqlite": {
+            "type": "local",
+            "command": ["npx", "-y", "@modelcontextprotocol/server-sqlite"],
+            "args": ["--db", "data.db"]
+          }
+        }
+      }
+
+  - id: OPENCODE_CORE-006
+    title: "Using Variables in Configuration"
+    scope: project
+    pattern: |
+      Opencode config supports variable substitution for environment variables and file contents.
+    implementation: |
+      {
+        "instructions": [
+          "{file:.cursor/rules/python.md}",
+          "{file:docs/api_standards.md}"
+        ],
+        "env": {
+          "API_KEY": "{env:MY_API_KEY}"
+        }
+      }
