@@ -122,7 +122,13 @@ class KBMetrics:
                         largest_file = str(yaml_file.relative_to(self.repo_path))
 
                     # Track by domain
-                    domain = yaml_file.parent.parent.name
+                    try:
+                        rel_path = yaml_file.relative_to(self.domains_path)
+                        domain = rel_path.parts[0]
+                        # Debug: print(f"{yaml_file} -> {domain}") 
+                    except ValueError:
+                        domain = "unknown"
+                    
                     if domain not in yaml_stats['domains']:
                         yaml_stats['domains'][domain] = {
                             'files': 0,
