@@ -1,0 +1,210 @@
+# Disk Space Issues with Deleted Files Held Open
+# Troubleshooting when df shows full but du shows less space used
+
+version: "1.0"
+category: "disk-space"
+last_updated: "2026-01-24"
+scope: "universal"
+
+errors:
+  - id: "DISK-001"
+    title: "Disk 100% full but du shows much less space used"
+    severity: "critical"
+
+    problem: |
+      The 'df' command shows the disk is 100% full, but running 'du -sh *'
+      shows significantly less space used. This happens when a large file
+      is deleted but still held open by a running process.
+
+    symptoms:
+      - "df -h shows 100% disk usage"
+      - "du -sh / shows much lower usage (e.g., 40GB vs 100GB)"
+      - "Disk space not freed after deleting large log file"
+      - "Restarting process suddenly frees disk space"
+
+    root_cause: |
+      In Linux, when a file is deleted while a process still has it open:
+      1. The directory entry is removed (file disappears in ls)
+      2. The inode and data blocks remain (process still has file handle)
+      3. Space is only freed when ALL processes close the file
+
+      The file is still consuming disk space but is invisible to du
+      because it has no directory entry. df counts actual block usage.
+
+    diagnosis:
+      find_deleted_files: |
+        # Find deleted files still held open by processes
+        lsof | grep "(deleted)"
+
+        # Or get summary with sizes
+        lsof | grep "(deleted)" | awk '{sum+=$7} END {print sum/1024/1024 " MB"}'
+
+      find_specific_process: |
+        # Find which process is holding the deleted file
+        lsof | grep -i "(deleted)" | grep -i "log"
+
+        # Check file descriptors for a specific PID
+        ls -la /proc/12345/fd/ | grep deleted
+
+      check_disk_space: |
+        # View actual disk usage (includes deleted open files)
+        df -h
+
+        # View apparent usage (excludes deleted open files)
+        du -sh /var/log
+
+    affected_scenarios:
+      - "Applications with large log files (x-ui, docker, databases)"
+      - "Log rotation before restarting services"
+      - "Container logs filling disk"
+      - "Trace/debug files not properly closed"
+
+    solution:
+      truncate_file: |
+        # Method 1: Truncate the file descriptor (preferred - safe)
+        # Find the PID and FD from lsof output, then:
+        truncate -s 0 /proc/PID/fd/FD_NUMBER
+
+        # Example: PID 1343329, FD 7
+        truncate -s 0 /proc/1343329/fd/7
+
+        # This zeroes the file while process keeps it open
+
+      restart_service: |
+        # Method 2: Restart the service (frees all handles)
+        systemctl restart service-name
+
+        # Or for docker
+        docker restart container-name
+
+      copy_truncate_method: |
+        # Method 3: Copy and truncate (if process supports)
+        cp /var/log/large.log /var/log/large.log.bak
+        > /var/log/large.log
+        # Then restart service to close old file
+
+      explanation: |
+        Truncating /proc/PID/fd/FD is the safest method because:
+        - Process continues running
+        - File descriptor remains valid
+        - Space is immediately freed
+        - Process can still write to the file
+
+        Restarting the service is cleaner but causes downtime.
+
+    prevention:
+      setup_logrotate: |
+        # Create logrotate configuration
+        cat > /etc/logrotate.d/service-name << 'EOF'
+        /var/log/service-name/*.log {
+            daily
+            rotate 7
+            compress
+            delaycompress
+            missingok
+            notifempty
+            create 0640 root root
+            sharedscripts
+            postrotate
+                systemctl reload service-name > /dev/null 2>&1 || true
+            endscript
+            maxsize 1G
+        }
+        EOF
+
+        # Test configuration
+        logrotate -d /etc/logrotate.d/service-name
+
+      logrotate_directives: |
+        # Key directives for preventing this issue:
+
+        daily              # Rotate daily
+        rotate 7           # Keep 7 days of logs
+        maxsize 1G         # Rotate if file exceeds 1GB
+        compress           # Compress old logs
+        delaycompress      # Delay compression by one day
+        copytruncate       # Copy then truncate (if service doesn't support SIGHUP)
+        # OR
+        sharedscripts      # Run postrotate once (for services that support SIGHUP)
+        postrotate         # Reload service to close old log file
+
+      docker_logs: |
+        # Limit Docker container logs
+        cat > /etc/docker/daemon.json << 'EOF'
+        {
+          "log-driver": "json-file",
+          "log-opts": {
+            "max-size": "100m",
+            "max-file": "5"
+          }
+        }
+        EOF
+
+        systemctl restart docker
+
+    tags: ["disk-space", "linux", "troubleshooting", "logs", "lsof"]
+
+troubleshooting:
+  - symptom: "Cannot delete file, text file busy"
+    causes:
+      - "Process still has file open for execution"
+      - "File is memory-mapped by running process"
+    solution: |
+      # Find process using the file
+      fuser /path/to/file
+      lsof /path/to/file
+
+      # Stop process before deleting
+      systemctl stop service
+      rm /path/to/file
+
+  - symptom: "df shows decreasing space but du doesn't change"
+    causes:
+      - "Hidden deleted files held open"
+      - "Deleted files in containers"
+    solution: |
+      # Check for deleted files
+      lsof | grep "(deleted)"
+
+      # Check docker disk usage
+      docker system df
+
+      # Clean docker
+      docker system prune -a
+
+best_practices:
+  - rule: "Always set up logrotate before deploying services"
+    reason: "Prevents log files from growing indefinitely"
+
+  - rule: "Use maxsize directive in logrotate"
+    reason: "Handles unexpected log spikes between rotations"
+
+  - rule: "Test logrotate with -d flag"
+    reason: "Catch configuration errors before they matter"
+
+  - rule: "Monitor disk space with alerts"
+    command: "df -h | grep -E '9[0-9]%|100%'"
+
+  - rule: "Use lsof when disk usage doesn't match"
+    reason: "Quickly identifies deleted but open files"
+
+common_services_with_this_issue:
+  - service: "x-ui / xray"
+    log_file: "/var/log/3xui.log"
+    fix: "logrotate with maxsize 100M"
+
+  - service: "Docker containers"
+    log_location: "/var/lib/docker/containers/*/*-json.log"
+    fix: "daemon.json with log-opts max-size"
+
+  - service: "nginx"
+    log_files: "/var/log/nginx/*.log"
+    fix: "logrotate comes pre-configured, verify postrotate"
+
+  - service: "MySQL/MariaDB"
+    log_files: "/var/log/mysql/*.log"
+    fix: "SET GLOBAL general_log = 'OFF'; for query log"
+
+  - service: " systemd journals"
+    log_location: "/var/log/journal/"
+    fix: "journald.conf with SystemMaxUse=1G"

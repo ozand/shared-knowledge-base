@@ -1,0 +1,95 @@
+# Nginx Configuration for LLM API Streaming
+# Optimal nginx reverse proxy configuration for LLM/AI API endpoints
+
+version: "1.0"
+category: "nginx-llm-streaming"
+last_updated: "2026-01-24"
+scope: "infrastructure"
+
+pattern_name: "LLM Streaming Proxy"
+use_case: "Reverse proxy configuration for LLM APIs (OpenAI, Anthropic, local models)"
+
+problem: |
+  Standard nginx proxy configuration buffers responses, which breaks streaming
+  responses from LLM APIs. This causes:
+  - No tokens appear until generation is complete
+  - Timeout errors on long generations
+  - Poor user experience for chat applications
+
+solution:
+  nginx_config: |
+    server {
+        listen 127.0.0.1:8444 ssl proxy_protocol;
+        http2 on;
+        server_name llm.example.com;
+
+        ssl_certificate /etc/letsencrypt/live/llm.example.com/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/llm.example.com/privkey.pem;
+
+        # Proxy protocol for real client IP
+        set_real_ip_from 127.0.0.1;
+        real_ip_header proxy_protocol;
+
+        location / {
+            proxy_pass http://backend:8112;
+
+            # Standard headers
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # LLM STREAMING - Critical settings
+            proxy_buffering off;              # Disable response buffering
+            proxy_read_timeout 300s;          # Allow long generations
+            proxy_connect_timeout 300s;
+            proxy_send_timeout 300s;
+
+            # HTTP/1.1 with persistent connection
+            proxy_set_header Connection "";
+            proxy_http_version 1.1;
+
+            # Disable caching and chunked encoding
+            chunked_transfer_encoding off;
+            proxy_cache off;
+        }
+    }
+
+  explanation: |
+    Key settings for LLM streaming:
+    - `proxy_buffering off`: Prevents nginx from buffering the response
+    - Extended timeouts: LLM generation can take 30+ seconds
+    - HTTP/1.1: Required for proper streaming
+    - `Connection ""`: Removes Connection header to allow keep-alive
+
+benefits:
+  - Real-time token streaming to clients
+  - Supports long-running LLM generations
+  - Maintains HTTP/2 for client connections
+  - Passes real client IP via proxy_protocol
+
+alternatives:
+  - "Use grpc for streaming (better performance but more complex)"
+  - "WebSocket proxy (requires additional configuration)"
+  - "Direct connection (bypass nginx, loses SSL/proxy benefits)"
+
+testing:
+  - name: "Test streaming endpoint"
+    command: |
+      curl -N -H "Authorization: Bearer $TOKEN" \
+        https://llm.example.com/v1/chat/completions
+
+  - name: "Verify no buffering"
+    indicator: "Tokens appear immediately, not all at once"
+
+common_mistakes:
+  - mistake: "Forgetting proxy_buffering off"
+    symptom: "No streaming, all tokens appear at once"
+
+  - mistake: "Timeout too short (default 60s)"
+    symptom: "504 Gateway Timeout on long generations"
+
+  - mistake: "Using HTTP/2 without proper streaming config"
+    symptom: "Chunks buffered or connection drops"
+
+tags: ["nginx", "llm", "streaming", "reverse-proxy", "api"]

@@ -1,0 +1,195 @@
+# Xray/X-ui SNI-based Routing Configuration
+# SNI fallback routing for multiple services on single port 443
+
+version: "1.0"
+category: "xray-sni-routing"
+last_updated: "2026-01-24"
+scope: "infrastructure"
+
+pattern_name: "SNI Fallback Routing with Xray"
+use_case: |
+  Route multiple domains/subdomains to different backend services
+  based on SNI (Server Name Indication) while sharing port 443
+
+problem: |
+  Need to host multiple services with different domains on a single
+  server with only one public IP address. All services need to use
+  port 443 (HTTPS), but each should route to different backends.
+
+  Example:
+  - redis.example.com → backend:8111 (Redis Backend)
+  - llm.example.com → backend:8112 (LLM API Gateway)
+  - Both need to terminate TLS at port 443
+
+solution:
+  architecture: |
+    Client → Xray (port 443) → SNI matching → Nginx (different ports) → Backends
+
+    Xray uses SNI from TLS ClientHello to route to different nginx
+    instances, which then proxy to the actual backend services.
+
+  xray_fallbacks_config: |
+    # In x-ui: Inbounds → Edit → Fallbacks section
+    # Or in config.json under streamSettings:
+
+    "fallbacks": [
+      {
+        "name": "llm.example.com",      # SNI to match
+        "dest": "127.0.0.1:8444",       # Route to this nginx port
+        "xver": 1,                      # Enable proxy protocol
+        "alpn": "",
+        "path": ""
+      },
+      {
+        "name": "redis.example.com",
+        "dest": "127.0.0.1:8443",
+        "xver": 1,
+        "alpn": "",
+        "path": ""
+      },
+      {
+        "name": "",                     # Empty = default/catch-all
+        "dest": "127.0.0.1:8443",
+        "xver": 1,
+        "alpn": "",
+        "path": ""
+      }
+    ]
+
+  nginx_configs:
+    - name: "llm.example.com on port 8444"
+      config: |
+        server {
+            listen 127.0.0.1:8444 ssl proxy_protocol;
+            http2 on;
+            server_name llm.example.com;
+
+            ssl_certificate /etc/letsencrypt/live/llm.example.com/fullchain.pem;
+            ssl_certificate_key /etc/letsencrypt/live/llm.example.com/privkey.pem;
+
+            set_real_ip_from 127.0.0.1;
+            real_ip_header proxy_protocol;
+
+            location / {
+                proxy_pass http://backend:8112;
+                # ... proxy settings
+            }
+        }
+
+    - name: "redis.example.com on port 8443"
+      config: |
+        server {
+            listen 127.0.0.1:8443 ssl proxy_protocol;
+            http2 on;
+            server_name redis.example.com;
+
+            ssl_certificate /etc/letsencrypt/live/redis.example.com/fullchain.pem;
+            ssl_certificate_key /etc/letsencrypt/live/redis.example.com/privkey.pem;
+
+            set_real_ip_from 127.0.0.1;
+            real_ip_header proxy_protocol;
+
+            location / {
+                proxy_pass http://backend:8111;
+                # ... proxy settings
+            }
+        }
+
+  xui_database_method: |
+    # x-ui manages config.json and overwrites manual changes
+    # Must update via SQLite database:
+
+    # 1. Connect to database
+    sqlite3 /etc/x-ui/x-ui.db
+
+    # 2. View current stream_settings
+    SELECT id, stream_settings FROM inbounds WHERE port = 443;
+
+    # 3. Update fallbacks via Python script
+    python3 << 'EOF'
+    import sqlite3
+    import json
+
+    conn = sqlite3.connect('/etc/x-ui/x-ui.db')
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT id, stream_settings FROM inbounds WHERE port = 443')
+    row = cursor.fetchone()
+
+    if row:
+        inbound_id, stream_str = row
+        stream = json.loads(stream_str)
+
+        # Update fallbacks
+        stream['fallbacks'] = [
+            {'name': 'llm.example.com', 'dest': '127.0.0.1:8444', 'xver': 1},
+            {'name': 'redis.example.com', 'dest': '127.0.0.1:8443', 'xver': 1},
+            {'name': '', 'dest': '127.0.0.1:8443', 'xver': 1}
+        ]
+
+        new_stream = json.dumps(stream, separators=(',', ':'))
+        cursor.execute('UPDATE inbounds SET stream_settings = ? WHERE id = ?',
+                      (new_stream, inbound_id))
+        conn.commit()
+
+    conn.close()
+    EOF
+
+    # 4. Restart x-ui
+    systemctl restart x-ui
+
+  explanation: |
+    How it works:
+    1. Client connects to port 443 with SNI (llm.example.com)
+    2. Xray reads SNI from TLS ClientHello
+    3. Xray matches against fallbacks list by "name" field
+    4. Connection forwarded to matched dest (127.0.0.1:8444)
+    5. Nginx handles SSL and proxies to backend
+    6. Proxy protocol passes real client IP
+
+    Order matters! More specific SNI entries should come before
+    the empty (default) entry.
+
+benefits:
+  - Single IP/port for multiple services
+  - Real client IP via proxy_protocol
+  - No need for multiple public IPs
+  - Centralized TLS termination
+
+drawbacks:
+  - Complex configuration (xray + nginx)
+  - x-ui web panel may have bugs with multiple fallbacks
+  - Must use database updates when web panel fails
+  - Harder debugging when routing fails
+
+troubleshooting:
+  - symptom: "All domains route to same backend"
+    cause: "Fallbacks not in correct order, empty SNI matches first"
+    solution: "Ensure specific SNI entries come before empty/default entry"
+
+  - symptom: "x-ui web panel shows 500 error when adding fallback"
+    cause: "x-ui bug with multiple fallback entries"
+    solution: "Update via SQLite database directly, then restart x-ui"
+
+  - symptom: "Changes disappear after x-ui restart"
+    cause: "x-ui regenerates config.json from database"
+    solution: "Always update database, never edit config.json directly"
+
+  - symptom: "Client IP shows as 127.0.0.1"
+    cause: "proxy_protocol not enabled or xver not set to 1"
+    solution: "Set xver: 1 in fallback and 'proxy_protocol' in nginx listen"
+
+alternative_approaches:
+  - name: "Nginx stream module with ssl_preread"
+    pros: ["Simpler config", "No x-ui dependency"]
+    cons: ["Nginx must be on port 443", "Conflicts with xray"]
+
+  - name: "HAProxy with SNI routing"
+    pros: ["Built-in SNI routing", "Better performance"]
+    cons: ["Another service to manage", "Steeper learning curve"]
+
+  - name: "Separate IPs per service"
+    pros: ["Simplest config", "Independent services"]
+    cons: ["Need multiple public IPs", "Additional cost"]
+
+tags: ["xray", "x-ui", "sni", "routing", "nginx", "reverse-proxy", "tls"]

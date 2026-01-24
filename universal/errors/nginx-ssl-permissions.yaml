@@ -1,0 +1,169 @@
+# Nginx SSL Certificate Permissions Errors
+# Let's Encrypt certificate access issues on nginx
+
+version: "1.0"
+category: "ssl-permissions"
+last_updated: "2026-01-24"
+scope: "universal"
+
+errors:
+  - id: "SSL-001"
+    title: "Nginx cannot read Let's Encrypt SSL certificates"
+    severity: "critical"
+
+    problem: |
+      Nginx fails to start or reload with SSL certificate permission errors.
+      Let's Encrypt certificates are stored in /etc/letsencrypt/ with
+      restricted permissions that prevent nginx from reading them.
+
+    symptoms:
+      - "nginx: [emerg] BIO_new_file() failed (SSL: error:...)"
+      - "cannot load certificate"
+      - "nginx -t fails with permission denied"
+      - "502 Bad Gateway after certificate renewal"
+
+    root_cause: |
+      Let's Encrypt creates certificates with restrictive permissions:
+      - /etc/letsencrypt/archive/ has 700 (drwx------) permissions
+      - Private key (privkey.pem) has 600 (-rw-------) permissions
+      - Nginx runs as unprivileged 'nginx' user
+      - Symlinks in /etc/letsencrypt/live/ point to archive/
+
+      The archive directory is NOT readable by the nginx user, causing
+      certificate read failures.
+
+    affected_files:
+      - "/etc/letsencrypt/archive/"
+      - "/etc/letsencrypt/archive/domain/privkey.pem"
+      - "/etc/letsencrypt/live/domain/privkey.pem"
+
+    solution:
+      fix_permissions: |
+        # Fix archive directory permissions
+        sudo chmod 755 /etc/letsencrypt/archive
+        sudo chmod 755 /etc/letsencrypt/archive/domain
+
+        # Fix private key permissions (readable by nginx group)
+        sudo chmod 644 /etc/letsencrypt/archive/domain/privkey.pem
+
+        # Test nginx configuration
+        sudo nginx -t
+
+        # Reload nginx
+        sudo systemctl reload nginx
+
+      permanent_fix: |
+        # Add post-renewal hook to certbot
+        echo '#!/bin/bash
+        chmod 755 /etc/letsencrypt/archive
+        chmod 755 /etc/letsencrypt/archive/*
+        chmod 644 /etc/letsencrypt/archive/*/privkey*.pem
+        systemctl reload nginx' > /etc/letsencrypt/renewal-hooks/post/fix-perms.sh
+
+        chmod +x /etc/letsencrypt/renewal-hooks/post/fix-perms.sh
+
+      explanation: |
+        Making archive directory 755 allows nginx to traverse it.
+        Making privkey 644 allows nginx to read it (security is maintained
+        through file ownership - still owned by root).
+
+    prevention:
+      - "Always set up post-renewal hooks after obtaining certificates"
+      - "Test nginx configuration after certbot changes"
+      - "Use certbot with --deploy-hook to fix permissions automatically"
+
+    related_errors:
+      - "SSL-002"
+
+    tags: ["nginx", "ssl", "lets-encrypt", "permissions", "certificates"]
+
+  - id: "SSL-002"
+    title: "SSL certificate renewal breaks nginx"
+    severity: "high"
+
+    problem: |
+      nginx works fine initially but breaks after Let's Encrypt auto-renewal.
+      Certbot creates new certificate files with default restrictive permissions.
+
+    symptoms:
+      - "Website works immediately after manual setup"
+      - "Breaks 30-90 days later"
+      - "Error logs show certificate permission errors"
+      - " systemctl status nginx shows failed"
+
+    root_cause: |
+      Let's Encrypt renews certificates every ~60 days by default.
+      New certificate files are created with default 600/700 permissions,
+      overwriting any manual permission fixes.
+
+    solution:
+      add_deploy_hook: |
+        # Method 1: Add to renewal configuration
+        sudo vim /etc/letsencrypt/renewal/domain.conf
+
+        # Add this line:
+        renew_hook = chmod 644 /etc/letsencrypt/archive/domain/privkey*.pem && systemctl reload nginx
+
+        # Method 2: Use deploy-hook directory (recommended)
+        sudo tee /etc/letsencrypt/renewal-hooks/deploy/fix-perms.sh > /dev/null << 'EOF'
+        #!/bin/bash
+        chmod 755 /etc/letsencrypt/archive
+        chmod 755 /etc/letsencrypt/archive/*
+        chmod 644 /etc/letsencrypt/archive/*/privkey*.pem
+        systemctl reload nginx
+        EOF
+
+        sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/fix-perms.sh
+
+      test_renewal: |
+        # Test renewal without actually renewing
+        sudo certbot renew --dry-run
+
+    prevention:
+      - "Always add deploy-hook after obtaining certificate"
+      - "Test with --dry-run before waiting for actual renewal"
+      - "Monitor renewal logs: /var/log/letsencrypt/letsencrypt.log"
+
+    tags: ["nginx", "ssl", "lets-encrypt", "certbot", "renewal"]
+
+troubleshooting:
+  - symptom: "nginx won't start after SSL config"
+    causes:
+      - "Certificate file path incorrect"
+      - "Private key file not readable"
+      - "Archive directory not traversable"
+      - "SELinux/AppArmor blocking access"
+    solution: |
+      # Check actual paths
+      namei -l /etc/letsencrypt/live/domain/privkey.pem
+
+      # Check nginx user
+      ps aux | grep nginx
+
+      # Check SELinux
+      getenforce
+
+  - symptom: "Certificate works but breaks after reboot"
+    causes:
+      - "Permissions not persisted"
+      - "Deploy hook not executable"
+      - "Nginx starts before mount points ready"
+    solution: |
+      # Verify hook exists and is executable
+      ls -la /etc/letsencrypt/renewal-hooks/*/fix-perms.sh
+
+      # Test manually
+      sudo /etc/letsencrypt/renewal-hooks/deploy/fix-perms.sh
+
+best_practices:
+  - rule: "Always use deploy-hooks for permission fixes"
+    reason: "Survives certificate renewals"
+
+  - rule: "Test with --dry-run"
+    reason: "Catch issues before actual renewal"
+
+  - rule: "Monitor certificate expiry"
+    command: "certbot certificates"
+
+  - rule: "Keep archive readable"
+    reason: "Live symlinks point to archive, must be traversable"
