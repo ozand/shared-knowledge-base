@@ -73,7 +73,7 @@ def cmd_index(args):
     total_entries = 0
     for domain_dir in domains_dir.iterdir():
         if domain_dir.is_dir() and domain_dir.name != "catalog":
-            for yaml_file in domain_dir.glob("*.yaml"):
+            for yaml_file in domain_dir.rglob("*.yaml"):
                 total_entries += 1
 
     print(f"📊 Found {total_entries} entries")

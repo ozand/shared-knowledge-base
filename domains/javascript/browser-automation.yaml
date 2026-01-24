@@ -1,0 +1,74 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: javascript
+errors: []
+patterns:
+  - id: JS-AUTO-001
+    title: "React SPA Event Bypass: Direct DOM Manipulation"
+    scope: framework
+    tags: ["react", "automation", "selenium", "playwright"]
+    pattern: |
+      Standard automation clicks/types often fail on React components because they expect specific synthetic events.
+      Bypass this by dispatching events directly or manipulating React's internal state via DOM.
+    implementation: |
+      // Playwright example: trigger onChange manually
+      await page.evaluate(() => {
+        const input = document.querySelector('input');
+        const lastValue = input.value;
+        input.value = 'new value';
+        const event = new Event('input', { bubbles: true });
+        // React 16+ hack to ensure internal tracker updates
+        const tracker = input._valueTracker;
+        if (tracker) { tracker.setValue(lastValue); }
+        input.dispatchEvent(event);
+      });
+
+  - id: JS-AUTO-002
+    title: "ContentEditable Input Detection"
+    scope: universal
+    tags: ["automation", "dom"]
+    pattern: |
+      Many modern editors (Draft.js, Slate, TipTap) use `contenteditable` divs instead of `<input>` or `<textarea>`.
+      Automation tools looking for input tags will fail. Detect them by `contenteditable` attribute or `role="textbox"`.
+    implementation: |
+      // XPath selector for any editable field
+      const selector = '//*[(@contenteditable="true" or @role="textbox") and not(@readonly="true")]';
+
+  - id: JS-AUTO-003
+    title: "Enter Key Submission Pattern"
+    scope: universal
+    tags: ["automation", "forms"]
+    pattern: |
+      Some single-page apps (SPAs) only submit forms on 'Enter' keypress, ignoring submit buttons or having none.
+      Explicitly pressing Enter is more reliable than looking for a button.
+    implementation: |
+      await page.focus('input[name="search"]');
+      await page.keyboard.press('Enter');
+
+  - id: JS-AUTO-004
+    title: "Async Completion Detection via Content Monitoring"
+    scope: universal
+    tags: ["automation", "async"]
+    pattern: |
+      Waiting for network idle is unreliable in modern apps (websockets, polling).
+      Instead, monitor the DOM for a specific stability condition (e.g., content stop changing for X ms) or specific success/error indicators.
+    implementation: |
+      // Wait for specific element to appear/disappear
+      await page.waitForSelector('.loading-spinner', { state: 'detached' });
+      // Or wait for text content to stabilize
+      await expect(page.locator('#result')).not.toBeEmpty();
+
+  - id: JS-AUTO-005
+    title: "Query Complexity Detection with Keyword Matching"
+    scope: universal
+    tags: ["search", "automation"]
+    pattern: |
+      When automating search queries, detect query complexity to choose the right search strategy (simple keyword vs semantic).
+      Use regex to identify logical operators (AND, OR, site:) which imply advanced search mode.
+    implementation: |
+      const isComplex = /(".*"|site:|filetype:| OR | AND )/.test(query);
+      if (isComplex) {
+        // Use advanced search interface
+      } else {
+        // Use standard search bar
+      }

@@ -1,0 +1,53 @@
+version: "5.1"
+last_updated: "2026-01-24"
+category: windows
+errors:
+  - id: WIN-SHELL-001
+    title: "CRLF Line Endings in Bash Scripts"
+    severity: high
+    scope: universal
+    problem: "Bash scripts fail with 'command not found' or strange errors like `\r` on Windows."
+    solution:
+      explanation: |
+        Windows uses CRLF (`\r\n`) line endings, but Bash expects LF (`\n`). 
+        When Git checks out files on Windows, it often converts LF to CRLF (autocrlf=true).
+      code: |
+        # Fix individual file
+        dos2unix script.sh
+        
+        # Configure Git to enforce LF for shell scripts
+        # .gitattributes
+        *.sh text eol=lf
+
+  - id: WIN-NODE-001
+    title: "npx Command Fails in subprocess on Windows"
+    severity: medium
+    scope: javascript
+    problem: "Running `npx` via Python `subprocess` or Node `child_process` fails with 'FileNotFound' on Windows."
+    solution:
+      explanation: |
+        On Windows, `npx` is a batch file (`npx.cmd`), not an executable. 
+        You must run it through `cmd /c` or use `shell=True` (in Python).
+      code: |
+        # Python
+        subprocess.run(["cmd", "/c", "npx", "eslint"], check=True)
+        # OR
+        subprocess.run("npx eslint", shell=True)
+
+  - id: WIN-PYTHON-001
+    title: "Python Shebang Scripts Require .py Extension"
+    severity: medium
+    scope: python
+    problem: "Scripts with shebangs (`#!/usr/bin/env python`) but no extension fail to run on Windows."
+    solution:
+      explanation: |
+        Unlike Unix, Windows relies on file extensions to associate interpreters. 
+        A file named `myscript` won't run as Python unless explicitly called with `python myscript`.
+      code: |
+        # Rename script
+        mv myscript myscript.py
+        
+        # Or execute explicitly
+        python myscript
+
+patterns: []
