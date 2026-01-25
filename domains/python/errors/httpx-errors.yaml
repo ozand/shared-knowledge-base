@@ -1,0 +1,53 @@
+version: "1.0"
+title: HTTPX Client Errors
+scope: python
+severity: medium
+category: python-errors
+last_updated: "2026-01-25"
+tags:
+  - python
+  - httpx
+  - networking
+  - url-parsing
+errors:
+  - id: "HTTPX-001"
+    title: "HTTPX Base URL Path Merging Issue"
+    severity: "medium"
+    scope: python
+    problem: |
+      URL path segments are dropped when merging `base_url` and request path if slashes are missing.
+      
+      **Symptoms:**
+      - `404 Not Found` when endpoint definitely exists
+      - Logs show requests going to root `/endpoint` instead of `/v1/endpoint`
+      
+      **Root Cause:**
+      `httpx` (and `requests`) follows strict URL joining rules (RFC 3986).
+      If `base_url` path does not end with `/` (e.g. `http://host/v1`), and request path starts with `/` (e.g. `/chat`), the base path is **replaced**.
+      
+      `http://host/v1` + `/chat` = `http://host/chat` (WRONG)
+      `http://host/v1/` + `chat` = `http://host/v1/chat` (CORRECT)
+      
+    wrong_code: |
+      # Base URL has path but no trailing slash
+      client = httpx.Client(base_url="http://api.com/v1")
+      # Request has leading slash
+      client.post("/chat/completions") 
+      # Result: http://api.com/chat/completions (v1 lost!)
+    correct_code: |
+      # 1. Ensure trailing slash on base_url
+      url = settings.base_url.rstrip("/") + "/"
+      client = httpx.Client(base_url=url)
+      
+      # 2. Ensure NO leading slash on request path
+      client.post("chat/completions")
+      # Result: http://api.com/v1/chat/completions (Correct)
+    diagnosis_steps: |
+      1. Log the final URL before sending:
+         ```python
+         request = client.build_request("POST", "chat/completions")
+         print(request.url)
+         ```
+    related_entries: []
+    references:
+      - https://www.python-httpx.org/advanced/#merging-of-configuration

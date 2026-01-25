@@ -99,3 +99,51 @@ errors:
       - DOCKER-PATTERN-002
       - DOCKER-020
     references: []
+
+  - id: "DOCKER-024"
+    title: "Inter-Container Communication Failure (Host vs Internal DNS)"
+    severity: "high"
+    scope: docker
+    problem: |
+      Containers in the same Docker network cannot communicate when using Host IP/Loopback.
+      
+      **Symptoms:**
+      - "Connection refused" or "Connection reset by peer" when calling service A from B
+      - `curl http://localhost:PORT` works on host, but fails from inside container
+      - `curl http://HOST_IP:PORT` fails from inside container
+      
+      **Root Cause:**
+      - **Loopback (localhost):** Inside a container, `localhost` refers to the container itself, not the host.
+      - **Host IP:** Often blocked by firewall (iptables) or not routed correctly from inside Docker network loopback.
+      - **Binding:** Target service might be bound to `127.0.0.1` inside its container, making it invisible to outside (even via port mapping).
+      
+      **Solution:**
+      1. **Internal DNS:** Use the container name (e.g., `http://my-service:3000`) if both are in same network.
+      2. **Bind 0.0.0.0:** Ensure target service listens on `0.0.0.0`, not `127.0.0.1`.
+      3. **Host Gateway:** Use `host.docker.internal` (if configured) for host access.
+    wrong_code: |
+      # .env
+      # Wrong: Trying to reach another container via Host IP or localhost
+      SERVICE_URL=http://localhost:3000/v1
+      SERVICE_URL=http://192.168.1.35:3000/v1
+    correct_code: |
+      # 1. Ensure both containers are in same network (docker-compose.yml)
+      networks:
+        my_network:
+          external: true
+          
+      # 2. Use Container Name as Hostname
+      SERVICE_URL=http://target-container-name:3000/v1
+      
+      # 3. Ensure target binds to all interfaces
+      # target-service config:
+      bind: 0.0.0.0
+    diagnosis_steps: |
+      1. Check networks:
+         `docker inspect container_name` -> verify "Networks" matches target.
+      2. Ping by name:
+         `docker exec container_a ping container_b`
+      3. Curl by name:
+         `docker exec container_a curl -v http://container_b:port`
+    related_entries: []
+    references: []
