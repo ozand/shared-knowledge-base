@@ -1,0 +1,154 @@
+# Session Lessons: Multi-Domain SNI Routing with Xray
+# Date: 2025-01-25
+# Context: Setting up llm.ayga.tech alongside redis.ayga.tech
+
+version: "1.0"
+category: "session-lessons"
+last_updated: "2025-01-25"
+
+session_summary: |
+  Attempted to set up SNI-based routing for multiple domains (redis.ayga.tech,
+  llm.ayga.tech) through Xray Reality on port 443. Discovered critical limitation
+  where Reality's `target` field overrides the `fallbacks[]` array.
+
+timeline:
+  - step: "Initial setup"
+    action: "Created nginx config for llm.ayga.tech on port 8444"
+    result: "Config created, SSL certificate obtained"
+
+  - step: "Added fallbacks via x-ui database"
+    action: "Updated stream_settings.fallbacks with multiple entries"
+    result: "Config generated correctly but routing didn't work"
+
+  - step: "Investigation"
+    action: "Tested both domains, both returned same service"
+    result: "Discovered realitySettings.target overrides fallbacks"
+
+  - step: "Attempted fix"
+    action: "Set realitySettings.target to empty string"
+    result: "Xray failed to start, connection refused"
+
+  - step: "Pivoted to port-based routing"
+    action: "Created nginx config on port 9443"
+    result: "Working solution: llm.ayga.tech:9443"
+
+lessons_learned:
+  - lesson: "Xray Reality doesn't support multiple SNI fallbacks"
+    severity: "critical"
+    discovery: |
+      The `realitySettings.target` field acts as a single fallback destination
+      that completely overrides the `fallbacks[]` array in streamSettings.
+      This appears to be a fundamental limitation of how Reality works.
+
+    evidence: |
+      # Config with multiple fallbacks (doesn't work)
+      "fallbacks": [
+        {"name": "redis.ayga.tech", "dest": "127.0.0.1:8443"},
+        {"name": "llm.ayga.tech", "dest": "127.0.0.1:8444"}
+      ]
+      "realitySettings": {"target": "127.0.0.1:8443"}  # Always used
+
+      # Result: ALL traffic goes to 8443, ignoring fallbacks
+
+  - lesson: "Direct database editing breaks x-ui web interface"
+    severity: "high"
+    discovery: |
+      After manually updating the x-ui SQLite database, the web interface
+      started returning 500 errors when trying to add new inbounds.
+
+    workaround: |
+      - Keep database edits minimal
+      - Always backup before changes
+      - Consider using port-based routing instead
+
+  - lesson: "Port-based routing is more reliable than SNI routing"
+    severity: "medium"
+    discovery: |
+      Using custom ports (e.g., :9443) bypasses the entire SNI routing
+      complexity and works reliably with standard nginx configuration.
+
+    working_solution: |
+      redis.ayga.tech   → :443 (xray) → nginx:8443 → backend:8111
+      llm.ayga.tech:9443 → :9443 (nginx) → backend:8112
+
+mistakes_made:
+  - mistake: "Assumed Xray Reality supported multiple SNI fallbacks"
+    impact: "Wasted 2+ hours troubleshooting"
+    prevention: "Research limitations before implementation"
+
+  - mistake: "Modified production database without rollback plan"
+    impact: "x-ui web interface broke, had to restore manually"
+    prevention: "Always backup database before modifications"
+
+  - mistake: "Didn't verify assumptions about service ports"
+    impact: "Confusion about which service was on which port"
+    prevention: "Document port mappings clearly at project start"
+
+verification_steps:
+  - name: "Verify service on correct port"
+    command: |
+      curl -s http://backend:8111/  # Should return Redis Backend
+      curl -s http://backend:8112/  # Should return LLM Gateway
+
+  - name: "Verify domain routing"
+    command: |
+      curl -sk https://domain/  # Check which service responds
+
+  - name: "Verify xray config"
+    command: |
+      cat /usr/local/x-ui/bin/config.json | grep -A 20 fallbacks
+
+artifacts_created:
+  - path: "/etc/nginx/conf.d/llm-9443.conf"
+    description: "Nginx config for llm.ayga.tech on port 9443"
+
+  - path: "/etc/nginx/conf.d/llm.ayga.tech.conf"
+    description: "Original config for port 8444 (no longer used)"
+
+  - path: "/etc/letsencrypt/live/llm.ayga.tech/"
+    description: "SSL certificate obtained via certbot"
+
+commands_used:
+  - description: "Obtain SSL certificate"
+    command: |
+      certbot certonly --standalone -d llm.ayga.tech
+
+  - description: "Fix SSL permissions"
+    command: |
+      chmod 755 /etc/letsencrypt/archive
+      chmod 755 /etc/letsencrypt/archive/*
+      chmod 644 /etc/letsencrypt/archive/*/privkey*.pem
+
+  - description: "Update x-ui database"
+    command: |
+      sqlite3 /etc/x-ui/x-ui.db
+      SELECT id, stream_settings FROM inbounds WHERE port = 443;
+
+  - description: "Open firewall port"
+    command: |
+      iptables -I INPUT -p tcp --dport 9443 -j ACCEPT
+
+recommendations:
+  - recommendation: "Use nginx stream module for multi-domain SNI routing"
+    priority: "high"
+    reasoning: |
+      Nginx's ssl_preread actually works for SNI-based routing, unlike
+      Xray Reality. Consider migrating if more domains are needed.
+
+  - recommendation: "Document all port mappings in project README"
+    priority: "medium"
+    reasoning: |
+      Confusion about which service runs on which port wasted time.
+
+  - recommendation: "Test SNI routing in staging before production"
+    priority: "medium"
+    reasoning: |
+      Would have discovered Xray limitation without affecting production.
+
+related_entries:
+  - "infrastructure/patterns/nginx-llm-streaming.yaml"
+  - "infrastructure/patterns/xray-sni-routing.yaml"
+  - "universal/errors/nginx-ssl-permissions.yaml"
+  - "universal/errors/disk-space-deleted-files.yaml"
+
+tags: ["xray", "sni", "routing", "lessons-learned", "nginx"]

@@ -1,9 +1,14 @@
 # Xray/X-ui SNI-based Routing Configuration
 # SNI fallback routing for multiple services on single port 443
 
-version: "1.0"
+version: "1.1"
 category: "xray-sni-routing"
-last_updated: "2026-01-24"
+last_updated: "2026-01-25"
+
+# ⚠️ CRITICAL LIMITATION DISCOVERED ⚠️
+# Xray Reality does NOT support multiple SNI fallbacks properly.
+# The `realitySettings.target` field overrides the `fallbacks[]` array.
+# See "known_limitations" below for details.
 scope: "infrastructure"
 
 pattern_name: "SNI Fallback Routing with Xray"
@@ -20,6 +25,33 @@ problem: |
   - redis.example.com → backend:8111 (Redis Backend)
   - llm.example.com → backend:8112 (LLM API Gateway)
   - Both need to terminate TLS at port 443
+
+known_limitations: |
+  ⚠️ **CRITICAL:** Xray Reality does NOT support multiple SNI fallbacks!
+
+  Problem discovered 2026-01-25:
+  - `realitySettings.target` acts as a SINGLE fallback destination
+  - The `fallbacks[]` array is IGNORED when `realitySettings.target` is set
+  - All non-VLESS traffic goes to the same `target` destination
+
+  Evidence:
+  ```json
+  "streamSettings": {
+    "fallbacks": [
+      {"name": "redis.ayga.tech", "dest": "127.0.0.1:8443"},  // IGNORED
+      {"name": "llm.ayga.tech", "dest": "127.0.0.1:8444"}     // IGNORED
+    ],
+    "realitySettings": {
+      "target": "127.0.0.1:8443"  // This OVERRIDES fallbacks[]
+    }
+  }
+  ```
+
+  Workaround: Use port-based routing instead:
+  - Service 1: https://redis.ayga.tech/ (port 443, xray default)
+  - Service 2: https://llm.ayga.tech:9443/ (custom port, bypass xray)
+
+  Alternative: Replace xray with nginx stream module + ssl_preread
 
 solution:
   architecture: |
@@ -157,10 +189,54 @@ benefits:
   - Centralized TLS termination
 
 drawbacks:
-  - Complex configuration (xray + nginx)
-  - x-ui web panel may have bugs with multiple fallbacks
-  - Must use database updates when web panel fails
+  - ⚠️ **DOES NOT WORK with Reality:** Multiple SNI fallbacks don't work
+  - x-ui web panel has bugs with multiple fallback entries
+  - Direct database editing breaks x-ui web interface
+  - Complex configuration (xray + nginx) for single-use case
   - Harder debugging when routing fails
+
+# WORKING SOLUTION: Port-Based Routing
+working_solution:
+  description: |
+    Since Xray Reality doesn't support multiple SNI fallbacks, use
+    port-based routing for additional services:
+
+  setup: |
+    # Primary service (through xray:443)
+    redis.ayga.tech → xray:443 → nginx:8443 → backend:8111
+
+    # Additional services (direct ports)
+    llm.ayga.tech:9443 → nginx:9443 → backend:8112
+
+  nginx_config_port_based: |
+    # /etc/nginx/conf.d/llm-9443.conf
+    server {
+        listen 9443 ssl;  # Direct port, no proxy_protocol needed
+        http2 on;
+        server_name llm.ayga.tech;
+
+        ssl_certificate /etc/letsencrypt/live/llm.ayga.tech/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/llm.ayga.tech/privkey.pem;
+
+        location / {
+            proxy_pass http://backend:8112;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_buffering off;  # For LLM streaming
+            proxy_read_timeout 300s;
+        }
+    }
+
+  firewall: |
+    # Open custom port
+    iptables -I INPUT -p tcp --dport 9443 -j ACCEPT
+
+  benefits:
+    - Simple, reliable configuration
+    - Works with existing xray setup
+    - No database hacking required
+    - x-ui web interface stays functional
 
 troubleshooting:
   - symptom: "All domains route to same backend"
