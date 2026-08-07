@@ -26,6 +26,7 @@ agent_usage: "Read this first to understand guideline structure"
 | [01-project-structure.md](01-project-structure.md) | 🔴 Critical | Project setup, file organization | Directory layout, src/tests separation |
 | [02-code-quality.md](02-code-quality.md) | 🟡 Contextual | Code changes, refactoring | Ruff, mypy, pre-commit hooks |
 | [03-testing-strategy.md](03-testing-strategy.md) | 🟡 Contextual | Writing/running tests | Unit, integration, E2E testing |
+| [04-ddd-guideline.md](04-ddd-guideline.md) | 🟡 Contextual | Domain modeling, context boundaries | Bounded Contexts, Entities, Aggregates |
 
 ---
 
